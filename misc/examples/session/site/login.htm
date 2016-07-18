@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title>Empty Title</title>
+    
+    <meta charset="UTF-8" />
+    <meta name="description" content="Entry page for session demonstration" />
+    <meta name="author" content="Charles P Jungmann" />
+    <meta name="created" content="2015-08-18" />
+    
+    <link rel="stylesheet" href="session.css" type="text/css" />
+    <style type="text/css">
+      #login
+      {
+         border:solid 1px black;
+         background-color:#DDDDDD;
+         width: 20em;
+         margin:1em auto 1em;
+      }
+      #login div { margin-bottom: 6pt; }
+      #login label { width:5em; display:inline-block; text-align:right; }
+      #login label::after { content : ": " }
+      #login div.buttons { text-align: center; }
+    </style>
+    <script type="text/javascript">
+      window.onload = function()
+      {
+         var el = document.getElementById("first");
+         if (el)
+            el.focus();
+      };
+    </script>
+  </head>
+  <body>
+    <h1>SchemaFW Schema Application Demonstration</h1>
+    <form id="login" method="post" action="schema?default.spec:login_submit">
+      <fieldset>
+        <legend>Please Login</legend>
+        <div>
+          <label for="handle">Handle</label>
+          <input type="text" id="first" name="handle" size="20" maxlength="20" />
+        </div>
+        <div>
+          <label for="password">Password</label>
+          <input type="password" name="password" size="20" maxlength="20" />
+        </div>
+        <div class="buttons">
+          <input type="submit" value="Login" />
+        </div>
+        <div>
+          <a href="signup.htm">Signup for a new account.</a>
+        </div>
+      </fieldset>
+    </form>
+    
+  </body>
+</html>
+

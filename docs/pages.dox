@@ -1,0 +1,1030 @@
+/**
+ * @mainpage SchemaFW
+ *
+ * @ref OLD_SchemaFW
+ *
+ * The Schema FrameWork is a system for building database-driven web applications.
+ * Its goal is to be simple enough to make basic sites easy, yet flexible enough to
+ * make extensive sites manageable.
+ *
+ * @section MainPage_New_WebApp Creating a New Web App
+ *
+ * Create a new web application with the `schemafw_setup` command.  @ref SchemaFW_Application
+ *
+ * @section MainPage_Building_The_App Building The App
+ *
+ * - @ref md_userguide_BuildingTheFramework
+ * - @ref md_userguide_SchemaFCGIOptions
+ * - @ref md_userguide_ConfiguringApache
+ * - @ref Specs_File_Documentation
+ * - @ref SchemaFW_Application
+ * - @ref Topics_Main
+ * - @ref Examples_Main
+ *
+ * @section MainPage_Programming_Server
+ * For programmers desiring to modify or extend the schema web server application.
+ * - @ref TheSimpleProcedure
+ * - @ref StoredProc
+ *
+ */
+
+
+/**
+ * @page OLD_SchemaFW Former MainPage
+ *
+ * @section mainpage_Intro Introduction
+ *
+ * This project is called Schema Framework, AKA SchemaFW.  It earns this
+ * name because schemas are central to its operation.  Schemas are used
+ * to inform the browser how to render data, tables, and forms.  It includes
+ * a language for modifying stock schemas on the server, and a set of stylesheets
+ * and javascript files for rendering and running the application on the client.
+ *
+ * This project intends to provide a small, flexible CGI/FASTCGI
+ * component that generates XML web documents from MySQL stored
+ * procedures, modified by a script file.
+ *
+ * @ref Design_And_Philosophy
+ *
+ * @section Using_Schema_Framework Using the Schema Framework
+ *
+ * First look at how SchemaFW works to see if its processes will suit your
+ * application.  @ref Schema_Main
+ *
+ * Creating a web application in SchemaFW is very.  @ref SchemaFW_Application
+ * describes how a SchemaFW application is created and run.
+ *
+ * If you think SchemaFW is something you would like to explore, look at
+ * @ref SchemaFW_Dev_Guide
+ *
+ * ## Creating A SchemaFW Application
+ *
+ * A SchemaFW application consists of the following on a LAMP server:
+ * - A MySQL database with tables and stored procedures
+ * - An Apache application with specific SchemaFW settings
+ * - A Specs file with instructions about rendering data.
+ *
+ * ### Specs File "Programming"
+ *
+ * I have written several pages on this topic, but they are not all ready
+ * to be integrated into a definitive set of documentation.  As I write this,
+ * I am still working out the rules for special cases.  It is for these
+ * special cases that I'm making this section: so I can easily find the
+ * steps required for more complicated constructions.
+ *
+ * @ref Specs_File_Documentation
+ * 
+ *
+ * ## Low-level Programming Topics
+ *
+ * These topics may be of interest to programmers who might want to
+ * modify the code for their own use.
+ *
+ * The Schema project makes no claims to portability.  It is expected to be
+ * built and run on a Linux web stack.  @ref Portability
+ *
+ * The Schema component attempts to use stack memory as much as
+ * possible.  A discussion of the strategy on page @ref Discuss_Stack
+ *
+ * The DataStack is widely-used base class in SchemaFW for making
+ * name-indexed data available.  @ref Discuss_Making_DataStack is
+ * an example of building a new type of DataStack.
+ *
+ * There are special query string parameters here @ref QS_Params.
+ *
+ * @ref SimpleProcedure_Usage describes the recommended method of
+ * retrieving data from MySQL.  With one exception (@ref Import_Data_Internals),
+ * the SchemaFW expects that all database interactions will take place
+ * using stored procedures to help prevent SQL-injections attacks.
+ *
+ * There is some SchemaFW MySQL infrastructure.  @ref SchemaFW_MySQL_Overview
+ *
+ * I have come up with a method of unit testing that is described in
+ * @ref Unit_Testing_Convention
+ *
+ * I started work on a new strategy for transforming the XML, but gave
+ * it up.  @ref Aborted_Self_Transform Aborted Self-Transform describes
+ * the issues and preserves some of what I learned in case I need to
+ * try it again.
+ *
+ * My debugging expertise is growing as I work on this project, but I
+ * don't expect to remember everything.  @ref SchemaFW_Debugging_Hints
+ * has some discussion of debugging issues.
+ *
+ * This project includes, for now, some pages about writing Doxygen
+ * documentation.  I am learning this system, and I have prepared a
+ * few pages to help me remember how to do things.  @ref Doxygen_Hints.
+ */
+
+/**
+ * @page Design_And_Philosophy Design and Philosophy
+ *
+ * The basic idea behind SchemaFW is to let the client do as much as possible of
+ * running a web application.  Modern client computers, even if they are smart
+ * phones or other hand-held devices, have more than enough power to handle these
+ * tasks.  With the server handing these tasks off to the client allows it to
+ * handle a greater volume of clients.
+ *
+ * For several years, I have been developing web applications with this basic
+ * approach.  Each new application gave me new ideas.  Each iteration became
+ * simpler and smaller
+ *
+ * @section What_Happens_Each_Call What Happens During Each Call
+ *
+ * These are the steps that occur with each call to schema:
+ *
+ * @subsection Steps_Part_1 Part 1
+ *
+ * -# Determines if POST or GET.
+ * -# Reads query string, if found.
+ * -# Opens appropriate specs file and mode
+ * -# Identifies the stored procedure that will be run.
+ * -# Gets name and type of the stored procedure's parameters.
+ * -# Builds string with which to call the stored procedure.
+ *
+ * @subsection Steps_Part_2 Part 2
+ *
+ * From this point, if type : form-new;
+ * -# Print schema from input parameters from part 1.
+ * -# Finish.
+ *
+ * all other types:
+ * -# Prepare the stored procedure with the string and parameter bindings from part 1.
+ * -# Set the parameter values from stdin (POST values) and the query
+ * string, if it exists and there are null bindings.
+ * -# If requested, print the schema from the result fields.
+ * -# Print the row or set of rows.
+ * -# Repeat steps 3 and 4 for any other results in the resultset.
+ * -# Finish.
+ *
+ * @sa @ref Specs_Mode_Types
+ *
+ * @ref mainpage_Intro
+ */
+
+ /**
+ * @page Portability Portability
+ *
+ * November 22, 2015
+ *
+ * This project assumes it will be running under Linux with MySQL as the database
+ * client.  Some site installation scripts help with Apache configuration, but I
+ * don't think it's necessary to run under Apache.  It is a CGI application that
+ * is designed to run as FASTCGI, ie to persist to process requests indefinitely
+ * with minimal memory allocation issues.  I believe that program should be portable
+ * to other web server platforms that support FASTCGI.  I may make a compiler flag
+ * to toggle between a FASTCGI or CGI implementation.
+ *
+ * At the time I'm writing this page, I am using GCC 4.8.1 to build the project
+ * and taking advantage of several C++11 language enhancements.  This may impact
+ * portability.  I do try to follow basic good coding practices.
+ *
+ * @section Portability_Why_Not_Portable_1 Why Not Portable?
+ *
+ * There are several factors that will impact portability:
+ *
+ * - Windows Issues
+ *   -# GCC compiler flags (GCC can be run on Windows, however)
+ *   -# Hand-made `configure` script makes no accommodations to other environments
+ *   -# At least one POSIX-only function, `strcasecmp` is not available in Windows
+ *
+ * - General Issues
+ *   -# Using `alloca` to allocate stack memory.  This function may be
+ *      deprecated/removed in the future.
+ *
+ * @section Portability_Why_Not_Portable_2 Why Not Portable?
+ *
+ * I might aspire to writing more portable code for public approval except for
+ * the following reasons:
+ *
+ * - I need to finish the project: it's taking too long as it is.
+ * - The project doesn't need any Windows server features to run.
+ * - Building and running a Linux server is much cheaper and efficient than
+ *   running a Windows server.
+ * - I don't have any version of Windows running at my house, so there is
+ *   no easy opportunity to test for portability.
+ * - With no opportunity to test for portability, spending time coding for
+ *   portability will be futile.
+ *
+ * @ref mainpage_Intro
+ */
+
+/**
+ * @page Installing_SchemaFW Installing SchemaFW
+ *
+ * These are the requirements for running SchemaFW:
+ *
+ * For now, I am only explaining how to do this in a Linux environment.  It's the
+ * environment in which I developed, tested, and implemented SchemaFW.  I expect
+ * that running on OSX will be similar, but Windows will need different solutions
+ * for several processes.  So...I will list Linux as a requirement for now.
+ *
+ * -# Linux computer
+ *    - MySQL, server and development files
+ *    - Webserver that supports FASTCGI
+ *    - Gnu C++ compiler (g++)
+ * -# SchemaFX support files
+ *
+ * @sa @ref Server_Setup
+ *
+ * @todo Complete this Installing_SchemaFW page.
+ *
+ * @ref mainpage_Intro
+ */
+
+/**
+ * @page Unit_Testing_Convention Unit Testing Convention
+ *
+ * In this project, most source files have a unit test section.  This section
+ * is separated from the main part of the code with an @#ifdef and includes a
+ * main() function and testing functions that main() will call.  This strategy
+ * allows a local build to create an executable that can run a unit test, while
+ * the unit test code will be omitted in a full project build.
+ *
+ * At the top of many source files in this project  is a compile instruction
+ * that EMACS understands.  Typing @code M-x compile @endcode in EMACS will use
+ * this instruction to compile the unit test.  These instructions are duplicated
+ * in the header file of the same name so calling M-x compile there works as
+ * well as in the source file.
+ *
+ * In the following header file examples, look at the compile instruction in
+ * the first line in each file.  The main items of interest are
+ * - the -o directive to name the executable to be built
+ * - the -DINCLUDE_XXX instruction that causes the unit test code to be included.
+ * .
+ * Here are the examples:
+ *
+ * - @link vclasses.hpp Simple example with minimal dependencies @endlink
+ * - @link bindc.hpp Example with more dependencies and special compile and link flags @endlink
+ *
+ * Within the unit_test block, I include the .cpp source files on which the
+ * current file depends so that the resulting executable can run.  I can't seem
+ * to make links to cpp source files, so I will simply refer you to vclasses.cpp
+ * and bindc.cpp, respectively, for the implementation of unit testing in the
+ * examples above.
+ */
+
+/**
+ * @page QS_Params Query String Parameters
+ *
+ * The first one or two parameters can be pure values.  The first
+ * unnamed value is interpreted to be the specifications ("Specs")
+ * file.  If the second parameter is also unnamed, it will be
+ * interpreted as the desired advisor mode.
+ *
+ * @code
+ * http://yoursite.com/schema?SpecsFile&FormMode
+ * @endcode
+ *
+ * If a mode is not specified, the Specs file will be searched
+ * for the "default" spec in the global space.  See @ref Specs_File.
+ */
+
+/**
+ * @page Discuss_Stack Discussion of Stack-usage Strategy
+ *
+ * I have designed this component to use stack memory as much as
+ * possible.  The reason is that, as a FASTCGI component, it
+ * should expect to be long-running, processing many requests
+ * without slowing down.  Over time, Heap memory that is allocated
+ * and freed leads to fragmentation, making it increasingly
+ * difficult find appropriate memory blocks to satisfy requests.
+ *
+ * Stack memory, while limited, suffers no such fragmentation
+ * issues: the memory is released as functions return.  Unused
+ * stack space is a single large block of memory.
+ *
+ * Programming for stack usage introduces some code constraints,
+ * mainly that memory or objects created with stack memory,
+ * cannot be returned from a function.  In this application,
+ * any function that creates a stack-allocated object requires
+ * a class reference that implements a callback interface which
+ * is called with the stack-allocated object is complete.  When
+ * the usage function returns, the stack-object-builder also
+ * returns, returning the used memory to the stack.
+ *
+ * @sa @ref Templated_Callbacks
+ */
+
+/**
+ * @page Discuss_DataStack_line_handle The Peculiar DataStack line_handle
+ *
+ * Access to line_handle is unusual in that the classes that facilitate
+ * the access have no data elements, and are designed thus so their this*
+ * pointer is the line_handle address.  
+ *
+ * Each line_handle is simply a pointer to a string, its name.  However,
+ * the beginning of the line_handle is actually to the left of the string.
+ * Just before the string is a DMAP-mapped area that contains an offset
+ * from the beginning of the name string to the beginning of the allocated
+ * memory.
+ *
+ * The layout of the name string, DMAP, and the beginning of allocation
+ * are type-independent and are handled by base_handle.  Type-based t_handle
+ * derives from base_handle and uses the template type T to map T and optional
+ * extra memory.
+ *
+ * In order to maintain the proper this* pointer, your code should never
+ * declare a line_handle, only references of or pointers to a line_handle.
+ * If you declare a line_handle, either directly or with \e auto, it will
+ * have its own address.  This will defeat access to the DMAP and the
+ * object.  Use <em>auto &</em> or <em>auto *</em> instead.
+ *
+ * @sa adbranch.cpp::build_index
+ * @sa @ref T_HANDLEs
+ */
+
+/**
+ * @page T_HANDLEs Using t_handle<T> objects
+ *
+ * This template-based derivation from line_handle finally makes the
+ * line_handle useful.  The T class is the payload for information
+ * that will be accessed by name or iteration.
+ *
+ * @section T_HANDLE_Iteration t_handle Iteration
+ *
+ * A DataStack<T> and most derived classes have a start() function that
+ * returns the first t_handle<T> element.  Iteration through the contents
+ * of a stack would look like this:
+ *
+ * @code
+ void iterate_collection(DataStack<MyObj> &ds)
+{
+   for (auto *ptr = ds.start(); ptr; ptr=ptr->next())
+   {
+      MyObj &obj = ptr->object();
+      // Use the object
+   }
+}
+ * @endcode
+ */
+
+/**
+ * @page Discuss_Making_DataStack Making a DataStack
+ *
+ * See also @ref Using_DataStacks
+ *
+ * A DataStack<T> holds an array of t_handle<T>, and provides various
+ * tools for accessing elements of this array and attributes of an
+ * element.
+ *
+ * While the concept of the DataStack has been pretty stable, the methods
+ * of building a stack have multiplied and evolved as I get more experience
+ * using them.
+ *
+ * Originally, the suggested method for building a DataStack was to
+ * employ recursive methods to add to a stack.  More recently, I have
+ * been simply using a loop to repeatedly use alloca to link new
+ * elements.
+ *
+ * All current examples (as of 2015-06-23) use a callback to make the
+ * DataStack available because I am allocating all memory on the stack,
+ * so items can't be returned.  However, these is nothing about a DataStack
+ * that requires it to reside in stack memory.  Future needs may dictate
+ * a different approach, perhaps saving commonly-used DataStacks on the heap
+ * for repeated use.  See @ref Discuss_Stack.
+ *
+ ~~~{.cpp}
+ ab_handle *head = nullptr;
+ ab_handle *tail = nullptr;
+ 
+ const char *name = get_name();
+ const MyObj *object = object_getter();
+
+ while (*name)
+ {
+    
+ }
+
+ 
+ ~~~
+ * 
+ * @todo Make a more complete list of examples.  Some require links.
+ * Note that it is necessary to include an @@file doxygen comment at the
+ * top of any file that contains a function to which you want to link.
+ * adbranch.hpp is the source of example #2 below.
+ *
+ * Here are some examples:
+ * - @ref Building_DataStack_Example_Simple_String_Map
+ * - @ref Building_DataStack_Example_Advisor_Index
+ * - @ref Building_DataStack_Example_Header_Stack
+ */
+
+/**
+ * @page Using_DataStacks Using a DataStack
+ *
+ * There are two main types of access to DataStacks: to get a specific
+ * item by name or index, or to cycle through all items in a DataStack.
+ * Here we show both methods.
+ *
+ * @h2 By-item Access
+ *
+ * You need to get the info for an element named @i Content-Disposition:
+ *
+~~~{c++}
+ void process_info(DataStack<Info> &header)
+ {
+    auto *info = header.data("Content-Disposition");
+    if (info)
+    {
+       // read the info
+    }
+ }
+~~~
+ *
+ * Alternatively, you may want to examine every element of a DataStack.
+ * The easiest form is this:
+ ~~~{c++}
+ void process_fields(DataStack<BindC> &binds)
+ {
+    for (auto *handle=binds.start(); handle; handle=handle->next())
+    {
+       const char *name = handle->str();
+       BindC      &bind = handle->object();
+    }
+ }
+ ~~~
+ */
+
+/**
+ * @page Building_DataStack_Example_Header_Stack Building DataStack Example: Header_Stack
+ * Return to @ref Discuss_Making_DataStack
+ *
+ * This function builds a subclass of DataStack that associates one string
+ * (a header name) to a list of named values.
+ *
+ * The get_header_line function reads from stdin the next line that ends with CR/LF.
+ * It returns false when it encounters an empty line, indicating the header list has
+ * ended.  get_header_line `returns' the length of the name and value portions of
+ * the header in the reference arguments len_name and len_value.
+ *
+ * @snippet multipart_reader.cpp DataStack_Building_Snippet_Header_Stack
+ */
+
+/**
+ * @page Building_DataStack_Example_Advisor_Index Building DataStack Example: Advisor_Index
+ * Return to @ref Discuss_Making_DataStack
+ *
+ * This example 
+ *
+ * @snippet specsreader.cpp DataStack_Building_Snippet_Advisor_Index
+ */
+
+/**
+ * @page Building_DataStack_Example_Simple_String_Map Building DataStack Example: Simple String Map
+ * Return to @ref Discuss_Making_DataStack
+ *
+ * I'm leaving the following code as I found it.  It was originally written as
+ * a test of a new process for building a DataStack that didn't require a builder
+ * object and recursive calls.
+ *
+ * This example makes a simple struct that only contains a pointer to the string
+ * that resides in the @i extra area.
+ *
+ * It is technically possible to create a string map without an object, but
+ * this seemed more straightforward back when I wrote it.
+ *
+ * The struct for the template:
+ * @snippet datastack.cpp Snippet_Simple_String_Class
+ *
+ * Build a DataStack of string pointers mapping one string to one other string.
+ * @snippet datastack.cpp DataStack_Building_Snippet_Simple_String_Map
+ */
+ 
+/**
+ * @page NonRecursive_DataStack Non-Recursive Method of DataStack Building
+ *
+ * The following is live code in the project.  The comments that start with REQ
+ * refer to code elements that directly pertain to building a DataStack.  Other
+ * comments, specifically those that start Example-specific, mainly explain
+ * how I am tracking the data in the example.  Also note that this function
+ * makes use of the new Generic Callback templates.
+ *
+ * @sa TDataStack_User
+ * @sa @ref Templated_Callbacks
+ *
+ * The following snippet is live code, but simple and heavily documented to serve
+ * as an example of how to build a DataStack directly.  After this snippet is
+ * another snippet example of how to use the function.
+ *
+ * @snippet adbranch.cpp build_index
+ *
+ * The following snippet is an example of how to use the previous example, and
+ * more importantly, how to use a lambda function as a callback without using
+ * std::function.  The problem with std::function is that it makes a heap
+ * allocation that I'm trying to avoid.  The snippet makes use of the new
+ * Generic Callback templates. For a more basic example of their use, please
+ * refer to @ref Templated_Callbacks.
+ *
+ * @snippet adbranch.cpp non-recursive-datastack-example
+ */
+   
+
+/**
+ * @page Discuss_BindInfo BindInfo Concepts
+ *
+ * @todo Rewrite this page to reflect new BindC structure.
+ *
+ * MYSQL_BIND arrays are used to communicate with MySQL Statements.  A
+ * MYSQL_BIND array is used to pass values to a prepared procedure,
+ * and another MYSQL_BIND array is used to collect the results.
+ *
+ * The BindInfo structure, when hosted in a DataStack<BindInfo> collection,
+ * attempts to provide a convenient interface for allocating memory
+ * and setting and getting the values.
+ *
+ * When constructing the DataStack, the memory allocation for each line
+ * includes extra length to serve as the buffer of the MYSQL_BIND structure.
+ *
+ * It is not trivial to set the values.  The data is not typed, so the
+ * compiler doesn't know how to set the data.  I have tried different
+ * approaches to similar problems in the past, but here I'm using
+ * easily-constructed intermediary objects that pass the data to the
+ * MYSQL_BIND::buffer.  See IBindVal. in bindval.hpp.
+ *
+ * Here is an example:
+ *
+ * @code
+ * void void set_params(DataStack<BindInfo> *ds)
+ * {
+ *    (*ds)[0] = b_string("This is a string.");
+ *    ds->object(1) = b_int(10);
+ *    ds->object(2) = b_tiny(12);
+ *    etc....
+ * }      
+ * @endcode
+ *
+ * Setting parameters is relatively easy when you know the type.
+ * For setting parameters from the http request is more challenging,
+ * and this will be done by providing each implementation will include
+ * a function to convert a string to its own type.
+ *
+ * For the most part, the purpose of calling a procedure is to send
+ * the data to a FILE* stream, so each IBindVal implementation includes
+ * a print function and an XML print function (for strings).  In that case,
+ * the value is not used, it is simply sent off.
+ *
+ * @todo Describe the BindAlias implementation and strategy once it's complete.
+ *
+ * Using a result DataStack<BindInfo> is more complicated if you need to
+ * use the data on the server.  This is relatively rare, probably limited
+ * to calling ssys_get_procedure_params.  Since the types represented there
+ * are a subset of all MYSQL types, the alias types will be cast to one of
+ * the subset types.  For other types, there will be a slight performance
+ * hit due to conversion to the subset type.  As you can tell, this is not
+ * yet developed.  I will try to remember to revisit this page once I have
+ * this working to describe the strategy and usage.
+ */
+
+
+/**
+ * @page MYSQL_Setup MySQL Setup
+ * 
+ * Data security is one of the design goals of this framework.  Using compiled
+ * code for serving data is one aspect of realizing this goal.  The other is
+ * to ensure that the MySQL user that Schema uses to interact with MySQL has
+ * very limited privileges.  This page will discuss creating an account for
+ * Schema to use, and make suggestions about how to make it more secure.
+ *
+ * In this example, 'webuser' is the name of the user I create for this purpose.
+ * Don't feel constrained to use the same name, but remember to replace 'webuser'
+ * with your chosen name where appropriate.
+ *
+ * Assumptions in place for the following commands.  Most of the commands are
+ * MySQL commands, so the first assumption is that we're logged into MySQL
+ * as 'root' or some other user whose priviliges allow the commands used.
+ * -# Signed into MySQL as 'root' or other privilieged user.
+ * -# The application's database is called 'MyAppDB'.
+ * -# All application operations are done with Stored Procedures.
+ * -# All application Stored Procedure names begin with 'App'.
+
+ * ADD SYSTEM PROCEDURES
+ *
+ * Schema a procedure named ssys_get_procedure_params to discover the names,
+ * positions, and types of parameters for the Stored Procedures.  Before using
+ * the database with Schema, this procedure must be loaded.  Find sys_procs.sql
+ * in the XXX directory.
+ * @todo Decide where sys_procs.sql will be distributed.
+ *
+ * From the command line:
+ *
+ * @code
+ * you@yours:~$ mysql -u root -ppassword MyAppDB < sys_procs.sql
+ * @endcode
+ *
+ * CREATE THE USER
+ *
+ * @code
+ * mysql> CREATE USER 'webuser'@'localhost' IDENTIFIIED BY 'webuser';
+ * @endcode
+ *
+ * The statement above creates my 'webuser' account and assigns 'webuser'
+ * as the password.  We could use a complicated password, but since it must
+ * be readable by Schema from somewhere, it is not completely secure.  We
+ * will protect the data by restricting privileges, instead.
+ *
+ * @code
+ * mysql> GRANT EXECUTE ON 'MyAppDB'.'ssys_get_procedure_params'
+ * mysql> to 'webuser'@'localhost';
+ * mysql> GRANT EXECUTE ON 'MyAppDB'.'App*' to 'webuser'@'localhost';
+ * mysql> FLUSH PRIVILEGES;
+ * @endcode
+ *
+ * (FLUSH PRIVILEGES activiates the new grants.)
+ *
+ * The first grant is critical because Schema uses that procedure as described in
+ * "ADD SYSTEM PROCEDURES" above.  The second grant is very restricted, granting
+ * a specific database and a limited list of procedures.  It will not be possible
+ * for this account to execute adhoc queries, either for discovering information
+ * or damaging the data.
+ *
+ * If you are running more than one Schema application on the server, you could
+ * use '*'.'App*' and '*'.'ssys_get_procedure_params' with little risk.  However,
+ * in that case, a more unique procedure prefix than 'App' might be in order.
+ *
+ * PREPARING FOR MYSQL CONNECTION
+ *
+ * Schema will need to create a working connection to MySQL using the 'webuser'
+ * account.  There are two ways to do this.
+ *
+ * -# Prepare environments variables MYS_HOST, MYS_USER, MYS_PASS, and MYS_DB
+ * with the host, user name, password, and database values, respectively.
+ * -# Add the following to /etc/my.cnf or /etc/mysql/my.cnf:
+ *
+ * @code
+ * [client]
+ * host = localhost
+ * user = webuser
+ * password = webuser
+ * database = MyAppDB
+ * @endcode
+ *
+ * I use a combination: I set host, user, and password in /etc/mysql/my.cnf,
+ * and the database in the Specs file. @ref  Specs_File.
+ */
+
+ /**
+ * @page SchemaFW_Debugging_Hints Debugging Hints
+ *
+ * I'm not so experienced with GDB that I can't benefit from some reminders
+ * about how to debug certain situations.  This page will help me accomplish
+ * some debugging goals and make it easier to find the web pages that helped
+ * me understand the methods.
+ *
+ * @section SchemaFW_Debugging_Hints_Fork Debugging Forked Execution
+ *
+ * This seemed hard until I actually did it.  GDB includes a few commands that
+ * make it easy to debug child processes.
+ * What I do is set a breakpoint at the `fork` commands, then issue
+ * ~~~
+ * (gdb) set follow-fork-mode child
+ * ~~~
+ * or
+ * ~~~
+ * (gdb) set follow-fork-mode parent
+ * ~~~
+ * to change which process I want to follow.
+ *
+ * In the fork_convert function I wrote for testing, I changed the mode to `child`
+ * at the first fork, then back to `parent` mode at the second fork in order to
+ * debug the process that feeds the stdin of `ssconvert`.
+ *
+ * Refer to [GDB Forks](https://sourceware.org/gdb/onlinedocs/gdb/Forks.html)
+ * for more information.
+ *
+ * @section SchemaFW_Debugging_Hints_Watchpoints Setting Watchpoints
+ *
+ * When I need to run a large part of program before the targeted-for-debugging
+ * code runs, setting a watchpoint makes this less painful.
+ *
+ * For example, I know a loop will run 4 times safely, and an error will occur
+ * during the 5th iteration, I can add a counter variable and set a watchpoint
+ * for when it changes to 5:
+ *
+ * ~~~
+ * (gdb) watch counter==5
+ * ~~~
+ *
+ * See [GDB Watchpoints](https://sourceware.org/gdb/onlinedocs/gdb/Set-Watchpoints.html)
+ * for more examples and commands.
+ */
+
+/**
+ * @page Alloc_Debugging Breaking At Memory Allocation
+ *
+ * As I am developing the program to run as much on stack memory as possible,
+ * it has become necessary to identify hidden memory allocations in order to
+ * identify which functions result in heap allocation.
+ *
+ * GDB is my debugging tool, and the following steps will cause a break
+ * to occur at every heap allocation.  If a backtrace is performed at the
+ * break, it should be possible to identify the place in your code that
+ * leads to the heap allocation.
+ *
+ * @sa [beej quick guide to gdb](http://beej.us/guide/bggdb/#qref)
+ *
+ * @section The_Steps The Steps
+ *
+ * -# Open gdbtui with the suspect program
+ * -# Insert a breakpoint just after mysql_real_connect
+ * -# 'continue' to the first breakpoint
+ * -# Attach a breakpoint to the _int_malloc function @code (gdb) b _int_malloc @endcode
+ * -# 'continue' to the next malloc.
+ * -# 'bt' to examine the call-stack.
+ * -# repeat last two steps until the program terminates.
+ *
+ * In the unit test program for procedure.cpp, on 2015-07-03, valgrind identifies
+ * memory allocations.  One is for stdio.h, and the rest are made during the
+ * initialization of MySQL and making the connection.
+ *
+ * Because MySQL makes so many allocations, it is far more efficient to defer
+ * setting the _int_malloc breakpoint until MySQL is finished.  Then the
+ * breakpoints found are more likely to be caused by code you can influence.
+ *
+ * Also be aware that other MySQL commands also allocate heap memory at a less
+ * frequent rate.
+ */
+
+/**
+ * @page Aborted_Self_Transform Aborted Self-Transform
+ *
+ * I spent a couple of days trying to change the way pages are transformed,
+ * but eventually returned to the original way.  I struggled with several
+ * elements, so I am wrote this page to document the solutions to those
+ * problems to save time in the event that I try this again.
+ *
+ * @section Aborted_Self_Transform_Original The Original Path
+ *
+ * The concept for SchemaFW evolved from earlier work that took advantage
+ * of Microsoft's exposing the XML and XSLT documents used to generate a
+ * page.  Using the two files, I would make changes to the XSLT file before
+ * using it to transform nodes from the XML document.
+ *
+ * The first version of Firefox was just released, and after ignoring it
+ * for a while, I added work-arounds to allow my web applications to run
+ * there.  One necessity was to use the page URL to get another copy of
+ * the XML file (which was cached, no penalty), then got a copy of the
+ * XSLT document from the URL in the <?xml-stylesheet ...?>
+ * processing-instruction.
+ *
+ * I made a XML processing javascript file that created new methods that
+ * were replaced with browser-specific code so web applications using my
+ * method could largely ignore the browser.
+ *
+ * At first, I also ignored Safari, but when Google Chrome was introduced
+ * using the same WebKit engine, I added code to handle its idiosyncracies.
+ * Now the applications ran on Windows, Mac, and the IPhone.  When the
+ * Chrome browser came to Android phones, it worked there, too.
+ *
+ * @section Aborted_Self_Transform_Rethink Rethinking The Path
+ *
+ * One thing always bugged me: I didn't know (and still don't) if it is
+ * guaranteed to get cached XML and XSLT documents.  While it has always
+ * been possible to request XML and XSLT documents using Javascript
+ * from an HTML page, I really liked that receiving an XML file with
+ * and xml-stylesheet processing-instruction would directly render a
+ * page.
+ *
+ * I finally dawned on me that my code was living in the past.  The new
+ * versions of Internet Explorer no longer provided the XMLDocument and
+ * XSLDocument properties, so even there I was requesting a second copy
+ * of each.  Perhaps it was time to make a version that requested each
+ * document once only.
+ * 
+ * @section Aborted_Self_Transform_New_Version The New Version, Postponed
+ *
+ * I had an idea that seemed to make sense: to send a very simple HTML
+ * file when requesting the XML, a simple (at first) Javascript file
+ * would read the URL, set a special request header while using XMLHttpRequest
+ * to get the XML and XSLT documents.
+ *
+ * I added code to dynamically-load javascript files, using callbacks
+ * to ensure each one was loaded before loading the next, and calling a
+ * final callback when finished (@ref Dynamically_Load_Javascript).
+ *
+ * A mini HTML file (@ref Cplusplus_Heredoc) was returned for a request
+ * without a special request header.
+ *
+ * The SchemaFW always included that request header when requesting data
+ * via xhr (XMLHttpRequest) calls to get the real data.
+ * The `window.onload` function read the query string from
+ * `window.location.search`, submitting that URL back to the web server
+ * to get the page data.
+ *
+ * All this was done asynchronously, with callback functions and setting
+ * the _load_ event.
+ *
+ * @section Aborted_Self_Transform_Defeat Gaving Up The Battle
+ *
+ * I abandoned the attempt when it became too difficult to actually render
+ * the entire page from the XSLT file.
+ *
+ * One major goal was to use a relatively vanilla XSLT file.  There are
+ * two reasons for this.
+ *
+ * -# The XSLT file could then be easily used to debug a schema result:
+ *    `schema -b | grep project.xsl -`
+ * -# It makes writing the XSLT file easier for a programming population
+ *    that is less likely to be expert at the art.
+ *
+ * I easily got the XML and XSLT files as described in the previous
+ * section.  Then my problems began.
+ *
+ * First, I tried using `document.write()` to replace the
+ * current file with the transformation results, but while I knew when
+ * the transformation was complete, I couldn't set a callback or event
+ * that would notify me when the script files were finished loading.
+ * The window.load event never fired, perhaps because  I was running in
+ * the window.load() method of the mini HTML file.  As I am writing this
+ * post-mortem, it occurs to me that I could have window.onload set a
+ * timer to begin the transformation, exiting window.onload and perhaps
+ * allowing it to be replaced and called when `document.write()` is
+ * complete.  I leave it to the future me to try this.  I've had enough.
+ *
+ * The next idea I had was to move the _head_ and _body_ sections of the
+ * main template (ie match="/") into templates that matched manufactured
+ * nodes (_sfw_head_match_ and _sfw_body_match_ for the head and body
+ * sections, respectively).  To generate the code, I would do the
+ * following:
+ ~~~{.js}
+var headnode = xmlDoc.createElement("sfw_head_match");
+xmlDoc.documentElement.appendChild(headnode);
+xslObj.transformReplace(document.head, headnode);
+
+var bodynode = xmlDoc.createElement("sfw_body_match");
+xmlDoc.documentElement.appendChild(bodynode);
+xslObj.transformReplace(document.body, bodynode);
+ ~~~
+ *
+ * The problem with this is that it messed up the document.head value.
+ *
+ * This is the point where I gave up.  I realized that while I was having
+ * so many difficulties getting this to work with Chrome, the at least
+ * some of the problems are due to bugs in Chrome, which would have to
+ * be worked around.  There would almost certainly be different difficult
+ * problems to solve with Firefox, not to mention the current Internet
+ * Explorer.  I would also want to ensure that IE6 would also work,
+ * meaning another layer of problems.  All this to enable a single
+ * retrieval of an XML file, which is generally cached anyway.
+ */
+
+/**
+ * @page Cplusplus_Heredoc C++ Heredoc
+ *
+ * C++ is not supposed to have a heredoc notation, but for a static const char*
+ * member function, the g++ compiler refused to append adjacent strings into a
+ * single string.  This actually works better, anyway, because it's possible to
+ * include quotes and othe punctuation that would normally confuse the compiler.
+ *
+ * The example that follows was the mini HTML file that I returned in the
+ * @ref Aborted_Self_Transform attempt.  Notice that I included two headers,
+ * then two newlines before the DOCTYPE statement.  Look at this documentation
+ * about [string literals](http://en.cppreference.com/w/cpp/language/string_literal).
+ *
+ ~~~{.cpp}
+const char* Schema::s_mini_doc = 
+   R"(Content-Type: text/html
+Status: 200 OK
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="includes\mini_startup.js"></script>
+  </head>
+  <body>
+    <div style="height:1em; width:5em; margin:10em auto;">Loading...</div>
+  </body>
+</html>
+)";
+ ~~~
+ */
+
+/**
+ * @page Dynamically_Load_Javascript Dynamically Load Javascript
+ *
+ * This shows a function for loading new Javascript code into a running
+ * web page and an example of its use.  Providing a callback function
+ * will give final notification that it is safe to call functions from
+ * the post-loaded script files.
+ *
+ ~~~{.js}
+// The application won't work until event handling is enabled,
+// and that won't happen before the script file with the required
+// functions is loaded.
+
+window.onload = function()
+{
+   var arrScriptFiles = ["includes/XML.js",
+                         "includes/sfwobjects.js",
+                         "includes/sfwmain.js",
+                         "includes/classes.js",
+                         "includes/Events.js",
+                         "includes/Dialog.js",
+                         "includes/Moveable.js"
+                        ];
+
+   // Use callback function from this file, not directly
+   // from one of the post-loaded scripts:
+   load_script(arrScriptFiles, enable_event_handling);  
+};
+
+function enable_event_handling()
+{
+   // Now I can call a function from one of the script files
+   start_events();
+}
+
+// Function to asynchronously load script files
+function load_scripts(arrScripts, callback)
+{
+   var host = document.head;
+   var ndx = 0;
+
+   // Closure function is recursive through the callback
+   // function of addEventListener("load"):
+   function get_next()
+   {
+      if (ndx < arrScripts.length)
+      {
+         var s = document.createElement("script");
+         
+         // _get_next_ in the second parameter continues the recursion:
+         s.addEventListener("load", get_next, false);
+         s.src = arrScripts[ndx++];
+         host.appendChild(s);
+      }
+      else
+      {
+         // No more array elements available, no more recursion.
+         // Use the callback if provided:
+         if (callback)
+            callback();
+      }
+   }
+
+   // Start the process:
+   get_next();
+}
+ ~~~
+ */
+
+/**
+ * @page Import_Data_Internals Import Data Internals
+ *
+ * @todo Finish this page.  It needs better styles of calling out code and
+ *  examples.
+ *
+ * @section Import_Data_Internals_Intro Introduction
+ *
+ * With a framework so dependant on working with data in a database,
+ * it is necessary to provide a means to import existing data.  The
+ * preferred methods for doing this in MySQL normally raise security
+ * concerns.  This page will describe the concerns and how I have
+ * addressed them.
+  *
+ * I am using the LOAD DATA feature of MySQL to import files because it
+ * seems to work best with streamed data that we get from multipart_form
+ * file submissions.
+ *
+ * @section Import_Data_Internals_Security Security
+ *
+ * @subsection Import_Data_Internals_Concerns Security Concerns
+ *
+ * There are several security concerns with importing:
+ * -# LOAD DATA cannot be put into a stored procedure (remember, using
+ *    stored procedures helps us avoid MySQL-injection mischeif).
+ *
+ * -# LOAD DATA gives a user access to any file in the exposed directories.
+ *    See <a href="https://dev.mysql.com/doc/refman/5.6/en/load-data-local.html">
+ *    MySQL documentation</a>.
+ *
+ * -# It is necessary to grant the SchemaFW user FILE privileges.
+ *
+ * -# We must enable LOAD LOCAL DATA so we can provide an alternative data
+ *    reader.  LOAD LOCAL DATA can allow unrestricted access to any directory
+ *    or file on the server.
+ *
+ * @subsection Import_Data_Internals_Provisions Security Provisions
+ *
+ * These are the steps I use to address the various security issues:
+ *
+ * -# I suggest setting @i secure_file_priv to /tmp in your default my.cnf
+ *    to limit the directories from which LOAD DATA can read.  It may be
+ *    preferred to set the value in such a way that LOAD DATA will always
+ *    fail, despite having FILE privileges.
+ *
+ * -# When not explicitely importing a spreadsheet, mysql_set_local_infile_handler
+ *    is called to use callbacks that result LOAD LOCAL DATA to fail.
+ *
+ * -# When LOAD LOCAL DATA is enabled, it only works with filename '-'.
+ *
+ * -# The query string starts 'LOAD LOCAL DATA INFILE '-' INTO ' followed
+ *    by the table name.  This could be an opportunity for SQL-injection,
+ *    except that I confirm that the table name exists.  SQL-injection
+ *    table names will not match existing table names, so the LOAD LOCAL DATA
+ *    will fail under such an attack.
+ *
+ */
+
+ 

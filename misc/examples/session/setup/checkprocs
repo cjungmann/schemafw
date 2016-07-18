@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mysql information_schema -e "SELECT ROUTINE_NAME, ROUTINE_DEFINITION FROM ROUTINES WHERE ROUTINE_SCHEMA='SessionDemo' AND ROUTINE_NAME LIKE 'App_Session%'"

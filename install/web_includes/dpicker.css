@@ -1,0 +1,24 @@
+div.dpicker_host
+{
+    position:fixed;
+    top:0;
+    left:0;
+    background-color:#DDDDDD;
+    display:none;
+}
+table.mycal
+{
+    background-color:#FFFFFF;
+    border:solid 1px black;
+    margin:0 1em 1em 1em;
+}
+table.mycal td.target { cursor:pointer; }
+table.mycal td.center { text-align:center; }
+table.mycal td.info { text-align:center; }
+table.mycal td.dhead { text-align:center; border:none; }
+table.mycal td.name { font-weight:bold; text-align:center; }
+
+table.mycal td { text-align:right; border:solid 1px #CCCCCC; }
+table.mycal td.out_month { color: #CCCCCC; }
+table.mycal td.select { background-color: #FFFF66; }
+table.mycal td.today { color: #FF6666; font-weight:bold; }

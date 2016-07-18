@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SchemaFW Login Demonstration</title>
+    <link rel="stylesheet" href="includes/schemafw.css" type="text/css" />
+    <!-- <script type="text/javascript" src="includes/sfwmain.js"></script> -->
+    <!-- <script type="text/javascript" src="includes/classes.js"></script> -->
+    <!-- <script type="text/javascript" src="includes/Events.js"></script> -->
+    <!-- <script type="text/javascript" src="includes/Dialog.js"></script> -->
+    <!-- <script type="text/javascript" src="includes/Moveable.js"></script> -->
+    <!-- <script type="text/javascript" src="includes/sfwobjects.js"></script> -->
+    <!-- <script type="text/javascript" src="includes/XML.js"></script> -->
+    <!-- <script type="text/javascript"> -->
+    <!--   function implement_functions() { ; } -->
+    <!--   function classes_implement()   { ; } -->
+    <!--   window.onload = function()     { ; } -->
+    <!-- </script> -->
+  </head>
+  <body>
+    <div id="SWF_Header">
+      <h1>SchemaFX Login Demonstration</h1>
+      <a href="schema">Home</a>
+    </div>
+    <div id="SFW_Content">
+      <div class="SFW_Host">
+        <form method="post" action="schema?default:submit_login" data-group-type="form">
+          <fieldset class="Schema">
+            <legend>Dialog</legend>
+            <div class="buttons">
+              <div class="buttons">
+                <button type="button" data-type="jump" data-url="?default:create">Create New Account</button>
+              </div>
+            </div>
+            <hr />
+            <div>
+              <label for="p_handle">p handle</label>
+              <input type="text" name="p_handle" size="25" maxlength="128" value="" />
+            </div>
+            <div>
+              <label for="p_password">p password</label>
+              <input type="text" name="p_password" size="20" maxlength="" value="" />
+            </div>
+            <hr />
+            <div class="buttons">
+              <input type="submit" value="Submit" />
+              <input type="button" value="Cancel" class="Embedded" />
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

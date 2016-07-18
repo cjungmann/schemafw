@@ -1,0 +1,255 @@
+/**
+ * @page TheSimpleProcedure The SimpleProcedure Class
+ 
+ * The SimpleProcedure class is the interface through which MySQL is accessed in
+ * this project.  It handles creating, initializing a MYSQL_STMT prepared statement
+ * object; creating an MYSQL_BIND array to accept input parameters; binding MYSQL_BIND
+ * the MYSQL_BIND array to the MYSQL_STMT; executing the MYSQL_STMT; cycling through
+ * one or more results, creating MYSQL_BIND arrays output values for each result and
+ * binding them to read the result rows; then finally cleaning up after everything,
+ * leaving MySQL in a stable state for the next prepared statement.
+ *
+ * A SimpleProcdure requires 5 things to run:
+ * -# An open MySQL connection,
+ * -# A query string,
+ * -# A BindStack for input parameters,
+ * -# An IParam_Setter object to set the BindStack values,
+ * -# An IResult_User object to consume one or more DataStack<BindC> objects
+ *    output by the prepared statement.
+ *
+ * In the most basic example using
+ * SimpleProcedure::build(MYSQL*, const char*, const char*, const IParam_Setter*, IResult_User*),
+ * the five parameters parameters of the build function below match the five
+ * requirements listed above:
+ ~~~c++
+ void demo_simple_simple(MYSQL *mysql, unsigned int id)
+ {
+    // The lambda function and template instantiation creates the
+    // only missing argument, the IResult_User object of the last
+    // function parameter.
+    auto f = [](int result_number, DataStack<BindC> &ds)
+    {
+       fputs("The dude's name is ", stdout);
+       ds.object(0).print(stdout);
+    };
+    Result_User_Row<decltype(f)> user(f);
+
+    // Note that the "I" value of the third parameter is a typeval used to build
+    // a BindStack (the third requirement) for the input parameters.
+    SimpleProcedure::build(mysql,
+                           "CALL App_Get_Name_of_Dude(?)",
+                           "I",
+                           Adhoc_Setter<1>(ai_ulong(id)),
+                           user);
+ }
+ ~~~
+ *
+ * In the example above, each parameter of the build function corresponds to one
+ * of the requirements of SimpleProcedure.  Each of the last four parameters can be
+ * replaced with a generated string or a built-in class.  In the sample code above,
+ * the _user_ value for parameter 5 could be replaced with an Result_As_XML object
+ * that will write the results to stdout (by default) as XML.
+ *
+ * When dealing with web requests, the BindStack must be generated from the requirements
+ * of the stored procedure to be called.  In this case, as in many others, the BindStack
+ * is generated using the StoredProc class.
+ *
+ ~~~c++
+ // An unlikely assumption is made that the 
+ void demo_simple_web(MYSQL *mysql, const char *procedure_name)
+ {
+    // Make the IParam_Setter object
+    StrmStreamer ss(stdin);
+    StreamerSetter setter(ss);
+    
+    // Make the IResult_User object
+    Result_As_XML user(stdout);
+ 
+    auto f = [&mysql, &setter, &user](StoredProf &sp)
+    {
+       SimpleProcedure::build(mysql,
+                              sp.querystr(),
+                              sp.bindstack(),
+                              &setter,
+                              &user);
+    };
+    Generic_User<StoredProc,decltype(f)> sp_user(f);
+
+    StoredProc::build(mysql, procedure_name, sp_user);
+ }
+ ~~~
+ *
+ * SimpleProcedure is optimized to process requests from the internet, receiving
+ * input values in a stream (via stdin) from an HTTP POST or GET request, returning
+ * the results as a stream to stdout.  For flexibility, the means of setting input
+ * parameters and reading output results are accomplished through interface classes
+ * IParam_Setter and IResult_User.
+ *
+ * For web-based interactions, the IParam_Setter-derived classes QStringer_Setter
+ * and Streamer_Setter set the input parameter values, while the IResult_User classes
+ * Result_As_XML and Result_As_SchemaDoc write out the procedure results.
+ *
+ * Other IParam_Setter classes allow non-stream access to SimpleProcedure.  For
+ * example, the framework must call stored procedure ssys_get_procedure_params to
+ * prepare a schema for form-building and to identify the input parameter names and
+ * data types for running a procedure.  IParam_Setter class Adhoc_Setter is used to
+ * set the input parameters when calling ssys_get_procedure_params.
+ *
+ * To summarize, here is a categorized list of classes that help run statements.
+ * Jump to the class links below for usage examples.
+ *
+ * - __Input Parameters__
+ *   - Building MYSQL_BIND array for input parameters:
+ *     - StoredProc class
+ *     - Adhoc_Setter
+ *     - Schema object internally uses the StoredProc class
+ *   - Setting MYSQL_BIND values for input parameters:
+ *      - Inputs set from stream
+ *         - QStringer_Setter
+ *         - Streamer_Setter
+ *         - The Schema object implements IParam_Setter and uses values from both
+ *           POST and GET data to fill in the complete allotment of parameter values.
+ *      - Inputs set with lambda functions
+ *         - Adhoc_Setter
+ *         - TParam_Setter
+ * - **Results Output via _IResult_User_**
+ *   - Output to a stream (with common base class Result_User_Base):
+ *     - Result_As_XML
+ *     - Result_As_SchemaDoc
+ *   - Output received by a lambda function:
+ *     - Result_User_Row
+ *     - Result_User_Pre_Fetch
+ *
+ * A SimpleProcedure uses several other objects execute a procedure:
+ * - A __BindStack__ (or its parent, DataStack<BindC>) is used both for
+ *   submitting values to, and retrieving values from a prepared statement.
+ * - An __IParam_Setter__ -derived class.  For prepared statements that require
+ *   input parameters, derive a class from pure virtual class _IParam_Setter_.
+ * - A __IResult_User__ -derived class for prepared statements that create
+ *   results.
+ *
+ *
+ ~~~c++
+ void demo_SimpleProcedure(MYSQL *mysql, uint32_t id, const char *name)
+ {
+    auto f_user = [](int result_number, DataStack<BindC> &ds)
+    {
+    };
+    Result_User<decltype(f_user)> result_user(f_user);
+
+    SimpleProcedure::build(mysql,
+                           "CALL my_procedure(?,?)",
+                           "Is32",
+                           Adhoc_Setter<2>(ai_ulong(&id)), si_text(name),
+                           result_user);
+ }
+ ~~~
+ *
+ */
+
+/**
+ * @page SimpleProcedure_Usage SimpleProcedure Usage
+ *
+ * Let's start with a simple implementation.
+ ~~~c++
+ void demo_SimpleProcedure(MYSQL *mysql, uint32_t id)
+ {
+    auto f_ruser = [](int result_number, DataStack<BindC> &ds)
+    {
+       
+    };
+    ResultUser<decltype(f_ruser)> result_user(f_ruser);
+
+    SimpleProcedure::build(mysql,
+                           "CALL App_Person_Info(?)",
+                           "I",
+                           Adhoc_Setter<1>(ai_ulong(&id)),
+                           result_user);
+    };
+ }
+ ~~~
+ *
+ *
+ * A different way to set parameters.  See also the source code for
+ * Schema::resolve_enum_set_references().
+ ~~~c++
+ void demo_SimpleProcedure2(MYSQL *mysql, uint32_t id)
+ {
+    auto f_psetter = [&id]((DataStack<BindC> &ds)
+    {
+    };
+    TParam_Setter<decltype(f_psetter)> param_setter(f_psetter);
+
+    auto f_ruser = [](int result_number, DataStack<BindC> &ds)
+    {
+       
+    };
+    ResultUser<decltype(f_ruser)> result_user(f_ruser);
+
+    auto f_run = [&mysql, &param_setter, &result_user](DataStack<BindC> &bs)
+    {
+       SimpleProcedure sp("CALL App_Person_Info(?)", &bs);
+       sp.run(mysql, &param_setter, &result_user);
+    };
+ 
+ }
+ ~~~
+ *
+ * @note This page is in a transitional state.  That which I now consider
+ * best practices has evolved as I get more experience using the framework.
+ * As as result, this page is not complete or perhaps even consistent.
+ *
+ * This is the class that actually executes MySQL procedures.  It uses
+ * various other resources that should have been prepared earlier.
+ *
+ * In the following example, the @e call_procedure function may never
+ * exist in real code, but I wrote it this way to identify the resources
+ * needed to execute a procedure.
+ *
+ * A SimpleProcedure object can be directly instantiated and run in the
+ * following manner:
+ *
+ * @code
+ void call_procedure(BindStack &bsParams,
+                     MYSQL_BIND *bindsParam,
+                     IParam_Setter &p_setter,
+                     IResult_User &r_user)
+ {
+    const char *query = "CALL MyProcedure(?,?)";
+    SimpleProcedure sp(query, bsParams, bindsParams);
+ }
+ * @endcode
+ *
+ * @section BindStack_Intro BindStacks
+ *
+ * MySQL uses arrays of MYSQL_BIND, initialized with a pointer to a buffer
+ * used to transfer data and several other pointers to indicate certain
+ * states.
+ *
+ * A BindStack (a thin wrapper around DataStack<BindC>) makes it easier to
+ * attach and interact with MYSQL_BIND arrays used as procedure parameters
+ * and results.  In general, a BindStack is not created directly, but built
+ * up in another function.  See @ref Discuss_Making_DataStack
+ *
+ * @subsection BindStack_Params BindStack for Procedure Parameters
+ *
+ * A BindStack that is attached to a procedure for parameters becomes the
+ * conduit through which values are passed to MySQL for executing the
+ * procedure.
+ *
+ * Since this project is intended to serve out documents in a webserver as
+ * a CGI/FASTCGI object, the primary way to set the parameter BindStack is
+ * to pull values from stdin.  This is done with Streamer_Setter, an
+ * implementation of IParam_Setter.  Some requests pass values on the
+ * URL as the query string.  These values can be used to set parameters
+ * using the QStringer_Setter object.
+ *
+ * The template-based Adhoc_Setter is another IParam_Setter-derived class.
+ * This class was designed to make it possible to set parameters more
+ * directly.
+ *
+ * @snippet mysql_import.cpp SimpleProcedure_Adhoc_Params
+ */
+ 
+ 
+ 

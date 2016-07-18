@@ -1,0 +1,162 @@
+/**
+ * @page Doxygen_Hints Doxygen Hints
+ *
+ * @section Introduction
+ *
+ * I have been learning this system and I'm not yet fluent in it.  So this page
+ * will serve, for a while, as a place to put stuff I am learning about Doxygen.
+ *
+ * I had some problems escaping comments in a code snippet:
+ * @ref Doxygen_Escaping_Comments
+ *
+ * A code base is very interrelated, and the documentation will need to provide
+ * links between different classes, methods, functions, etc.  The following
+ * references explain how to make different kinds of links.
+ * - @ref Doxygen_Generic_Links
+ * - @ref Doxygen_Source_Code_Links
+ * - @ref Doxygen_Function_Links
+ * - @ref Doxygen_Include_ifdef_Excludes
+ */
+
+/**
+ * @page Doxygen_Escaping_Comments Doxygen Escaping Comments
+ *
+ * I just fought with this for a couple of hours.  I use C/C++ block comments
+ * with slash-asterisk to open and asterisk-slash to close.  However, if I want
+ * to document how to document (/see Link_to_source below), having a asterisk-slash
+ * in the code causes the entire documentation block to close.
+ *
+ * My solution is to add a Unicode zero-width-space between the asterisk and the
+ * slash.  In EMACS, I do this with `M-x insert-char` or `C-x 8 ret`, then type
+ * `200B`.  This is not an ideal solution because if the code is copied then pasted
+ * into a source file, the zero-width-spaces are included (as little underscores on
+ * my machine) and must be deleted.
+ *
+ * @ref Doxygen_Hints
+ */
+
+/**
+ * @page Doxygen_Generic_Links Doxygen Generic Links
+ *
+ * Links do not have to be complicated.  Doxygen automatically creates certain
+ * kinds of links simply if they are recognized.  Sometimes, Doxygen needs a little
+ * help.
+ *
+ * - Links to pages look like this @@ref Page_Name
+ * - Links to snippets look like this: @@snippet sourcefile.cpp function_name
+ * @sa @ref Doxygen_Source_Code_Links
+ *
+ * @ref Doxygen_Hints
+ */
+
+/**
+ * @page Doxygen_Include_ifdef_Excludes Doxygen Include Functions Excluded by @#ifdef
+ *
+ * My unit test functions are excluded by @#ifdef, but I may want to use these
+ * functions in the Doxygen documentation as usage examples.
+ *
+ * If you want to include @#ifdef-excluded code in your Doxygen-generated
+ * documentation, you need to edit the Doxyfile and set ENABLE_PROCESSING = NO.
+ *
+ * @ref Doxygen_Hints
+ */
+
+/**
+ * @page Doxygen_Function_Links Doxygen Links to Global Functions
+ *
+ * By default, global functions are not automatically included in Doxygen
+ * documentation.  (There is a Doxyfile setting I can't remember right now that
+ * does cause all functions to be included.)  To make a function's Doxygen
+ * comments visible and linkable, there are two requirements.
+ *
+ * -# Include a @@file directive in the file where the function resides.
+ * The @@file directive does not need to include the filename.  In fact, some people
+ * warn against including the filename to guard against a filename change
+ * causing a mismatch with the documentation.
+ * -# Make a link to the function somewhere in the project.
+ *
+ * @note Functions are made available according to the source file in which
+ * they're found.  A header file does not necessarily document all functions
+ * in its related source file.  Because of this, you may find that function lists
+ * from an .hpp file do not include the all the functions you would see if you were
+ * looking at the .cpp source.
+ *
+ * @ref Doxygen_Hints
+ */
+
+/**
+ * @page Doxygen_Source_Code_Links Doxygen Display of Example Source Code (snippets)
+ *
+ * Most Doxygen stuff is pretty easy, but I'm having more trouble with links.
+ * This is what I've learned about links.
+ *
+ * There are two methods for incorporating live code sample into Doxygen comments.
+ * The first is by @@include or @@dontinclude with @@skip, etc (look at the Doxygen
+ * documentation).  The second, that I am using, is with @@snippet.  I think it's
+ * easier to add comments to the source code and include the entire function than
+ * to add code segements of the function between Doxygen text in the stop-start
+ * fashion that @@dontinclude uses.
+ *
+ * @note tl;dr For snippets to work, You must also ensure that the EXAMPLE_PATH
+ * line is set in the Doxyfile file.  This is discussed at the bottom of this
+ * subsection.
+ *
+ * A code snippet is identified as the code between two identical block markers.
+ * A block marker is a label in [] brackets.  It must be within a Doxygen comment,
+ * and the comment should end on the same line as the block marker.  I think this
+ * is why block marker examples in Doxygen documentation are written as single-line
+ * comments, beginning with // in C/C++/etc. because they don't need  a comment
+ * terminator that might be on another line.
+ *
+ * @note The following code samples include zero-width-space characters between the
+ * asterisk and the slash to prevent termination of the hosting Doxygen comment.
+ * @ref Doxygen_Escaping_Comments
+
+ * This is the safest method, using a single-line comment, even though I don't use it.
+ * @code
+ * /​**
+ *  * @brief example
+ *  *​/
+ * // [my_snippet]
+ *  void my_snippet(void)
+ *  {
+ *     printf("Hi mom!\n");
+ *  }
+ * // [my_snippet]
+ * @endcode
+ *
+ * If you are stubborn, like me, wanting to consistently use C/C++ block comments
+ * for Doxygen comments, the following examples illustrate how to successfully
+ * incorporate the block markers in C/C++ block comments.
+ *
+ * That is, either the block marker is in its own single-line comment:
+ * @code
+ * /​**
+ *  * @brief example
+ *  *​/
+ * /​** [my_snippet] *​/
+ *  void my_snippet(void)
+ * @endcode
+ *
+ * Or the comment hosting the block marker ends after the block marker but on the same line:
+ * @code
+ * /​**
+ *  * @brief example
+ *  * [my_snippet] *​/
+ *  void my_snippet(void)
+ * @endcode
+ *
+ * Do not be tempted to put the block marker in the documentation block.  It will
+ * work, but there will be an extraneous *​/ at the beginning of the block of text.
+ *
+ * One critical thing I neglected, which frustrated me, was that I needed to set
+ * the EXAMPLE_PATH variable in the Doxyfile file.  I set it to . (for the current
+ * directory)
+ * @code
+ * EXCLUDE_SYMBOLS        =
+ * EXAMPLE_PATH           = .
+ * EXAMPLE_PATTERNS       =
+ * @endcode
+ *
+ * @ref Doxygen_Hints
+ */

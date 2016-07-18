@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>File Upload Test/Demonstration</title>
+  </head>
+  <body>
+    <h1>File Upload Test/Demonstration</h1>
+    <p>Let's try to do a multipart form for a file upload.</p>
+    <form method="post"
+          action="schema?default.spec:upload-people"
+          enctype="multipart/form-data">
+      <fieldset>
+        <legend>Upload a CSV file</legend>
+        <div>
+          <label for="upfile">Upload the file</label>
+          <input type="file" name="upfile" />
+        </div>
+        <div>
+          <label for="fname">First Name</label>
+          <input type="text" name="fname" />
+        </div>
+        <div>
+          <label for="age">Age</label>
+          <input type="text" name="age" />
+        </div>
+        <div>
+          <input type="submit" value="Submit"/>
+        </div>
+      </fieldset>
+    </form>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+# Set the cookies as in the following example.
+# Note the environment name is HTTP_COOKIE
+# Note the quotes surrounding the cookie values
+# Note that "gdbtui --args" follows setting the cookie environment
+
+# Obvious reminder: replace values for the cookie and the p_handle and p_password arguments
+HTTP_COOKIE="SessionId=1; SessionHash=3dLU0RvbyDzmreTE3QuxPIrcJvF3B43t" gdbtui --args ./schema -b -m submit_login -v p_handle=handle -v p_password=password

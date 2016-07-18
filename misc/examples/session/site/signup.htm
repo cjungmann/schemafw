@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title>SchemaFW Session Signup</title>
+    
+    <meta charset="UTF-8" />
+    <meta name="description" content="Entry page for session demonstration" />
+    <meta name="author" content="Charles P Jungmann" />
+    <meta name="created" content="2015-08-18" />
+    
+    <link rel="stylesheet" href="session.css" type="text/css" />
+    <style type="text/css">
+      #signup
+      {
+         border:solid 1px black;
+         background-color:#DDDDDD;
+         width: 20em;
+         margin:1em auto 1em;
+      }
+      #signup div { margin-bottom: 6pt; }
+      #signup label { width:5em; display:inline-block; text-align:right; }
+      #signup label::after { content : ": " }
+      #signup div.buttons { text-align: center; }
+    </style>
+    <script type="text/javascript">
+//  <![CDATA[
+      function set_message(str)
+      {
+         var div = document.getElementById("message");
+         if (div)
+         {
+            div.innerHTML = "";
+            div.appendChild(document.createTextNode(str));
+         }
+      }
+
+      function confirm_submit(form)
+      {
+         var msg = document.getElement
+         var pw1 = form.password.value;
+         var pw2 = form.password2.value;
+
+         function clear_pws()
+         {
+            form.password.value = form.password2.value = "";
+            form.password.focus();
+         }
+         
+         if (pw1!=pw2)
+         {
+            set_message("Mismatched passwords.");
+            clear_pws();
+            return false;
+         }
+         else if (pw1.length < 4)
+         {
+            set_message("Password too short.");
+            clear_pws();
+            return false;
+         }
+         return true;
+      }
+
+      window.onload = function()
+      {
+         var form = document.getElementById("signup");
+         if (form)
+            form.onsubmit = function() { return confirm_submit(form); };
+            
+         var el = document.getElementById("first");
+         if (el)
+            el.focus();
+      };
+      
+//  ]]>      
+    </script>
+  </head>
+  <body>
+    <h1>SchemaFW Session Signup</h1>
+    <form id="signup" method="post" action="schema?default.spec:signup_submit" target="_blank">
+      <fieldset>
+        <legend>Please Signup</legend>
+        <div>
+          <label for="handle">Handle</label>
+          <input type="text" id="first" name="handle" size="20" maxlength="20" />
+        </div>
+        <div>
+          <label for="password">Password</label>
+          <input type="password" name="password" size="20" maxlength="20" />
+        </div>
+        <div>
+          <label for="password2">Password</label>
+          <input type="password" name="password2" size="20" maxlength="20" />
+        </div>
+        <div id="message">
+        </div>
+        <div class="buttons">
+          <input type="submit" value="Login" />
+        </div>
+        <div>
+          <a href="login.htm">Login to an existing account.</a>
+        </div>
+      </fieldset>
+    </form>
+    
+  </body>
+</html>
+

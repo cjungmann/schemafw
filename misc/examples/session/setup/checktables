@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mysql SessionDemo -e 'SELECT * FROM SSYS_SESSION s INNER JOIN Session_Info i ON s.id = i.id'

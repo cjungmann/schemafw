@@ -1,0 +1,985 @@
+/**
+ * @page Examples_Main SchemaFW Code Examples
+ *
+ * There is always tension between software characteristics of
+ * powerful and easy-to-use.  Generally, when an application is easy
+ * to use, it has traded flexibility for simplicity, making most of
+ * the decisions for the user.  On the other hand, greater power
+ * usually means more options.  As the number of options increases,
+ * the burden of discovery also increases.  It becomes easier to
+ * miss the best option to solve a given design problem.
+ *
+ * SchemaFW tries to be both powerful and easy to use, but also
+ * recognizes the likely futility of such a goal.  In the interest
+ * of making it easier to develop SchemaFW applications, the following
+ * code samples will attempt to explain the range from simple to
+ * less simple ways to accomplish common tasks.
+ *
+ * SchemaFW is a framework for delivering database-driven web
+ * applications.  Tables and forms are the basic structures that
+ * present data in groups or individually.  More advanced structures
+ * can incorporate tables into a form.  Examples for all of these
+ * will be added to this documentation.
+ *
+ * - @ref Examples_Schema_Overview
+ * - @ref Examples_Common_Data_Def
+ * - @ref Examples_Schemas_In_Modes
+ * - Table Procedures
+ *   - @ref Examples_Simplest_Table_Proc
+ *   - @ref Examples_Simple_Editable_Table_Proc
+ * - @ref Examples_Form_Procedures
+ *   - @ref Examples_Recommended_Form_Interaction
+ *   - @ref Examples_Single_Procedure_Form_Interaction
+ *     - @ref Examples_Form_Update_Proc
+ *     - @ref Examples_Form_Value_Proc
+ *     - @ref Examples_Form_Add_Proc
+ *     - @ref Examples_Form_Add_Proc_Dependent
+ * - @ref Examples_Advanced_Topics
+ *   - @ref Examples_Advanced_Reference_Values
+ *   - @ref Examples_Advanced_Variables_Result_Type
+ *     - @ref Examples_Advanced_Variables_Creation
+ *     - @ref Examples_Advanced_Variables_Access
+ *     - @ref Examples_Advanced_Variables_Usage
+ *   - @ref Examples_Advanced_Multi_Result_Procs
+ *   - @ref Examples_Advanced_Rename_Parts
+ *
+ */
+
+/**
+ * @page Examples_Schema_Overview Schema Overview
+ *
+ * @tableofcontents
+ *
+ * SchemaFW is a framework that aids the development of a database-drive web
+ * application based on MySQL.
+ *
+ * The framework consists of a server portion and a client portion.
+ *
+ * The server portion accepts input from the client and returns an XML-based
+ * SchemaFW document.  The contents of the SchemaFW document are determined by
+ * the instructions in a Specs File.
+ *
+ * The client part of the SchemaFW framework renders pages and runs the application
+ * based on the information contained in the SchemaFW document.
+ *
+ * @section Examples_Schema_Overview_Schemas Schemas in SchemaFW
+ *
+ * As suggested by the name, schemas are fundamental to the SchemaFW framework.
+ * The basic SchemaFW schema is an XML fragment that contains elements corresponding
+ * to the fields in a query result or the parameters of a stored procedure.  A basic
+ * schema minimally provides the name and data-type for each field.  SchemaFW schemas
+ * also carry extra information as directed by instructions in a Specs File.
+ *
+ * The schema is used to direct the building of a page.  Schemas are used to
+ * build forms and tables.  The form-builder uses a schema to create the fields
+ * in a form.  The table-builder uses a schema to create the table columns and as
+ * a hint.
+ *
+ * @section Examples_Schema_Overview_Specs_File The Specs File
+ *
+ * The SchemaFW documents are constructed from the results or parameters of MySQL
+ * procedures as modified and extended by instructions in a Specs File.
+ *
+ * The specs file contains @e modes that themselves contain sets of instructions, and
+ * @e global @e instructions that are shared by all modes in a specs file.  Most modes
+ * stand alone, but a specs file can also include shared modes that are loaded into
+ * a request mode by reference.
+ *
+ * A specific request mode is loaded based on the query string of an HTTP request
+ * received from a client. The query string should include, among other things,
+ * the specs file name and the name of a request mode in the specs file.
+ ~~~
+ http://yourdomain.com?default:person_table
+ ~~~
+ * At the time of this writing, SchemaFW is implemented by an CGI executable named
+ * @ schema.  It is the default running file (Directory Index in the Apache .conf
+ * file), so the query string begins with a '?'.  Specs files are assumed to have
+ * a '.specs' extension, so omitting the extension will append '.specs' if
+ * necessary to find the specs file.  The request mode follows the the specs file
+ * name after a colon (:) delimiter.
+ *
+ * If no specs file nor request mode is loaded, the framework looks for specs file
+ * `default.spec` and loads the named default mode or the first request mode in
+ * the specs file.
+ *
+ * @section Examples_Schema_Overview_Request_Mode The Request Mode
+ *
+ * The request mode contains a set of instructions for building a SchemaFW document.
+ * It identifies the type of interaction the mode is providing and the procedure
+ * it should use to satisfy the client's request.  A SchemaFW document typically
+ * includes at least one schema.  Additional instructions are added according to
+ * the role the mode serves.
+ *
+ * See @ref Examples_Schemas_In_Modes
+ */
+
+/**
+ * @page Examples_Schemas_In_Modes Schemas in Modes
+ *
+ * In SchemaFW, the basic schema is a description of data from MySQL.  It contains a
+ * set of fields that describe an interaction with MySQL.  There are two sources of
+ * schemas in SchemaFW:
+ *
+ * -# The parameters of a procedure.  Usually used to build a form.
+ * -# The result of a query.  Usually used to build a table or to pre-fill a form's
+ *    fields.
+ *
+ * A raw schema is an unmodified schema as derived from MySQL and includes a set of
+ * data, each including the field's name and data-type.  Specs file request modes
+ * are used to modify and supplement raw schemas in order to communicate the
+ * developer's intentions to the SchemaFW client software.  First, individual
+ * fields can be modified to be hidden, read-only (for forms), and to include
+ * user-friendly labels.  Schema modifications also include instructions for how
+ * to handle the larger context in which the fields are displayed.
+ *
+ * Table-specific Schema Instructions
+ *
+ * -`on_line_click` tells the client what to do when the user clicks on a table row.
+ *   This usually means to open the associated record, but other responses are also
+ *   possible.
+ * - `button` with its child instructions define table-wide actions.  The most common
+ *   button is the add button.
+ * See also:
+ * - @ref Examples_Simplest_Table_Proc
+ * - @ref Examples_Simplest_Editable_Table_Proc
+ *
+ * Form-specific Schema Instructions
+ * -`form-action` is the URL to which the form's data is sent shen submitting.
+ 
+ *
+ * a request mode, the developer can suppliment the raw schema data with additional
+ * instructions.  The schema can include user-friendly field labels for form fields
+ * or table columns.  For form fields, the schema can direct the client to hide a
+ * field, make it read-only, or even to get the field value from elsewhere in the
+ * document.  The schema also 
+ *
+ * The SchemaFW server includes the schemas in the SchemaFW documents that it sends
+ * to the client.  The client uses other SchemaFW resources and application-specific
+ * custom code to render and operate web pages using the information contained in the
+ * SchemaFW document.
+ *
+ * The `schema` instruction in a specs file mode is used to modify the raw schema
+ * derived from the MySQL procedure.
+ *
+ ~~~{.yaml}
+ person_table
+    type      : table
+    procedure : App_Person_List
+    result
+       schema
+ ~~~
+ */
+ 
+
+/**
+ * @page Examples_Advanced_Topics
+ *
+ * When working with more complicated applications, it is often helpful to
+ * use custom names for the result.
+ *
+ * The Advance Topics Include:
+ * - @ref Examples_Advanced_Reference_Values
+ * - @ref Examples_Advanced_Variables_Result_Type
+ * - @ref Examples_Advanced_Multi_Result_Procs
+ * - @ref Examples_Advanced_Rename_Parts
+ */
+
+/**
+ * @page Examples_Advanced_Reference_Values Using Reference Values
+ *
+ * Reference values are values found in an SchemaFW document that can
+ * be inserted somewhere else.  Reference values are automatically used to
+ * fill form fields with the values of a record that is being edited,
+ * but can also be used to modify strings with values added to a SchemaFW
+ * document.  Reference values are used to add parameters to URLs and to
+ * customize display strings with information in the document.
+ *
+ * @section Examples_Advanced_Reference_Values_Create Where Reference Values are Found
+ *
+ * Reference values are found within the results of a SchemaFW document.
+ 
+ * One result type for reference values is the @e form-values result type.
+ * The @e form-values type is used in a @e form-edit document type to fill the
+ * form fields with the values of the currently-selected record.  If no result
+ * is tagged as the @e form-values result, the framework will use the first
+ * result in the document as the @e form-values result.
+ *
+ * A @e variables type result is the other place that reference values can be
+ * found.  There can be more than one @e variables results in a document, but
+ * in that case, it is up to the developer to consider the possibilities and
+ * consequences of name collisions.
+ *
+ * In both cases, the @e form-values and the @e variables type results, it
+ * is advisable to derive the results from a query that returns a single row.
+ * This is usually accomplished by getting a record by its unique primary key,
+ * but using `LIMIT 1` clause in a query can force the issue.
+ *
+ * @section Examples_Advanced_Reference_Values_Code
+ *
+ * For the this discussion, we will make references to the following code.  The
+ * example will be for a procedure supporting a form-edit document with various
+ * types of data.  The procedure will work with the tables in @ref Examples_Common_Data_Def
+ * @htmlonly
+ <pre class="fragment schema">
+ <span class="comment">-- Procedure for which fields data is needed:</span>
+ CREATE PROCEDURE App_Person_Update(id INT UNSIGNED,
+                                    fname VARCHAR(20),
+                                    lname VARCHAR(30))
+
+ <span class="comment">-- Procedure providing fields data</span>
+ CREATE PROCEDURE App_Person_Values(id INT UNSIGNED)
+ BEGIN
+    SELECT p.id, p.fname, p.lname
+      FROM Person p
+     WHERE p.id = id;
+
+    SELECT email
+      FROM Email
+     WHERE id_person = id
+     LIMIT 1;
+ END $$
+ </pre>
+ * @endhtmlonly
+ *
+ * The specs file mode using the data could look like this:
+ ~~~{.yaml}
+ person_edit
+    type        : form-edit
+    # This procedure will provide a schema describing the fields
+    # of the procedure that will receive the data from the form.
+    schema-proc : App_Person_Update
+    
+    # This schema instruction, intended to modify the schema provided
+    # by procedure App_Person_Update, will be a child of the documentElement
+    # and will be used for rendering the form
+    schema
+       # This instruction uses referenced data:
+       title       : Editing {@fname} {@lname} ({$name})
+       form-action : ?default:person_edit_submit
+
+    # This procedure gets the data that will be used for prefilling the
+    # form fields and for referenced data.
+    procedure : App_Person_Values
+    result
+       type : form-values
+    result
+       type : variables
+       
+ ~~~
+ *
+ * 
+ *
+ * @section Examples_Advanced_Reference_Values_Access Accessing Reference Values
+ *
+ * There are several ways a reference value can be invoked:
+ *
+ * -# Form fields will be filled from the like-named attributes of the first row
+ *    in a @e form-values result.
+ * -# Form fields can also be filled from a @e variables result by including
+ *    a ref-value instruction in a field branch of a schema.
+ *    @code
+ *    pview_new_phone
+ *       type        : form-new
+ *       procedure   : App_PView_Values
+ *       result
+ *          type : variables
+ *       schema-proc : App_PView_Add_Phone
+ *       schema
+ *          field : id_person
+ *             ref-value : id
+ *    @endcode
+ * -# String replacement uses either @e form-values or @e variables results
+ *    as a source of values.  In the following example:
+ *    @code
+ *    
+ *    @endcode
+ */
+ 
+/**
+ * @page Examples_Advanced_Variables_Result_Type Using a Variables Result Type
+ *
+ * The contents of a @e variables result type are accessible by name
+ * both during an XSL transformation @b and as a javascript variable.
+ *
+ * @section Examples_Advanced_Variables_Creation Create Variables in the Schema Document
+ *
+ * The query that populates a @e variables result type should return
+ * a single row.  There can be more than one @e variables result per
+ * procedure.
+ *
+ * For an example, assume the following procedure code segment:
+ ~~~{.sql}
+ SELECT p.id, p.fname, p.lname
+   FROM Person p
+  WHERE p.id = id;
+ ~~~
+ * with this specs file result instruction:
+ ~~~{.yaml}
+    result
+       type : variables
+ ~~~
+ *
+ * @section Examples_Advanced_Variables_Access Accessing Schema Document Variables
+ *
+ * @subsection Examples_Advanced_Variables_Access_XSL Access Variables in XSL
+ *
+ * During a transformation, the field values are accessible using the
+ * `get_var_value` template.  All @e variables results will be searched.
+ * The first field that matches the `name` parameter will be used.
+ ~~~{.xsl}
+ <xsl:call-template name="get_var_value">
+    <xsl:with-param name="name" select="'lname'" />
+ </xsl:call-template>
+ ~~~
+ *
+ * @subsection Examples_Advanced_Variables_Access_Javascript Access Variables in Javascript
+ *
+ * If the @e variables result is part of a rendered HTML page, the values
+ * in the result will be added as properties to a javascript global object
+ * named `sfwvars`.  Using the example above, the following javascript
+ * element will be created:
+ *
+ ~~~{.html}
+ <script type="text/javascript">
+    sfwvars.id = "1";
+    sfwvars.fname = "John";
+    sfwvars.lname = "Doe";
+ </script>
+ ~~~
+ * Please note that the `sfwvars` object will only be created if there is at
+ * least one @e variables result type.
+ *
+ * ### Available Overrides
+ * The default global variables object name can be changed.  It is currently
+ * set in `sfwtemplates.xsl` with this element:
+ ~~~{.xsl}
+ <xsl:variable name="vars_obj" select="'sfwvars'" />
+ ~~~
+ *
+ * In the application-specific stylesheet (ie @e default.xsl ), make another
+ * `vars_obj` variable with a different name.  Its existence in the called
+ * stylesheet will prevent the default `vars_obj` from being imported.
+ ~~~{.xsl}
+ <xsl:variable name="vars_obj" select="'my_unique_object'" />
+ ~~~
+ * which would result in the following javascript element:
+ ~~~{.html}
+ <script type="text/javascript">
+    my_unique_object.fname = "John";
+    my_unique_object.lname = "Doe";
+ </script>
+ *
+ * @subsection Examples_Advanced_Variables_Access_Specs Access Variables in the Specs File
+ *
+ * This method is where result variables are particularly useful.  Taking a cue from
+ * template transformations, enclosing a variable name in `{@` and `}' will result in
+ * the `{@...}` expression being replaced with the value of the variable.
+ *
+ * Using the select statement at the top of this page, consider the following
+ * example:
+ *
+ ~~~{.yaml}
+ mode_new_person
+    type : form-edit
+    title : Editing Person {@fname} {@lname}
+    .
+    .
+ ~~~
+ *
+ * The caption of the form will be `Editing Person John Doe`, with @e John replacing
+ * the `{@fname}` and @e Doe replacing `{@lname}`.
+ *
+ * Another example is to prefill a form field with the id value of a membership
+ * group.  Think of editing a family record, wanting to add a family member.  It
+ * will be necessary to include the family id in the query when creating the  person
+ * record.
+ *
+ * An example of this can be found @ref Examples_Form_Add_Proc_Dependent
+ *
+ ~~~
+ *
+ * @section Examples_Advanced_Variables_Usage Using Schema Document Variables
+ *
+ * The variables feature arose mainly to solve a transformation problem.  While most
+ * data items are identified by a single integer value (the primary key value), many
+ * items, when saved, need to include more than one index value.
+ *
+ * Think of a person item belonging to a family item.  Working in family item,
+ * adding a person will likely require the family id to be included when inserting
+ * a new person record.  The Schema document that generates a @e form-new form
+ * typically includes only a schema derived from the procedure that performs the
+ * record insert.  There are several possible ways to prefill a @e family_id
+ * field, ranging from javascript code to insert the value in an XSL variable,
+ * or prefilling the form field after the form is rendered, to maintaining a
+ * session value (on the server) of the current family that can be added to the
+ * INSERT command in MySQL.  These methods require custom programming, and in the
+ * case of the server session value, potential for complicated side-effects.
+ *
+ * 
+ *
+ *
+ */
+ 
+/**
+ * @page Examples_Advanced_Multi_Result_Procs Multi-Result Procedures
+ *
+ * The SchemaFW makes it easy to use multi-result procedures.  The
+ * resultset will include as many results as there are row-returning
+ * SELECT queries in a procedure.
+ *
+ * Using our example database, @ref Examples_Common_Data_Def, we may
+ * want to design a view including several attributes of a person.  In
+ * our example, the available attributes are related phone numbers and
+ * emails.  This is an appropriate use of a multi-result procedure.
+ *
+ ~~~{.sql}
+ CREATE PROCEDURE App_Person_View(id INT UNSIGNED)
+ BEGIN
+    -- Example of query returning no rows...it will not generate
+    -- a result.  It is used here to set a value that might be
+    -- used to validate the parameter before continuing.
+    DECLARE pcount INT UNSIGNED;
+    SELECT COUNT(p.*) INTO pcount
+      FROM Person p
+     WHERE p.id = id;
+    
+    -- The first result, person record information.  Add NULL-valued
+    -- fields that will be described in the schema
+    SELECT CONCAT(p.fname, ' ', p.lname) AS name
+           NULL AS efield,
+           NULL AS pfield
+      FROM Person p
+     WHERE p.id = id;
+
+    -- The second result, associated emails
+    SELECT e.email
+      FROM Email e
+     WHERE e.id_person = id;
+
+    -- The third result, associated phone numbers
+    SELECT p.phone, p.sms
+      FROM Person2Phone p2p
+           INNER JOIN Phone ON p.id = p2p.id_phone
+     WHERE p2p.id_person = id;
+
+    -- The fourth result will be a variables result type.
+    -- The id field can be particularly important for adding to URLs.
+    SELECT p.id, p.fname, p.lname
+      FROM Person p
+     WHERE p.id = id;
+ END $$
+ ~~~
+ *
+ * If you're not sure how a @e variables result type works in the fourth result,
+ * please see @ref Examples_Advanced_Variables_Result_Type.
+ *
+ ~~~{.yaml}
+ person_view
+    type : form-view
+    procedure : App_Person_View
+    result
+       schema
+          title : Person View
+          field : efield
+             type : list
+             result : elist
+             call : ?default:person_edit_emails
+          field : pfield
+             type : list
+             result : plist
+             call : ?default:person_edit_phones
+    result
+       name : elist
+       row-name : email
+    result
+       name : plist
+       row-name : phone
+    result
+       type : variables
+ ~~~
+ */
+
+/**
+ * @page Examples_Advanced_Rename_Parts Renaming Results and Rows
+ *
+ * The standard stylesheet (sfwtemplates.xsl) includes templates that
+ * identify results by their place in a document hierarchy and by the
+ * presence of the `rndx` attribute.  The standard templates match
+ * the results by placement and attribute for building tables and forms.
+ *
+ * Renaming either the results element or the row element, or both,
+ * provides an opportunity for a custom match in your application's
+ * default stylesheet.
+ *
+ * ### Unmodified Result Names
+ * The standard result output looks like this, using results named
+ * `result`, and records named `row`:
+ ~~~{.xml}
+ <resultset ...>
+    <result rndx="1" row-name="row">
+       <row fname="John" lname="Doe" />
+    </result>
+ </resultset>    
+ ~~~
+ *
+ * Changing the names can be done several ways.  Note that the following
+ * examples are incomplete forms meant to illustrate the current point.
+ *
+ * ### Change Names Without Using a Schema
+ *
+ ~~~{.yaml}
+ change_name_simple
+    type      : form-info
+    procedure : App_Person_Table
+    name      : plist
+    row-name  : person
+ ~~~
+ * Will give the result:
+ ~~~{.xml}
+ <resultset ...>
+    <plist rndx="1" row-name="person">
+       <person id="1" fname="John" lname="Doe" />
+       <person id="2" fname="Nancy" lname="Buck" />
+    </plist>
+ </resultset>
+ ~~~
+ *
+ * ### Change Name Using a Schema
+ * You can also rename the parts using a schema:
+ ~~~{.yaml}
+ change_name_schema
+    type      : form-info
+    procedure : App_Person_Table
+    schema : person
+       name : plist
+ ~~~
+ * with the result
+ ~~~{.xml}
+ <resultset ...>
+    <plist rndx="1">
+       <schema name="person">
+          <field name="id" type="INT" primary-key="true" auto-increment="true"
+                 sort="number" not-null="true" length="4" />
+          <field name="fname" type="VARCHAR" length="20" />
+          <field name="lname" type="VARCHAR" length="30" />
+       </schema>
+       <person id="1" fname="John" lname="Doe" />
+       <person id="2" fname="Nancy" lname="Buck" />
+    </plist>
+  </resultset>
+ ~~~
+ * Note that the schema defines the data element in the group, not its
+ * container, so the value `person` following the `schema` instruction
+ * changes the element name from `row` to `person`.  To change the name
+ * of the container element, use a name instruction under the schema.
+ *
+ * In an application, the first form, without a schema, is appropriate
+ * when a result is used as a lookup, where the contents are well-known.
+ 
+ *
+ * The standard stylesheet matches results with an XPath like this:
+ * `<xsl:template match="/*/*[@rndx=1]" mode="make_table">`
+ *
+ *
+ *
+ */
+
+/**
+ * @page Examples_Form_Add_Proc The Form Add Procedure
+ *
+ * The add procedure is similar to the @ref
+ *
+ * @section Examples_Form_Add_Proc_Simple
+ *
+ ~~~{.sql}
+ CREATE PROCEDURE App_Person_Add(fname VARCHAR(20),
+                                 lname VARCHAR(30))
+ BEGIN
+    INSERT
+      INTO Person (fname, lname)
+    VALUES (fname, lname);
+
+    IF ROW_COUNT() > 0 THEN
+       CALL App_Person_Table(LAST_INSERT_ID());
+    END IF;
+ END $$
+ ~~~
+ *
+ * Like @ref Examples_Form_Update_Proc, the App_Person_Add
+ * procedure appears twice in the typical usage.  First, when
+ * building the form, then when submitting the form.
+ *
+ * Here is the form-new mode that builds the form:
+ ~~~{.yaml}
+ person_add
+    type : form-new
+    schema-proc : App_Person_Add
+    form-action : ?default:person_add_submit
+ ~~~
+ *
+ * Here is the form-submit mode
+ ~~~{.yaml}
+ person_add
+    type      : form-submit
+    procedure : App_Person_Add
+    result
+       type : update
+ ~~~
+ *
+ * Note the `result` branch that prepares the results of App_Person_Table().
+ * @ref Examples_Form_Update_Proc
+ */
+ 
+ /**
+ * @page Examples_Form_Add_Proc_Dependent Dependent form-new
+ *
+ * A dependent table is a table whose records refer to records in another table.  In
+ * our example database, both the Email and Phone tables are dependent on the Person
+ * table, the Email, with the `id_person` field, is directly-dependent, while the Phone
+ * table is indirectly-dependant through the Person2Phone table.  In both cases, adding
+ * a record to the dependent table requires the id of the Person for whom the record
+ * is being added.
+ *
+ * The MySQL INSERT query will need the id of the Person, which could be provided
+ * either as a session variable or as a procedure parameter.  In our examples, we
+ * use the parameter method because it is simple and consistent (see
+ * @ref Examples_Advanced_Variables_Usage for an explanation).
+
+ * The simplest example is the Email add due to the direct relationship between
+ * the Email record and the Person record.
+ ~~~{.sql}
+ CREATE PROCEDURE App_Person_Email_Add(email_id INT UNSIGNED,
+                                       email VARCHAR(128))
+ BEGIN
+    INSERT
+      INTO Email (id_person, email)
+    VALUES (email_id, email);
+
+    IF ROW_COUNT() > 0 THEN
+       -- The success response varies...
+    END;
+ END $$
+ ~~~
+ *
+ * There are two procedures named in the following mode definition.  The
+ * `schema-proc : App_Person_Email_Add` is run first to collect parameter
+ * information for the form.  The first-level `schema` instruction refers to
+ * this procedure and schema.  The second procedure instruction,
+ * `procedure : App_Person_Value` is run after the form schema is complete,
+ * and it receives the posted data for its parameters.  
+ ~~~{.yaml}
+ person_add_email
+    type        : form-new
+    form-action : person_add_email_submit
+    procedure   : App_Person_Value
+    schema-proc : App_Person_Email_Add
+    schema
+       field : email_id
+          value-ref : id
+    result
+       type : variables
+~~~ 
+ *
+ * 
+ */
+
+/**
+ * @page Examples_Form_Value_Proc The Form Value Procedure
+ *
+ * The procedure us used to populate a form that is defined
+ * from the schema of a form update procedure.  As such, it
+ * does not need a schema.
+ *
+ ~~~{.sql}
+ CREATE PROCEDURE App_Person_Value(id INT UNSIGNED)
+ BEGIN
+    SELECT p.id, p.fname, p.lname
+      FROM Person p
+     WHERE p.id = id;
+ END $$
+ ~~~
+ *
+ * Note that the following specs mode is the same as in the
+ * form-edit mode in @ref Examples_Form_Update_Proc.
+ * 
+ * This simple procedure is called by the by being named in the
+ * procedure instruction of the edit mode:
+ ~~~{.yaml}
+ person_edit
+    type : form-edit
+    schema-proc : App_Person_Update
+    procedure   : App_Person_Value
+    form-action : ?default:person_edit_submit
+    result
+       type : variables
+ ~~~
+ *
+ * Note the `result` branch with type=variables: This instructs
+ * SchemaFW to return the (first) procedure result as a variables
+ * type.  By this designation, the values of the selected record
+ * are made available to fill the form fields.
+ */
+
+/**
+ * @page Examples_Form_Update_Proc The Form Update Procedure
+ *
+ * This procedure is unique among the form procedures in that it is
+ * used twice.  First, for the form-edit mode type, to provide the
+ * form-building schema based on the parameters of the procedure.
+ * Then, during form-submit mode type, the procedure is run after
+ * mapping the submitted form values to the procedure parameters.
+ *
+ ~~~{.sql}
+ CREATE PROCEDURE App_Person_Update(id INT UNSIGNED,
+                                    fname VARCHAR(20),
+                                    lname VARCHAR(30))
+ BEGIN
+    UPDATE Person p
+       SET p.fname = fname,
+           p.lname = lname
+     WHERE p.id = id;
+
+    -- Upon success, return the updated record for client's table
+    IF ROW_COUNT() > 0 THEN
+       CALL App_Person_Table(id);
+    END IF;
+ END $$
+ ~~~
+ * Note that the following specs mode is the same as in @ref Examples_Form_Value_Proc.
+ *
+ * Remember that the procedure is used in two places, here in the form-edit mode:
+ ~~~{.yaml}
+ person_edit
+    type : form-edit
+    schema-proc : App_Person_Update
+    procedure   : App_Person_Value
+    form-action : ?default:person_edit_submit
+    result
+       type : variables
+ ~~~
+ * (see @ref Examples_Form_Value_Proc for explanation of the `result` branch.)
+ *
+ * The procedure is again used in the form-submit mode:
+ ~~~{.yaml}
+ person_edit_submit
+    type : form-submit
+    procedure : App_Person_Update
+    result
+       type : update
+ ~~~
+ * In this case, the `result` branch identifies the result as an update type.
+ * The `CALL App_Person_Table(id)` line in the procedure should return a
+ * suitable record to replace the XML representation of the table and will
+ * be used to replace the selected record in the HTML table.
+ */
+ 
+ 
+
+/**
+ * @page Examples_Form_Procedures Form Procedures
+ *
+ * Forms are more complicated that tables.  Tables mainly display
+ * data and have hooks for adding or opening records, a form must
+ * do the following:
+ * - Use a schema to build the form.
+ * - For existing records, read a record to populate form elements.
+ * - Provide other options on the record, primarily to delete.
+ * - Send the form data to the server.
+ * - Update the table with the new or changed record, or by removing
+ *   a successfully deleted record.
+ *
+ */
+
+/**
+ * @page Examples_Recommended_Form_Interaction Recommended Form Interaction
+ */
+
+/**
+ * @page Examples_Single_Procedure_Form_Interaction Single Procedure Form Interaction
+ *
+ * It is possible to use a single procedure, but it is not recommended.
+ * There are several problems to solve.
+ *
+ * The procedure must:
+ * - consider the contents of each parameter to discern the intention.
+ *   This, in particular, multiplies the complexity as the number of
+ *   nullable parameters increases.
+ * - include many branches based on the interaction mode.
+ * - the output field must match the parameters in name and type.
+ ~~~{.sql}
+ DELIMITER $$
+ CREATE PROCEDURE App_Person_Form(id UNSIGNED INT,
+                                  fname VARCHAR(20),
+                                  lname VARCHAR(30))
+BEGIN
+   -- Adding new record when no existing record indicated
+   IF id IS NULL THEN
+      -- If minimum parameters set, run as an App_Person_Add_Submit procedure
+      IF fname IS NOT NULL OR lname IS NOT NULL THEN
+         INSERT
+           INTO Person (fname, lname)
+         VALUES (fname, lname);
+
+         -- Upon success, return the new record for the client's table
+         IF ROW_COUNT() > 0 THEN
+            CALL App_Person_Table(LAST_INSERT_ID());
+         END IF;
+      END IF;
+      
+   -- Working with an existing record
+   ELSE
+      -- If no parameters sent, run as a App_Person_Values procedure
+      IF fname IS NULL AND lname IS NULL THEN
+         SELECT p.id, p.fname, p.lname
+           FROM Person p
+          WHERE p.id = id
+      -- If parameters set, run as App_Person_Update_Submit
+      ELSE
+         UPDATE Person p
+            SET p.fname = fname,
+                p.lname = lname
+          WHERE p.id = id;
+          
+         -- Upon success, return the updated record for the client's table
+         IF ROW_COUNT() > 0 THEN
+            CALL App_Person_Table(id);
+         END IF;
+      END IF;
+   END IF;
+END $$
+                                  
+ ~~~
+ * 
+ */
+
+/**
+ * @page Examples_Common_Data_Def The Common Data Definition
+ * All examples will use the tables defined on this page.
+ *
+ * In this model, the person is the primary element, represented
+ * by a single record in the Person table.  A person may have
+ * more than one email address and more than one phone number,
+ *
+ * The model includes two different many-to-one relationships.
+ * Here, emails are not shared but each is associated with a single
+ * person.  Each record, therefore, includes the key value of the
+ * person to whom it belongs.
+ *
+ * In this model, phone numbers may be shared.  A residential
+ * phone number may be shared by several occupants.  For this
+ * relationship, there is a Phone table and a Person2Phone
+ * table to connect phone numbers to people.
+ *
+ * Note that this model is for demonstration purposes.  The
+ * data definitions are intended to illustrated the many-to-one
+ * model as well as the many-to-many model of associating
+ * various bits of data.
+ ~~~{.sql}
+ CREATE TABLE Person
+ (
+    id    INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    fname VARCHAR(20) NOT NULL,
+    lname VARCHAR(30) NULL,
+    INDEX (lname)
+ );
+
+ CREATE TABLE Email
+ (
+    id        INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id_person INT UNSIGNED,
+    email     VARCHAR(128)
+ );
+
+ CREATE TABLE Phone
+ (
+    id    INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    phone VARCHAR(20),
+    sms   BOOLEAN
+ );
+
+ CREATE TABLE Person2Phone
+ (
+    id_person INT UNSIGNED,
+    id_phone  INT UNSIGNED
+ );
+ ~~~
+ */
+
+/**
+ * @page Examples_Table_Data_Id The `data-id` Row Attribute
+ *
+ * When a table is rendered by the framework, it attempts to
+ * attach a `data-id` attribute to each TR (table row) element.
+ * The framework looks at the table schema for a primary key
+ * field and, if found, uses the named field value of each
+ * record as the `data-id` value.
+ */
+
+/**
+ * @page Examples_Simplest_Table_Proc The Simplest Table Procedure
+ *
+ * A table query returns a collection of items.  The
+ * simplest table query will always return every record.  This
+ * type of table is not very useful: there are no provisions
+ * for adding, modifying, or deleting a record.
+ ~~~{.sql}
+ DELIMITER $$
+ CREATE PROCEDURE App_Person_List()
+ BEGIN
+    SELECT p.id, p.fname, p.lname
+    FROM Person p;
+ END $$
+ ~~~
+ *
+ * The specs mode associated with the procedure should look like this:
+ ~~~{.yaml}
+ person_list
+    type      : table
+    procedure : App_Person_List
+ ~~~
+ */
+  
+/**
+ * @page Examples_Simple_Editable_Table_Proc The Simple Editable Table Procedure
+ * When table records are added, changed, or removed, it is
+ * preferable to return only the changes.  The following
+ * enhancement of the basic table query can return the
+ * entire set or a single record.  Doing this with a single
+ * query helps ensure that layout of replacement records
+ * match the records that a user already has in hand.
+ *
+ * Note the single parameter and the WHERE clause.  If
+ * the `id` parameter is null, this procedure works like
+ * the simpler example above.  If an `id` is passed to the
+ * procedure, only the single matching record will be selected.
+ ~~~{.sql}
+ DELIMITER $$
+ CREATE PROCEDURE App_Person_List(id INT UNSIGNED)
+ BEGIN
+    SELECT p.id, p.fname, p.lname
+      FROM Person p
+     WHERE id IS NULL
+        OR p.id = id;
+ END $$
+ ~~~
+ *
+ * The specs mode.  Notice the addition of the `on_line_click`
+ * and `button` instructions.
+ *
+ * The `on_line_click` will open a dialog using the URL value
+ * of the instruction and the data-id attribute of the table
+ * row.  (See @ref Examples_Table_Data_Id)
+ 
+ * called to open a dialog
+ ~~~{.yaml}
+ person_list
+    type      : table
+    procedure : App_Person_List
+    on_line_click : ?default:person_edit
+    button
+       label : Add Person
+       type  : add
+       task  : ?default:person_add
+ ~~~
+ */
+

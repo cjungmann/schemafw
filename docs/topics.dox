@@ -1,0 +1,121 @@
+/**
+ * @page Topics_Main Topics in SchemaFW Development
+ *
+ * Solutions to various application designs are often obscure and
+ * require an understanding of how elements of SchemaFW work together.
+ * The page links below provide some guidance and examples using
+ * SchemaFW to build real applications.
+ *
+ * I can't devote as much time to this as I'd like just now, but
+ * I think this set of documentation will be valuable.  It should be
+ * a set of pages that explain how to do things.  The problem is that
+ * since an application requires SQL code and Specs code, requiring a
+ * lot of code just to illustrate a small point.
+ *
+ * Perhaps what I need here is a page with a full, very simple, application,
+ * with both the SQL and specs code with notes explaining how and why it
+ * works.  The topic pages discuss the issue and have a link to jump to
+ * the point in the sample code that implements the subject of the topic.
+ 
+ *
+ * - @ref Topics_Table_Updates
+ * - @ref Topics_Edit_After_Add
+ *
+ */
+
+/**
+ * @page Topics_Table_Updates Updating a Table WIth New Data
+ *
+ * SchemaFW tables typically define a @i on_line_click instruction for
+ * editing the record associated with the row.  When the editing is complete,
+ * the table should replace the line with the new data.
+ *
+ * In this simple app, we are managing a list of names.
+ *
+ * The SQL code:
+~~~{.sql}
+CREATE PROCEDURE App_Person_List(id INT UNSIGNED)
+BEGIN
+   SELECT p.id, p.fname, f.lname
+     FROM Person p
+    WHERE id IS NULL
+       OR p.id = id;
+END $$
+
+CREATE PROCEDURE App_Person_Value(id INT UNSIGNED)
+BEGIN
+END $$
+
+CREATE PROCEDURE App_Person_Add(fname VARCHAR(25), lname VARCHAR(32))
+BEGIN
+   INSERT
+     INTO Person (fname, lname)
+   VALUES (fname, lname);
+
+   IF ROW_COUNT() > 0 THEN
+      CALL App_Person_List(LAST_INSERT_ID());
+   END IF;
+END $$
+~~~
+ ~~~{.spec}
+ person_list
+    type          : table
+    procedure     : App_Person_List
+    on_line_click : ?default:person_edit
+
+person_edit
+   type        : form-edit
+   procedure   : App_Person_Value
+   schema-proc : App_Person_Update
+   form-action : person_edit_submit
+
+person_edit_submit
+   type      : form-submit
+   procedure : App_Person_Update
+   result
+      type : update
+~~~
+ *
+
+ */
+
+/**
+ * @page Topics_Edit_After_Add Open Edit Dialog After Record Add
+ *
+ * A composite data item is collection of data records with a common root record.
+ * An example of this would be a person record with collections of residential
+ * and email addresses and phone numbers.
+ *
+ * Managing composite data items can be challenging in both programming and
+ * user interface.  Having a simple @i add dialog, followed by a comprehensive
+ * @i edit dialog often solves these challenges.
+ *
+ * The least important factor is the user interface.  The advantage of separating
+ * the @i add from the @i edit dialogs is to make it easier for a user to quickly
+ * enter several new records at a time.  The advantage of separation is minimal
+ * and subjective, but real.
+ *
+ * The programming issue is more important.  In the person example previously
+ * mentioned, an existing person record is necessary in order to attach the
+ * address and phone records to the person.  It follows that a simple @i add dialog
+ * can establish the base record, with the @i edit dialog following to add the
+ * associated data.
+ *
+ * It would be possible to create a dialog where all of the items are collected
+ * before submitting the entire data set, but that approach presents two
+ * additional problems: first, there is (currently) no help in managing unattached
+ * tables as would be necessary to add, for example, several phone numbers with
+ * the initial person add.  Second, in a SchemaFW application, where the MySQL
+ * procedure gets unfiltered form data, the procedure accepting the data will
+ * have to parse and separate multiple records contained in individual data
+ * fields.
+ *
+ * Having established why to use the technique, let's show how it's done.  Using
+ * the person example:
+ *
+ ~~~{.sql}
+ 
+ ~~~
+ */
+ 
+ 

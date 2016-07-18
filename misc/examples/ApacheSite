@@ -1,0 +1,28 @@
+# NameVirtualHost 127.0.0.1:80
+# Listen 80
+
+   
+<VirtualHost *:80>
+   DocumentRoot /usr/source/doc/schemafw/examples/simple/site
+   DirectoryIndex schema
+   ServerName sdemo
+   ServerAlias /
+
+   # Enable CGI for "schema" program only:
+   <Files "schema">
+      SetHandler cgi-script
+      Options FollowSymLinks
+      Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+      Order allow,deny
+      Allow from all
+   </Files>
+   
+   # SetEnv MYS_HOST "localhost"
+   # SetEnv MYS_USER "user"
+   # SetEnv MYS_PASS "password"
+   SetEnv MYS_DB   "SimpleDB"
+</VirtualHost>
+
+# Local Variables:
+# mode: shell-script
+# End:

@@ -1,0 +1,14 @@
+html { background-color: #CCCCFF; }
+body
+{
+    width:50em;
+    margin:1em auto;
+    background-color:#FFFFFF;
+}
+
+h1
+{
+    font-family: sans-serif;
+    font-size:18pt;
+    text-align:center;
+}

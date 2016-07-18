@@ -1,0 +1,1723 @@
+/**
+ * @page Specs_File_Documentation Main Specs File Page
+ *
+ * Specs File Pages:
+ *
+ * - @ref Specs_File_Overview
+ * - @ref Specs_File_Struction
+ * - @ref Specs_File_Annotated_Example_Code
+ * - @ref Specs_Response_Mode
+ *   - @ref Specs_Table_Mode
+ *   - @ref Specs_File_Table_Mode
+ *   - @ref Specs_Form_Modes
+ *      - @ref Specs_Form_Using_A_Schema
+ *      - @ref Specs_Mode_Form_New
+ *      - @ref Specs_Mode_Form_Edit
+ *      - @ref Specs_Mode_Form_Submit
+ *      - @ref Specs_Mode_Form_Try
+ *   - @ref Specs_Mode_Delete
+ * - @ref Specs_Shaping_Instructions
+ *   - @ref Specs_Shaper_Schema
+ * - @ref Specs_File_Troubleshooting
+ */
+
+/**
+ * @page Specs_File_Overview Specs File Overview
+ *
+ * A specs file maps the relationships between MySQL procedures
+ * and how they will be presented to an end user.
+ *
+ * Procedures are used to generate output, of course, but in a
+ * SchemaFW application, many aspects of procedures are used to
+ * create different parts of an interation.  Procedures are often
+ * used to generate schemas, both for the input parameters and
+ * the output results.  The parameter-generated schema is used
+ * to build forms that the end user will use to send information
+ * to the application.  The result-generated schema describes
+ * the contents of the result, primarily for a table-view to
+ * describe each column's data-type and name.
+ *
+ * SchemaFW, through instructions in a specs file, allows a
+ * developer to add almost unlimited detail to a schema, from
+ * additional presentation hints for each record field, to
+ * custom values for the result as a whole.  Both the result
+ * group and the record element can be renamed.
+ *
+ * The specs file contains instructions about how to use MySQL
+ * procedures.  These instructions are grouped into `modes`.
+ * A URL containing a specs file name and a mode name prompts
+ * the framework to read the mode into memory.  The contents of
+ * the mode are then used to direct the output.
+ *
+ * There are a number of specs file instructions that are reserved
+ * and have specific purposes for the generation of a SchemaFW
+ * document.  A developer is also free to inclue non-reserved
+ * instructions that will be directly added to the output.  This
+ * freedom helps keep the underlying structure relatively simple
+ * and well-defined while providing flexibility for customization.
+ */
+
+ /**
+ * @page Specs_File_Struction Specs File Struction
+ *
+ * The relationship between instructions is indicated by indentation
+ * levels.  Items with the same indentation level that are between
+ * two other items at a lower indentation level are siblings.  An
+ * item that is indented from a previous element is a child of the
+ * previous element.
+ *
+ ~~~{.yaml}
+ library
+    subject : History
+       book : The History of Religion
+          author : John Priest
+          pages : 453
+       book : The History of Food
+          author : Nancy Cook
+          pages : 325
+    subject : Fiction
+       book : Recovered Magic
+          author : Elizabeth Wicca
+          pages : 378
+       book : The Runaway Project
+          author : Pascal Koad
+          pages : 295
+ ~~~
+ * In the above example, `library` is the `mode` because it begins
+ * on column 1.  `library` contains child elements named `subject`,
+ * which in turn contain `book` elements.  The `subject : Fiction`
+ * element concludes the list of `books` in the `subject : History`
+ * list.  The subjects are siblings under the library.  The history
+ * books are siblings under the history subject.
+ *
+ * A specs file is a simple file with a hierarchy declared with
+ * indented lines.  A item that is indented from a previous line
+ * is a child of the previous line.  Multiple lines at the same
+ * indent-level under a parent are siblings.  A sibling list is
+ * terminated by a line at a lesser indent-level or the end of
+ * the file.
+ *
+ * Lines of text are called _instructions_ or _items_, but
+ * _instructions_ are more specific in that they call for some
+ * action.
+ *
+ * An item that begins at column 0 is called a _mode_.  Modes
+ * can be global with no children if prefixed with a _$_, or marked
+ * as _$shared_ to be included in several other modes.  If a mode is
+ * designed to be called through a URL, it is called a _response_mode_
+ * because it prepares a response to an HTTP request.
+ */
+
+
+
+ /**
+ * @page Specs_File_Annotated_Example_Code Annotated Example Specs File
+~~~{.py}
+# global mode examples:
+$database : DemoDatabase
+$stylesheet : default.xsl
+
+# shared mode example:
+$shared : person_fields
+   field : id
+      readOnly : true
+      hidden   : true
+   field : handle
+      label : Handle
+   field : fname
+      label : First Name
+   field : lname
+      label : Last Name
+
+# Table response mode
+person_list
+   type          : table
+   procedure     : App_Person_List
+   on_line_click : ?default:edit_person
+
+# Form response mode, using shared mode
+edit_person
+   type         : form-edit
+   procedure    : App_Person_Values
+   schema-proc  : App_Person_Update      # Get the form schema from the procedure
+                                         # to which the form is submitted.
+   form-action  : ?default:submit_person
+   schema
+      siblings : $person_fields
+
+# Form mode to demonstrate map-value instruction:
+edit_person2
+   type        : form-edit
+   procedure   : App_Person_Values
+   schema-proc : App_Person_Update
+   form-action  : ?default:submit_person
+   schema
+      field : family_id
+         hidden    : true
+         map-value : id   # This instruction tells the framework to look for attribute
+                          # `id` in the row element (retrieved from App_Person_Values)
+                          # to preset the value of field `family_id`
+
+# Mode called by the edit_person mode
+submit_person
+  type      : form-submit
+  procedure : App_Person_Update
+  # Define the result to update the table
+  result
+     type : update
+     name : row     # _row_ is the default value, so this could have been
+                    # omitted, but the _name_ should match the name of the
+                    # elements in the table mode (which also defaults to
+                    #_row_).
+~~~
+ */
+
+/**
+ * @page Specs_Response_Mode The Specs Response Mode
+ *
+ * The response mode is the essential item of a specs file.
+ * Other modes: global modes, shared modes, and global
+ * instruction modes, modify a response mode by providing
+ * a default value for an implied instruction in the response
+ * mode.
+ *
+ * @todo How A Specs File Runs:
+ * When Schema runs, it identifies the specs file and mode from
+ * the query string of the HTTP request.  It opens the specs file
+ * and loads the named response mode.  
+ *
+ * The simplest response mode is a name and a _procedure_
+ * instruction:
+ * ~~~
+ index
+    procedure : App_Index
+ * ~~~
+ * This example could be the entire specs file, but it makes
+ * some dangerous assumptions, particularly about which database
+ * will be used.  In the absence of a _database_ instruction,
+ * Schema will use whatever database is currently in use in the
+ * long-running Schema instance.
+ *
+ * These are the keywords:
+ * - __attributes__      (Deprecated) a list of attributes to add to the
+ *                       document element.  Use sibling-shares instead.
+ * - __root__           (Deprecated?) With sibling-shares, this is no longer necessary.
+ * - __database__       The database where the procedure lives.
+ * - __jump__           URL value used to create an HTTP _Location_ header
+ *                      for instructing the client to load a new page.
+ * - __mode-type__      Reserved attribute, added to the document element
+ *                      to help the XSL decide how to interpret the XML document.
+ * - __post__           Reserved attribute, added to the document element
+ *                      if the HTTP request method is _POST_.
+ * - __procedure__      The name of the procedure that will provide either or
+ *                      both the schema or the procedure results.
+ * - __qstring__        Reserved attribute, the query string of the HTTP request
+ *                      is added as an attribute of the document element.
+ * - __result__         A branch under the response mode that modifies
+ *                      the output of a query contained in the procedure.
+ *                      There can be multiple queries in a procedure, and thus
+ *                      also there can be multiple _result_ branches.  The
+ *                      branches are numbered to match multiple queries.  This
+ *                      instruction is optional if there is only a single query
+ *                      in the procedure.
+ * - __root-procedure__ A procedure to be used to add attributes to the document
+ *                      element.  It should consist of a single SELECT query that
+ *                      selects one line.  The fields names will become attribute
+ *                      names, with the field values being the attribute values.
+ *                      There can be more than one _root-procedure_ instruction,
+ *                      but it is the designer's responsibility to avoid duplicate
+ *                      attributes.
+ * - __tag__            This instruction directs Schema to override the default
+ *                      document element tag name of _resultset_.
+ * - __schema__         This instruction alone simply instructs Schema to include
+ *                      a schema with the result.  _schema_ can also contain
+ *                      special schema instructions to modify the standard schema
+ *                      output, especially for settings for result columns.
+ * - __session-type__   How sessions should be implemented.  Possible values are;
+ *      - __none__      (the default value) no session required.  Note that if a
+ *                      session has been established, it will remain open.
+ *      - __abandon__   Terminate any active session
+ *      - __simple__    Track user anonymously
+ *      - __identity__  Some method of identifying the user will be used, with or
+ *                      without password protected.
+ *      - __establish__ relax identity requirements in order to present or process
+ *                      a login form
+ 
+ * - __type__           Name the mode type in case it's not a table (the default)
+ *      - __table__        Information for display, usually with an xml-stylesheet
+ *                         attached to the document.  @ref Specs_Table_Mode
+ *      - __info__         Requests information for reference rather than display.
+ *      - __delete__       Deletes a record
+ *      - __form-edit__    Form with values set from a record: includes a schema and
+ *                         a data record.
+ *      - __form-new__     Form without record values: includes a schema but no
+ *                         data record
+ *      - __form-submit__  Uses GET or POST values (or even cookie values) to fill the
+ *                         parameters of and run a stored procedure.  Not necessary to
+ *                         have a result.
+ *      - __form-result__  This mode for a form that can succeed or fail.  Originally
+ *                         designed for a login page, it may be applicable to other
+ *                         form types, as well.
+ *      - __form-try__     This mode will both display and process a form, so a failed
+ *                         form can be presented again with a message, optionally with
+ *                         the valid field entries retained.
+ *      - __abandon_session__ Does two things:
+ *          - Calls MySQL proceddure ssys_session_abandon, which calls
+ *            app-provided App_Session_Abandon() via trigger ssys_sync_session_update()
+ *            to clean up the database.
+ *          - Changes the session cookies, either deleting or reseting as
+ *            appropriate.
+ *
+ * - __xml-stylesheet__ The stylesheet that will be used to transform the XML output.
+ *                      The value of this instruction will be used to output an XML
+ *                      processing instruction `<?xml-stylesheet type="text/xsl" href="sheet" ?>`
+ *
+ */
+
+/**
+ * @page Specs_Table_Mode The Table Mode
+ *
+ * A table mode page should call a procedure that _may_ return several rows for the
+ * main display.  The default stylesheet will display the rows as a table, but it is
+ * also possible to have one or a set of custom templates to render that data in
+ * something other than a table.  The best way to do that is to make a name for the
+ * result and to create one or more templates that match the named result.
+ *
+ * __This information will need to be expanded if and when the technique is used.__
+ *
+ * @section Specs_Table_Mode_Making_Changes Making Changes to the Table
+ *
+ * There are three actions one can take with a table: _add_, _update_, and _delete_.
+ * As elsewhere, these actions are accomplished by invoking response modes.  We will
+ * look at these operations in order of increasing difficulty.
+ *
+ * @section Specs_Table_Mode_Line_Click Table Mode Line Click
+ *
+ * When the table is used to present a set of records, it will be possible to click
+ * on a line to edit the record.  The setup for this is to include an _on_line_click_
+ * instruction in the mode or the schema.
+ *
+ * In most situations, it will be sufficient to simply identify the URL that opens
+ * a dialog by making an _on_line_click_ attribute.  The record id, identified by
+ * default as an _data-id_ attribute on the _tr_ element, will be appended to the
+ * URL to complete it.
+ *
+ * The _on_line_click_ instruction can be written to add the attribute to either the
+ * document element or the schema element.  If _on_line_click_ is defined in both
+ * the document element and the schema, the schema value will be used.
+ *
+ * Consider the following examples:
+ *
+ * @code
+ * # Example with _on_line_click_ attribute in document element:
+ * person_list
+ *    procedure     : App_Person_List
+ *    type          : table
+ *    on_line_click : ?default:person_edit
+ *
+ * # Example with _on_line_click_ as schema attribute:
+ * family_list
+ *    procedure    : App_Family_List
+ *    type         : table
+ *    schema : person
+ *       on_line_click : ?default:family_edit
+ * @endcode
+ *
+ * Note: The name of the record id attribute can be changed using the _line_click_id_
+ * setting.  There is no documentation for this, yet.  Consult the javascript code
+ * to see how it may be used.  I don't really expect that this will be used.
+ *
+ * @subsection Specs_Table_Mode_Line_Click_Element Table Mode Line Click Element
+ *
+ * In most cases, it will be sufficient to simply use the _on_line_click_ element
+ * for the URL.  The record will be identified by an integer value representing
+ * the primary key of the target record.  An _on_line_click_ __element__ can be
+ * written to provide more details about calling for dialog information.  At the
+ * time this page is being written, this feature has only been attempted once
+ * in an aborted attempt to write an allowance application.  If it becomes
+ * necessary to use this feature, you will have to consult the javascript for
+ * hints on its use.
+ *
+ * @section Specs_Table_Mode_Add_Button Table Mode Add Record
+ *
+ * Adding a record requires a button.
+ *
+ ~~~
+ # For the table:
+ person_list
+    procedure : App_Person_List
+    type      : table
+    button
+       label : New
+       type  : add
+       task  : ?default:person_add_submit
+
+person_add
+   procedure   : App_Person_Submit
+   type        : form-new
+   form-action : ?default:person_add_
+       
+person_add_submit
+   procedure : App_Person_Submit
+   type      : form-submit
+   result
+      type : update
+ ~~~
+ * @ref Specs_Mode_Form_Submit Form-Submit Response Mode
+ *
+ ~~~
+ person_add_submit
+    procedure : App_Person_Submit
+    type      : form-submit
+    result
+       type : update
+ ~~~
+ * ## Match new result row-name to schema name:
+ * If you are getting a _Tag mismatch_ console error
+ * 
+ *
+ * 
+ */
+
+/**
+ * @page Specs_Mode_Delete Delete Mode
+ *
+ * The process for deleting a record requires some programming on the
+ * developer's part.  This is necessary because a delete operation is
+ * generally not recoverable, so a user must be given a chance to
+ * to confirm or abort the delete operation.
+ *
+ * The delete operation will require three parts, an entry in a specs
+ * file, a MySQL procedure to execute the delete, and a Javascript function
+ * to call in which the user is shown what record will be deleted and
+ * asked to confirm the delete.
+ *
+ * The design of the MySQL procedure is found at @ref MySQL_Procedures_Delete.
+ *
+ * Note: it is important to realize that the script file must be loaded
+ * in the page from which the dialog that has the delete button.  The script
+ * __will not be loaded__ from the dialog.
+ *
+ * The following example includes a delete button:
+ *
+ ~~~
+  # file: default.spec
+
+  person_list
+     type          : table
+     procedure     : App_Person_List
+     on_line_click : ?default:person_edit
+     
+     # Adding script to the page view from which _family_edit_ will pop:
+     script
+        src : person.js   # Contains the delete_person() function
+  
+  person_edit
+     type        : form-edit
+     procedure   : App_Person_Value
+     schema-proc : App_Person_Submit
+     # Create a button to call a javascript function:
+     button
+        label : Delete Person
+        type  : call
+        task  : delete_person  # function name
+ ~~~
+ *
+ * There must be a very simple response mode that calls the delete procedure:
+ *
+ ~~~
+  # file: default.spec
+  
+  person_delete
+     type      : delete
+     procedure : App_Person_Delete
+ ~~~
+ * See @ref MySQL_Procedures_Delete for procedure _App_Person_Delete_ sample code.
+ *
+ * The _delete_person_ function will be included in the _person.js_ file
+ * included with the _script_ instruction in the above response mode
+ * description.  The function should call the _person_delete_ response
+ * mode to execute the delete procedure.  It should look something like this:
+ *
+ ~~~{.js}
+ // file: person.js
+ 
+ function delete_person(udf_bundle)
+ {
+    // Confirm the node exists:
+    if (node)
+    {
+       var msg = "Confirm that you want to delete \""
+                 + node.getAttribute("fname") + " " + node.getAttribute("lname")
+                 + "\"";
+       if (window.confirm(msg))
+       {
+          var url = "schema?default:person_delete=" + node.getAttribute("id");
+          SchemaFW.default_delete(url,udf_bundle);
+       }
+    }
+ }
+ ~~~
+ *
+ * Things to note in the _delete_person_ function:
+ * - Consults the udf_bundle for the XML element that is being edited and is thus
+ *   the candidate for deletion.
+ * - Creates a confirmation message to confirm the record to be deleted and the
+ *   opportunity to abort the delete if the user has second thoughts.
+ * - If delete is confirmed, it constructs a URL calling the appropriate
+ *   response mode.  For procedures with a single parameter, it is not necessary
+ *   to name the parameter, so simply adding `"=" + node.getAttribute("id")` is
+ *   sufficient to call a single-parameter procedure.
+ * - SchemaFW provides a convenience function `SchemaFW.default_delete()` that
+ *   - submits the delete request,
+ *   - reads the response,
+ *   - on success, deletes the HTML table row AND the XML record element,
+ *   - on failure, notifies the user that the operation failed.
+ */
+
+/**
+ * @page Specs_File_Table_Mode Response Mode Type Table
+ *
+ * While this document type does not require a table presentation, it
+ * will most often take that form.
+ *
+ * Generally, a table mode document will consist of a result element with
+ * many child elements representing rows in a query.
+ *
+ * Of particular interest is the table displaying a group of records.  The
+ * framework provides hooks to link a click on a table row with a opening
+ * a dialog to edit the indicated record.  There are also hooks for adding
+ * an _add_ button for creating new records for the table.
+ *
+ * Consider the following response mode:
+ * ~~~
+ person_list
+    procedure     : App_Person_List
+    type          : table
+    on_line_click : ?default:person_edit
+    button
+       label : New
+       type  : add
+       task  : ?default:person_new
+ * ~~~
+ *
+ * The response mode is matched with one or more procedures.  The _procedure_
+ * is the procedure that populates the table.  The URL at _on_line_click_ should
+ * be to response mode that includes a schema for building a form and data to
+ * populate it.  The URL that is part of the button should return a schema for
+ * building an empty form.
+ *
+ * @ref MySQL_Procedures_Table for displaying a table
+ * @ref MySQL_Procedures_Form_Submit for updating or inserting a record.
+ */
+ 
+/**
+ * @page Specs_Form_Modes Form Modes
+ *
+ * There are several form modes to identify different form types and steps
+ * in processing a form.
+ *
+ * - form-edit
+ * - form-new
+ * - form-submit
+ * - form-try
+ * - form-result (doesn't do anything yet)
+ *
+ * @section Specs_Form_Schema_Discuss Forms and Schemas
+ *
+ * Presenting a form (using form-edit, form-new or form-try) requires a schema.
+ * In most cases, a schema will be automatically generated if one of these mode
+ * types are declared.
+ *
+ * @subsection Specs_Form_Schema_Proc_Instruction The schema-proc Instruction
+ *
+ * Editing data requires two steps: presenting the form and submitting the values.
+ * For _form-edit_ and _form-try_, it is useful to include a _schema-proc_ instruction
+ * in addition to _procedure_ instruction for acquiring data.  The _schema-proc_
+ * should name the procedure that will make the changes, ie the "submit" procedure,
+ * in order to ensure that the form includes appropriate fields.  The _procedure_
+ * instruction will be used to get data, as usual, and will be used to populate the
+ * form.
+ *
+ * @subsection Specs_Form_Using_A_Schema Improving the Form with a Schema
+ *
+ * The namesake _schema_ instruction contains instructions for changing the
+ * default labels and characteristics of form's fields.
+ *
+ *
+ * @section Specs_Mode_Form_New The form-new Mode
+ *
+ * A new form represents an item that doesn't yet exist in the database.
+ *
+ * @section Specs_Mode_Form_Edit The form-edit Mode
+ *
+ * @section Specs_Mode_Form_Submit The form-submit Mode
+ *
+ * A _form-submit_ mode will pass submitted named values (POST or GET) to the
+ * named parameters of the specified procedure and run the stored procedure.
+ *
+ * ### Updating the HTML Table
+ * The client-side of the framework can replace or add a line to a table from
+ * the data returned from the http request.  This feature has several requirements:
+ *
+ * - The procedure must perform a SELECT query through which the values are returned.
+ * - The fields of the procedure return query _should_ match the attributes of the
+ *   table line for which it will provide a replacement record.
+ *   @ref MySQL_Procedures_Form_Submit
+ * - The response mode _must_ include a _result_ branch that includes the _type_
+ *   value _update_.
+ * - The _result_ branch should include a _row-name_ instruction.  The _row-name_,
+ *   if included, must match the row name of the table to which the record will be
+ *   copied.  The _row-name_ instruction can be omitted if the table uses the default
+ *   row name _row_ .
+ * 
+ *
+ * @code
+ * person_submit
+ *    type      : form-submit
+ *    procedure : App_Person_Submit
+ *    result
+ *       type     : update
+ *       row-name : person
+ * @endcode
+ *    
+ * 
+ *
+ * 
+ *
+ * @section Specs_Mode_Form_Try The form-try Mode
+ *
+ * This mode both processes and reports on the procedure.  It was introduced to
+ * handle login forms where feedback may be offered from a previous attempt.  By
+ * necessity, this method will run in variable mode and not attempt to reload
+ * the XML or XSL documents.  See @ref Specs_Variables_Result
+ * 
+ */
+
+/**
+ * @page Specs_Shared_Mode The Specs Shared Mode
+ *
+ */
+
+/**
+ * @page Specs_Global_Instruction The Specs Global Instruction
+ *
+ */
+
+/**
+ * @page Schema_Main Using Schema
+ *
+ * @section Schema_Main_Introduction Schema Introduction
+ *
+ * Schema is a framework of tools that make producing a secure data-base driven
+ * website relatively easy. The basic aim of Schema is to hand off most of the
+ * rendering and processing tasks to the web client.  This takes a large load off
+ * of the server, allowing it to serve more clients at a time.  The clients have
+ * more than enough power to handle most of the tasks that other frameworks handle
+ * on the server.
+ *
+ * @section Technology Technology
+ *
+ * Schema takes advantage of the following technologies:
+ *
+ * - Server Technology
+ *    - MySQL, a powerful free database
+ *    - C++, can produce fast and efficient code
+ *    - FASTCGI, efficient processor of http requests
+ * - Client Technology
+ *    - AJAX (Asynchronous Javascript And Xml)
+ *    - XSLT, an established and well-supported template language
+ *
+ * @section Usage_Summary Usage Summary
+ *
+ * @subsection Server_Setup Server Setup
+ *
+ * -# Create Database and Tables
+ * -# Create @ref Stored_Procedures to interact with Data
+ * -# Write @ref Specs_File that modify query results before returning to the client
+ *
+ * The first program auditioned as a command-line spreadsheet convertor
+ * was _unoconv_.  It uses the _Open-_ or _Libre-Office_ conversion code.
+ * It should have worked fine, but there were problems running headless,
+ * having more than one instance running, and with its being rather slow
+ * (it's a Java app).  While _unoconv_ works as a command line, reading
+ * from `stdin` and writing to `stdout`, the _Office_ programs didn't.
+ * I suspect (but haven't confirmed) that _unoconv_ does this magic with
+ * named pipes.  Since this program also uses pipes, I thought it would be
+ * an unacceptable resource drain to have 4 or more pipes running.
+ *
+ * I switched to _gnumeric_ and its companion _ssconvert_.  There was some
+ * initial difficulty, especially with voluminous warnings about how it
+ * can't "autolaunch a dbus-daemon"  The warnings do not predict failure,
+ * so I am ignoring them by opening /dev/null and using `dup2` to send
+ * the warnings to oblivion.
+ * 
+ * There are no special setup requirements to use `ssconvert`.  The setup
+ * requirements for `unoconv` are below in case circumstances require us
+ * to use `unoconv` instead of `ssconvert`.
+ *
+ * @subsection Import_Setup Import Setup
+ * -# Install unoconv `apt-get install unoconv`
+ * -# Make a home directory for apache:
+ *    - sudo mkdir /home/www-data
+ *    - sudo chown www-data /home/www-data
+ *    - sudo emacs /etc/passwd
+ *      - Find line with www-data
+ *      - The last two value are:
+ *        - __penultimate:__ home directory: set to `/home/www-data`
+ *        - __last:__ path to shell program: set to `/bin/bash`
+ *
+ * @subsection Client_Setup Client Setup
+ *
+ * For a simple application that displays tables and dialogs for adding or editing
+ * records, the built-in Javascript files and XSLT templates may be sufficient for
+ * the entire application.
+ */
+
+
+/**
+ * @page SchemaFW_Application The SchemaFW Application
+ *
+ * A SchemaFW application is organized into a directory, usually named after
+ * the name of the application, with two subdirectories, `setup` and `site.`
+ *
+ * The `setup` directory contains the table and procedure definition script
+ * files for the application.  There are several system script files that will
+ * be installed by `schemafw_setup` to handle basic operations and to support
+ * application-specific procedures and tables.
+ *
+ * The `site` directory is where Apache will run the application.  To start,
+ * It contains `default.spec` and the `schema` executable, as well as a
+ * subdirectory (`includes`) that contains framework-supporting files.
+ *
+ * @section PreinstallApacheSetup Pre-install Apache Setup
+ *
+ * -# __Configure Apache__ to Allow Action and fcgid-script
+ *    See @ref ApacheModSetup
+ *
+ * @section Using_schemafw_setup Using schemafw_setup
+ * 
+ * During `make install`, an executable script, `schemafw_setup` is added
+ * to /usr/bin.  Call it to help setup a new site.
+ *
+ * `schemafw_setup` will ask several questions:
+ *
+ * -# __host name__ This will be the name of the directory as well as being
+ *    the hostname Apache uses.
+ *
+ * -# __MySQL user__ This defaults to root.  If you use another user, the
+ *    alternate user must have root-like privileges to create tables, procedures,
+ *    etc.
+ *
+ * -# __password__ The password for the MySQL user.
+ *
+ * -# __Database Name__ The name of the application database.
+ *
+ *    (`schemafw_setup` will create the database after getting these four
+      pieces of information.)
+ *
+ * -# __path to your site__ Sadly, `schemafw_setup` doesn't yet expand ~ or
+ *    consider the current directory.  The full path must be specified.
+ *
+ *    (`schemafw_setup` will create the new directory, the `setup` and
+ *     `site` subdirectories and install boilerplate files to help prepare
+ *     the new application.)
+ *
+ * -# __copy configuration file and restart Apache__  The final step is to
+ *    install the Apache configuration file.  A default
+ *    configuration file is provided in the `setup` directory, if chosen at
+ *    setup time, `schemafw_setup` will make a symbolic copy to
+ *    `/etc/apache2/sites-enabled and restart Apache to make it active.
+ *
+ */
+
+/**
+ * @page ApacheModSetup Apache Mod Setup
+ *
+ * Certain modules and other settings must be enabled to run SchemaFW.
+ *
+ * - The _actions_ module must be enabled
+ *   - `$ cd /etc/apache/mods-enabled`
+ *   - `$ sudo cp -s ../mods-available/action* .`
+ *   - restart Apache: `$ sudo /etc/init.d/apache2 restart`
+ *
+ * - For FASTCGI
+ *   - `$ sudo apt-get install libapache2-mod-fcgid`
+ *   - `$ cd /etc/apache/mods-enabled`
+ *   - `$ sudo cp -s ../mods-available/fcgid* .`
+ *   - restart Apache: `$ sudo /etc/init.d/apache2 restart`
+ *   
+ */
+
+/**
+ * @page MySQL_Setup MySQL Setup
+ *
+ * @todo Flesh out this page.
+ *
+ * For security, create a MySQL user whose only priviledge is to EXECUTE.
+ * This requires that a stored procedure is prepared for every action involving
+ * application data, but eliminates the possibility that someone could inject
+ * malicious code to compromise the data.
+ *
+ * @sa @ref Stored_Procedures
+ *
+ * Return to @ref Schema_Main
+ */
+
+/**
+ * @page Specs_File The Specifications File
+ *
+ * @todo This page is out-of-date while I work on the language of
+ * the specs file.  Don't forget to revise this page once the language
+ * is stabilized.
+ *
+ * The Specifications, or 'Specs' file is a set of instructions for generating
+ * Schema documents.  The Schema documents are used by the framework to build
+ * HTML pages with which the end user interacts with your data.
+ * See @ref Schema_Documents.
+ *
+ * A Specs file contains instructions about how to create responses to
+ * HTTP requests.  A project can include one or many Specs files.  Each
+ * Specs file contains some global information, followed by one or many
+ * _response_modes_ that describe how to respond to a request.
+ *
+ * @section Specs_File_Definitions Definitions
+ *
+ * - __mode__               A line beginning at position 0.
+ * - __response mode__      A mode providing instructions about
+ *                          how to response to an HTTP request.
+ * - __global instruction__ An instruction at column 0 and prefixed
+ *                          with a @em $ (dollar sign).
+ * - __shared mode__        A mode of the form `$shared : sharename`
+ *                          that can be included by reference in another mode.
+ *
+ * @code
+ * # Examples of global instructions:
+ * $database      : ImportDemo
+ * $xml-stylsheet : import.xsl
+ *
+ * # An example of a shared mode:
+ * $shared : person_fields
+ *    field    : id
+ *       readonly : true
+ *       hidden   : true
+ *    field    : fname
+ *       label    : First Name
+ *    field    : lname
+ *       label    : Last Name
+ *
+ * # An example of a response mode.
+ * list
+ *    root-procedure : App_Root_Values
+ *    procedure      : App_Person_List
+ *    schema         : person
+ *       fields : $person_fields
+ *
+ * # An example of processing a form submission.
+ * # Posted forms must jump @ref Why_Posted_Forms_Always_Jump
+ * submit
+ *    procedure : App_Person_Submit
+ *    jump : ?default:list
+ *        
+ * @endcode
+ *
+ * @section Specs_Keywords_Intro Specs Keywords
+ *
+ * There is a set of keywords that direct the interpretation of the
+ * response mode.  They are defined in the following pages, grouped
+ * according to the mode type
+ *
+ * - @ref Specs_Response_Mode
+ * - @ref Specs_Shared_Mode
+ * - @ref Specs_Global_Instruction
+ *
+ * The Schema framework
+ *
+ * @sa @ref SchemaFW_Specification_Mode
+ * @sa @ref Specs_Global_Instructions
+ * @sa @ref Specs_Shared_Mode
+ *
+ * @sa @ref Specs_Schema_Modifications
+ * @sa @ref Specs_Field_Modifications
+ * @sa @ref Basic_SchemaFW_Document
+ *
+ * Return to @ref Schema_Main
+ */
+
+/**
+ * @page Specs_Post_Response_Dilemma The Post Response Dilemma
+ *
+ * The design of SchemaFW is evolved from my earlier work using
+ * transformed XML documents to run an application.  Microsoft Internet
+ * Explorer made the source XML and XSL document available to the
+ * transformed page via the _XMLDocument_ and _XSLDocument_ properties.
+ * I render the page so a link between the HTML and the XML can be
+ * easily established, and the link is exploited to automate several
+ * tasks.
+ *
+ * Other browsers didn't provide the same properties, so I wrote work-around
+ * code for them to reload the source XML document by using the _location_
+ * property of the browser, then parse the XML document to see what XSL file
+ * was used and reload that document as well.
+ *
+ * Amazingly, I didn't realize the flaw in the work around until recently:
+ * for a page rendered by transforming an XML document that is the result
+ * of a posted request, the _location_ value is not sufficient to reproduce
+ * the page: it will be missing the posted data.  This normally wouldn't
+ * come up because most pages are the result of a GET request to display
+ * a table, and the POST requests come from AJAX forms that are adding to
+ * or modifying the tables' contents without loading a new page.
+ *
+ * When I started to allow some forms to jump to a new page for the results,
+ * I started to have trouble.  The page would load with the expected results,
+ * and then the framework would try to reload the XML source document with
+ * the URL from _location_.  Without the data parameters, the server-side of
+ * the framework would invoke the same stored procedures with NULL parameters,
+ * resulting in corrupted data and confusing error messages.
+ *
+ * Here are a few ways to avoid this problem:
+ * - Try to only use forms to edit or add to a table.
+ * - For form-centric pages, use a _variables_ result and disable page loading.
+ *   @ref Specs_Variables_Result
+ */
+
+/**
+ * @page Specs_Variables_Result Variables Result Type
+ *
+ * In a response mode, if a result is marked as a _variable_ type,
+ * the standard XSL file (_sfwtemplates.xsl_) will render the attributes
+ * of the first line of result's data as variables in a script element.
+ * The field name will become the attribute name, and the field's value
+ * will become the attribute value.
+ *
+ * - The field values will be XML-escaped.
+ * - The field names will NOT be XML-escaped: be careful.
+ * - There is no provision to prevent duplicate attributes.  It is the
+ *   developer's responsibility to check for and prevent this from
+ *   happening.
+ */
+
+/**
+ * @page SchemaFW_Specification_Mode The SchemaFW Specification Mode
+ *
+ * The mode is the primary and necessary structure in a specification file.
+ * It provides the instructions that will be used to build the XML document
+ * that will be returned to the client.  Although global instructions can
+ * be incorporated into a running mode, the instructions in the mode will
+ * always override global instructions.
+ *
+ * A mode, at minimum, always includes the mode header and a _procedure_
+ * instruction, like this:
+ * @code
+ * home
+ *    procedure : App_List_People
+ * @endcode
+ *
+ * Assuming the the _home_ mode is in _default.spec_, the full URL to run the
+ * _home_ mode is `schema?default.spec:home`
+ * - Since _schema_ is the default document in the standard setup,
+ *   _schema_ can be omitted (`?default.spec:home).  __NOTE__ that the _?_
+ *   is still required so the server recognizes the URL as a query string.
+ * -  The _.spec_ extension is assumed, so `?default:home` is also valid.
+ * - _default.spec_ is assumed if no specs file is provided, so this is
+ *   also a valid URL: `?:home`.
+ * - If _home_ is the default mode, either specifically named with a global
+ *   _$default-mode_ instruction, or if _home_ is the first mode in the specs
+ *   file, the `:home` part is not necessary.  The URL can consist solely
+ *   of the specification file name, or even nothing if _default.spec_ is
+ *   the desired specs file.
+ *
+ * @section SchemaFW_Jump_For_Post SchemaFW Jumps on Posts
+ *
+ * SchemaFW always sets a jump destination for posted requests.  If a _jump_
+ * instruction is not provided in the mode, SchemaFW use a blank URL.  See
+ * @ref Why_Posted_Forms_Always_Jump.
+ */
+
+/**
+ * @page Specs_Global_Instructions Global Instructions
+ *
+ * Global instructions are modes (with a tag on column 0) that begin
+ * with _$_ (dollar sign).  They generally consist of a single value
+ * following the _$_-prefixed tag:
+ * @code
+ * $database      : ImportDemo
+ * $xml-stylsheet : import.xsl
+ * @endcode
+ */
+
+/**
+ * @page Specs_Shared_Mode Shared Modes
+ *
+ * A shared mode is a mode that can be included by reference in another
+ * mode.  Shared modes can be nested, that is, a shared mode can include
+ * another shared mode.  Beware of circular references.
+ *
+ * Shared modes are often used to define a set of form modifications
+ * that are needed in several modes that use the same procedure.
+ *
+ * One good example of a share moded is a shared root mode to consistently
+ * add a set of attributes to a subset of the modes in a specs file.
+ * ~~~
+$database : SchemaDemo
+$xml-stylesheet : default.xsl
+
+$session-type : login
+$test_authorized : App_Auth_Test
+$jump_not_authorized : ?default:login
+
+# For authorized-user pages, add account info to root mode attributes
+# using the root-procedure instruction
+$root
+   root-procedure : App_Authorized_Root_Procedure
+
+# A override root branch for non-logged-in modes.  It doesn't add
+# the account attributes and uses a unique stylesheet with more
+# login information. 
+$shared : login-root
+   xml-stylesheet : login.xsl
+
+login
+   procedure : App_Login_Submit
+   type : form-login
+   root : $login-root
+   schema : handle
+      form-action : ?default:submit_login
+
+submit_login
+   procedure : App_Login_Submit
+   type : form-confirm
+   root : $login-root
+
+home
+   procedure : App_Home
+
+people
+   procedure : App_People_List
+   type : table
+   schema : person
+      attributes
+         on_line_click : ?default:edit_person
+      buttons
+         button
+            label : New
+            type  : add
+            task  : ?default:add_person
+
+edit_person
+   procedure : App_Person_Edit
+   type : form-edit
+   .
+   .
+   .
+
+add_person
+   procedure : App_Person_Edit
+   type : form-submit
+   .
+   .
+   .
+ * ~~~
+ */
+ 
+
+
+/**
+ * @page Basic_SchemaFW_Document The Basic SchemaFW Document
+ *
+ * The basic SchemaFW is an XML file that has an _xml-stylesheet_ definition.
+ *
+ * When given an XML file with a _xml-stylesheet_ definition, virtually all GUI
+ * browsers will use XSLT to transform the XML contents into an HTML/web page.
+ *
+ * In SchemaFW, an application-specific  _xml-stylesheet_ should import the
+ * SchemaFW XSLT templates in _sfwtemplates.xsl_ to enable SchemaFW features.
+ * These features include:
+ *
+ * - Nicely-rendered tables and forms
+ * - Loaded SchemaFW Javascript library
+ * - Loaded SchemaFW CSS stylesheet
+ * - Loading the cached XML document
+ * - Loading the cached XSLT document.
+ * 
+ */
+
+/**
+ * @page SchemaFW_XML_Documents SchemaFW XML Documents
+ *
+ * In general practice, a SchemaFW application starts with an XML file that
+ * includes an _xml-stylesheet_ processing instruction to identify an XSLT
+ * file that will build the page.
+ *
+ *
+ * 
+ */
+
+/**
+ * @page Creating_SchemaFX_XSLT_Doc Creating a SchemaFX XSLT Document
+ *
+ * The main XML document will be transformed using an application-specific
+ * XSLT document.  SchemaFW makes it relatively easy to build a useful XSLT
+ * document by providing a stylesheet that 
+ *
+ * The framework provides stylesheets that should be embedded in a web
+ * application's XSLT file with `<xsl:import href="includes/sfxtemplates.xsl>`
+ * instruction.  This stylesheet provides the templates load the necessary
+ * Javascript and CSS files, a _window.load_ function to initialize the
+ * application, and build form and table page fragments for the ongoing
+ * operation of the application.
+ *
+ * The framework looks for an element, typically a _div_, that is 
+  */
+
+/**
+ * @page Why_Posted_Forms_Always_Jump Why Posted Forms Always Jump
+ *
+ * A full-page SchemaFW transform always attempts to get the cached XML document
+ * from which the page is rendered.  This works as expected with a GET request,
+ * when XHR resends the request URL it will return the cached copy without
+ * bothering the server.
+ * 
+ * On the other hand, the URL of POST requests does not include the values
+ * that were sent to the server.  When SchemaFW resends the request URL using XHR,
+ * the posted values will not be included, XHR will thus not recognize the
+ * request as a duplicate, and a cached page cannot be returned.  The "best" case
+ * scenario is that the server may still be able to send useful information, but
+ * we must assume that, without the data, the procedure on the server will fail,
+ * and we will receive an error message instead of a copy of the page's data.
+ *
+ * To prevent this from happening, SchemaFW always adds the _Refresh_ response
+ * header to posted results.  If provided, SchemaFW will use the _jump_
+ * instruction in the active mode for _url_ value in the _Refresh_ header.
+ * Otherwise, it will include a blank URL that will jump to the default
+ * mode of default.spec.
+ *
+ * For full-page transforms, the browser will jump to the URL in the _Refresh_
+ * response header.  The _Refresh_ response header is ignored when the data
+ * is retrieved using XHR, so no jump will occur when updating page fragments.
+ */
+
+/**
+ * @page Using_SpecsReader Using SpecsReader
+ *
+ * SpecsReader is a tool for accessing information in a Specs file (@ref Specs_File).
+ *
+ * On initialization, SpecsReader reads the entire specs file, saving the name and
+ * file position of every mode in the file.
+ *
+ * Once initialized, without further file access, SpecsReader can:
+ *
+ * -# Confirm the existence of any named mode.
+ * -# Access the value of a mode
+ * -# Return the file position of any name mode.
+ *
+ * The above facilities are useful for preparing the environment in which Schema 
+ * will operate.
+ *
+ * The primary purpose of a specs file is to specify how the results or
+ * parameters of a procedure will be presented to the client.  The standard
+ * mode is where this information is located.  Read the named mode with
+ * @ref SpecsReader::build_branch().  This function will read the lines in the mode,
+ * as well as the lines of any referenced shared modes, to build a tree-linked
+ * ab_handle with which the mode instructions can be read.
+ *
+ * See @ref SpecsReader_Read_Mode.
+ *
+ * @todo Provide some example code, in code blocks or snippets, to
+ *       explain the use of SpecsReader
+ *
+ * @section SpecsReader_Read_Mode Reading A Mode
+ *
+ * When reading a mode from a specs file, SpecsReader builds a memory tree
+ * of ab_handles, each holding the a single line from the specs file.  As
+ * SpecsReader reads each line, it notes the line type.  For lines that
+ * refer to shared modes, SpecsReader will append the contents of the shared
+ * mode to the end of the ab_handles linked-list.  SpecsReader will likewise
+ * append to the end any shared modes within the shared mode that have not
+ * previously been appended.
+ *
+ * When all lines of the named mode and all included shared modes have been
+ * retrieved, SpecsReader will reconcile the tree by replacing the shared mode
+ * ab_handles with pointers to the appropriate shared mode that follows the
+ * main mode.
+ */
+
+/**
+ * @page Specs_Schema_Modifications Modifying the Schema Element
+ *
+ * @todo Write this page
+ *
+ * If it's a form, you'll need the include a form-action line.
+ *
+ * If it's a table, you'll probably want to have a on_line_click line and
+ * probably a button to add a new record.
+ *
+ * @sa @ref Specs_Field_Modifications
+ * Return to @ref Schema_Main
+ */
+
+/**
+ * @page Specs_Field_Modifications Modifying Schema Fields
+ *
+ * @todo Write this page.
+
+ * @sa @ref Specs_Schema_Modifications
+ * Return to @ref Schema_Main
+ */
+
+/**
+ * @page Specs_Form_Types Schema Form Types
+ *
+ * Forms are structured requests for information.  Forms are used to add
+ * new information or to change existing information.
+ *
+ * In the Schema framework, forms are generated from schema elements of the
+ * Schema document.  See @ref Schema_Element.
+ *
+ * Schemas can be created from two sources:
+ *
+ * -# The parameters of a stored procedure
+ * -# The results of a query
+ *
+ * Every operation involves retrieving the parameters of a stored procedure,
+ * so it more efficient, if a schema is to be used for a new item form, to
+ * generate the schema from the parameters.  In this case, you identify the
+ * procedure that will save the data.  If the form is to edit an existing item,
+ * it is better to retrieve the latest contents, and thus using the results
+ * of a query.  See @ref Schema_Form_Queries.
+ *
+ * Look at the following modes.  Assuming using best practices, the fields in the
+ * result of the App_Person_Values will match exactly with the parameters of the
+ * App_Person_Submit procedure.  In that way, and by sharing the same fields
+ * shared mode, one can get the same schema with either stored procedure.
+ *
+ * For efficiency, when you need a blank form, use the Submit procedure to build
+ * the schema from the input parameters as you see in the "new" mode below.  You
+ * will thus avoid running the a redundant query.  If you need the values to
+ * prefill a form, then use the App_Person_Values query as you see in the "edit"
+ * mode.
+ * @code
+new
+   procedure : App_Person_Submit
+   type : form-new
+   attributes
+      form-action : person:submit
+      title : Person Dialog
+   schema : info
+      fields : $person
+   
+edit
+   procedure : App_Person_Values
+   type : form-edit
+   result : 1
+      name : form
+      schema : info
+        fields : $person
+      attributes
+         form-action: person:submit
+         title : Person Dialog
+ * @endcode
+ *
+ * @sa @ref Specs_File
+ * @sa @ref Specs_Form_Types
+ *
+ * Return to @ref Schema_Main
+ */
+
+/**
+ * @page Specs_Mode_Types Mode Types
+ *
+ * Every mode should indicate its type to indicate how the procedure will
+ * be interpreted.  If there is no type declaration, SchemaFW will return
+ * the rows of the query without a schema.
+ *
+ * There are two main types of modes, data and form.  A data type, mainly
+ * _table_, simply returns data.  Forms must distinguish between a call to
+ * get the parameters (_form-new_ and _form-login_) to present an empty form,
+ * a form that edits existing data (_form-edit_), and submitting data from
+ * a form (_form-submit_ and _form_confirm_)to be applied as the arguments
+ * of a stored procedure.
+ *
+ * ### Form Mode Types
+ *
+ * There are several mode types associated with form handling.  HTML Forms can
+ * be generated from the parameters of stored procedures and/or schema directions.
+ * Form mode types also indicate how data submitted from HTML forms are mapped
+ * to procedure parameters to execute the stored procedure.
+ *
+ * #### Session Considerations with Form Types
+ *
+ * For specs files that invoke session handling, normal form types will not
+ * be processed if there is no current session.  Session form types, on the other
+ * hand, are used to establish a session, so they will be displayed and processed
+ * without a current session.
+ *
+ *  __Data Interaction Form Types__
+ *
+ * - __form-new__     returns a schema prepared with the parameters of the named
+ *                    procedure, with modifications, but without data.
+ * - __form-edit__    returns a schema prepared with the parameters of the named
+ *                    procedure, with modification, and with data.
+ * - __form-submit__  uses parameters of named procedure to interpret submitted data.
+ *
+ * __Session Interaction Form Types__
+ *
+ * Session form types work like their relatives, but are 
+ * - __form-login__   like _form-new_ with an empty form, but for session
+ *                    authorization, so it skips the no-session jump.
+ * - __form-confirm__ like _form-submit_, calls the procedure with the form data
+ *                    mapped to the procedure parameters.
+ *
+ * __Other Session Form Type__
+ *
+ * - __session_abandon__ deletes session record, call session clean-up procedure,
+ *                       clear session cookies, jump to jump_no_session if
+ *                       specified, otherwise home page.
+ *
+ * __Non-session Form Types__
+ * - __info__            while not enforced, an _info_ type should return
+ *                       information about a single item
+ * - __table__           should return set of items.  By default, data in this
+ *                       format will be displayed as a table, but when identified
+ *                       appropriately, could invoke an application-specific
+ *                       XSLT template for customized display.
+ * - __collection__      synonyn for _table_
+ * - __import__          notifies that SchemaFW should expect a file submission
+ *                       in a multipart-form.
+ *
+ * __Obsolete Mode Types__
+ * - __session_form__    uses named procedure to create a schema for a login form.
+ * - __session_submit__  uses named procedure to interpret submitted data.
+ *
+ *
+ * Unsurprisingly, the modes that start "form-" work with forms.  @c form-new and
+ * @c form-edit both include a schema, even if not requested.  The schema is used
+ * by the client software to render a form.  The @c form-submit accepts the values
+ * sent by POST or GET (or both) to set the parameter values of the named
+ * stored procedure.
+ *
+ * The type @c info should return information about a single item.  The resultset
+ * can include several results with lookup information, if necessary, but the
+ * main result should contain a single item.
+ *
+ * The type @c collection should return a set of items.  By default, a collection
+ * will be displayed as a table, but with customization, a collection could be a
+ * calendar, a graph, or some other view of an aggregation of items.
+ 
+ */
+
+/**
+ * page Schema_Form_Queries Schema Form Queries
+ *
+ * Managing data will require at least two procedures, one to retrieve the data
+ * and another to save the data.
+ *
+ * @section Submit_Procedure The Submit Procedure
+ *
+ * @code
+ * @endcode
+ * Generally, the basic retrieve procedure will
+ * have a single parameter, the integer id number.  Other retrieve procedures
+ * are possible, of course, with other combinations of data, but the id parameter
+ * procedure is basic and is assumed by the framework.
+ */
+
+ 
+
+
+/**
+ * @page Specs_Shared_Mode The Shared Mode
+ *
+ * A shared mode is a global mode that can be accessed from within
+ * other modes to replace certain sections.  This makes it possible
+ * for a single list of values to be used by several related modes,
+ * to help maintain a consistency where it's desirable.  The shared
+ * mode has a value for searching, and child nodes that will be used
+ * in place of the lines that would have followed the line requesting
+ * the shared section.
+ *
+ * An example of this is the labeling of field fields across the
+ * set of modes.  A person record with Collection, Submit, and Form
+ * modes will want to use consistent labels for the fields.  This
+ * is easily done with a shared fields mode:
+ *
+ * @code
+ $shared : person_fields
+    fields
+       field : p_fname
+          label : First Name
+       field : p_lname
+          label : Last Name
+ * @endcode
+ *
+ * Any advisor line can access the shared mode by setting the value
+ * equal to the shared mode's value, prefixed with a '$':
+ *
+ * @code
+submit
+   procedure : App_Person_Submit
+   schema : person
+      fields : $person_fields
+ * @endcode
+ *
+ * In the above example, the fields section of the submit mode will use
+ * the values in the $shared:person_fields
+ *
+ * Return to @ref Schema_Main
+ * Return to @ref Specs_File
+ */
+
+/**
+ * @page Specs_Form_Mode Specs File Form Modes
+ *
+ * Most interactions are done with forms of some sort.  SchemaFW has attempted
+ * to provide a set of form-related mode-types that will handle any data entry
+ * situation.
+ *
+ * Nearly all interactons with a database involve some sort of a form, so
+ * in order to handle the variety of form interactions, there are several defined
+ * types to help provide simple ways to accomplish many tasks.
+ *
+ * Note that, with custom XSL, CSS, and Javascript, there is really no limit
+ * on what can be done with SchemaFW.  The form modes being discussed here
+ * leave flags in the XML output that alter the look or performance of a form
+ * when detected by the XSL and Javascript code.
+ *
+ * @section Specs_Form_Modes_Explained Form Modes Explanation
+ *
+ * There are three standard form modes, **form-new**, **form-edit**, and
+ * **form-submit**.  These modes are not expected to stand alone or render
+ * a page, but rather to work with other elements that are already on the screen.
+ * In the normal case, the form information will be retrieved and submitted
+ * using _AJAX_ methods, while the form will be presented as a floating dialog
+ * on top of the content with which the form is designed to interact.
+ *
+ * When using an _identity_ session, the three standard form types will return
+ * a failure message if an authorized session is not in force.  The client-side
+ * code of the framework will detect the message and report it to the user.
+ *
+ * The specialized form types depart from standard in various ways.  They are
+ * provided in the interest of simplifying a response mode, but they often
+ * require very specific things elsewhere in order for the framework to
+ * detect the difference and provide a non-standard response.
+ *
+ * @section Specs_Form_Types_Standard_Three The Standard Three Form Types
+ *
+ * The three standard form-related mode types
+ *
+ * - __form-new__  
+ *    Makes an empty form
+ */
+
+ /**
+  * @page Specs_Form_Mode_Authorization Authorization Forms
+  *
+  * Authorization forms pose a unique challenge to our assumptions.
+  *
+  * First of all, unlike other forms, an authorization for _should_
+  * stand alone.  Since it must preceed any data transfer, there can be
+  * no active page from which it will be run and to which it will
+  * return.  Without a context to fall back on, the request must jump
+  * to a new page. See @ref Specs_Post_Response_Dilemma.
+  *
+  * Next, while the application requires a user to be authorized, the
+  * user will not be authorized when receiving or submitting the authorization
+  * form.  This requires some special handling.
+  *
+  * Here is how I'm doing it:
+  *
+  * I am using a new response mode type, _form-result_.  The form-result
+  * will be used for both rendering and submitting the form.  The main
+  * characteristic of the form-result is that it will render without
+  * attempting to reload the XML source document.
+  *
+  * @code
+  $xml-stylesheet : default.xsl
+  $database       : mydatabase
+  
+  login-submit
+     procedure     : App_Login_Form
+     session-type  : establish
+     type          : form-result
+     jump-no-error : /
+  * @endcode
+  *
+  * The above simplest form of the submit mode demands a few things from
+  * the stored procedure.  It requires that the outcome of the login attempt
+  * be recorded in a single row query result that contains, at least, a
+  * column named _error_ with an integer value, 0 for success, and any
+  * other integer for a failure.  An optional field that will be sought
+  * and used is _msg_, which should contain a string that will be displayed
+  * on the form.
+  *
+  * Note that in the following, I've labelled the BEGIN line to allow
+  * early termination with the `LEAVE` command.
+  *
+  * Also note that there are several `SELECT` statements.  The second
+  * does a `SELECT ... INTO` which does not show up in the output.  The
+  * other `SELECT` statements all create _error_ columns for the
+  * framework to find.
+  *
+  * It is necessary, for the default case, that the first query result
+  * contains outcome of the procedure.  However, there is no limit to
+  * following query results, if they happen in the called procedures at
+  * the end of this procedure.
+  *
+  * Eventually, I may add code to allow naming the outcome result in
+  * a multi-result document.
+  *
+  ~~~{.sql}
+DROP PROCEDURE IF EXISTS App_Login_Form $$
+CREATE PROCEDURE App_Login_Form(handle VARCHAR(128),
+                                password VARCHAR(20))
+this_proc:BEGIN
+   DECLARE handle_id INT UNSIGNED;
+   
+   IF @session_confirmed_id IS NULL THEN
+      SELECT 1 AS error, 'Active session required to login.' AS msg;
+      LEAVE this_proc;
+   END IF;
+
+   SELECT id INTO handle_id
+     FROM Handle
+    WHERE Handle.handle = handle
+      AND Handle.password = MD5(password);
+
+   IF handle_id IS NULL THEN
+      SELECT 1 AS error, 'The handle/password pair not valid.' AS msg;
+      LEAVE this_proc;
+   ELSE
+      SELECT 0 AS error, 'Successful login.' AS msg;
+   END IF;
+
+   CALL App_Login_Set_Session(handle_id);
+   CALL App_Session_Restore(@session_confirmed_id);
+END $$
+  ~~~
+  *
+  */
+
+/**
+ * @page Specs_Shaping_Result_Names Custom Result Names
+ *
+ * The default name of a result element is @e result, but this can be
+ * easily changed.  Results are identified in the framework as an element
+ * that has an @e rndx attribute, like this:
+ *
+ ~~~{.xml}
+   <resultset ...>
+      <result rndx="1" ...>
+         <row .../>
+      </result>
+   </resultset>
+ ~~~
+ *
+ * The name of each result can be different to better describe the
+ * contents of the result.  There are several ways the result will be
+ * renamed:
+ *
+ * - schema : 
+ */
+
+/**
+ * @page Specs_Shaping_Row_Names Custom Row Names
+ *
+ * SchemaFW uses _row_ as the default row name in results.  This is OK
+ * for "rapid development," but using custom names has important benefits.
+ * The greatest benefit is the opportunity to provide custom templates
+ * that match your renamed rows.
+ *
+ ~~~
+ # In specs file
+ $xml-stylesheet : myStylesheet.xsl
+ person_list
+    type      : table
+    procedure : App_Family_List
+    on_line_click : ?default:edit_person
+    # Renames element names to "person"
+    schema : person
+
+edit_person
+   type      : form-edit
+   procedure : App_Family_Update
+   result
+      type     : update
+      # Note matching row-name : person to schema : person
+      row-name : person
+ ~~~
+ *
+ *
+ * In the stylesheet that renders your page, you can include a template
+ * that matches the renamed row for custom output.  You could make a new
+ * form-building template by copying and customizing the template in
+ * `sfwtemplates.xsl` that matches _schema_ and has a _make_form_ mode.
+ * I will eventually restructure the template for simpler customization.
+ *
+ * If you use the template tag in the code sample, XSL will select that
+ * template before the standard _make_form_ template because additionally
+ * matching an attribute is a more specific match than the generic `match="schema"`.
+ ~~~{.xsl}
+ <!-- In your myStylesheet.xsl (used as result of $xml-stylesheet instruction) -->
+ <xsl:template match="schema[@name='person']" mode="make_form">
+    .
+    .
+    .
+ </xsl:template>
+ ~~~
+ *
+ * @section Specs_Shaping_Row_Names_Trouble Troubleshooting Custom Names
+ *
+ * An error will occur when adding records to the table if the _table_ response
+ * mode includes a named schema and the _form-edit_ result does not match the
+ * schema name.  This can be from a mismatched or missing _row-name_ instruction
+ * in the _form-edit_ mode.  Consult the code sample above to see the proper form.
+ * 
+ */
+
+/**
+ * @page Specs_Shaping_Instructions Shaping Instructions
+ *
+ * @sa @ref Specs_Shaper_Schema
+ * @sa @ref Specs_Shaping_Row_Names
+ * @sa @ref Specs_Shared_Modes
+ *
+ * The SchemaFW XML documents that are generated from MySQL procedures are
+ * relatively simple documents.  They consist of a document element named
+ * _resultset_, with zero or more child elements named _result_, each of
+ * which contain zero or more child elements named _row_.  The _row_ elements
+ * have attributes in field-name/value pairs.
+ *
+ ~~~{.xml}
+ <?xml version="1.0" ?>
+ <resultset>
+    <result rndx="1">
+       <row id="1" fname="John" lname="Doe" />
+       <row id="2" fname="Jane" lname="Smith" />
+    </result>
+    <result rndx="2">
+       <row id="1" id_person="1" number="612-345-6789" />
+       <row id="2" id_person="2" number="763-456-7890" />
+    </result>
+ </resultset>
+ ~~~
+ *
+ * SchemaFW can render that document as a table with three columns, named
+ * _id_, _fname_, and _lname_.
+ *
+ * There are several problems that can occur when using a generic format as
+ * above.
+ *
+ * - NULL values
+ *   - If a field value in a row is NULL, there will be no attribute for
+ *    that field.  However, the columns are set by the first row, so following
+ *    rows with a different configuration of attributes will end up with values
+ *    in the wrong columns.
+ * - Unfriendly Column Names
+ *   - Field names that make sense in a database design are often not suitable
+ *     for use by an end-user.
+ * - Distinguising results from one another
+ *   - Procedures that execute more than one SELECT statement will have multiple
+ *     results.  Numbered results (using an _rndx_ attribute) are not scan-friendly
+ *     and are harder to interpret as a XSLT template match.
+ * 
+ */
+
+/**
+ * @page Specs_Shaper_Schema
+ *
+ * The schema is the primary method for modifying MySQL output.  There are some
+ * shortcuts that can make a schema unnecessary, but for most cases, and for the
+ * most control, the schema is the tool for the job.
+ *
+ * A schema can rename the rows and provide rendering hints for tables and
+ * forms.
+ */
+
+/**
+ * @page Specs_Shared_Modes Shared Modes
+ *
+ * Shared modes can be used to help standardize settings between modes
+ * and between similar settings
+ *
+ * A shared mode is created with a global mode tag (<i>$</i>-prefix), followed
+ * by the share name:
+ ~~~
+ $shared : id_field
+    field    : id
+       readOnly : true
+       hidden   : true
+
+$shared : fname_field_settings
+   label       : First Name
+   html-length : 20
+
+ ~~~
+ *
+ * A shared mode can be used in two ways: as the sub-instructions of
+ * of another instruction, or as co-sub-instructions or siblings.  Using the
+ * shared modes above, consider the following examples:
+ *
+ ~~~
+  person_list
+     procedure     : App_Person_List
+     type          : table
+     on_line_click : ?default:person_edit
+     result
+        name   : people
+        schema : person
+           siblings : $id_field
+           field : fname
+              siblings: $fname_field_settings
+           field : lname
+              label : Last Name
+ ~~~
+ * The response mode will expand to look like:
+ ~~~
+  person_list
+     procedure     : App_Person_List
+     type          : table
+     on_line_click : ?default:person_edit
+     result
+        name   : people
+        schema : person
+           field : $id_field
+           field : fname
+              siblings: $fname_field_settings
+           field : lname
+              label : Last Name
+ ~~~
+ *
+ * It is easy to test shared expansions, use the <i>-b</i> (batch) and <i>-d mode</i>
+ * command line options:
+ *
+ * `./schema -b -m person_list -d mode`
+ */
+                
+/**
+ * @page Specs_File_Troubleshooting Troubleshooting
+ *
+ * If things are not working as you would expect, open your javascript
+ * debugger and watch the console for messages.
+ *
+ * @section Specs_File_Errors_Console Console-indicated Errors
+ *
+ * Many errors will not show warnings to the end use, but are written to the
+ * console, which can be read when in the debugging mode of the major browsers.
+ *
+ * @subsection Console_Error_Tag_Mismatch Tag mismatch: added "row" element to group of "person" elements.
+ *
+ * This error is generated when, when a record is added or changed, the tag name
+ * of the replacement XML element does not match the schema name.  This prevents
+ * the new element from being included in the table when it's replotted.  See
+ * @ref Specs_Shaping_Row_Names_Trouble
+ *
+ * @subsection Console_Error_Unknown_Column Unknown column "id_family" in "field list" (CALL ...) execute
+ *
+ * This is a MySQL-generated error that occurred while executing the procedure.
+ * Look carefully at the procedure named after _CALL_ in the message.
+ *
+ * Note that this error reveals a small detail about the internal
+ * structure of your application.  While it may not be important, it is
+ * safer to fix these types of errors as soon as possible.
+ *
+ */

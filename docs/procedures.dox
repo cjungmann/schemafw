@@ -1,0 +1,175 @@
+/**
+ * @page Stored_Procedures Stored Procedures
+ *
+ * The interface between stored procedures and the outside world is through
+ * the procedures parameters, the input, and the queries' results, the output.
+ *
+ * The Schema Framework captures the input requirements and output data to
+ * create schemas with which forms, tables, and even custom output are rendered.
+ *
+ * In most cases, and by default in the framework, procedures that retrieve data
+ * will have either no parameters or a single parameter that is an integer
+ * (signed or unsigned).  Some of these procedures will retrieve a single record
+ * for editing, and others will retrieve a collect of records.
+ * @sa @ref Table_Procedures
+ * @sa @ref Retrieve_Procedures
+ *
+ * Procedures that save data will have several parameters, one for each data
+ * element.
+ * @sa @ref Submit_Procedures
+ */
+
+/**
+ * @page Naming_Stored_Procedures Naming Stored Procedures
+ *
+ * To make it easier to check your collection of procedures for completion, I
+ * suggest you use the following naming convention.  If you list procedures
+ * by name in name order, your application procedures will be isolated from
+ * other procedures in the database, and it will be easier to isolate procedures
+ * of a class by using LIKE queries.  The basic idea is: <i>App_Object_Task</i>,
+ * where "App" groups all procedures together, "Object" is replaced by the name
+ * of the type of object the set of procedures works with, and finally, "Task"
+ * is the task the procedure performs.  The main tasks will be Table, Submit,
+ * and Edit, though they are not required nor are they limited to those three.
+ *
+ * Here is an example to illustrate:
+ *
+ * To handle a table of persons, you could create a procedure App_Person_Collection to
+ * return all persons in the table, App_Person_Submit would save the results of a form,
+ * and App_Person_Values would provide the input values for a form editing an existing
+ * record.
+ *
+ * To see your person procedures:
+ * @code
+ mysql> SELECT SPECIFIC_NAME
+ mysql> FROM information_schema.ROUTINES
+ mysql> WHERE ROUTINE_SCHEMA = 'SchemaDemo'
+ mysql> AND SPECIFIC_NAME LIKE 'App_Person_%';
+ * @endcode
+ *
+ */
+
+/**
+ * @page Table_Procedures Table Procedures
+ *
+ * This class of procedures refers to procedures that are designed to return
+ * multiple records.  The most common view of such data would be a table, but
+ * the document could be rendered in another form such as a calendar or graph.
+ *
+ * This is the simplest of this form:
+ * @code
+ DELIMITER $
+ DROP PROCEDURE IF EXISTS App_Person_Collection $
+ CREATE PROCEDURE App_Person_Collection()
+ BEGIN
+    SELECT * FROM Person;
+ END $
+ DELIMITER ;
+ * @endcode
+ *
+ * However, the following is more useful because this procedure will provide
+ * the table view as well as an item view with the same fields when the application
+ * calls for replacing or adding a record without sending the entire table.
+ *
+ * @code
+ DELIMITER $
+ DROP PROCEDURE IF EXISTS App_Person_Collection $
+ CREATE PROCEDURE App_Person_Collection(p_id INT UNSIGNED)
+ BEGIN
+    IF p_id IS NULL THEN
+       SELECT id, handle, fname, lname FROM Person;
+    ELSE
+       SELECT id, handle, fname, lname
+         FROM Person
+        WHERE id = p_id;
+     END IF;
+ END $
+ DELIMITER ;
+ * @endcode
+ *
+ * @sa @ref Submit_Procedures
+ * @sa @ref Retrieve_Procedures
+ * @sa @ref Stored_Procedures
+ */
+
+/**
+ * @page Retrieve_Procedures Retrieve Procedures
+ *
+ * The default functions of the framework assume that a record is identified
+ * by an integer, signed or unsigned.  This is the way a click on a table line
+ * opens a record.  Although it is possible to create procedures that take multiple
+ * parameters or string parameters, the framework won't help you as much getting
+ * and displaying the records.
+ *
+ * @code
+DELIMITER $
+DROP PROCEDURE IF EXISTS App_Person_Values $
+CREATE PROCEDURE App_Person_Values(p_id INT UNSIGNED)
+BEGIN
+   SELECT id     AS p_id,
+          handle AS p_handle,
+          fname  AS p_fname,
+          lname  AS p_lname
+     FROM Person
+    WHERE id = p_id;
+END $
+DELIMITER ;
+ * @endcode
+ *
+ * @sa @ref Submit_Procedures
+ * @sa @ref Table_Procedures
+ * @sa @ref Stored_Procedures
+ */
+
+/**
+ * @page Submit_Procedures Submit Procedures
+ *
+ * @todo Change the parameters to id, handle, etc, from p_id, p_handle, etc if testing
+ * shows that this doesn't confuse MySQL.  Don't forget to update the references in
+ * the prose if the parameter names are changed.
+ *
+ * It is a good idea to have one procedure handle both adding a new record and
+ * editing an existing record.  In the following example, the value of p_id determines
+ * which statement to run.  If p_id is NULL, it assumes that the values are intended
+ * to be added as a new record.  If not null, it replaces the existing values of the
+ * record whose id matches p_id with the argument values.
+ *
+ * @note In a real application, the code would have to handle a error caused by a
+ * duplicate entry.  This should be handled with an exception handler that catches
+ * the MySQL error.  That feature is not yet implemented at the time of this
+ * documentation, and the only error-checking is to not return the record if a
+ * record was not created.
+ *
+ * @code
+DELIMITER $
+DROP PROCEDURE IF EXISTS App_Person_Submit $
+CREATE PROCEDURE App_Person_Submit(p_id INT UNSIGNED,
+                                   p_handle VARCHAR(20),
+                                   p_fname VARCHAR(20),
+                                   p_lname VARCHAR(30))
+BEGIN
+   DECLARE rid INT UNSIGNED;
+   IF p_id IS NULL THEN
+      INSERT INTO Person (handle, fname, lname)
+             VALUES (p_handle, p_fname, p_lname);
+
+      SET rid = LAST_INSERT_ID();
+   ELSE
+      UPDATE Person
+         SET handle = p_handle,
+             fname = p_fname,
+             lname = p_lname
+       WHERE id = p_id;
+    END IF;
+
+    IF rid IS NOT NULL THEN
+       CALL App_Person_Collection(rid);
+END $
+DELIMITER ;
+ * @endcode
+ *
+ * @sa @ref Retrieve_Procedures
+ * @sa @ref Table_Procedures
+ * @sa @ref Stored_Procedures
+ */
+

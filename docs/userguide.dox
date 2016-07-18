@@ -1,0 +1,104 @@
+/**
+ * @page SchemaFW_Dev_Guide SchemaFW Developers Guide
+ *
+ * Creating a dynamic web application can be a very imposing task.
+ * Building a simple web page is challenging enough, requiring
+ * expertise in HTML, CSS, Javascript (ECMAScript), etc, to generate
+ * an engaging user experience.  That is only the start.
+ *
+ * Using a database to manage dynamic content multiplies the challenge.
+ * A developer must design data tables and write queries to populate and
+ * retrieve information.  HTML tables, forms, and other displays  must be
+ * kept in sync with the database design.  Security must be a high priority
+ * to prevent malicious attempts to access private data or to disrupt the
+ * application.
+ *
+ * SchemaFW can help relieve some of the burden of creating a dynamic
+ * web application.  The SchemaFW developer will focus primarily on
+ * designing a database and queries, and writing simple scripts that
+ * connect user requests to the queries.
+ *
+ * This guide contains the following sections:
+ *
+ * - @ref SDG_Security_Overview
+ * - @ref SDG_Creating_App
+ * - @ref SDG_Database_Design
+ * - @ref SDG_Sessions
+ * - @ref SDG_Scripts
+ *   - @ref Specs_File
+ *   - @ref Specs_Mode_Types
+ *
+ * @todo Complete this introduction page.
+ */
+
+/**
+ * @page SDG_Security_Overview
+ *
+ * List security concerns and how SchemaFW helps manage them.
+ *
+ * @ref SchemaFW_Dev_Guide
+ */
+
+/**
+ * @page SDG_Creating_App Creating a SchemaFW Application
+ *
+ * Describe using schemafw_setup
+ *
+ * @ref SchemaFW_Dev_Guide
+ */
+
+/**
+ * @page SDG_Database_Design Database Design for SchemaFW
+ *
+ * @ref SchemaFW_Dev_Guide
+ */
+
+/**
+ * @page SDG_Sessions Managing Sessions in SchemaFW
+ *
+ * Describe how sessions are started and ended.
+ *
+ * @subsection SDG_Sessions_App_Session_Abandon App_Session_Abandon Procedure
+ *
+ * When a session is ended by timeout or logout, SchemaFW will call
+ * an App_Session_Abandon stored procedure to clean up after the session.
+ * An empty App_Session_Abandon procedure is created in sys_procs.sql
+ * to be the target of a trigger.  The SchemaFW developer will likely
+ * want to replace the default App_Session_Abandon procedure with a
+ * customized version that cleans up application-specific session
+ * information
+ *
+ * @todo Schema::cancel_session refers here.  Ensure the content here
+ * helps explain the issues there.
+ *
+ * @ref SchemaFW_Dev_Guide
+ */
+
+ /**
+ * @page SDG_Keywords Keywords
+ *
+ * The vocabulary directing SchemaFW is limited.
+ */
+
+/**
+ * @page SDG_Scripts Writing SchemaFW Specs Files
+ *
+ * @ref SchemaFW_Dev_Guide
+ */
+
+ /**
+ * @page SDG_Importing_Data Importing Data
+ *
+ * SchemaFW uses the _Gnumeric_ `ssconvert` utility to import
+ * spreadsheets into MySQL.  Ideally, imported spreadsheets will
+ * be in Microsoft Excel format, but other spreadsheet formats that
+ * _Gnumeric_ support are also acceptable.  Ironically, CSV, which
+ * is the format to which all spreadsheets are converted, may not
+ * be a good import format because CSV is not standardized.
+ *
+ * When importing data into SchemaFW, the default behavior is to load
+ * the data into a quarantine table from which working tables can be
+ * updated.  This allows a confirmation step for the client to
+ * confirm that the column names of the uploaded data match the 
+ * content.
+ */

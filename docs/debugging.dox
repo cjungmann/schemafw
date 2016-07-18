@@ -1,0 +1,101 @@
+/**
+ * @page Schema_Debugging_Main Debugging SchemaFW
+ * I have made some effort in making the task of debugging
+ * easier for the developer.
+ *
+ * The _schema_ command is used by Apache to serve the pages,
+ * but it also works as a command line utility when using
+ * certain command line parameters.
+ *
+ * The @e -b command line parameter stands for _batch_ and
+ * with that parameter, you can see the output that would
+ * go to the client.  The header information is printed to
+ * _stderr_, the XML document to _stdout_.  You will be able
+ * to see the headers, but also send the output to _xsltproc_
+ * to debug your stylesheets.
+ *
+ * ### Simplest Form
+ * The following will run the default response mode of _default.spec_:
+ *
+ * @code
+ * ./schema -b
+ * @endcode
+ *
+ * ### Select a Response Mode
+ * Specify a different response mode with @e -m
+ *
+ * @code
+ * ./schema -b -m login
+ * @endcode
+ *
+ * ### View Resolved Response Mode
+ * Specs files allow shared modes that can be incorporated into
+ * multiple response modes.  For complicated response modes, it can
+ * be helpful to see how SchemaFW resolves the shared modes.  This
+ * can be done with the @e -d _mode_ parameter.
+ *
+ * This will show the default mode:
+ * @code
+ * ./schema -b -d mode
+ * @endcode
+ *
+ * This will show the named mode:
+ * @code
+ * ./schema -b -m login -d mode
+ * @endcode
+ *
+ * ### Posted Form Parameters
+ * Posted forms can be simulated with the @e -v parameter.  The @e -v
+ * parameter should be followed by the _name=value_ like this:
+ * @code
+ * ./schema -b -m login_submit -v handle=mike -v password=word
+ * @endcode
+ *
+ * ### Test the Transformation
+ * With the exception of errors that cause fatal errors, all of the
+ * above examples write out an XML document.  If you want to test
+ * your stylesheet, simply pipe the output to _xsltproc_.  Note the
+ * trailing dash character.  It represents the stdin of the pipe, and
+ * by putting at the end of the command line, it tells xsltproc to use
+ * stdin for the input file.
+ * @code
+ * ./schema -b -m login | xsltproc default.xsl -
+ * @endcode
+ *
+ * ### Sessions: Including Cookies
+ * Using sessions introduce a bit of complexity, but it is possible to
+ * fake a session by copying the session information to the command line
+ * as in the following example.  Look at the header lines that say
+ * @code
+ * Set-Cookie: SessionId=00
+ * Set-Cookie: SessionHash=AiFtKa12Gv0euKCoKZ5zLDPlwOBqasv6
+ * @endcode
+ *
+ * When transferring the SessionHash value to the command line,  use the
+ * BASH copy buffer.  The key combinations are Ctrl-Shift-C to copy and
+ * Ctrl-Shift-V to paste.
+ *
+ * Make sure that you either quote the pair of cookie values, or escape
+ * the space between `SessionId=00;` and `SessionHash=xxxxx`.
+ *
+ * @code
+ * HTTP_COOKIE="SessionId=1; SessionHash=AiFtKa12Gv0euKCoKZ5zLDPlwOBqasv6" ./schema -b
+ * @endcode
+ *
+ * ### GDB Debugging
+ * When debugging the C++ code, add `gdbtui --args` just before `./schema`:
+ * @code
+ * gdbtui --args ./schema -b -m login
+ * @endcode
+ *
+ * If there are cookie values, `gdbtui --args` goes between the cookies and the
+ * `./schema`:
+ * @code
+ * HTTP_COOKIE="SessionId=1; SessionHash=AiFtKa12Gv0euKCoKZ5zLDPlwOBqasv6" gdbtui --arg ./schema -b
+ * @endcode
+ *
+ * There are a few useful functions for placing breaks.
+ * - Schema::install_response_mode
+ * - Schema::process_root_branch
+ * - Result_As_SchemaDoc::pre_fetch_use_result
+ */

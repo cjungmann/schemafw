@@ -1,0 +1,38 @@
+#! /bin/bash
+
+title=${1:~title}
+
+IFS='' read -r -d '' dochead <<EOFhead
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+      <title>${title}</title>
+      <style type="text/css">
+      html { background-color:#CCCCFF; }
+      body { margin:1em auto; width:800px; background-color:#FFFFFF; padding:1em;}
+      h1,h2,h3,h4 { font-family:sans-serif; }
+      pre { border:solid 1px #999999; padding:8px; }
+      code { background-color:#FFFF99; font-family:monospace; padding:0 4px; }
+      pre code { display:block; }
+      </style>
+   </head>
+   <body>
+EOFhead
+
+IFS='' read -r -d '' docfoot <<EOFfoot
+   </body>
+</html>
+EOFfoot
+
+mkdir html
+
+aray=($(ls -1 *.md))
+
+for fle in "${aray[@]}"
+do
+    name="html/${fle%\.md}"
+    echo "${dochead}" > "${name}.htm"
+    sed 's|\.md)|\.htm)|' "${fle}" | cmark >> "${name}.htm"
+    echo "${docfoot}" >> "${name}.htm"
+done
+
