@@ -55,32 +55,31 @@ in the future.
 
 1. Clone the Repository
    
+   I suggest putting the source code in the traditional directory _/usr/local/src_.
+   
    ~~~
    cd /usr/local/src
-   sudo git clone https://chuckj@bitbucket.org/chuckj/schema.git
+   sudo git clone https://github.com/cjungmann/schemafw.git
    ~~~
-
-   I suggest putting the source code in the traditional directory _/usr/local/src_.
 
 2. Configure, Build, and Install
-
+   
    Assuming we're in _/usr/local/src_ after the completion of step 1:
-
+   
    ~~~
-   cd schema
+   cd schemafw/src
    sudo ./configure
    sudo make
    sudo make install
    ~~~
 
 3. Confirm That Schema is Running
-
+   
    ~~~
    schema.fcgi --version
    ~~~
 
    This should print out the version to confirm the application is running.
-   
 
 ## Links
 

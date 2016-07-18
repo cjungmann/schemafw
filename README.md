@@ -3,57 +3,30 @@
 **schema** an underlying organizational pattern or structure; conceptual framework
 [dictionary.com](http://dictionary.reference.com/browse/schema)
 
-The Schema Framework includes several parts that, working together, define a
-protocol by which the server workload is substantially reduced and the client
-assumes most of the responsibility for rendering and running the application.
+The Schema Framework (SchemaFW) includes several parts that, working together and
+using MySQL as the database, define a protocol by which the server workload is
+substantially reduced and the client assumes most of the responsibility for
+rendering and running a web application.
 
-A _schema_ is used to describe how data sent by the server should be interpreted
-by the client.
+The SchemaFW server interpreter reads a SRM (Schema Response Mode) script file to
+determine how to respond to a user request.  The server returns an XML file to the
+client, which will be interpreted by the framework's tools to render web pages.
 
-See the [User Guide](userguide/UserGuide.md)
+Most server responses will include _schema_ elements that include not only data types
+and names of the data but also other developer hints, supplied in the SRM script, 
+that inform the browser how to render pages, respond to user input, and send requests
+back to the server.
 
-# Installation Steps
+The framework uses XSL extensively for running the application.  While much can be
+accomplished with minimal knowledge of XSL, using XSL and AJAX makes it easy
+to extend the framework with custom templates for unique interactions.
 
-## Prerequisites
+Browse the [User Guide](userguide/UserGuide.md) to see what SchemaFW is all about.
 
-```
-$ sudo apt-get install build-essential
-$ sudo apt-get install libmysqlclient-dev
-```
+Look at the [Case Study](userguide/SchemaFWCaseStudy.md) for an overview of how
+SchemaFW is used to develop a database-driven web application.
 
-# Clone the Repository
+Consult [Building the Framework](userguide/BuildingTheFramework.md) for instructions
+on how to download, build, and install SchemaFW.
 
-Get the SchemaFW source code with the following command:
-
-```
-$ git clone https://bitbucket.org/chuckj/schemafw
-```
-
-# Build The Project
-
-Build and install the library and executable
-```
-./configure
-make
-sudo make install
-```
-
-Apache Setup, copy .conf file, then enable it:
-```
-sudo a2enconf schemafw
-sudo /etc/init.d/apache2 restart
-```
-
-Setup a new website.  Use `schemafw_setup` to prepare a database and project directory
-```
-schemafw_setup
-```
-
-# Consult the UserGuide to Learn About SchemaFW Programming
-
-[SchemaFW User Guide](userguide/BuildingTheFramework.md)
-
-Programming for SchemaFW applications is done with MySQL stored procedures.
-The framework exposes the procedures through script files that instruct
-the SchemaFW server which procedures to use and how to use them.
 
