@@ -29,3 +29,14 @@ procedure
 resultset
    : The complete output of a procedure, including as many results as are
      produced in the procedure.
+
+--------------------------------------------------------------------------------
+
+Back: [Establish a New SchemaFW Site](CreateNewSite.md)
+&nbsp;
+&nbsp;
+Up: [SchemaFW Basics](SchemaFWBasics.md)
+&nbsp;
+&nbsp;
+Top: [Main Page](UserGuide.md)
+

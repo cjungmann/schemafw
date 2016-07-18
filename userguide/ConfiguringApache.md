@@ -59,14 +59,15 @@ Some documentation for this can be found at the
 [PHP.net site](http://docs.php.net/manual/en/configuration.changes.php#configuration.changes.apache).
 I haven't been able to get this to work like I want.
 
+--------------------------------------------------------------------------------
 
-## Links
-
-Previous Page [Building the Framework](BuildingTheFramework.md)
-
-Next Page [Create MySQL User Account](CreateWebUser.md)
-
-Section [Preparing to Use SchemaFW](PreparingToUseSchemaFW.md)
-
-[Main Page](UserGuide.md)
-
+Next: [Create MySQL User Account](CreateWebUser.md)
+&nbsp;
+&nbsp;
+Back: [Building the Framework](BuildingTheFramework.md)
+&nbsp;
+&nbsp;
+Up: [Preparing to Use SchemaFW](PreparingToUseSchemaFW.md)
+&nbsp;
+&nbsp;
+Top: [Main Page](UserGuide.md)

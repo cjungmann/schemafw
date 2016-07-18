@@ -7,5 +7,10 @@ server to run SchemaFW web applications.
 - [Configuring Apache](ConfiguringApache.md)
 - [Create MySQL User Account](CreateWebUser.md)
 
+--------------------------------------------------------------------------------
 
-[Main Page](UserGuide.md)
+Next: [SchemaFW Basics](SchemaFWBasics.md)
+&nbsp;
+&nbsp;
+Up: [Main Page](UserGuide.md)
+

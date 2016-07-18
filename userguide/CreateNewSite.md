@@ -138,3 +138,14 @@ to create a new SchemaFW site.
    ~~~
    google-chrome http://localhost/cs
    ~~~
+
+--------------------------------------------------------------------------------
+
+Next: [Using MySQL Procedures](UsingMySQLProcedures.md)
+&nbsp;
+&nbsp;
+Up: [SchemaFW Basics](SchemaFWBasics.md)
+&nbsp;
+&nbsp;
+Top: [Main Page](UserGuide.md)
+

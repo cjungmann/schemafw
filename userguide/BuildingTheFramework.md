@@ -81,11 +81,13 @@ in the future.
 
    This should print out the version to confirm the application is running.
 
-## Links
+--------------------------------------------------------------------------------   
 
-Next Page [Configuring Apache](ConfiguringApache.md)
-
-Section [Preparing to Use SchemaFW](PreparingToUseSchemaFW.md)
-
-[Main Page](UserGuide.md)
+Next: [Configuring Apache](ConfiguringApache.md)
+&nbsp;
+&nbsp;
+Up: [Preparing to Use SchemaFW](PreparingToUseSchemaFW.md)
+&nbsp;
+&nbsp;
+Top:[Main Page](UserGuide.md)
 

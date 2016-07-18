@@ -19,3 +19,17 @@ mode
       grandchild1 : Ellen
       grandchild2 : Ralph
    child3 : 
+
+--------------------------------------------------------------------------------
+
+Next: [Definitions](Definitions.md)
+&nbsp;
+&nbsp;
+Back: [Using MySQL Procedures](UsingMySQLProcedures.md)
+&nbsp;
+&nbsp;
+Up: [SchemaFW Basics](SchemaFWBasics.md)
+&nbsp;
+&nbsp;
+Top: [Main Page](UserGuide.md)
+

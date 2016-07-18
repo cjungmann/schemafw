@@ -73,11 +73,13 @@ With the completion of the steps above, your system will be able to use a
 password-protected user account without having to include the password in
 any file on your website.
 
-## Links
+--------------------------------------------------------------------------------
 
-Previous Page [Create MySQL User Account](CreateWebUser.md)
-
-Section [Preparing to Use SchemaFW](PreparingToUseSchemaFW.md)
-
-[Main Page](UserGuide.md)
+Back: [Create MySQL User Account](CreateWebUser.md)
+&nbsp;
+&nbsp;
+Up: [Preparing to Use SchemaFW](PreparingToUseSchemaFW.md)
+&nbsp;
+&nbsp;
+Top: [Main Page](UserGuide.md)
 
