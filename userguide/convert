@@ -7,13 +7,14 @@ IFS='' read -r -d '' dochead <<EOFhead
 <html xmlns="http://www.w3.org/1999/xhtml">
    <head>
       <title>${title}</title>
+      <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
       <style type="text/css">
-      html { background-color:#CCCCFF; }
+      html { background-color:#CCCCFF; font-family:sans-serif; line-height:1.5em; }
       body { margin:1em auto; width:800px; background-color:#FFFFFF; padding:1em;}
       h1,h2,h3,h4 { font-family:sans-serif; }
       pre { border:solid 1px #999999; padding:8px; }
       code { background-color:#FFFF99; font-family:monospace; padding:0 4px; }
-      pre code { display:block; }
+      pre code { display:block; line-height:1.25em;}
       </style>
    </head>
    <body>
@@ -24,7 +25,7 @@ IFS='' read -r -d '' docfoot <<EOFfoot
 </html>
 EOFfoot
 
-mkdir html
+mkdir -p html
 
 aray=($(ls -1 *.md))
 
