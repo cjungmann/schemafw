@@ -32,11 +32,9 @@ resultset
 
 --------------------------------------------------------------------------------
 
-Back: [Establish a New SchemaFW Site](CreateNewSite.md)
-&nbsp;
-&nbsp;
+Back: [Understanding SRM Files](SRMFiles.md)
+  
 Up: [SchemaFW Basics](SchemaFWBasics.md)
-&nbsp;
-&nbsp;
+  
 Top: [Main Page](UserGuide.md)
 
