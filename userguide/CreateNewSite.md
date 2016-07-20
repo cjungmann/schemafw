@@ -113,17 +113,21 @@ to create a new SchemaFW site.
    sudo emacs /etc/apache2/sites-available/cs.conf
    ~~~
 
-   Then copy in the following contents, remembering to replace _\*user\*_ with
-   your username and _cs_ an appropriate server name, leaving a single word
-   if running on localhost, or a full URL if running on the internet
+   Then copy in the following contents, remembering to replace _your_user_name_ with
+   your username and _www.your_domain.com_ with an appropriate server name.  Look
+   at [Running Websites on Localhost](RunningOnLocalhost.md) for a discussion of the
+   issues running your site and hosting Apache on your workstation.
 
    ~~~apache
    <VirtualHost *:80> 
-     ServerName cs
-     DocumentRoot /home/\*user\*/www/CaseStudy/site
+     ServerName www.your_domain.com
+     DocumentRoot /home/your_user_name/www/CaseStudy/site
      DirectoryIndex default.srm
    </VirtualHost>
    ~~~
+
+   See [Running Websites on Localhost](RunningOnLocalhost.md) if you plan to do your development
+   on a workstation with LAMP and SchemaFW.
 
    Save the file, the enable the site and restart Apache
 
