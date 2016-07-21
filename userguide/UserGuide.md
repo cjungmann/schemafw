@@ -22,6 +22,7 @@ There are several sections.
   - [A Delete Interaction](CSDeleteInteraction.md)
   - [L-CRUD Files Listings](LCRUDInteractions.md)
 - Advanced Topics
+  - [MySQL Hints](MySQLHints.md)
   - [Running Websites on LocalHost](RunningOnLocalhost.md)
   - [Debugging with Command Line Options](SchemaFCGIOptions.md)
   - [Context References](ContextReferences.md)
