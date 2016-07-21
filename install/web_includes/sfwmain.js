@@ -23,7 +23,6 @@ window.onload = function()
    function prepare_embedded_form(form)
    {
       center_form(form, true);
-      SchemaFW.resize_dialog_labels(form);
       form.style.visibility = "visible";
       SchemaFW.focus_on_first_field(form);
    }
