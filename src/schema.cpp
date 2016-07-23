@@ -158,7 +158,7 @@ const char *arr_schema_default_types[] = { "table",
 
 
 /**
- * @brief Return a random string based on time, urandom, ip_address
+ * @brief Fill the buffer with a random string based on time, urandom, ip_address
  *
  * @param buff A buffer into which the random characters will be copied
  * @param copylen The number of characters that will be copied.
@@ -181,17 +181,20 @@ void make_session_string(char *buff, size_t copylen)
       size_t rcount = read(fh, buff, copylen);
       if (rcount==copylen)
       {
-         char *p = buff;
-         char *end = buff + copylen;
-         int val = *p % 62;
+         unsigned char *p = reinterpret_cast<unsigned char*>(buff);
+         unsigned char *end = p + copylen;
          while (p<end)
          {
+            *p %= 62;
+            
             if (*p < 10)
-               *p = '0' + val;
+               *p += '0';
             else if (*p < 36)
-               *p = 'A' + val-10;
+               *p += 'A'-10;
             else
-               *p = 'a' + val-36;
+               *p += 'a'-36;
+
+            ++p;
          }
       }
 
@@ -208,27 +211,6 @@ void make_session_string(char *buff, size_t copylen)
          }
       }
    }
-
-   // FILE f;
-   // FILE *fp = ifopen("/dev/urandom", "r", f);
-   
-   // if (fp)
-   // {
-   //    char *ptr = buff;
-   //    for (size_t i=0; i<copylen; ++i)
-   //    {
-   //       int val = ifgetc(fp) % 62;
-   //       if (val < 10)
-   //          *ptr = '0' + val;
-   //       else if (val < 36)
-   //          *ptr = 'A' + val-10;
-   //       else
-   //          *ptr = 'a' + val-36;
-
-   //       ++ptr;
-   //    }
-   //    ifclose(f);
-   // }
 }
 
 void set_session_seed(MYSQL *mysql, const char* seed)
