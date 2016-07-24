@@ -3,6 +3,8 @@
 SchemaFW offers server facilities for establishing and managing sessions through
 the use of browser cookies.
 
+See also [SchemaFW Session Processing Procedures](SchemaFWSessionProcs.md).
+
 ## Setup
 
 The Schema Framework includes many system stored procedures.  Although there
@@ -17,7 +19,7 @@ be copied into your own application as a template for your own development.
 
 ### Procedures and Their Responsibilities
 
-- **App_Request_Cleanup()**: should clear all session variables.
+- **App_Session_Cleanup()**: should clear all session variables.
 - **App_Session_Start(int id)** : create table records for persistent session
   information.
 - **App_Session_Restore(int id)** : read and use the persistent session information.
@@ -26,7 +28,7 @@ be copied into your own application as a template for your own development.
 - **App_Session_Confirm_Authorization(int id)** : by default returns 1, but can be
   overridden to return 0 if your authorization conditions have not been met.
 
-#### App_Request_Cleanup()
+#### App_Session_Cleanup()
 
 This procedure is called at the _start_ of a session to ensure that session
 variables are cleared before use.  It is done at the start to help prevent

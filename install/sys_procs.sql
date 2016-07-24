@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS SSYS_SESSION
 -- 2. The '-f' directive has been omitted when call this script.
 --
 
--- NOTE: The following App_Request_ and App_Session functions should not
+-- NOTE: The following App_Session_ functions should not
 --       call DROP PROCEDURE in sys_procs.sql.  Reloading sys_procs.sql
 --       as part of an update must not overwrite app-specific versions
 --       of these procedures.
@@ -145,8 +145,8 @@ CREATE TABLE IF NOT EXISTS SSYS_SESSION
 --       application-specific script file.
 
 -- Called when a session starts to ensure important session variables 
--- DROP PROCEDURE IF EXISTS App_Request_Cleanup $$
-CREATE PROCEDURE App_Request_Cleanup()
+-- DROP PROCEDURE IF EXISTS App_Session_Cleanup $$
+CREATE PROCEDURE App_Session_Cleanup()
 BEGIN
 END $$
 
@@ -180,7 +180,7 @@ DROP PROCEDURE IF EXISTS ssys_clear_for_request $$
 CREATE PROCEDURE ssys_clear_for_request()
 BEGIN
    SET @session_confirmed_id = NULL;
-   CALL App_Request_Cleanup();
+   CALL App_Session_Cleanup();
 END $$
 
 DROP PROCEDURE IF EXISTS ssys_seed_session_string $$

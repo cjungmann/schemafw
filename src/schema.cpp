@@ -1422,6 +1422,9 @@ int Schema::wait_for_requests(loop_sentry sentry, FILE *out)
                schema_with_post(sr, out);
             else
                schema_without_post(sr, out);
+
+            // Clean up after every request for data security.
+            clear_for_new_request();
          };
 
          const char *pt = getenv("PATH_TRANSLATED");
@@ -1566,6 +1569,21 @@ void Schema::log_new_request(void)
    ifprintf(stderr, "*** Request type %s with %s.\n", type, qstring);
 }
 
+/**
+ * @brief Calls app-defined procedure App_Session_Cleanup to ensure secure environment.
+ *
+ * This function calls system procedure ssys_clear_for_request, which in turn calls
+ * app-defined procedure App_Session_Cleanup.  The indirect call allows for additional
+ * system setup in the future without breaking existing applications.
+ *
+ * The app-defined procedure App_Session_Cleanup should set session variables to
+ * NULL to prevent leftover values from being exploited by another application.
+ * However, some design might benefit from initializing a session variable here as a
+ * flag, so this function is called twice per request, once just after the database
+ * is checked and set, and again upon returning from processing the response.  The
+ * second time would be sufficient for security, but the first call to this function
+ * is also run for the hypothetical session initialization need.
+ */
 void Schema::clear_for_new_request(void)
 {
    auto cb_result = [](int result_number, DataStack<BindC> &ds)
@@ -2167,6 +2185,9 @@ void Schema::install_response_mode(const char *mode_name)
 
             // Must be called before get_session_status():
             set_requested_database();
+
+            // Once we're in the response's database, do a security clear:
+            clear_for_new_request();
             
             // Must be called before get_session_status in case we need to authorize:
             SESSION_TYPE   sess_type   = get_session_type();
@@ -2820,22 +2841,23 @@ bool Schema::refresh_to_no_session_destination(int seconds)
 /**
  * @brief Set the current database, clear connection session variables.
  *
- * This function should be called exactly once per request.  With that in
- * mind, it is the best place to call clear_for_new_request in order to
- * clear the connection's session variables (at least the ones we care
- * about).
+ * This function is called from install_response_mode() as an early necessary
+ * step of preparing the environment for processing the request.
  *
- * Makes an assertion about no more than once, using the s_headers_done
+ * Note that the function does not fail for a missing _database_ instruction.
+ * This should be allowed in a server where there is only one database.  It only
+ * fails if a requested database is not available.
+ *
+ * It should be called only once, or the prepared environment may be corrupted,
+ * with abandoned session settings possibly left exposed.  Thus, the function
+ * uses assert() to ensure one trip through here, using the s_headers_done
  * variable as a flag.
+ *
+ * If a design calls for accessing another database, it should be done in
+ * stored procedures with database-specified queries and calls.
  *
  * Sets the instance variable m_database_confirmed, which will be checked
  * in get_session_status().
- *
- * Right now, I can't think why one would change the database in the
- * middle of processing a request, but to do so would create confusion
- * due to the cleared connection session variables.  The assertion should
- * prevent that and warn me if I forget my current assumptions and attempt
- * to change the database inappropriately.
  */
 void Schema::set_requested_database(void)
 {
@@ -2852,8 +2874,6 @@ void Schema::set_requested_database(void)
       set_failure_message("No database specified", "set_requested_database");
    else
    {
-      // Clear connection temporary variables for new request
-      clear_for_new_request();
       m_database_confirmed = true;
    }
 }
