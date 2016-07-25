@@ -22,10 +22,19 @@ There are several sections.
   - [A Delete Interaction](CSDeleteInteraction.md)
   - [L-CRUD Files Listings](LCRUDInteractions.md)
 - Advanced Topics
-  - [MySQL Hints](MySQLHints.md)
+  - Session Stuff  
+    This must be fleshed out.  Assumptions I made about how this is
+    set up turn out to be obsolete.  Refine the process while working
+    on menu order and return to describe the conditions that dictate
+    how and when the procedures are called.
+    - [COMPLETE AFTER menu-order LOGIN Sessions and Authorization](SessionsAndAuthorization.md)
+    - [COMPLETE AFTER menu-order LOGIN SchemaFW Session Processing Procedures](SchemaFWSessionProcs.md)
+    
   - [Running Websites on LocalHost](RunningOnLocalhost.md)
   - [Debugging with Command Line Options](SchemaFCGIOptions.md)
+  - [Debugging Hints for SQL Procedures](DebuggingSQLHints.md)
   - [Context References](ContextReferences.md)
   - [Composite Dialogs **NOT DONE**](CompositeDialogs.md)
   - [Using LOAD DATA LOCAL INFILE **NOT DONE**](LoadDataLocalInfile.md)
   - [Importing Files **NOT DONE**](ImportingFiles.md)
+  - [MySQL Hints](MySQLHints.md)
