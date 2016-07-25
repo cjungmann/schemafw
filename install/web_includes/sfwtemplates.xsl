@@ -219,12 +219,20 @@
 
   <xsl:template name="css_includes">
     <link rel="stylesheet" type="text/css" href="includes/schemafw.css" />
+    <xsl:value-of select="$nl" />
     <link rel="stylesheet" type="text/css" href="includes/dpicker.css" />
     <xsl:value-of select="$nl" />
   </xsl:template>
 
-  <!--Elminate blank lines for unmatched elements-->
+  <!--Elminate extra output for unmatched elements and attributes -->
   <xsl:template match="*" mode="add_to_head"></xsl:template>
+  <xsl:template match="@*" mode="add_to_head"></xsl:template>
+
+  <xsl:template match="@meta-jump" mode="add_to_head">
+    <xsl:variable name="content" select="concat('0; url=', .)" />
+    <meta http-equiv="refresh" content="{$content}" />
+    <xsl:value-of select="$nl" />
+  </xsl:template>
 
   <xsl:template match="meta-jump" mode="add_to_head">
     <xsl:variable name="wait">
@@ -288,6 +296,7 @@
 
   <xsl:template match="/*" mode="fill_head">
     <xsl:value-of select="$nl" />
+
     <xsl:call-template name="css_includes" />
     <xsl:call-template name="js_includes" />
 
@@ -297,8 +306,7 @@
       <xsl:apply-templates select="." mode="add_document_variables" />
     </xsl:if>
 
-    <xsl:apply-templates select="*" mode="add_to_head" />
-    <xsl:apply-templates select="@mode-type" mode="add_to_head" />
+    <xsl:apply-templates select="@*" mode="add_to_head" />
 
   </xsl:template>
 
