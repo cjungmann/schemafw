@@ -59,7 +59,7 @@ const _CType CTyper::s_types[] = {
      sizeof(MYSQL_TIME), ai_date::cast_and_use, "TIME", "time" },
    { MYSQL_TYPE_DATETIME, false, CT_TIME_DATE, _CType::TYPE_TIME,
      sizeof(MYSQL_TIME), ai_date::cast_and_use, "DATETIME", "datetime" },
-   { MYSQL_TYPE_TIMESTAMP, false, CT_TIME_DATE, _CType::TYPE_TIME,
+   { MYSQL_TYPE_TIMESTAMP, true, CT_TIME_DATE, _CType::TYPE_TIME,
      sizeof(MYSQL_TIME), ai_date::cast_and_use, "TIMESTAMP", "timestamp" },
    
    { MYSQL_TYPE_VAR_STRING, false, CT_STRING_TEXT, _CType::TYPE_STRING,
