@@ -168,13 +168,6 @@ CREATE PROCEDURE App_Session_Abandon(id INT UNSIGNED)
 BEGIN
 END $$
 
--- Called by ssys_session_confirm_authorization() when logging in.
--- DROP PROCEDURE IF EXISTS App_Session_Confirm_Authorization $$
-CREATE PROCEDURE App_Session_Confirm_Authorization()
-BEGIN
-   SELECT true;
-END $$
-
 
 DROP PROCEDURE IF EXISTS ssys_clear_for_request $$
 CREATE PROCEDURE ssys_clear_for_request()
@@ -220,7 +213,7 @@ BEGIN
    DECLARE session_id INT UNSIGNED;
 
    IF @session_string_seed IS NULL THEN
-      SIGNAL SQLSTATE 'ERROR' SET MESSAGE_TEXT = 'Failed to create session: missing session string seed.';
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Failed to create session: missing session string seed.';
    END IF;
    
    SELECT id INTO session_id
@@ -293,12 +286,6 @@ BEGIN
    END IF;
 
    SELECT still_good;
-END $$
-
-DROP PROCEDURE IF EXISTS ssys_session_confirm_authorization $$
-CREATE PROCEDURE ssys_session_confirm_authorization()
-BEGIN
-   CALL App_Session_Confirm_Authorization;
 END $$
 
 DROP PROCEDURE IF EXISTS ssys_assert_session_id $$

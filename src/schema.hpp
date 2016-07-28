@@ -332,9 +332,9 @@ public:
       MACTION_FORM_EDIT,
       MACTION_FORM_NEW,
       MACTION_FORM_SUBMIT,
-      MACTION_FORM_VIEW,
       MACTION_FORM_TRY,
       MACTION_FORM_RESULT,
+      MACTION_FORM_VIEW,
       MACTION_ABANDON_SESSION,
       MACTION_IMPORT
    };
@@ -351,6 +351,15 @@ public:
    static void print_mode_types(FILE *f);
    static MODE_ACTION get_mode_type(const char *str);
 
+   /**
+    * @brief Quick test if form type requiring parameters.  Does not include form-view.
+    *
+    * A _form-view_ should probably have another name to distiguish it from other forms,
+    * except that it displays data in a form-like layout.  However, it is different
+    * because the field data is not changeable on the _form-view_ page, there is no
+    * _Submit_ button.  A _form-view_ form is expected to offer editing by jumping
+    * to an editing page for the selected field.
+    */
    static bool is_form_type(MODE_ACTION a)
    {
       return a>=MACTION_FORM_EDIT && a<=MACTION_FORM_RESULT;
@@ -500,7 +509,7 @@ protected:
 
    inline bool session_is_valid(void) const { return m_session_id != s_invalid_session; }
    inline void invalidate_session(void)     { m_session_id = s_invalid_session; }
-   bool is_session_authorized(void) const;
+   bool is_session_authorized(uint32_t id) const;
 
    /**
     * @brief Types of significant session status.

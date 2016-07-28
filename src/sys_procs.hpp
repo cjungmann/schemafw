@@ -21,7 +21,6 @@
  * - ssys_confirm_table()
  * - ssys_clear_for_request()
  * - ssys_session_confirm()
- * - ssys_session_confirm_authorization()
  *
  * The remainder of the code relates to managing sessions.
  *
@@ -54,10 +53,6 @@
  *   the available field has changed from 0 to 1 (unavailable to available).
  *   It should typically clear data from the app-specific table to prevent
  *   private data from being visible by a user who uses a recycled session id.
- *
- * - __App_Session_Confirm_Authorization__ will be called by
- *   ssys_session_confirm_authorization() to check the authorization level
- *   set in the current session.
  *
  * @note The App_Request_Cleanup and App_Session_xxxxx procedures are
  *       defined as do-nothing procedures by sys_procs.sql to ensure their
@@ -390,19 +385,6 @@ ssys_session_start_result* ssys_session_start(void);
  */
 int ssys_session_confirm(unsigned session_id, char[32] session_string);
 
-/**
- * @brief Reports the authorization level of the current session.
- *
- * This procedure calls the application-specific App_Session_Confirm_Authorization()
- * procedure to retrieve the authorization level.
- *
- * It will be called by the framework if the session type is _login_ like this:
- * @code
- $session-type : login
- * @endcode
- */
-int ssys_session_confirm_authorization(void);
-
 
 /**
  * @brief Like an assert, this procedure emits an error SIGNAL if
@@ -492,37 +474,5 @@ void App_Session_Restore(unsigned id);
  */
 void App_Session_Abandon(unsigned id);
 
-/**
- * @brief Dummy Authorization Confirmation procedure.
- *
- * @return 0 (false) if not authorized,
- *         1 (true) if authorized.
- *
- * This procedure is different from the other dummy session procedures
- * in that it is expected to return a value.  The value is returned
- * by executing a SELECT command that selects either zero (0) for not
- * authorized, or a number greater than zero to indicate the level
- * of authorization.  Some applications may have several authorization
- * values to unlock different sections of an application.
- *
- * It is up to the developer to decide how to implement this procedure,
- * but as an example, during the development of the LoginDemo example
- * application, the App_Session_Restore function, which is called by
- * ssys_session_confirm(), is overridden to, among other things, set
- * session variables _@session_handle_id_ and _@session_handle_name_.
- *
- * In that case, App_Session_Confirm_Authorization looks like this:
- *
- ~~~ sql
-    CREATE PROCEDURE App_Session_Confirm_Authorization()
-    BEGIN
-       SELECT CASE
-                 WHEN @session_handle_id IS NULL THEN 0
-                 ELSE 1
-              END;
-    END $$
- ~~~
- */
-int App_Session_Confirm_Authorization(void);
 
 /** @} */

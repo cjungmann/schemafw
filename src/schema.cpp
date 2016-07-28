@@ -1912,7 +1912,7 @@ bool Schema::confirm_session(uint32_t id, const char *hash) const
       };
    Result_User_Row<decltype(cb_result)> result_user(cb_result);
    
-   SimpleProcedure::build(&Schema::s_mysql,
+   SimpleProcedure::build(&s_mysql,
                           "CALL ssys_session_confirm(?,?)",
                           "Is32",
                           Adhoc_Setter<2>(ai_ulong(&id),
@@ -2001,10 +2001,10 @@ const char *Schema::get_jump_destination(SESSION_TYPE st) const
  * @return TRUE if the session is valid and either there is no `test_authorized`
  *         setting, or the `test_authorized` procedure returns 1.
  */
-bool Schema::is_session_authorized(void) const
+bool Schema::is_session_authorized(uint32_t id) const
 {
    bool is_authorized = false;
-   
+
    if (session_is_valid())
    {
       const char *procname = value_from_mode_or_global("test_authorized");
@@ -2037,17 +2037,18 @@ bool Schema::is_session_authorized(void) const
             }
          };
          
-         auto cb_query = [&cb_result](const char *query)
+         auto cb_query = [&id, &cb_result](const char *query)
          {
             Result_User_Row<decltype(cb_result)> result_user(cb_result);
 
-            SimpleProcedure::build(&Schema::s_mysql,
+            SimpleProcedure::build(&s_mysql,
                                    query,
+                                   "I",
+                                   Adhoc_Setter<1>(ai_ulong(&id)),
                                    result_user);
          };
 
-         SimpleProcedure::build_query_string(procname, 0, cb_query);
-
+         SimpleProcedure::build_query_string(procname, 1, cb_query);
       }
    }
    
@@ -2266,7 +2267,6 @@ void Schema::install_response_mode(const char *mode_name)
             // start a session and write out new cookie values:
             if (sess_type>STYPE_NONE && sess_status<SSTAT_RUNNING)
             {
-               
                // This function creates the records and writes the cookie values:
                if (!create_session_records())
                {
@@ -2380,7 +2380,7 @@ Schema::SESSION_STATUS Schema::get_session_status(SESSION_TYPE stype,
             m_session_id = id;
             if (stype==STYPE_IDENTITY)
             {
-               if (is_session_authorized())
+               if (is_session_authorized(id))
                   rval = SSTAT_AUTHORIZED;
                else
                   rval = SSTAT_RUNNING;
@@ -2389,7 +2389,9 @@ Schema::SESSION_STATUS Schema::get_session_status(SESSION_TYPE stype,
                rval = SSTAT_RUNNING;
          }
          else
+         {
             rval = SSTAT_EXPIRED;
+         }
       });
 
    return rval;
