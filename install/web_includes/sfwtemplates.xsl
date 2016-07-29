@@ -28,6 +28,9 @@
   <xsl:variable name="apospair">&apos;&apos;</xsl:variable>
   <xsl:variable name="aposaka">&#x7f;</xsl:variable>
 
+  <xsl:variable name="result-row"
+                select="/*[@mode-type='form-result']/*[@rndx=1]/*[@error]" />
+
   <xsl:template match="/*[@mode-type='form-edit']" >
     <xsl:choose>
       <xsl:when test="schema">
@@ -229,9 +232,11 @@
   <xsl:template match="@*" mode="add_to_head"></xsl:template>
 
   <xsl:template match="@meta-jump" mode="add_to_head">
-    <xsl:variable name="content" select="concat('0; url=', .)" />
-    <meta http-equiv="refresh" content="{$content}" />
-    <xsl:value-of select="$nl" />
+    <xsl:if test="not($result-row) or $result-row/@error=0">
+      <xsl:variable name="content" select="concat('0; url=', .)" />
+      <meta http-equiv="refresh" content="{$content}" />
+      <xsl:value-of select="$nl" />
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="meta-jump" mode="add_to_head">
@@ -311,34 +316,29 @@
   </xsl:template>
 
 
-  <xsl:template match="*" mode="branch_standard_modes">
-    <xsl:choose>
-      <!-- <xsl:when test="@make_node_dialog"> -->
-      <!--   <xsl:apply-templates select="result[@make_node_dialog]" /> -->
-      <!-- </xsl:when> -->
+  <xsl:template match="/*" mode="branch_standard_modes">
+    <xsl:if test="$result-row">
+      <xsl:if test="$result-row/@msg">
+        <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
+      </xsl:if>
 
-      <!-- <xsl:when test="@make_dialog"> -->
-      <!--   <xsl:apply-templates select="." /> -->
-      <!-- </xsl:when> -->
-      
-      <xsl:when test="schema">
-        <xsl:choose>
-          <xsl:when test="@mode-type='form-edit'">
-            <xsl:apply-templates select="schema" mode="make_form">
-              <xsl:with-param name="type" select="'form'" />
-            </xsl:apply-templates>
-          </xsl:when>
-          <xsl:otherwise>
-            <xsl:apply-templates select="schema" mode="make_form">
-              <xsl:with-param name="type" select="'form'" />
-            </xsl:apply-templates>
-          </xsl:otherwise>
-        </xsl:choose>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:apply-templates select="*[@rndx=1]" />
-      </xsl:otherwise>
-    </xsl:choose>
+      <xsl:if test="@meta-jump and $result-row/@error=0">
+        <p>Click <a href="{@meta-jump}">here</a> if you're not taken there.</p>
+      </xsl:if>
+    </xsl:if>
+
+    <xsl:if test="not($result-row) or not($result-row/@error=0)">
+      <xsl:choose>
+        <xsl:when test="schema">
+          <xsl:apply-templates select="schema" mode="make_form">
+            <xsl:with-param name="type" select="'form'" />
+          </xsl:apply-templates>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="*[@rndx=1]" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
   </xsl:template>
   
   <xsl:template match="*[@rndx]">
