@@ -1883,6 +1883,25 @@ void Schema::abandon_session_records(uint32_t id, const char *hash)
                                           si_text(hash)),
                           result_user);
 }
+
+
+/**
+ * @brief Unconditionally delete session records for after a failed login attempt.
+ *
+ * We don't know the results of the login query until we have lost the cookie
+ * values.  This function gets 'em again to call
+ * abandon_session_records(uint32_t, conat char*).
+ */
+void Schema::abandon_session_records(void)
+{
+   get_session_cookies(
+      [this](uint32_t id, const char *hash)
+      {
+         abandon_session_records(id,hash);
+      }
+      );
+}
+
 //@ [SimpleProcedure_Adhoc_Params]
 
 /**
@@ -2321,6 +2340,16 @@ void Schema::install_response_mode(const char *mode_name)
                   {
                      // Continue preparing the data:
                      start_document();
+
+                     // On return, check if a login attempt failed:
+                     if (sess_type==STYPE_ESTABLISH)
+                     {
+                        sess_status = get_session_status(sess_type, false);
+                        if (sess_status < SSTAT_AUTHORIZED)
+                           abandon_session_records();
+                     }
+
+                     
                   }
                   catch(schema_exception &se)
                   {
@@ -2370,12 +2399,7 @@ Schema::SESSION_STATUS Schema::get_session_status(SESSION_TYPE stype,
    get_session_cookies(
       [this, &stype, &abandon_session, &rval](uint32_t id, const char *hash)
       {
-         if (abandon_session)
-         {
-            abandon_session_records(id,hash);
-            rval = SSTAT_EXPIRED;
-         }
-         else if (confirm_session(id,hash))
+         if (!abandon_session && confirm_session(id,hash))
          {
             m_session_id = id;
             if (stype==STYPE_IDENTITY)
@@ -2390,6 +2414,7 @@ Schema::SESSION_STATUS Schema::get_session_status(SESSION_TYPE stype,
          }
          else
          {
+            abandon_session_records(id, hash);
             rval = SSTAT_EXPIRED;
          }
       });

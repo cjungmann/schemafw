@@ -505,6 +505,7 @@ protected:
    void clear_session_cookies(void);
    bool create_session_records(void);
    void abandon_session_records(uint32_t id, const char *hash);
+   void abandon_session_records(void);
    bool confirm_session(uint32_t id, const char *hash) const;
 
    inline bool session_is_valid(void) const { return m_session_id != s_invalid_session; }
