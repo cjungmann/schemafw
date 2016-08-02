@@ -22,6 +22,11 @@ There are several sections.
   - [A Delete Interaction](CSDeleteInteraction.md)
   - [L-CRUD Files Listings](LCRUDInteractions.md)
 - Advanced Topics
+  - [Running Websites on LocalHost](RunningOnLocalhost.md)
+  - [Debugging with Command Line Options](SchemaFCGIOptions.md)
+  - [Debugging Response Modes](DebuggingResponseModes.md)
+  - [Debugging Hints for SQL Procedures](DebuggingSQLHints.md)
+  - [Result Dialogs (type:form-result)](ResultDialogs.md)
   - Session Stuff  
     This must be fleshed out.  Assumptions I made about how this is
     set up turn out to be obsolete.  Refine the process while working
@@ -29,10 +34,7 @@ There are several sections.
     how and when the procedures are called.
     - [COMPLETE AFTER menu-order LOGIN Sessions and Authorization](SessionsAndAuthorization.md)
     - [COMPLETE AFTER menu-order LOGIN SchemaFW Session Processing Procedures](SchemaFWSessionProcs.md)
-    
-  - [Running Websites on LocalHost](RunningOnLocalhost.md)
-  - [Debugging with Command Line Options](SchemaFCGIOptions.md)
-  - [Debugging Hints for SQL Procedures](DebuggingSQLHints.md)
+
   - [Context References](ContextReferences.md)
   - [Composite Dialogs **NOT DONE**](CompositeDialogs.md)
   - [Using LOAD DATA LOCAL INFILE **NOT DONE**](LoadDataLocalInfile.md)

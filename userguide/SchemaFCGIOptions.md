@@ -5,6 +5,9 @@ streams for _stdin_, _stdout_, and _stderr_.  A debugging mode is provided, as w
 where the I/O is with the console in order to see exactly what is sent to a client
 with a given set of posted values.
 
+On this page, we will refer to _command-line mode_ as **CL mode**, which is
+activated by the command-line use of any of the following options.
+
 ## The List of Options
 
 - <b>--version</b> Shows the version number of _schema.fcgi_
@@ -25,6 +28,17 @@ with a given set of posted values.
       are allowed, but the the server will produce default output.  A user-defined
       type should expect to be caught in the XSL stylesheet and result in custom
       output.
+
+## How it Works
+
+The purpose of providing command-line options is for debugging the output.  Keeping
+that goal in mind, there are some differences in how the output is directed.
+
+- In CL mode, _stdin_ will get only the XML document, all headers and error
+  messages will be directed to _stderr_.  This makes it possible to pipe the
+  `schema.fcgi` output to `xsltproc` to see the HTML display of the request.
+
+  
 
 ## Examples
 
