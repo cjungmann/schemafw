@@ -118,13 +118,16 @@ else
 	install -D --mode=644 ../userguide          /usr/share/doc/schemafw
 endif
 
-update:
-	install -D --mode=755 schema.fcgi              /usr/local/lib/cgi-bin/schema.fcgi
+update-server:
+	install -D --mode=755 schema.fcgi           /usr/local/lib/cgi-bin/schema.fcgi
 
 stop-update:
 	sudo /etc/init.d/apache2 stop
-	install -D --mode=755 schema.fcgi              /usr/local/lib/cgi-bin/schema.fcgi
+	install -D --mode=755 schema.fcgi           /usr/local/lib/cgi-bin/schema.fcgi
 	sudo /etc/init.d/apache2 start
+
+update-client:
+	cp -r ../install/web_includes               /usr/local/lib/schemafw/
 
 uninstall:
 	rm -f /usr/bin/schema.fcgi
