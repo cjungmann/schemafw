@@ -300,19 +300,29 @@
 
 
   <xsl:template match="/*" mode="fill_head">
-    <xsl:value-of select="$nl" />
+    <xsl:choose>
 
-    <xsl:call-template name="css_includes" />
-    <xsl:call-template name="js_includes" />
+      <xsl:when test="$result-row and $result-row/@error=0 and @meta-jump">
+        <script type="text/javascript">
+          <xsl:text>location.replace(&quot;</xsl:text>
+          <xsl:value-of select="@meta-jump" />
+          <xsl:text>&quot;);</xsl:text>
+        </script>
+      </xsl:when>
 
-    <xsl:if test="count($vars)">
-      <script type="text/javascript">var <xsl:value-of select="$vars_obj" />={};</script>
-      <xsl:value-of select="$nl" />
-      <xsl:apply-templates select="." mode="add_document_variables" />
-    </xsl:if>
+      <xsl:otherwise>
+        <xsl:value-of select="$nl" />
+        <xsl:call-template name="css_includes" />
+        <xsl:call-template name="js_includes" />
+        <xsl:if test="count($vars)">
+          <script type="text/javascript">var <xsl:value-of select="$vars_obj" />={};</script>
+          <xsl:value-of select="$nl" />
+          <xsl:apply-templates select="." mode="add_document_variables" />
+        </xsl:if>
+        <xsl:apply-templates select="@*" mode="add_to_head" />
+      </xsl:otherwise>
 
-    <xsl:apply-templates select="@*" mode="add_to_head" />
-
+    </xsl:choose>
   </xsl:template>
 
 
