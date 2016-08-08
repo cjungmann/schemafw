@@ -32,10 +32,19 @@
                 select="/*[@mode-type='form-result']/*[@rndx=1]/*[@error]" />
 
   <xsl:template match="/*[@mode-type='form-edit']" >
+    <xsl:param name="root" />
+
+    <xsl:variable name="form-type">
+      <xsl:choose>
+        <xsl:when test="$root">form</xsl:when>
+        <xsl:otherwise>dialog</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
     <xsl:choose>
       <xsl:when test="schema">
         <xsl:apply-templates select="schema" mode="make_form">
-          <xsl:with-param name="type" select="'dialog'" />
+          <xsl:with-param name="type" select="$form-type" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>Unable to construct a form without a schema</xsl:otherwise>
@@ -43,10 +52,19 @@
   </xsl:template>
 
   <xsl:template match="/*[@mode-type='form-new']" >
+    <xsl:param name="root" />
+
+    <xsl:variable name="form-type">
+      <xsl:choose>
+        <xsl:when test="$root">form</xsl:when>
+        <xsl:otherwise>dialog</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
     <xsl:choose>
       <xsl:when test="schema">
         <xsl:apply-templates select="schema" mode="make_form">
-          <xsl:with-param name="type" select="'dialog'" />
+          <xsl:with-param name="type" select="$form-type" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>Unable to construct a form without a schema</xsl:otherwise>
@@ -54,14 +72,23 @@
   </xsl:template>
 
   <xsl:template match="/*[@mode-type='form-view']">
+    <xsl:param name="root" />
+
+    <xsl:variable name="form-type">
+      <xsl:choose>
+        <xsl:when test="$root">form</xsl:when>
+        <xsl:otherwise>dialog</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
     <xsl:variable name="fschema" select="schema" />
     <xsl:variable name="rschema" select="*[not($fschema)][@rndx=1]/schema" />
     <xsl:variable name="schema" select="$fschema | $rschema" />
-    
+
     <xsl:choose>
       <xsl:when test="$schema">
         <xsl:apply-templates select="$schema" mode="make_form">
-          <xsl:with-param name="type" select="'dialog'" />
+          <xsl:with-param name="type" select="$form-type" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>Unable to construct a form without a schema</xsl:otherwise>
@@ -325,8 +352,11 @@
     </xsl:choose>
   </xsl:template>
 
-
   <xsl:template match="/*" mode="branch_standard_modes">
+    <div>Use mode=&quot;show_document_content&quot; instead of &quot;branch_standard_modes&quot;</div>
+  </xsl:template>
+
+  <xsl:template match="/*" mode="show_document_content">
     <xsl:if test="$result-row">
       <xsl:if test="$result-row/@msg">
         <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
@@ -337,8 +367,15 @@
       </xsl:if>
     </xsl:if>
 
+    <xsl:variable name="formtype" select="substring-after(/*/@mode-type,'form-')" />
+
     <xsl:if test="not($result-row) or not($result-row/@error=0)">
       <xsl:choose>
+        <xsl:when test="contains('edit view new', $formtype)">
+          <xsl:apply-templates select="/*">
+            <xsl:with-param name="root" select="1" />
+          </xsl:apply-templates>
+        </xsl:when>
         <xsl:when test="schema">
           <xsl:apply-templates select="schema" mode="make_form">
             <xsl:with-param name="type" select="'form'" />
@@ -1305,7 +1342,7 @@
               <div class="field_content">
                 <xsl:apply-templates select="." mode="get_value">
                   <xsl:with-param name="data" select="$data" />
-                </xsl:apply-templates>
+v                </xsl:apply-templates>
               </div>
             </xsl:otherwise>
           </xsl:choose>
@@ -1610,7 +1647,7 @@
       <xsl:apply-templates select="$schema/field" mode="get_row_class">
         <xsl:with-param name="data" select="." />
       </xsl:apply-templates>
-    </xsl:variable>
+v    </xsl:variable>
     
     <xsl:variable name="row_class_flag" select="$schema/@row_class_flag" />
 

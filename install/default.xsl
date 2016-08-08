@@ -34,7 +34,7 @@
         </div>
         <div id="SFW_Content">
           <div class="SFW_Host">
-            <xsl:apply-templates select="/*" mode="branch_standard_modes" />
+            <xsl:apply-templates select="/*" mode="show_document_content" />
           </div>
         </div>
       </body>
