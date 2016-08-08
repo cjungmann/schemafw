@@ -143,6 +143,67 @@ void Schema::print_mode_types(FILE *f)
    ifputc('\n', f);
 }
 
+
+int strcmpdash(const char* l, const char *r)
+{
+   bool mismatched_dash = false;
+   while (*l && *r)
+   {
+      if (*l!=*r)
+      {
+         if ((*l=='-' && *r=='_') || (*l=='_' && *r=='-'))
+            mismatched_dash = true;
+         else
+            return *l - *r;
+      }
+
+      ++l;
+      ++r;
+   }
+
+   return mismatched_dash ? 1024 : 0;
+}
+
+const char *arr_global_tags[] = {
+   "database",
+   "xml-stylesheet",
+   "default-mode",
+   "session-type",
+   "test_authorized",
+   "jump_no_session",
+   "jump_not_authorized",
+   "shared",
+   nullptr
+};
+
+void Schema::print_lint(FILE *f, const SpecsReader *reader)
+{
+   int warning_count = 0;
+   auto cb = [&f, &warning_count](const char *tag, const char *value)
+   {
+      if (*tag=='$')
+      {
+         const char *v = tag+1;
+         const char **l = arr_global_tags;
+         while (*l)
+         {
+            int diff = strcmpdash(v, *l);
+            if (diff==1024)
+            {
+               ++warning_count;
+               ifprintf(f, "\"%s\" should be \"%s\"\n", v, *l);
+            }
+            ++l;
+         }
+      }
+   };
+
+   reader->scan_modes(cb);
+
+   if (warning_count==0)
+      ifprintf(f, "No global mode errors found.\n");
+}
+
 /** @} */
 
 /**
@@ -956,6 +1017,7 @@ static const Schema::dapair g_debug_action_types[] = {
    {"modes", Schema::DEBUG_ACTION_PRINT_RESPONSE_MODES},
    {"all-modes", Schema::DEBUG_ACTION_PRINT_ALL_MODES},
    {"types", Schema::DEBUG_ACTION_PRINT_MODE_TYPES},
+   {"lint", Schema::DEBUG_ACTION_LINT},
    {nullptr, Schema::DEBUG_ACTION_IGNORE}
 };
 
@@ -2193,6 +2255,8 @@ void Schema::install_response_mode(const char *mode_name)
                   return m_specsreader->print_modes(stderr, false);
                case DEBUG_ACTION_PRINT_ALL_MODES:
                   return m_specsreader->print_modes(stderr, true);
+               case DEBUG_ACTION_LINT:
+                  return print_lint(stderr, m_specsreader);
                case DEBUG_ACTION_IGNORE:
                   break;
             }

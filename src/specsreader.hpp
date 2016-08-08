@@ -71,6 +71,16 @@ public:
     **/
    inline const t_handle<info>* start(void) const { return m_ds.start(); }
    const t_handle<info>* seek(const char *name, const char *value=nullptr) const;
+
+   template <class Func>
+   inline void scan(const Func &f) const
+   {
+      for (const auto* ptr = m_ds.start(); ptr; ptr = ptr->next())
+      {
+         f(ptr->str(), ptr->object().value());
+      }
+   }
+     
    
    long int position(const char *name, const char *value=nullptr) const;
 
@@ -172,6 +182,9 @@ public:
    {
       m_index.print_modes(out, include_shared);
    }
+
+   template <class Func>
+   inline void scan_modes(const Func &f) const { m_index.scan(f); }
 
    long int get_advisor_position(void) const { return m_advisor.get_position(); }
    void restore_advisor_position(long int pos) { m_advisor.restore_state(pos); }
