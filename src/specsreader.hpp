@@ -72,12 +72,22 @@ public:
    inline const t_handle<info>* start(void) const { return m_ds.start(); }
    const t_handle<info>* seek(const char *name, const char *value=nullptr) const;
 
+   /**
+    * @brief Calls the template function with each instruction.
+    *
+    * The template function type should look like this:
+    *
+    * `[](const char *tag, const char *value) -> bool`
+    *
+    * returning `true` to continue and `false` to terminate.
+    */
    template <class Func>
    inline void scan(const Func &f) const
    {
-      for (const auto* ptr = m_ds.start(); ptr; ptr = ptr->next())
+      for (const auto* ptr = m_ds.start();
+           ptr && f(ptr->str(), ptr->object().value());
+           ptr = ptr->next())
       {
-         f(ptr->str(), ptr->object().value());
       }
    }
      

@@ -176,10 +176,11 @@ const char *arr_global_tags[] = {
    nullptr
 };
 
+/** Not-comprehensive, this lint simply confirms valid global instruction tags. */
 void Schema::print_lint(FILE *f, const SpecsReader *reader)
 {
    int warning_count = 0;
-   auto cb = [&f, &warning_count](const char *tag, const char *value)
+   auto cb = [&f, &warning_count](const char *tag, const char *value) -> bool
    {
       if (*tag=='$')
       {
@@ -196,6 +197,7 @@ void Schema::print_lint(FILE *f, const SpecsReader *reader)
             ++l;
          }
       }
+      return true;
    };
 
    reader->scan_modes(cb);
