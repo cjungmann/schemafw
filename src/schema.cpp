@@ -1986,10 +1986,12 @@ bool Schema::confirm_session(uint32_t id, const char *hash) const
             BindC &o = ds[0].object();
             if (!o.is_null())
             {
-               ri_long ril;
+               int64_t rlong = -1;
+               ai_longlong ril(&rlong);;
                o.assign_to(ril);
-               
-               in_session = (ril==1);
+
+               if (rlong==1)
+                  in_session = true;
             }
          }
       };
@@ -2410,7 +2412,9 @@ void Schema::install_response_mode(const char *mode_name)
                      // On return, check if a login attempt failed:
                      if (sess_type==STYPE_ESTABLISH)
                      {
-                        sess_status = get_session_status(sess_type, false);
+                        // Use session_type STYPE_IDENTITY to prevent relaxed
+                        // STYPE_ESTABLISH processing after login attempt:
+                        sess_status = get_session_status(STYPE_IDENTITY, false);
                         if (sess_status < SSTAT_AUTHORIZED)
                            abandon_session_records();
                      }
