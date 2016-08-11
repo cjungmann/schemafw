@@ -26,8 +26,11 @@ There are several sections.
   - [Debugging with Command Line Options](SchemaFCGIOptions.md)
   - [Debugging Response Modes](DebuggingResponseModes.md)
   - [Debugging Hints for SQL Procedures](DebuggingSQLHints.md)
+  - [Adding Buttons](AddingButtons.md)
+  - [Context References](ContextReferences.md)
   - [Result Dialogs (type:form-result)](ResultDialogs.md)
-  - Session Stuff  
+  - Session Stuff
+    - [Session Login Procedure](SessionLoginProc.md)
     This must be fleshed out.  Assumptions I made about how this is
     set up turn out to be obsolete.  Refine the process while working
     on menu order and return to describe the conditions that dictate
@@ -35,7 +38,6 @@ There are several sections.
     - [COMPLETE AFTER menu-order LOGIN Sessions and Authorization](SessionsAndAuthorization.md)
     - [COMPLETE AFTER menu-order LOGIN SchemaFW Session Processing Procedures](SchemaFWSessionProcs.md)
 
-  - [Context References](ContextReferences.md)
   - [Composite Dialogs **NOT DONE**](CompositeDialogs.md)
   - [Using LOAD DATA LOCAL INFILE **NOT DONE**](LoadDataLocalInfile.md)
   - [Importing Files **NOT DONE**](ImportingFiles.md)
