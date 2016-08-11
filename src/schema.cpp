@@ -838,7 +838,7 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
          m_specsreader.print_sub_elements(m_out, result_handle, arr_result_reserved);
 
       // Don't print the schema if it comes from m_mode and m_mode
-      // includes a schema_proc:
+      // includes a schema-proc:
       if (m_mode==result_handle && schema_prints_early())
          schema = nullptr;
       
@@ -3441,10 +3441,10 @@ void Schema::process_info_procedure(StoredProc &infoproc)
       write_error_element(m_out, "warning", buff);
    }
 
-   // The existence of a schema_proc instruction determines what comes next
+   // The existence of a schema-proc instruction determines what comes next
    const char *schema_proc_name = m_mode->seek_value("schema-proc");
 
-   // If there was not schema_proc, we may need to print schema:
+   // If there was not schema-proc, we may need to print schema:
    if (!schema_proc_name)
    {
       // Print a form-producing schema for an empty form or a result form:
