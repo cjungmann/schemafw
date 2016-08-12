@@ -301,6 +301,11 @@
     <xsl:value-of select="$nl" />
   </xsl:template>
 
+  <xsl:template match="@script" mode="add_to_head">
+    <script type="text/javascript" src="{.}"></script>
+    <xsl:value-of select="$nl" />
+  </xsl:template>
+
   <xsl:template match="@*" mode="add_attribute_variable">
     <xsl:variable name="n" select="translate(local-name(),'-', '_')" />
     <xsl:value-of select="concat($vars_obj, '.' , $n, ' = &quot;', ., '&quot;;', $nl)" />
@@ -1342,7 +1347,7 @@
               <div class="field_content">
                 <xsl:apply-templates select="." mode="get_value">
                   <xsl:with-param name="data" select="$data" />
-v                </xsl:apply-templates>
+                </xsl:apply-templates>
               </div>
             </xsl:otherwise>
           </xsl:choose>
