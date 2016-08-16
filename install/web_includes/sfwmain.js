@@ -25,6 +25,8 @@ window.onload = function()
       center_form(form, true);
       form.style.visibility = "visible";
       SchemaFW.focus_on_first_field(form);
+      if (xmlDoc)
+         form.xmldoc = xmlDoc;
    }
 
    function docs_available()
@@ -35,6 +37,10 @@ window.onload = function()
          if (!docel)
             alert("Missing document element.");
 
+         var form;
+         if ((form=seek_embedded_form()))
+             form.xmldoc = xmlDoc;
+         
          var msg = docel.tagName=="message" ? docel : docel.selectSingleNode("message");
          if (msg)
          {
