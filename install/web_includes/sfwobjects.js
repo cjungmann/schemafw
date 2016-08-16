@@ -232,8 +232,15 @@ function InitializeSchemaFW(xmld, xslo)
       var schema = docel.selectSingleNode("schema");
       if (!schema)
          schema = docel.selectSingleNode("result/schema");
-      
-      if (schema && schema.getAttribute("form-action"))
+
+      var asform = false;
+
+      if (docel.hasAttribute("mode-type"))
+         asform = docel.getAttribute("mode-type").substring(0,4)=="form";
+      else if (schema && schema.getAttribute("form-action"))
+         asform = true;
+
+      if (asform)
          current_event_handler = form_event_handler;
       else
          current_event_handler = table_event_handler;
@@ -993,6 +1000,15 @@ function InitializeSchemaFW(xmld, xslo)
          window.location = url;
    }
 
+   function process_button_open(t,bundle)
+   {
+      var url = t.getAttribute('data-url');
+      if (url)
+      {
+         _new_context(url, null, null, null);
+      }
+   }
+
    function object_has_props(o)
    {
       var p;
@@ -1090,15 +1106,10 @@ function InitializeSchemaFW(xmld, xslo)
          }
       }
          
-
-      // field remains null for any failure
-      if (!field)
-         return;
-
       var cb_update = null;
 
       var content;
-      if ((content=parts.content))
+      if (field && (content=parts.content))
       {
          cb_update = function(guest)
          {
@@ -1133,6 +1144,9 @@ function InitializeSchemaFW(xmld, xslo)
             return false;
          case "jump":
             process_button_jump(t);
+            return false;
+         case "open":
+            process_button_open(t,bundle);
             return false;
          case "view":
             process_button_view(t,bundle);
@@ -1777,7 +1791,9 @@ function InitializeSchemaFW(xmld, xslo)
       function start_closure()
       {
          new_host = create_context_host();
-         old_host = get_sfw_host(bundle.source);
+
+         if (bundle && "source" in bundle)
+            old_host = get_sfw_host(bundle.source);
          
          if (old_host)
          {
@@ -1813,7 +1829,7 @@ function InitializeSchemaFW(xmld, xslo)
          if (hosted_element && "xmldoc" in hosted_element)
             hosted_element.xmldoc = null;
 
-         if ("update" in bundle)
+         if (bundle && "update" in bundle)
             bundle.update();
 
          if (saved_event_handler!=null)
@@ -1838,9 +1854,17 @@ function InitializeSchemaFW(xmld, xslo)
          if (!alert_notice(doc))
          {
             start_closure();
-            
+
+            var docel = doc.documentElement;
             var subd = addEl("div", new_host);
-            xslObj.transformFill(subd, doc.documentElement);
+            if (!docel.hasAttribute("form-type"))
+            {
+               docel.setAttribute("form-type","form");
+               xslObj.transformFill(subd, docel);
+               docel.removeAttribute("form-type");
+            }
+            else
+               xslObj.transformFill(subd, docel);
 
             if ((nl=subd.getElementsByTagName("table")).length)
             {

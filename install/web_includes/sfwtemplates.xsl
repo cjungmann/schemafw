@@ -36,6 +36,7 @@
 
     <xsl:variable name="form-type">
       <xsl:choose>
+        <xsl:when test="@form-type"><xsl:value-of select="@form-type" /></xsl:when>
         <xsl:when test="$root">form</xsl:when>
         <xsl:otherwise>dialog</xsl:otherwise>
       </xsl:choose>
@@ -56,6 +57,7 @@
 
     <xsl:variable name="form-type">
       <xsl:choose>
+        <xsl:when test="@form-type"><xsl:value-of select="@form-type" /></xsl:when>
         <xsl:when test="$root">form</xsl:when>
         <xsl:otherwise>dialog</xsl:otherwise>
       </xsl:choose>
@@ -76,6 +78,7 @@
 
     <xsl:variable name="form-type">
       <xsl:choose>
+        <xsl:when test="@form-type"><xsl:value-of select="@form-type" /></xsl:when>
         <xsl:when test="$root">form</xsl:when>
         <xsl:otherwise>dialog</xsl:otherwise>
       </xsl:choose>
