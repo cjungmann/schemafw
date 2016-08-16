@@ -2328,7 +2328,8 @@ void Schema::install_response_mode(const char *mode_name)
             //    - jump_no_session mode value set
             //    - NOT in a login-type form which establishes a session
             if (sess_type > STYPE_ESTABLISH && sess_status < SSTAT_RUNNING)
-               early_jump = jump_no_session;
+               if (!early_jump)
+                  early_jump = jump_no_session;
 
             // We're leaving immediately:
             if (early_jump)
