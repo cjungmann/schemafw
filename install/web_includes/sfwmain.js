@@ -83,6 +83,8 @@ window.onload = function()
    else
      getXMLDocs(docs_available);
 
+   xhr_default_req_header("SFW-XHRequest","true");
+
    start_app();
 };
 
