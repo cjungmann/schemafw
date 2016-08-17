@@ -1477,6 +1477,8 @@ int Schema::wait_for_requests(loop_sentry sentry, FILE *out)
          
          s_headers_done = false;
 
+         get_sfw_xhrequest();
+
          // for debugging unexpected requests while processing login-form:
          // log_new_request();
          
@@ -2334,11 +2336,19 @@ void Schema::install_response_mode(const char *mode_name)
             // We're leaving immediately:
             if (early_jump)
             {
-               print_Status_303();
-               write_location_header(early_jump);
-
-               if (sess_status==SSTAT_EXPIRED)
+               if (s_sfw_xhrequest)
+               {
+                  set_forbidden_header();
                   clear_session_cookies();
+               }
+               else
+               {
+                  print_Status_303();
+                  write_location_header(early_jump);
+
+                  if (sess_status==SSTAT_EXPIRED)
+                     clear_session_cookies();
+               }
                   
                write_headers_end();
                   
@@ -2812,8 +2822,11 @@ long Schema::get_request_mode_position(const char *mode_name, bool keep_looking)
 
 bool Schema::s_headers_done = false;
 
+// Set starting value in case called on command line:
+bool Schema::s_sfw_xhrequest = get_sfw_xhrequest();
 
-void Schema::set_status_to_expired(void)
+
+void Schema::set_forbidden_header(void)
 {
    assert(!s_headers_done);
    ifputs("Status: 403 Forbidden\n", s_header_out);
