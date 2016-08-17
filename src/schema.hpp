@@ -613,8 +613,10 @@ protected:
     * @{
     */
    static bool s_headers_done;
+   static bool s_sfw_xhrequest;
 
-   void set_status_to_expired(void);
+   static inline bool get_sfw_xhrequest(void) { return s_sfw_xhrequest=((getenv("HTTP_SFW_XHREQUEST")) ? true : false); }
+   void set_forbidden_header(void);
    void set_cookie(const char *name, const BindC *value=nullptr, int seconds_to_expire=0) const;
    void write_refresh_header(int64_t seconds, const char *url) const;
    void write_location_header(const char *url) const;
