@@ -262,11 +262,42 @@ function InitializeSchemaFW(xmld, xslo)
 
    function get_content_host()
    {
-      var docbody = document.body || document.getElementsByTagName("body")[0];
-      function m(n) { return class_includes(n,"SFW_Content"); }
-      var n = getFirstMatchingEl(docbody, m);
-      return n || docbody;
+      var el = document.getElementById("SFW_Content");
+      if (!el)
+         el = document.body;
+      return el;
    }
+
+   function resize_sfw_content()
+   {
+      if (content_host)
+      {
+         var ohigh, owide, high=0, wide=0;
+         var c = get_first_el(content_host);
+         while (c)
+         {
+            ohigh = c.offsetHeight;
+            owide = c.offsetWidth;
+            if (ohigh > high)
+               high = ohigh;
+            if (owide > wide)
+               wide = owide;
+            c = get_next_el(c);
+         }
+
+         content_host.style.height = String(wide) + "px";
+      }
+   }
+
+   function resize_to_fill_sfw_content(el)
+   {
+      if (content_host)
+      {
+         el.style.height = String(content_host.offsetHeight)+"px";
+         el.style.width = String(content_host.offset_width)+"px";
+      }
+   }
+
 
    function get_sfw_host(t)
    {
@@ -1855,8 +1886,12 @@ function InitializeSchemaFW(xmld, xslo)
          {
             start_closure();
 
+            // ensure SFW_Content extent backs all contents:
+            resize_sfw_content();
+
             var docel = doc.documentElement;
             var subd = addEl("div", new_host);
+//            var subd = new_host;
             if (!docel.hasAttribute("form-type"))
             {
                docel.setAttribute("form-type","form");
@@ -1882,6 +1917,9 @@ function InitializeSchemaFW(xmld, xslo)
             // Create closure and change event handling only if
             // opening a filled window
             window.custom_handler = thandler;
+
+            // Make host large enough to cover all previous content:
+            resize_to_fill_sfw_content(subd);
 
             if (callback_open)
                callback_open(subd);

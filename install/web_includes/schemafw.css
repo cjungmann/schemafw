@@ -1,7 +1,15 @@
-div.SFW_Host
+#SFW_Content
 {
     position:relative;
-    background-color:#FFFFFFF;
+}
+
+div.SFW_Host
+{
+    position:absolute;
+    top : 0px;
+    left : 0px;
+    width : 100%;
+    background: url(/includes/screen.png) repeat;
 }
 
 div.SFW_Host div.closer
@@ -19,8 +27,8 @@ div.SFW_Host div.closer
 
 div.SFW_Host h2 { text-align: center; background-color:#9999FF; }
 
-table.Schema { border-collapse:collapse; }
-table.Schema { margin:0 auto; padding:0; position:relative; }
+table.Schema { border-collapse:collapse; background-color: #FFFFFF; }
+table.Schema { margin:0 auto; padding:0; }
 
 table.Schema thead { padding:8px border:solid 4px yellow; }
 
@@ -91,7 +99,8 @@ form.Embedded
 {
     background-color:#EEEEEE;
     border:solid 2px #CCCCCC;
-    position:absolute;
+    display:table;
+    margin:0 auto;
     visibility:hidden;
 }
 

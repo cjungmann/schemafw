@@ -72,6 +72,9 @@ window.onload = function()
       }
    }
 
+   if (!"body" in document)
+      document.body = document.getElementsByTagName("body")[0];
+
    InitializeSchemaFW();
    
    var form = seek_embedded_form();
@@ -99,10 +102,9 @@ function process_sfwvars(obj)
 
 function prepare_event_handling()
 {
-   var body = document.getElementsByTagName("body")[0];
    function addEvent(name,f,el)
    {
-      var target = el || body;
+      var target = el || document.body;
       if (target.addEventListener)
          target.addEventListener(name,f,true);
       else if ((target=el||document) && target.attachEvent)
