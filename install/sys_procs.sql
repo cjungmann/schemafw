@@ -152,19 +152,19 @@ END $$
 
 -- Called to set session variables in application data tables
 -- DROP PROCEDURE IF EXISTS App_Session_Start $$
-CREATE PROCEDURE App_Session_Start(id INT UNSIGNED)
+CREATE PROCEDURE App_Session_Start(session_id INT UNSIGNED)
 BEGIN
 END $$
 
 -- Called to prepare session, especially to set session variables
 -- DROP PROCEDURE IF EXISTS App_Session_Restore $$
-CREATE PROCEDURE App_Session_Restore(id INT UNSIGNED)
+CREATE PROCEDURE App_Session_Restore(session_id INT UNSIGNED)
 BEGIN
 END $$
 
 -- Called when session ends as opportunity to clean up data tables
 -- DROP PROCEDURE IF EXISTS App_Session_Abandon $$
-CREATE PROCEDURE App_Session_Abandon(id INT UNSIGNED)
+CREATE PROCEDURE App_Session_Abandon(session_id INT UNSIGNED)
 BEGIN
 END $$
 
@@ -289,9 +289,9 @@ BEGIN
 END $$
 
 DROP PROCEDURE IF EXISTS ssys_assert_session_id $$
-CREATE PROCEDURE ssys_assert_session_id(id INT UNSIGNED)
+CREATE PROCEDURE ssys_assert_session_id(session_id INT UNSIGNED)
 BEGIN
-  IF id IS NULL OR NOT(id = @session_confirmed_id) THEN
+  IF id IS NULL OR NOT(session_id = @session_confirmed_id) THEN
      SIGNAL SQLSTATE 'ERROR' SET MESSAGE_TEXT = 'id doesn''t match session confirmed id.';
   END IF;
 END $$
