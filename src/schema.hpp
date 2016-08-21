@@ -325,19 +325,22 @@ public:
                          *   get_session_status().
                          */
       MACTION_NONE,
+      MACTION_ABANDON_SESSION,
+      MACTION_DELETE,
+      MACTION_IMPORT,
       MACTION_INFO,
+      MACTION_LOOKUP,
+
+      MACTION_FORM_SUBMIT,
+      MACTION_FORM_RESULT,
+
+      // All actions, after and including MACTION_TABLE, will force schema output:
       MACTION_TABLE,
       MACTION_DISPLAY,
-      MACTION_LOOKUP,
-      MACTION_DELETE,
       MACTION_FORM_EDIT,
       MACTION_FORM_NEW,
-      MACTION_FORM_SUBMIT,
       MACTION_FORM_TRY,
-      MACTION_FORM_RESULT,
-      MACTION_FORM_VIEW,
-      MACTION_ABANDON_SESSION,
-      MACTION_IMPORT
+      MACTION_FORM_VIEW
    };
 
    struct struct_mode_action
@@ -901,13 +904,13 @@ protected:
    /**
     * @brief Indicates if a schema must be printed even if not explicitly requested.
     *
-    * Both a table and a display mode type require a schema to display the results,
-    * so this function identifies if we're using one of these mode types.
+    * The table and display action types require the schema to print the result.
+    * Several form types also require schema in order to build the form.
+    * This function identifies if we're using one of these mode types.
     */
    inline bool must_print_schema(void) const
    {
-      return m_mode_action==Schema::MACTION_DISPLAY
-         || m_mode_action==Schema::MACTION_TABLE;
+      return m_mode_action >= Schema::MACTION_TABLE;
    }
 
    inline bool schema_prints_early(void) const { return m_schema_prints_early; }

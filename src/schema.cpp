@@ -3437,7 +3437,7 @@ void Schema::process_info_procedure(StoredProc &infoproc)
 {
    bool is_form = is_form_type(m_mode_action);
    bool is_empty_form = m_mode_action==MACTION_FORM_NEW;
-   bool is_result_form = m_mode_action==MACTION_FORM_RESULT;
+   bool force_schema = is_empty_form || m_mode_action==MACTION_FORM_RESULT;
 
    BindStack *bindstack = infoproc.bindstack();
 
@@ -3462,7 +3462,7 @@ void Schema::process_info_procedure(StoredProc &infoproc)
    if (!schema_proc_name)
    {
       // Print a form-producing schema for an empty form or a result form:
-      if (bindstack && (is_empty_form || is_result_form))
+      if (bindstack && force_schema)
       {
          Schema_Printer sprinter(*bindstack, *m_specsreader, *m_mode, m_out);
          sprinter.print(m_mode->seek("schema"), "form");
