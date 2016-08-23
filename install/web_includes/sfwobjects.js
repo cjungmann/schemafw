@@ -1002,6 +1002,8 @@ function InitializeSchemaFW(xmld, xslo)
          console.error("'call' button task not defined.");
       else
          window[task](bundle);
+
+      return false;
    }
 
    function process_button_delete(t,bundle)
@@ -1029,6 +1031,8 @@ function InitializeSchemaFW(xmld, xslo)
          console.error("'jump' button without URL.");
       else
          window.location = url;
+
+      return false;
    }
 
    function process_button_open(t,bundle)
@@ -1038,6 +1042,14 @@ function InitializeSchemaFW(xmld, xslo)
       {
          _new_context(url, null, null, null);
       }
+
+      return false;
+   }
+
+   function process_button_dialog(t,bundle)
+   {
+
+      return false;
    }
 
    function object_has_props(o)
@@ -1161,6 +1173,8 @@ function InitializeSchemaFW(xmld, xslo)
       var url = t.getAttribute("data-url");
       if (url)
          _new_context(url, bundle, null, cb_update);
+
+      return false;
    }
 
    function process_button_click(e,t,top,bundle)
@@ -1171,17 +1185,15 @@ function InitializeSchemaFW(xmld, xslo)
          case "delete":
             return process_button_delete(t,bundle);
          case "call":
-            process_button_call(t,bundle);
-            return false;
+            return process_button_call(t,bundle);
          case "jump":
-            process_button_jump(t);
-            return false;
+            return process_button_jump(t);
          case "open":
-            process_button_open(t,bundle);
-            return false;
+            return process_button_open(t,bundle);
+         case "dialog":
+            return process_button_dialog(t,bundle);
          case "view":
-            process_button_view(t,bundle);
-            return false;
+            return process_button_view(t,bundle);
          default:
             console.error("No provision for button type \"" + type + "\"");
       }
