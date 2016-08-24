@@ -38,6 +38,7 @@ There are several sections.
     - [COMPLETE AFTER menu-order LOGIN Sessions and Authorization](SessionsAndAuthorization.md)
     - [COMPLETE AFTER menu-order LOGIN SchemaFW Session Processing Procedures](SchemaFWSessionProcs.md)
   - [Multipart Form](MultipartForm.md)
+  - [Multipart Form Section](FormSection.md)
   - [Composite Dialogs **NOT DONE**](CompositeDialogs.md)
   - [Using LOAD DATA LOCAL INFILE **NOT DONE**](LoadDataLocalInfile.md)
   - [Importing Files **NOT DONE**](ImportingFiles.md)
