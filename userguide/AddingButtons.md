@@ -21,6 +21,16 @@ Sets of individual buttons will be rendered as groups.  An intervening button gr
 within a set of individual buttons will result in the buttons before and/or after
 the button group to be rendered as separate button groups.
 
+### Button Instructions
+
+Each button type includes at least two instructions, the **type** and an action
+instruction to perform upon clicking the button.  In practice, buttons also include
+a **label** instruction to alert the user to the purpose of the button.
+
+The action instruction can be of these types,
+- **url** when a page is to be loaded (_jump_ and _open_ button types)
+- **task** for a function call OR to name a response mode for a new context (_call_, _  add_, or _delete_ button types)
+
 ~~~srm
 demo_mode
    procedure : App_Demo
