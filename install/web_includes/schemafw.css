@@ -25,7 +25,7 @@ div.SFW_Host div.closer
     vertical-align:middle;
 }
 
-div.SFW_Host h2 { text-align: center; background-color:#9999FF; }
+div.SFW_Host h2 { text-align: center; background-color:#9999FF; margin:0; }
 
 table.Schema { border-collapse:collapse; background-color: #FFFFFF; }
 table.Schema { margin:0 auto; padding:0; }
@@ -63,10 +63,15 @@ table.Schema thead th
     cursor:pointer;
 }
 
-table.Schema thead tr.floater.button_row td { display:block; }
-table.Schema thead tr.button_row td { text-align:center; }
-table.Schema thead tr.button_row button { margin:.25em; }
+/* table.Schema thead tr.floater.button_row td { display:block; } */
+/* table.Schema thead tr.button_row td { text-align:center; } */
+/* table.Schema thead tr.button_row button { margin:.25em; } */
 
+/* approximate tr row spacing for p */
+p.button_row                   { margin: .25em 0; }
+/* tr.floater.button_row td       { display;block; } */
+tr.button_row td, p.button_row { text-align:center; }
+tr.button_row button           { margin: .25em; }
 
 table.Schema tbody tr { cursor:pointer; }
 table.Schema tbody td
@@ -101,7 +106,7 @@ form.Embedded
     border:solid 2px #CCCCCC;
     display:table;
     margin:0 auto;
-    visibility:hidden;
+    visibility:visible;
 }
 
 fieldset.Schema
