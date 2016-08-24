@@ -1326,16 +1326,6 @@ function InitializeSchemaFW(xmld, xslo)
       return node_olc;
    }
 
-   function get_attribute_value(aname, node, schema, docel)
-   {
-      var rval = node ? node.getAttribute("on_line_click") : null;
-      if (!rval)
-         rval = schema ? schema.getAttribute(aname) : null;
-      if (!rval)
-         rval = docel ? docel.getAttribute(aname) : null;
-      return rval;
-   }
-
    function get_line_click_attribute(schema, docel)
    {
       var url = null;
