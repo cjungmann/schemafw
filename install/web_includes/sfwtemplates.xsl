@@ -633,7 +633,7 @@
     </xsl:if>
 
     <xsl:variable name="host_class">
-      <xsl:text>button</xsl:text>
+      <xsl:text>button_row</xsl:text>
       <xsl:if test="$host-type='tr'">
         <xsl:value-of select="concat(' headfix_', local-name(..),'_',local-name())" />
       </xsl:if>
