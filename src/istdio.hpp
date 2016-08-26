@@ -4,7 +4,6 @@
 #define ISTDIO_HPP_SOURCE
 
 #include <assert.h>
-#include <stdarg.h>
 #include <stdio.h>
 
 #ifdef FASTCGI

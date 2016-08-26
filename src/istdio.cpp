@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdarg.h>
 
 #ifdef FASTCGI
 
@@ -37,7 +38,7 @@ int ifprintf(FCGI_FILE* f, const char *format, ...)
 #else   // ifndef FASTCGI
 inline int  ifprintf(FILE* f, const char *format, ...)
 {
-   valist args;
+   va_list args;
    va_start(args,format);
    int rval = vfprintf(f,format,args);
    va_end(args);
