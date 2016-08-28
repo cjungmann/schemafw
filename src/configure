@@ -29,11 +29,11 @@ CMARK_FLAG := $(shell which cmark 2> /dev/null)
 
 objlist=schema.o istdio.o xmlutils.o qstringer.o advisor.o datastack.o \
 specsreader.o adbranch.o prandstr.o vclasses.o ctyper.o bindc.o \
-bindstack.o procedure.o storedproc.o multipart_pull.o mysql_loaddata.o
+bindstack.o procedure.o storedproc.o fods.o multipart_pull.o mysql_loaddata.o
 
 hpplist=xmlutils.hpp istdio.hpp qstringer.hpp genericuser.hpp advisor.hpp \
 adbranch.hpp datastack.hpp specsreader.hpp prandstr.hpp vclasses.hpp \
-ctyper.hpp bindc.hpp bindstack.hpp procedure.hpp storedproc.hpp \
+ctyper.hpp bindc.hpp bindstack.hpp procedure.hpp storedproc.hpp fods.hpp \
 schema.hpp multipart_pull.hpp  mysql_loaddata.hpp
 
 all: schema.fcgi
@@ -83,6 +83,9 @@ bindstack.o : bindstack.cpp bindstack.hpp genericuser.hpp prandstr.hpp vclasses.
 
 procedure.o : procedure.cpp procedure.hpp ${hpplist} istdio.hpp
 	$(CXX) $(CXXFLAGS) -c -o procedure.o procedure.cpp
+
+fods.o : fods.cpp fods.hpp ${hpplist} istdio.hpp
+	$(CXX) $(CXXFLAGS) -c -o fods.o fods.cpp
 
 multipart_pull.o : multipart_pull.cpp multipart_pull.hpp vclasses.hpp prandstr.hpp
 	$(CXX) $(CXXFLAGS) -c -o multipart_pull.o multipart_pull.cpp
