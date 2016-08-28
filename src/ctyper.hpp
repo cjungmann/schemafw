@@ -80,6 +80,8 @@ struct _CType
    iclass_caster    m_caster;
    const char       *m_sql_name;
    const char       *m_param_data_type;
+   const char       *m_cell_type;
+   const char       *m_value_attribute;
 
    inline enum_field_types get_sqltype(void) const { return m_sqltype; }
    inline bool is_unsigned(void) const          { return m_is_unsigned; }
@@ -88,6 +90,9 @@ struct _CType
    inline size_t get_size(void) const           { return m_size; }
    inline iclass_caster get_caster(void) const  { return m_caster; }
    inline const char *get_type_name(void) const { return m_sql_name; }
+   inline const char *get_cell_type(void) const { return m_cell_type; }
+   inline const char *get_val_attr(void) const  { return m_value_attribute; }
+   inline const char *get_value_attribute(void) const { return m_value_attribute; }
 
    inline bool operator==(const char *c) const  { return 0==strcmp(c, m_param_data_type); }
 };
