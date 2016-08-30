@@ -5,6 +5,7 @@
 
 #include "qstringer.hpp"
 #include "storedproc.hpp"
+#include "fods.hpp"
 #include "adbranch.hpp"
 #include "specsreader.hpp"
 #include "multipart_pull.hpp"
@@ -327,6 +328,7 @@ public:
       MACTION_NONE,
       MACTION_ABANDON_SESSION,
       MACTION_DELETE,
+      MACTION_EXPORT,
       MACTION_IMPORT,
       MACTION_INFO,
       MACTION_LOOKUP,
@@ -628,17 +630,29 @@ protected:
    bool refresh_to_no_session_destination(int seconds=0);
 
    /** @brief Write content type to headers. */
-   inline static void print_ContentType() { ifputs("Content-Type: text/xml\n", s_header_out); }
+   inline static void print_XML_ContentType() { ifputs("Content-Type: text/xml\n", s_header_out); }
+   /** @brief Write FODS content type to headers. */
+   inline static void print_FODS_ContentType() { ifputs("Content-Type: application/vnd.oasis.opendocument.spreadsheet\n", s_header_out); }
+   
+   void add_stylesheet_pi(void);
+   
    /** @brief Use this function to end the headers to set the s_headers_done flag. */
    inline static void headers_conclude(FILE *out)   { ifputc('\n', out); s_headers_done = true; }
    /** @brief Alias for headers_conclude to match write_refresh_header() form. */
    inline void write_headers_end(void) const  { headers_conclude(s_header_out); }
+   /** @brief Write XML declaration. */
+   inline void write_xml_declaration(void) const { ifputs("<?xml version=\"1.0\" ?>\n", m_out); }
+   /** @brief Shortcut to replace deleted function add_finish_header_add_xml_pi(). */
+   inline void write_xml_start(bool add_xsl=true)
+   {
+      write_xml_declaration();
+      if (add_xsl)
+         add_stylesheet_pi();
+   }
    /**@}*/
    
    
    void set_requested_database(void);
-   void add_stylesheet_pi(void);
-   void finish_header_add_xml_pi(void);
 
    class CB
    {

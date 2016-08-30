@@ -2235,7 +2235,8 @@ void Schema::install_response_mode(const char *mode_name)
       log_missing_mode(name);
       
       ifputs("Status: 404 Not Found\n", s_header_out);
-      finish_header_add_xml_pi();
+      write_headers_end();
+      write_xml_start();
       print_message_as_xml(m_out, "error", "mode missing", mode_name);
    }
    else
@@ -2359,7 +2360,6 @@ void Schema::install_response_mode(const char *mode_name)
             // everything after this uses "Status: 200", so let's send it
             // before we go on:
             print_Status_200();
-            print_ContentType();
 
             // If a session is needed but expired or not yet running,
             // start a session and write out new cookie values:
@@ -2368,7 +2368,9 @@ void Schema::install_response_mode(const char *mode_name)
                // This function creates the records and writes the cookie values:
                if (!create_session_records())
                {
-                  this->finish_header_add_xml_pi();
+                  print_XML_ContentType();
+                  write_headers_end();
+                  write_xml_start();
                   print_message_as_xml(m_out,
                                        "error",
                                      "failed to establish a session",
@@ -2377,13 +2379,14 @@ void Schema::install_response_mode(const char *mode_name)
                }
             }
 
-            // At this point, the session is running if it's called for.
-
-            // Any jumping after this point will be as a meta jump,
-            // so we can set all remaining responses as Status: OK:
-            this->finish_header_add_xml_pi();
-
+            if (m_mode_action==MACTION_EXPORT)
+               print_FODS_ContentType();
+            else
+               print_XML_ContentType();
             
+            write_headers_end();
+            write_xml_start(m_mode_action!=MACTION_EXPORT);
+
 
             // The jump instruction will be included as a meta instruction
             // in the HTML head element, and as such, will be a suggestion.
@@ -3000,18 +3003,6 @@ void Schema::add_stylesheet_pi(void)
       ifputs("\" ?>\n", m_out);
    }
 }
-
-/**
- * @brief Finish http header and add XML processing instructions.
- */
-void Schema::finish_header_add_xml_pi(void)
-{
-   headers_conclude(s_header_out);
-      
-   ifputs("<?xml version=\"1.0\" ?>\n", m_out);
-   add_stylesheet_pi();
-}
-
 
 /**
  * @brief Begin processing the document.
@@ -3781,7 +3772,7 @@ void Schema::procedure_message_reporter(const char *type,
 {
    if (!s_headers_done)
    {
-      print_ContentType();
+      print_XML_ContentType();
       headers_conclude(s_header_out);
    }
 
