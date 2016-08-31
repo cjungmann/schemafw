@@ -24,8 +24,6 @@ void reset_fcgi_streams(void)
    _fcgi_sF[2].stdio_stream = stderr;
 }
 
-
-
 int ifprintf(FCGI_FILE* f, const char *format, ...)
 {
    va_list args;
