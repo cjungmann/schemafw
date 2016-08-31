@@ -113,19 +113,23 @@ const Schema::struct_session_type Schema::map_session_types[] =
    
 const Schema::struct_mode_action Schema::map_mode_actions[] =
 {
+   { "save-post",       Schema::MACTION_SAVE_POST       },
+   { "abandon-session", Schema::MACTION_ABANDON_SESSION },
+   { "delete",          Schema::MACTION_DELETE          },
+   { "export",          Schema::MACTION_EXPORT          },
+   { "import",          Schema::MACTION_IMPORT          },
    { "info",            Schema::MACTION_INFO            },
+   { "lookup",          Schema::MACTION_LOOKUP          },
+
+   { "form-submit",     Schema::MACTION_FORM_SUBMIT     },
+   { "form-result",     Schema::MACTION_FORM_RESULT     },
+   
    { "table",           Schema::MACTION_TABLE           },
    { "display",         Schema::MACTION_DISPLAY         },
-   { "lookup",          Schema::MACTION_LOOKUP          },
-   { "delete",          Schema::MACTION_DELETE          },
    { "form-edit",       Schema::MACTION_FORM_EDIT       },
    { "form-new",        Schema::MACTION_FORM_NEW        },
-   { "form-submit",     Schema::MACTION_FORM_SUBMIT     },
-   { "form-view",       Schema::MACTION_FORM_VIEW       },
    { "form-try",        Schema::MACTION_FORM_TRY        },
-   { "form-result",     Schema::MACTION_FORM_RESULT     },
-   { "abandon-session", Schema::MACTION_ABANDON_SESSION },
-   { "import",          Schema::MACTION_IMPORT          }
+   { "form-view",       Schema::MACTION_FORM_VIEW       }
 };
 const Schema::struct_mode_action *Schema::end_map_mode_actions =
    map_mode_actions + (sizeof(map_mode_actions) / sizeof(struct_mode_action));

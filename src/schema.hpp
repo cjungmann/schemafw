@@ -326,6 +326,7 @@ public:
                          *   get_session_status().
                          */
       MACTION_NONE,
+      MACTION_SAVE_POST,
       MACTION_ABANDON_SESSION,
       MACTION_DELETE,
       MACTION_EXPORT,
