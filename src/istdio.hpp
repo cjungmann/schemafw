@@ -14,8 +14,21 @@
  * FILE* and standard f... functions from stdio.h.  These are mainly used in
  * response mode type=save-post to write the POST data to a disk file.
  *
- * See Schema::write_multipart_preamble(FILE*) and Schema::save_stdin(const char*)
- * for an example of usage, especially of the _g_ prefix functions.
+ * See @ref ISTDIO_Examples for usage examples.
+ */
+
+/**
+ * @page ISTDIO_Examples istdio.hpp Examples
+ *
+ * Look at the following snippet for examples of using _i_ prefixed functions
+ * to read from stdin, and _g_ prefixed to open a FILE instead of a FCGI_FILE,
+ * and to write using stdin.h functions.
+ * @snippet schema.cpp Save_Stdin
+ *
+ * The following snippet uses _g_ prefixed function stdio.h functions to work with
+ * a FILE*, even if the code is compiled in FASTCGI mode.
+ * @snippet schema.cpp Write_Multipart_Preamble
+ *
  */
 
 #ifndef ISTDIO_HPP_SOURCE
