@@ -162,6 +162,22 @@ public:
    //    t_build(name, user);
    // }
 
+   /**
+    * @brief Build a SpecsReader from the path to an SRM file.
+    *
+    * This function uses AFile_Handle::build() and Advisor_Index::t_build()
+    * and their callbacks to conveniently construct a SpecsReader in one
+    * function call.
+    *
+    * ~~~c++
+    * auto f_sreader [](SpecsReader &sr)
+    * {
+    *    // use the SpecsReader object...
+    * };
+    *
+    * SpecsReader::build(path_to_srm, f_sreader);
+    * ~~~
+    */
    template <class Func>
    static void build(const char *path, Func f)
    {
