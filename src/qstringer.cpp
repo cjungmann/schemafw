@@ -365,6 +365,9 @@ bool BaseStringer::get_int_value(const char *name, long int &value) const
  * The function works with a char string instead of the
  * QUERY_STRING environment variable to enable testing the
  * conversions outside of a CGI environment.
+ *
+ * NOTE: The @p user callback function is ALWAYS called, either
+ * with an object or nullptr if @p str is null or empty;
  */
 void BaseStringer::t_build(const char *str,
                         IGeneric_Callback_Const_Pointer<BaseStringer> &user,

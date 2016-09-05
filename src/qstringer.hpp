@@ -119,9 +119,16 @@ public:
    void t_get_value(int index, const IGeneric_Callback_Const_Pointer<char> &callback) const;
    void t_get_value(const char *name, const IGeneric_Callback_Const_Pointer<char> &callback) const;
    template <class Func>
-   void get_value(const char *name, const Func &f)
+   void get_value(const char *name, const Func &f) const
    {
       t_get_value(name, Generic_User_Const_Pointer<char,Func>(f));
+   }
+
+   template <class Func>
+   void get_value(int index, const Func &f) const
+   {
+      Generic_User_Const_Pointer<char,Func> user(f);
+      t_get_value(index, user);
    }
 
    bool get_int_value(const char *name, long int &value) const;
@@ -131,6 +138,13 @@ public:
    static void t_build(const char *str,
                        IGeneric_Callback_Const_Pointer<BaseStringer> &qsu,
                        char separator='&');
+
+   template <class Func>
+   static void build(const char *str, const Func &f, char separater='&')
+   {
+      Generic_User_Const_Pointer<BaseStringer, Func> user(f);
+      BaseStringer::t_build(str, user);
+   }
 
    /**@}*/
 };
