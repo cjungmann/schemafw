@@ -8,13 +8,18 @@ running sessions or logins.
 After entering the following text, make sure that you _chmod_ to set the execution
 flags.
 
-Bash script/EMACS bonus: the EMACS file variables **-*-** notation is normally on
-the first line, but for shell scripts where the first line identifies the script
-interpreter, EMACS will look to the second line for the file variables line.
-
 ~~~sh
 #!/bin/bash
--*- mode: shell -*-
+-*- mode: sh -*-
+
+# Exit with hint if not called with 'source'
+if [ "$0" != "bash" ]; then
+  echo
+  echo Invoke this script as source to retain the environment changes:
+  echo source sfwlogin
+  echo
+  exit
+fi
 
 # Clear any previous cookies
 export HTTP_COOKIE=''
@@ -33,19 +38,29 @@ rm /tmp/liresult.txt
 
 # Start building the HTTP_COOKIE command
 
-echo -n 'export HTTP_COOKIE="'
+ecmd='export HTTP_COOKIE="'
 
 while read -r line; do
    if [[ "$line" =~ Set-Cookie:\ (.*) ]]
    then
        if [ -n "$found" ]; then
-           echo -n '; '
+           ecmd="${ecmd}; "
        fi
        found=1
-       echo -n ${BASH_REMATCH[1]}
+       ecmd="${ecmd}${BASH_REMATCH[1]}"
    fi
 done <<< "$liresult"
 
-# Close quotes and add newline to complete the command:
-echo '"'
+ecmd="${ecmd}\""
+
+eval ${ecmd}
 ~~~
+
+To use the script, call it with _source_ so that the script is run in the current
+process.  Otherwise, if the script is directly called, the environment variables will
+be set in the child process running the script, and the new environment values will
+be lost to the parent process.
+
+Assuming that the script above is called _sfwlogin_, it should be called like this:
+
+` $ source sfwlogin`
