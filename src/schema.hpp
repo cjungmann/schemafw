@@ -237,7 +237,28 @@ public:
 
    static void set_header_out(FILE *out) { s_header_out = out; }
 
+   struct SFW_Resources
+   {
+      SpecsReader        &m_sreader;
+      const BaseStringer *m_qstringer;
+      const ab_handle    *m_mode;
+      const BaseStringer *m_cookies;
+
+      SFW_Resources(SpecsReader &sr)
+         : m_sreader(sr), m_qstringer(nullptr), m_mode(nullptr), m_cookies(nullptr) { }
+
+      long int get_mode_position(void) const;
+   };
+
+   static void t_get_sfw_resources(IGeneric_Callback<SFW_Resources> &cb);
    
+   template <class Func>
+   static void get_sfw_resources(Func f)
+   {
+      Generic_User<SFW_Resources, Func> user(f);
+      t_get_sfw_resources(user);
+   }
+
    static int get_fake_stdin_from_command_args(int argc, char **argv,
                                                pipe_cl_struct &pcs);
 
@@ -507,6 +528,13 @@ protected:
    static void schema_without_post(SpecsReader &sr, FILE *out);
    static void schema_with_cl(FILE *out);
    /**@}*/
+
+
+#pragma push_macro("FILE")
+#undef FILE
+   void write_multipart_preamble(FILE *f);
+#pragma pop_macro("FILE")
+   void save_stdin(const char *target);
 
    void collect_resources(void);
 

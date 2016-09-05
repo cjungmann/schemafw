@@ -1380,6 +1380,102 @@ void * Schema::pthread_fake_stdin_start_routine(void *data)
 }
 
 /**
+ * @brief Get the file position of response mode.
+ *
+ * Using the SpecsReader and QueryString information that should already been
+ * prepared, look for the file position of the appropriate response mode.
+ *
+ * This function gets and discards stack-based strings to search the SpecsReader
+ * so as to conserve stack space while getting this information.
+ */
+long int Schema::SFW_Resources::get_mode_position(void) const
+{
+   long int rval = -1;
+   if (m_qstringer)
+   {
+      auto fval = [this, &rval](const char *name)
+         {
+            rval = m_sreader.get_mode_position(name);
+         };
+      m_qstringer->get_value(0, fval);
+   }
+
+   if (rval==-1)
+   {
+      auto f2 = [this, &rval](const ab_handle* abh)
+         {
+            rval = m_sreader.get_mode_position(abh->value());
+         };
+
+      m_sreader.get_global_mode("default_mode", nullptr, f2);
+   }
+
+   return rval;
+}
+
+void Schema::t_get_sfw_resources(IGeneric_Callback<SFW_Resources> &cb)
+{
+   SFW_Resources* p_sfwr = nullptr;
+
+   // Finally, save cookies, if found, then invoke the callback with our work.
+   auto f_cookies = [&p_sfwr, &cb](const BaseStringer *cookielist)
+   {
+      if (cookielist)
+         p_sfwr->m_cookies = cookielist;
+
+      cb(*p_sfwr);
+   };
+
+   // Fourth, load the response mode:
+   auto f_rmode = [&p_sfwr, &f_cookies](const ab_handle *mode)
+   {
+      p_sfwr->m_mode = mode;
+      BaseStringer::build(getenv("HTTP_COOKIE"), f_cookies, ';');
+   };
+
+   // Third...save query string object, use query string to get a response mode
+   auto f_qstring = [&p_sfwr, &f_rmode](const BaseStringer *querystring)
+   {
+      if (querystring)
+         p_sfwr->m_qstringer = querystring;
+
+      long int pos_mode = p_sfwr->get_mode_position();
+      // No response mode? Leave message and return:
+      if (pos_mode==-1)
+      {
+//         print_message_as_xml();
+         return;
+      }
+      else
+      {
+         Generic_User_Const_Pointer<ab_handle, decltype(f_rmode)> user(f_rmode);
+         p_sfwr->m_sreader.get_branch(pos_mode, user);
+      }
+   };
+
+   
+
+   // Second...get QueryString
+   auto f_sreader = [&p_sfwr, &f_qstring](SpecsReader &sr)
+   {
+      SFW_Resources sfwr(sr);
+      p_sfwr = &sfwr;
+      
+      BaseStringer::build(getenv("QUERY_STRING"), f_qstring);
+   };
+
+   // First...get SpecsReader
+   const char *pt = getenv("PATH_TRANSLATED");
+   if (pt)
+   {
+      change_to_path_dir(pt);
+      SpecsReader::build(pt,f_sreader);
+   }
+   else
+      ifputs("PATH_TRANSLATED not found.\n", stderr);
+}
+
+/**
  * @brief Return a file handle with which we can fake stdin for the CGI.
  *
  * @param argc The argc argument from main()
@@ -1492,9 +1588,6 @@ int Schema::wait_for_requests(loop_sentry sentry, FILE *out)
                schema_with_post(sr, out);
             else
                schema_without_post(sr, out);
-
-            // Clean up after every request for data security.
-            clear_for_new_request();
          };
 
          const char *pt = getenv("PATH_TRANSLATED");
@@ -1804,6 +1897,104 @@ void Schema::schema_without_post(SpecsReader &sr, FILE *out)
 //       run(&cls);
 //    }
 // }
+
+/**
+ * @brief Adds content-type and boundary info for save_stdin, if multipart/form-data.
+ *
+ * The Content-Type and boundary are saved in the environment variables for
+ * multipart/form-data, and are thus missing from stdin when processing a request.
+ * When the response type=save-post, we have to add this stuff back to the top of
+ * of the file to complete the POST data.
+ *
+ * Using FILE*, even in FASTCGI mode, so there is a pragma to remove the remapped
+ * FILE* definition.
+ */
+//@ [Write_Multipart_Preamble]
+#pragma push_macro("FILE")
+#undef FILE
+void Schema::write_multipart_preamble(FILE *f)
+#pragma pop_macro("FILE")
+{
+   const char* bstring = "boundary=";
+   const char* ct = getenv("CONTENT_TYPE");
+   if (ct)
+   {
+      const char* bndry = strstr(ct, bstring);
+      if (bndry)
+      {
+         bndry += strlen(bstring);
+         gfputs("Content-Type: ", f);
+         gfputs(ct, f);
+         gfputs("\r\n\r\n--", f);
+         gfputs(bndry, f);
+         gfputs("\r", f);
+      }
+   }
+}
+//@ [Write_Multipart_Preamble]
+
+/**
+ * @brief Write's POST data to target.
+ *
+ * When indicated by a mode's type = save_post, write stdin (which is the
+ * POST data) to @p target.  The POST data can then be used later for debugging
+ * complex forms, especially multipart forms.
+ */
+//@ [Save_Stdin]
+void Schema::save_stdin(const char *target)
+{
+   const char *error = nullptr;
+   
+   char buff[1024];
+   size_t copied;
+   size_t total_read = 0;
+   size_t total_written = 0;
+
+   // Using auto so the FILE return value is not converted to FCGI_FILE:
+   auto* ftarget = gfopen(target, "w");
+   
+   if (ftarget)
+   {
+      write_multipart_preamble(ftarget);
+
+      do
+      {
+         // Using ifread() for built-in stream to call appropriate fread(),
+         // regardless of FASTCGI mode:
+         copied = ifread(buff, 1, sizeof(buff), stdin);
+         if (copied>0)
+         {
+            total_read += copied;
+            assert(copied <= sizeof(buff));
+            // Using gfwrite() to write to the target file using stdio.h functions:
+            copied = gfwrite(buff, 1, copied, ftarget);
+            if (copied==0)
+            {
+               error = strerror(gferror(ftarget));
+               break;
+            }
+            else
+               total_written += copied;
+         }
+         else if (!ifeof(stdin))
+            error = strerror(iferror(stdin));
+      }
+      while (copied>0);
+      
+      gfclose(ftarget);
+   }
+   else
+      error = strerror(errno);
+
+   sprintf(buff, "Read %lu, wrote %lu bytes.\n", total_read, total_written);
+
+   print_message_as_xml(m_out,
+                        (error ? "error" : "result"),
+                        (error ? error : buff),
+                        "save-post");
+}
+//@ [Save_Stdin]
+
 
 /**
  * @brief This is where the request processing begins.
@@ -2233,6 +2424,7 @@ void Schema::set_instance_mode_values(const ab_handle *mode_handle)
 void Schema::install_response_mode(const char *mode_name)
 {
    long pos = get_request_mode_position(mode_name,true);
+   bool database_selected = false;
    if (pos<0)
    {
       const char *name = (mode_name && *mode_name) ? mode_name : "default";
@@ -2245,7 +2437,7 @@ void Schema::install_response_mode(const char *mode_name)
    }
    else
    {
-      auto f = [this,&mode_name](const ab_handle *mode_handle)
+      auto f = [this,&mode_name,&database_selected](const ab_handle *mode_handle)
          {
             // Redundant? Ensure name of handle received matches mode_name (or blank):
 //            assert((mode_name && *mode_name==0)||mode_handle->is_equal_to(mode_name));
@@ -2275,11 +2467,35 @@ void Schema::install_response_mode(const char *mode_name)
             m_mode = mode_handle;
             m_type_value = value_from_mode("type");
             m_mode_action = get_mode_type(m_type_value);
-            
+
+            if (m_mode_action==MACTION_SAVE_POST)
+            {
+               print_Status_200();
+               print_XML_ContentType();
+               write_headers_end();
+               write_xml_start();
+                  
+               const char *target = value_from_mode("target");
+               if (target)
+               {
+                  save_stdin(target);
+               }
+               else
+               {
+                  print_message_as_xml(m_out,
+                                       "error",
+                                       "Missing required file target",
+                                       "save-post");
+               }
+
+               return;
+            }
+
             bool abandoning = m_mode_action == MACTION_ABANDON_SESSION;
 
             // Must be called before get_session_status():
             set_requested_database();
+            database_selected = true;
 
             // Once we're in the response's database, do a security clear:
             clear_for_new_request();
@@ -2356,7 +2572,7 @@ void Schema::install_response_mode(const char *mode_name)
                }
                   
                write_headers_end();
-                  
+
                return;
             }
 
@@ -2415,6 +2631,7 @@ void Schema::install_response_mode(const char *mode_name)
                      print_message_as_xml(m_out,
                                           "error",
                                           "import failed");
+                     
                      return;
                   }
                }
@@ -2453,6 +2670,10 @@ void Schema::install_response_mode(const char *mode_name)
       
       m_specsreader->build_branch(pos, f);
    }
+
+   // Clean up upon leaving this function:
+   if (database_selected)
+      clear_for_new_request();
 }
 
 /**
@@ -3082,7 +3303,7 @@ void Schema::process_root_branch(const ab_handle *mode_root,
       // print the adhoc stuff:
       m_specsreader->print_sub_elements(m_out, m_mode, arr_root_reserved);
 
-//      print_env(false);
+      // print_env(false);
 
       const char *schema_proc_name = m_mode->seek_value("schema-proc");
       if (schema_proc_name)
