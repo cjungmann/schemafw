@@ -999,15 +999,32 @@ Schema::Schema(SpecsReader *sr, FILE *out)
      m_setter(nullptr),
      m_puller(nullptr),
 
-     m_reqd_CStringer(false),
-     m_reqd_QStringer(false),
-     m_reqd_ResponseMode(false),
-
      m_database_confirmed(false),
         
      m_cstringer(nullptr),
      m_qstringer(nullptr),
      m_mode(nullptr),
+     m_advisor(nullptr),
+     m_type_value(nullptr),
+     m_mode_action(MACTION_NULL),
+     m_meta_jump(nullptr),
+     m_prepage_message(nullptr),
+     m_session_id(s_invalid_session)
+{
+   clear_failure_strings();
+}
+
+Schema::Schema(SFW_Resources &sfwr, FILE *out)
+   : m_out(out),
+     m_specsreader(&sfwr.m_sreader),
+     m_setter(nullptr),
+     m_puller(nullptr),
+
+     m_database_confirmed(false),
+        
+     m_cstringer(sfwr.m_cookies),
+     m_qstringer(sfwr.m_qstringer),
+     m_mode(sfwr.m_mode),
      m_advisor(nullptr),
      m_type_value(nullptr),
      m_mode_action(MACTION_NULL),
@@ -1397,7 +1414,7 @@ long int Schema::SFW_Resources::get_mode_position(void) const
          {
             rval = m_sreader.get_mode_position(name);
          };
-      m_qstringer->get_value(0, fval);
+      m_qstringer->get_name_at(0, fval);
    }
 
    if (rval==-1)
@@ -1407,23 +1424,39 @@ long int Schema::SFW_Resources::get_mode_position(void) const
             rval = m_sreader.get_mode_position(abh->value());
          };
 
-      m_sreader.get_global_mode("default_mode", nullptr, f2);
+      m_sreader.get_global_mode("default-mode", nullptr, f2);
    }
 
    return rval;
 }
 
-void Schema::t_get_sfw_resources(IGeneric_Callback<SFW_Resources> &cb)
+void Schema::get_resources_from_environment(FILE *out)
 {
    SFW_Resources* p_sfwr = nullptr;
 
    // Finally, save cookies, if found, then invoke the callback with our work.
-   auto f_cookies = [&p_sfwr, &cb](const BaseStringer *cookielist)
+   auto f_cookies = [&out, &p_sfwr](const BaseStringer *cookielist)
    {
       if (cookielist)
          p_sfwr->m_cookies = cookielist;
 
-      cb(*p_sfwr);
+      Schema schema(*p_sfwr, out);
+
+      // Select and clear from installed response mode:
+      schema.set_requested_database();
+      schema.clear_for_new_request();
+
+      // Catch any exception so we have a change for database clean up:
+      try
+      {
+         schema.process_response_mode();
+      }
+      catch(const std::exception &se)
+      {
+         print_error_as_xml(out, se.what(), "process_response_mode");
+      }
+      
+      schema.clear_for_new_request();
    };
 
    // Fourth, load the response mode:
@@ -1437,7 +1470,7 @@ void Schema::t_get_sfw_resources(IGeneric_Callback<SFW_Resources> &cb)
    auto f_qstring = [&p_sfwr, &f_rmode](const BaseStringer *querystring)
    {
       if (querystring)
-         p_sfwr->m_qstringer = querystring;
+         p_sfwr->m_qstringer = static_cast<const QStringer*>(querystring);
 
       long int pos_mode = p_sfwr->get_mode_position();
       // No response mode? Leave message and return:
@@ -1577,27 +1610,16 @@ int Schema::wait_for_requests(loop_sentry sentry, FILE *out)
          
          s_headers_done = false;
 
-         get_sfw_xhrequest();
+         assign_sfw_xhrequest_flag();
 
-         // for debugging unexpected requests while processing login-form:
-         // log_new_request();
-         
-         auto f = [&out](SpecsReader &sr)
+         try
          {
-            if (is_post_request())
-               schema_with_post(sr, out);
-            else
-               schema_without_post(sr, out);
-         };
-
-         const char *pt = getenv("PATH_TRANSLATED");
-         if (pt)
-         {
-            change_to_path_dir(pt);
-            SpecsReader::build(pt, f);
+            Schema::get_resources_from_environment(stdout);
          }
-         else
-            ifputs("Missing PATH_TRANSLATED enviroment.\n", stderr);
+         catch(const schema_exception &se)
+         {
+            Schema::print_error_as_xml(stdout, se.what(), "install_response_mode");
+         }
       }
       
       mysql_close(&s_mysql);
@@ -1608,48 +1630,6 @@ int Schema::wait_for_requests(loop_sentry sentry, FILE *out)
    mysql_library_end();
 
    return exitval;
-}
-
-/**
- * @brief Run a single request and return.
- *
- * This function is used to fake a http request without any command line interaction
- * for the purpose of testing XSL stylesheets against an output.
- *
- * @param out File stream to which to write the response.
- * @param type Request type, 'g' for GET, 'p' for POST.
- */
-int Schema::run_single_request(SpecsReader &sr, FILE *out, char type)
-{
-   // type can only be 'g' or 'p' for GET or POST, respectively:
-   assert(type=='g' || type=='p');
-
-   // We're faking a web request, so set the flag appropriately:
-   Schema::s_is_web_request = true;
-   
-   int exit_value = 0;
-   if (start_mysql())
-   {
-      Schema::set_header_out(stderr);
-      switch(type)
-      {
-         case 'g':
-            setenv("REQUEST_METHOD", "GET", 1);
-            schema_without_post(sr, out);
-            break;
-         case 'p':
-            setenv("REQUEST_METHOD", "POST", 1);
-            schema_with_post(sr, out);
-            break;
-      }
-      
-      mysql_close(&s_mysql);
-   }
-   else
-      exit_value = 1;
-
-   mysql_library_end();
-   return exit_value;
 }
 
 /**
@@ -1765,138 +1745,6 @@ bool Schema::is_post_request(void)
    return method && (0==strcmp("POST", method));
 }
 
-/**
- * @brief Run Schema with stdin data, in addition to query string.
- *
- * @param sr SpecsReader reference because it's a required parameter
- */
-void Schema::schema_with_post(SpecsReader &sr, FILE *out)
-{
-   // Flag for other processing to replace the default
-   // at the end of this function:
-   bool skip_default_processing = false;
-   
-   const char *ctype = getenv("CONTENT_TYPE");
-   if (ctype)
-   {
-      auto f = [&sr, &out, &ctype, &skip_default_processing](const BaseStringer* pbs)
-      {
-         if (pbs->is_name_at(0, "application/x-www-form-urlencoded"))
-            ;
-         else if (pbs->is_name_at(0, "multipart/form-data"))
-         {
-            const char *boundary = nullptr;
-
-            // Content-type should have two values:
-            if (pbs->count()==2 && pbs->is_name_at(1,"boundary"))
-               boundary = pbs->get_raw_val_at(1);
-            else  // for if more than two values, just in case:
-            {
-               int pos = pbs->get_index_of_name("boundary");
-               int len = pbs->val_len_at(pos);
-               char *buff = static_cast<char*>(alloca(1+len));
-               memcpy(buff, pbs->get_raw_val_at(pos), len);
-               buff[len] = '\0';
-               boundary = buff;
-            }
-
-            if (boundary)
-            {
-               StrmStreamer ss(stdin);
-               Multipart_Pull mpp(ss);
-               
-               Schema schema(&sr, &mpp, out);
-               schema.collect_resources();
-            }
-
-            skip_default_processing = true;
-         }
-         // If not multipart_form or x-www-form-urlencoded,
-         // post an error and abort:
-         else
-         {
-            char *buff = static_cast<char*>(alloca(180));
-            snprintf(buff, 180, "Unexpected request content type \"%s\"\n", ctype);
-            procedure_message_reporter("error",
-                                       buff,
-                                       nullptr);
-            
-            skip_default_processing = true;
-         }
-      };
-      Generic_User_Const_Pointer<BaseStringer, decltype(f)> user(f);
-
-      BaseStringer::t_build(ctype, user, ';');
-   }
-
-   if (!skip_default_processing)
-   {
-      StrmStreamer ss(stdin);
-      Streamer_Setter setter(ss);
-      
-      Schema schema(&sr, &setter, out);
-      schema.collect_resources();
-   }
-}
-
-/**
- * @brief Run Schema with query string only, ignoring stdin data.
- *
- * @param sr SpecsReader reference because it's a required parameter
- */
-void Schema::schema_without_post(SpecsReader &sr, FILE *out)
-{
-   Schema schema(&sr, out);
-   schema.collect_resources();
-}
-
-
-// FILE *ask_for_input_file(void)
-// {
-//    FILE *f = nullptr;
-//    char buff[200];
-//    while (true)
-//    {
-//       ifprintf(stdout, "\nEnter the input file ('-' for none): ");
-//       scanf("%s", buff);
-
-//       if (buff[0])
-//       {
-//          if (*buff=='-')
-//             break;
-//          else if ((f=fopen(buff,"r")))
-//             break;
-//          else
-//             ifprintf(stdout, "File \"%s\" not found.", buff);
-//       }
-//    }
-//    return f;
-// }
-
-/** @brief Run Schema by collecting field data interactively. */
-// void Schema::schema_with_cl(FILE *out)
-// {
-//    auto run = [&out](IParam_Setter *setter)
-//    {
-//       Schema schema(setter, out);
-//       schema.collect_resources();
-//    };
-   
-//    FILE *f = nullptr;
-//    f = ask_for_input_file();
-//    if (f)
-//    {
-//       StrmStreamer ss(f);
-//       Streamer_Setter setter(ss);
-//       run(&setter);
-//       fclose(f);
-//    }
-//    else
-//    {
-//       CommandLine_Setter cls;
-//       run(&cls);
-//    }
-// }
 
 /**
  * @brief Adds content-type and boundary info for save_stdin, if multipart/form-data.
@@ -1912,24 +1760,32 @@ void Schema::schema_without_post(SpecsReader &sr, FILE *out)
 //@ [Write_Multipart_Preamble]
 #pragma push_macro("FILE")
 #undef FILE
-void Schema::write_multipart_preamble(FILE *f)
+size_t Schema::write_multipart_preamble(FILE *f)
 #pragma pop_macro("FILE")
 {
+   size_t len = 0;
    const char* bstring = "boundary=";
    const char* ct = getenv("CONTENT_TYPE");
    if (ct)
    {
+      gfputs("Content-Type: ", f);  // 14 characters
+      
       const char* bndry = strstr(ct, bstring);
       if (bndry)
       {
          bndry += strlen(bstring);
-         gfputs("Content-Type: ", f);
          gfputs(ct, f);
-         gfputs("\r\n\r\n--", f);
-         gfputs(bndry, f);
-         gfputs("\r", f);
+         gfputs("\r\n\r\n", f);      // 4 characters
+         len = 20 + strlen(ct);
+      }
+      else
+      {
+         gfputs(ct, f);
+         len = 14 + strlen(ct);
       }
    }
+
+   return len;
 }
 //@ [Write_Multipart_Preamble]
 
@@ -1955,7 +1811,8 @@ void Schema::save_stdin(const char *target)
    
    if (ftarget)
    {
-      write_multipart_preamble(ftarget);
+      // This only writes the CONTENT_TYPE value if it is set:
+      total_written = write_multipart_preamble(ftarget);
 
       do
       {
@@ -1995,64 +1852,6 @@ void Schema::save_stdin(const char *target)
 }
 //@ [Save_Stdin]
 
-
-/**
- * @brief This is where the request processing begins.
- *
- * This is a recursive function that uses m_reqd_XXX variables
- * as a checklist of what still needs to be acquired.  At each
- * acquisition, the resource is saved and collect_resources is
- * called again to check for the next need.  When everything is
- * ready, it calls find_request_mode.
- *
- * It uses the functions in @ref Opening_Specs_And_Mode to find
- * the instructions for building the page.
- **/
-void Schema::collect_resources(void)
-{
-   while (!m_reqd_ResponseMode)
-   {
-      if (!m_reqd_CStringer)
-      {
-         m_reqd_CStringer = true;
-         CStringer::build(
-            [this](const BaseStringer *qs)
-            {
-               // NOTE that qs might be null, and that's OK:
-               this->m_cstringer = qs;
-               this->collect_resources();
-            }
-            );
-      }
-      else if (!m_reqd_QStringer)
-      {
-         m_reqd_QStringer = true;
-         QStringer::build(
-            [this](const BaseStringer *qs)
-            {
-               // NOTE that qs might be null, and that's OK:
-               this->m_qstringer = static_cast<const QStringer *>(qs);
-               this->collect_resources();
-            }
-            );
-      }
-      else if (!m_reqd_ResponseMode)
-      {
-         m_reqd_ResponseMode = true;
-
-         if (m_qstringer)
-         {
-            auto firm = [this](const char *val)
-               {
-                  install_response_mode(val);
-               };
-            m_qstringer->get_name_at(0,firm);
-         }
-         else
-            install_response_mode("");
-      }
-   }
-}
 
 
 /**
@@ -2406,275 +2205,366 @@ void Schema::set_instance_mode_values(const ab_handle *mode_handle)
    m_type_value = value_from_mode("type");
 }
 
+
 /**
- * @brief Opens an appropriate request mode and saves it to Schema::m_mode before
- * calling Schema::start_document to start the output.
+ * @brief Break-out logic for need to jump before further processing.
  *
- * When we get to this function, we have collected all the information available
- * for deciding how to proceed.  That is, we have parsed, if found, the query
- * string and cookies.  The specs file has been opened, and the active mode has
- * been retrieved.
- *
- * Post requests will __always__A add a HTTP_LOCATION response header.  A jump is
- * required for a full-page transform on a post because we can't get a cached copy
- * of the XML document for processing.  XHR requests that return HTTP_LOCATION
- * do not jump anywhere, so the response header can be ignored for sub-page
- * transforms.  See @ref Why_Posted_Forms_Always_Jump.
+ * This may seem dangerous to return a char*, but the char pointers come
+ * from either the active response mode or a global mode, any of which will
+ * currently be in-memory, and thus not at risk of going out of scope before
+ * the value is used.
  */
-void Schema::install_response_mode(const char *mode_name)
+const char *Schema::check_for_early_jump(SESSION_TYPE stype, SESSION_STATUS sstatus)
 {
-   long pos = get_request_mode_position(mode_name,true);
-   bool database_selected = false;
-   if (pos<0)
+   const char *early_jump = nullptr;
+   const char *jump_no_session = value_from_mode_or_global("jump_no_session");
+
+   // Check for relocate and terminate _before_ getting the procedure;
+   // these conditions include:
+   //
+   // 1. - Authorization required (stype == STYPE_IDENTITY)
+   //    - Session not authorized (sstatus < SSTAT_AUTHORIZED)
+   //    - Jump where told, or go to "/"
+   if (stype==STYPE_IDENTITY && sstatus < SSTAT_AUTHORIZED)
    {
-      const char *name = (mode_name && *mode_name) ? mode_name : "default";
-      log_missing_mode(name);
-      
-      ifputs("Status: 404 Not Found\n", s_header_out);
-      write_headers_end();
-      write_xml_start();
-      print_message_as_xml(m_out, "error", "mode missing", mode_name);
+      early_jump = value_from_mode_or_global("jump_not_authorized");
+      if (!early_jump)
+         early_jump = jump_no_session ? jump_no_session : "/";
+
+      // A session may be in force, but we won't disturb it
+      // because it can be used at the login page.
+   }
+   //
+   // 2. - abandoning == true
+   //    - jump location discerned
+   if (m_mode_action==MACTION_ABANDON_SESSION)
+   {
+      early_jump = value_from_mode("jump");
+
+      if (!early_jump)
+         early_jump = jump_no_session;
+               
+      // get_session_status() will have already deleted the
+      // session records, so it's not necessary, and in fact,
+      // impossible to execute here because we've forgetten
+      // the hash string.
+               
+      // it's OK if early_jump is null here, it just means
+      // that it shouldn't jump later (allow the page to
+      // continue).
+   }
+
+   //
+   // 3. - A session is required (stype > STYPE_ESTABLISH)
+   //    - No session is in force (sstatus < SSTAT_RUNNING)
+   //    - jump_no_session mode value set
+   //    - NOT in a login-type form which establishes a session
+   if (stype > STYPE_ESTABLISH && sstatus < SSTAT_RUNNING)
+      if (!early_jump)
+         early_jump = jump_no_session;
+
+   return early_jump;
+}
+
+void Schema::action_save_post(void)
+{
+   print_Status_200();
+   print_XML_ContentType();
+   write_headers_end();
+   write_xml_start();
+                  
+   const char *target = value_from_mode("target");
+   if (target)
+   {
+      save_stdin(target);
    }
    else
    {
-      auto f = [this,&mode_name,&database_selected](const ab_handle *mode_handle)
+      print_message_as_xml(m_out,
+                           "error",
+                           "Missing required file target",
+                           "save-post");
+   }
+}
+
+bool Schema::confirm_multipart_form(void) const
+{
+   bool is_multipart_form = false;
+
+   const char *ctype = getenv("CONTENT_TYPE");
+   if (ctype)
+   {
+      auto f = [&is_multipart_form](const BaseStringer* pbs)
+      {
+         if (pbs->is_name_at(0, "multipart/form-data"))
          {
-            // Redundant? Ensure name of handle received matches mode_name (or blank):
-//            assert((mode_name && *mode_name==0)||mode_handle->is_equal_to(mode_name));
-            if (!((mode_name && *mode_name==0)||mode_handle->is_equal_to(mode_name)))
+            const char *boundary = nullptr;
+
+            // Content-type should have two values:
+            if (pbs->count()==2 && pbs->is_name_at(1,"boundary"))
             {
-               ifprintf(stderr, "Assertion failed: \"%s\" does not equal \"%s\"\n",
-                       mode_name, mode_handle->tag());
+               boundary = pbs->get_raw_val_at(1);
             }
+            else  // for if more than two values, just in case:
+            {
+               int pos = pbs->get_index_of_name("boundary");
+               if (pos)
+               {
+                  int len = pbs->val_len_at(pos);
+                  char *buff = static_cast<char*>(alloca(1+len));
+                  memcpy(buff, pbs->get_raw_val_at(pos), len);
+                  buff[len] = '\0';
+                  boundary = buff;
+               }
+            }
+
+            is_multipart_form = boundary ? true : false;
+         }
          
-            // If debug action, print mode and return/terminate:
-            switch(s_debug_action)
-            {
-               case DEBUG_ACTION_PRINT_MODE:
-                  return mode_handle->dump(stderr, false);
-               case DEBUG_ACTION_PRINT_MODE_TYPES:
-                  return print_mode_types(stderr);
-               case DEBUG_ACTION_PRINT_RESPONSE_MODES:
-                  return m_specsreader->print_modes(stderr, false);
-               case DEBUG_ACTION_PRINT_ALL_MODES:
-                  return m_specsreader->print_modes(stderr, true);
-               case DEBUG_ACTION_LINT:
-                  return print_lint(stderr, m_specsreader);
-               case DEBUG_ACTION_IGNORE:
-                  break;
-            }
-
-            m_mode = mode_handle;
-            m_type_value = value_from_mode("type");
-            m_mode_action = get_mode_type(m_type_value);
-
-            if (m_mode_action==MACTION_SAVE_POST)
-            {
-               print_Status_200();
-               print_XML_ContentType();
-               write_headers_end();
-               write_xml_start();
-                  
-               const char *target = value_from_mode("target");
-               if (target)
-               {
-                  save_stdin(target);
-               }
-               else
-               {
-                  print_message_as_xml(m_out,
-                                       "error",
-                                       "Missing required file target",
-                                       "save-post");
-               }
-
-               return;
-            }
-
-            bool abandoning = m_mode_action == MACTION_ABANDON_SESSION;
-
-            // Must be called before get_session_status():
-            set_requested_database();
-            database_selected = true;
-
-            // Once we're in the response's database, do a security clear:
-            clear_for_new_request();
-            
-            // Must be called before get_session_status in case we need to authorize:
-            SESSION_TYPE   sess_type   = get_session_type();
-
-            // The following function will delete the session records
-            // if _abandoning_ is true.
-            SESSION_STATUS sess_status = get_session_status(sess_type, abandoning);
-
-            const char *early_jump = nullptr;
-            const char *jump_no_session = value_from_mode_or_global("jump_no_session");
-
-            // Check for relocate and terminate _before_ getting the procedure;
-            // these conditions include:
-            //
-            // 1. - Authorization required (sess_type == STYPE_IDENTITY)
-            //    - Session not authorized (sess_status < SSTAT_AUTHORIZED)
-            //    - Jump where told, or go to "/"
-            if (sess_type==STYPE_IDENTITY && sess_status < SSTAT_AUTHORIZED)
-            {
-               early_jump = value_from_mode_or_global("jump_not_authorized");
-               if (!early_jump)
-                  early_jump = jump_no_session ? jump_no_session : "/";
-
-               // A session may be in force, but we won't disturb it
-               // because it can be used at the login page.
-            }
-            //
-            // 2. - abandoning == true
-            //    - jump location discerned
-            if (abandoning)
-            {
-               early_jump = value_from_mode("jump");
-
-               if (!early_jump)
-                  early_jump = jump_no_session;
-               
-               // get_session_status() will have already deleted the
-               // session records, so it's not necessary, and in fact,
-               // impossible to execute here because we've forgetten
-               // the hash string.
-               
-               // it's OK if early_jump is null here, it just means
-               // that it shouldn't jump later (allow the page to
-               // continue).
-            }
-
-            //
-            // 3. - A session is required (sess_type > STYPE_ESTABLISH)
-            //    - No session is in force (sess_status < SSTAT_RUNNING)
-            //    - jump_no_session mode value set
-            //    - NOT in a login-type form which establishes a session
-            if (sess_type > STYPE_ESTABLISH && sess_status < SSTAT_RUNNING)
-               if (!early_jump)
-                  early_jump = jump_no_session;
-
-            // We're leaving immediately:
-            if (early_jump)
-            {
-               if (s_sfw_xhrequest)
-               {
-                  set_forbidden_header();
-                  clear_session_cookies();
-               }
-               else
-               {
-                  print_Status_303();
-                  write_location_header(early_jump);
-
-                  if (sess_status==SSTAT_EXPIRED)
-                     clear_session_cookies();
-               }
-                  
-               write_headers_end();
-
-               return;
-            }
-
-            // The early jump with via "Status: 303" and Location is done,
-            // everything after this uses "Status: 200", so let's send it
-            // before we go on:
-            print_Status_200();
-
-            // If a session is needed but expired or not yet running,
-            // start a session and write out new cookie values:
-            if (sess_type>STYPE_NONE && sess_status<SSTAT_RUNNING)
-            {
-               // This function creates the records and writes the cookie values:
-               if (!create_session_records())
-               {
-                  print_XML_ContentType();
-                  write_headers_end();
-                  write_xml_start();
-                  print_message_as_xml(m_out,
-                                       "error",
-                                     "failed to establish a session",
-                                       "QUERY_STRING");
-                  return;
-               }
-            }
-
-            if (m_mode_action==MACTION_EXPORT)
-               print_FODS_ContentType();
-            else
-               print_XML_ContentType();
-            
-            write_headers_end();
-            write_xml_start(m_mode_action!=MACTION_EXPORT);
-
-
-            // The jump instruction will be included as a meta instruction
-            // in the HTML head element, and as such, will be a suggestion.
-            // The standard sfwtemplates.xsl will create a meta element in
-            // the HTML head element, but custom implementations are not
-            // bound to that behavior.
-            m_meta_jump = value_from_mode("jump");
-
-            try
-            {
-               // Detect request types:
-               if (m_mode_action==MACTION_IMPORT)
-               {
-                  if (process_import_form())
-                  {
-                     // import_table() should have ended by calling a query
-                     // to return a confirmation resultset.  Write it out here:
-                     process_root_branch(m_mode, nullptr,true);
-                  }
-                  else
-                  {
-                     print_message_as_xml(m_out,
-                                          "error",
-                                          "import failed");
-                     
-                     return;
-                  }
-               }
-               else
-               {
-                  // Since we've already written out the headers,
-                  // exceptions should be caught and reported here.
-                  try
-                  {
-                     // Continue preparing the data:
-                     start_document();
-
-                     // On return, check if a login attempt failed:
-                     if (sess_type==STYPE_ESTABLISH)
-                     {
-                        // Use session_type STYPE_IDENTITY to prevent relaxed
-                        // STYPE_ESTABLISH processing after login attempt:
-                        sess_status = get_session_status(STYPE_IDENTITY, false);
-                        if (sess_status < SSTAT_AUTHORIZED)
-                           abandon_session_records();
-                     }
-
-                     
-                  }
-                  catch(schema_exception &se)
-                  {
-                     print_error_as_xml(m_out, se.what(), "writing document");
-                  }
-               }
-            }
-            catch(const schema_exception &se)
-            {
-               print_error_as_xml(m_out, se.what(), "install_response_mode");
-            }
-         };
+      };
+      Generic_User_Const_Pointer<BaseStringer, decltype(f)> user(f);
       
-      m_specsreader->build_branch(pos, f);
+      BaseStringer::t_build(ctype, user, ';');
    }
 
-   // Clean up upon leaving this function:
-   if (database_selected)
-      clear_for_new_request();
+   return is_multipart_form;
 }
+
+/**
+ * @brief Starts work with information available in the selected response mode.
+ *
+ * This function is only called from Schema::get_resources_from_environment(), so
+ * the task of selecting and clearing the database is left to that function.  That
+ * allows early exit from this function without having to worry about database
+ * cleanup.
+ */
+void Schema::process_response_mode(void)
+{
+   assert(m_specsreader);
+   assert(m_mode);
+   
+   // If debug action, print mode and return/terminate:
+   switch(s_debug_action)
+   {
+      case DEBUG_ACTION_PRINT_MODE:
+         return m_mode->dump(stderr, false);
+      case DEBUG_ACTION_PRINT_MODE_TYPES:
+         return print_mode_types(stderr);
+      case DEBUG_ACTION_PRINT_RESPONSE_MODES:
+         return m_specsreader->print_modes(stderr, false);
+      case DEBUG_ACTION_PRINT_ALL_MODES:
+         return m_specsreader->print_modes(stderr, true);
+      case DEBUG_ACTION_LINT:
+         return print_lint(stderr, m_specsreader);
+      case DEBUG_ACTION_IGNORE:
+         break;
+   }
+
+   m_type_value = value_from_mode("type");
+   m_mode_action = get_mode_type(m_type_value);
+
+   if (m_mode_action==MACTION_SAVE_POST)
+   {
+      action_save_post();
+      return;
+   }
+
+   bool abandoning = m_mode_action == MACTION_ABANDON_SESSION;
+
+   SESSION_TYPE   stype   = get_session_type();
+   SESSION_STATUS sstatus = get_session_status(stype, abandoning);
+
+   // early_jump will be set if authorization rules and the current session status warrant:
+   const char *early_jump = check_for_early_jump(stype, sstatus);
+
+   // Provide appropriate feedback before leaving for authorization issues:
+   if (early_jump)
+   {
+      if (s_sfw_xhrequest)
+      {
+         set_forbidden_header();
+         clear_session_cookies();
+      }
+      else
+      {
+         print_Status_303();
+         write_location_header(early_jump);
+
+         if (sstatus==SSTAT_EXPIRED)
+            clear_session_cookies();
+      }
+      write_headers_end();
+   }
+   else
+   {
+      // The early jump with via "Status: 303" and Location is done,
+      // everything after this uses "Status: 200", so let's send it
+      // before we go on:
+      print_Status_200();
+
+      // If a session is needed but expired or not yet running,
+      // start a session and write out new cookie values:
+      if (stype>STYPE_NONE && sstatus<SSTAT_RUNNING)
+      {
+         // This function creates the records and writes the cookie values:
+         if (!create_session_records())
+         {
+            print_XML_ContentType();
+            write_headers_end();
+            write_xml_start();
+            print_message_as_xml(m_out,
+                                 "error",
+                                 "failed to establish a session",
+                                 "QUERY_STRING");
+            
+            // early exit with completed document:
+            return;
+         }
+      }
+
+      if (m_mode_action==MACTION_EXPORT)
+         print_FODS_ContentType();
+      else
+         print_XML_ContentType();
+            
+      write_headers_end();
+
+      if (m_mode_action==MACTION_EXPORT)
+      {
+         process_export();
+      }
+      else
+      {
+         write_xml_start(m_mode_action!=MACTION_EXPORT);
+         
+         // The jump instruction will be included as a meta instruction
+         // in the HTML head element, and as such, will be a suggestion.
+         // The standard sfwtemplates.xsl will create a meta element in
+         // the HTML head element, but custom implementations are not
+         // bound to that behavior.
+         m_meta_jump = value_from_mode("jump");
+
+         // Detect request types:
+         if (m_mode_action==MACTION_IMPORT)
+            process_import();
+         else
+            process_response(stype, sstatus);
+      }
+   }
+}
+
+/**
+ * @brief Returns an ODS file from a query.
+ *
+ * This is the one path that will not return an XML file, but rather an ODS file.
+ *
+ * Several steps here are different from the standard path, due to using Result_As_FODS
+ * as the Result_User.
+ */
+void Schema::process_export(void)
+{
+   // Prepare IParam_Setter m_setter, leaving m_puller=nullptr
+   StrmStreamer ss(stdin);
+   Streamer_Setter setter(ss);
+   m_setter = &setter;
+
+   const char *procname = m_mode->seek_value("procedure");
+   if (procname)
+   {
+      auto fsp = [this](StoredProc &sp)
+      {
+         SimpleProcedure proc(sp.querystr(), sp.bindstack());
+         Result_As_FODS user(m_out);
+
+         proc.run(&s_mysql, this, &user);
+                            
+      };
+      Generic_User<StoredProc, decltype(fsp)> spu(fsp);
+
+      StoredProc::build(&s_mysql, procname, spu);
+   }
+   else
+      print_message_as_xml(m_out, "error", "Missing procedure instruction");
+   
+}
+
+/**
+ * @brief Collects data from stdin in multipart/form-data.
+ *
+ * Uses a IParam_Setter that processes multipart/form-data encoding to
+ * find an uploaded file, which will be inserted into the quarantine table
+ * named in the response mode.
+ */
+void Schema::process_import(void)
+{
+   try
+   {
+      // Prepare m_puller, leaving m_setter at nullptr.
+      if (confirm_multipart_form())
+      {
+         StrmStreamer ss(stdin);
+         Multipart_Pull mpp(ss);
+         m_puller = &mpp;
+
+         if (process_import_form())
+         {
+            // import_table() should have ended by calling a query
+            // to return a confirmation resultset.  Write it out here:
+            process_root_branch(m_mode, nullptr,true);
+         }
+         else
+         {
+            print_message_as_xml(m_out,
+                                 "error",
+                                 "import failed");
+         }
+      }
+      else
+      {
+         print_message_as_xml(m_out,
+                              "error",
+                              "File import requires multipart/form-data.");
+      }
+   }
+   catch(const schema_exception &se)
+   {
+      print_error_as_xml(m_out, se.what(), "importing data");
+   }
+}
+
+/**
+ * @brief Wraps stdin into a IParam_Setter for setting procedure parameters.
+ */
+void Schema::process_response(SESSION_TYPE stype, SESSION_STATUS sstatus)
+{
+   // Prepare IParam_Setter m_setter, leaving m_puller=nullptr
+   StrmStreamer ss(stdin);
+   Streamer_Setter setter(ss);
+   m_setter = &setter;
+         
+   // Since we've already written out the headers,
+   // exceptions should be caught and reported here.
+   try
+   {
+      // Continue preparing the data:
+      start_document();
+
+      // On return, check if a login attempt failed:
+      if (stype==STYPE_ESTABLISH)
+      {
+         // Use session_type STYPE_IDENTITY to prevent relaxed
+         // STYPE_ESTABLISH processing after login attempt:
+         sstatus = get_session_status(STYPE_IDENTITY, false);
+         if (sstatus < SSTAT_AUTHORIZED)
+            abandon_session_records();
+      }
+   }
+   catch(schema_exception &se)
+   {
+      print_error_as_xml(m_out, se.what(), "writing document");
+   }
+}
+
 
 /**
  * @brief Read session cookies and confirm session validity.
@@ -2858,7 +2748,6 @@ bool Schema::process_import_form(void)
       while (!m_puller->end_of_form())
          m_puller->next_field();
    };
-   
 
    // Read read all fields
    while (!m_puller->end_of_form())
@@ -3000,7 +2889,7 @@ long Schema::get_first_non_global_mode(void)
  * @param keep_looking  Keep looking for a default mode if mode_name is not found.
  * @return
  *    -# file position of mode _mode_name_, if found,
- *    -# file position of a default mode if _mode_name_ is not specified, or
+v *    -# file position of a default mode if _mode_name_ is not specified, or
  *       if _mode_name_ __is__ specified but not found and _keep_looking_ is true.
  *    -# -1 if no mode was found.
  *
@@ -3051,7 +2940,7 @@ long Schema::get_request_mode_position(const char *mode_name, bool keep_looking)
 bool Schema::s_headers_done = false;
 
 // Set starting value in case called on command line:
-bool Schema::s_sfw_xhrequest = get_sfw_xhrequest();
+bool Schema::s_sfw_xhrequest = assign_sfw_xhrequest_flag();
 
 
 void Schema::set_forbidden_header(void)
@@ -4065,6 +3954,110 @@ int show_version(void)
    return 0;
 }
 
+static const char g_ctype[] = "content-type: ";
+static const int g_len_ctype = strlen(g_ctype);
+static const char g_ct_multipartform[] = "multipart/form-data; ";
+static const int g_len_ct_multipartform = strlen(g_ct_multipartform);
+static const char g_ct_boundary[] = "boundary=";
+static const int g_len_ct_boundary = strlen(g_ct_boundary);
+static const char g_ct_dispo[] = "content-disposition: ";
+static const int g_len_ct_dispo = strlen(g_ct_dispo);
+
+#pragma push_macro("FILE")
+#undef FILE
+void initialize_fake_stdin(int fh)
+{
+   char buff[1024];
+   char *end;
+   char *ptr;
+   size_t bread = 0;
+   size_t offset = 0;
+   int lines = 0;
+   int lines_to_read = 2;
+   bool found_boundary = false;
+
+   auto f_fillbuff = [&fh, &buff, &bread, &end, &ptr](void)
+   {
+      bread = read(fh, buff, sizeof(buff));
+      end = static_cast<char*>(buff) + bread;
+      ptr = buff;
+      return bread > 0;
+   };
+
+   while (f_fillbuff())
+   {
+      if (!found_boundary)
+      {
+         if (0==strncasecmp(g_ctype, ptr, g_len_ctype))
+         {
+            ptr += g_len_ctype;
+            if (0==strncasecmp(g_ct_multipartform, ptr, g_len_ct_multipartform))
+            {
+               ptr += g_len_ct_multipartform;
+               if (0==strncmp(g_ct_boundary, ptr, g_len_ct_boundary))
+               {
+                  found_boundary = true;
+                  ptr += g_len_ct_boundary;
+               }
+            }
+         }
+
+         // If no complete match of multipart/form preamble, it's not multipart/form.
+         // The code will ignore progress because we haven't yet collected three lines.
+         if (ptr - buff < g_len_ctype + g_len_ct_multipartform + g_len_ct_boundary)
+            break;
+      }
+
+      // Consume remainder of three lines
+      while (ptr < end && lines < lines_to_read)
+      {
+         if (*ptr=='\r')
+         {
+            if (lines==0 && found_boundary)
+            {
+               // Replace "Content-type: " with "CONTENT_TYPE=" to match
+               // what CGI provides.  Shift right one character to eliminate
+               // the extra space (ie ": " becomes "=").
+               char *pplus1 = buff + g_len_ctype;
+               
+               *ptr = '\0';
+               setenv("CONTENT_TYPE", pplus1, 1);
+               *ptr = '\r';
+            }
+            
+            if (*++ptr=='\n')
+               ++lines;
+         }
+         ++ptr;
+      }
+
+      if (lines>=lines_to_read)
+         break;
+      // Highly unlikely, but if we can't find the three lines in
+      // the buffer, try to get more characters:
+      else if (static_cast<size_t>(ptr-buff)==bread)
+         offset += sizeof(bread);
+   }
+
+   if (lines==lines_to_read)
+   {
+      assert(0==strncasecmp(g_ct_dispo, ptr, g_len_ct_dispo));
+      offset += ptr - buff;
+   }
+   else
+      offset = 0;
+
+   lseek(fh, offset, SEEK_SET);
+
+   // // test that file pointer is correct:
+   // f_fillbuff();
+   // char cdbuff[] = "content-disposition";
+   // if (strncasecmp(buff,cdbuff, strlen(cdbuff)))
+   //    ifputs("File not pointing properly!\n", stderr);
+   // lseek(fh, offset, SEEK_SET);
+}
+#pragma pop_macro("FILE")
+
 /**
  * @brief More complicated command-line processing code isolated from main()
  *
@@ -4073,12 +4066,13 @@ int show_version(void)
  * stylesheets (if you save the XML output to a file or pipe to xsltproc), or
  * for using `gdbtui --args` to debug the C/C++ code.
  */
-int process_command_line(int argc, char **argv)
+int Schema::process_command_line(int argc, char **argv)
 {
    char batch_type = 'p';
    int  batch_value_count = 0;
-   const char *bash_specs_file = "default.spec";
+   const char *bash_specs_file = nullptr;
    const char *bash_mode_name = nullptr;
+   const char *bash_input_file = nullptr;
 
    char **ptr = argv;
    for (++ptr; *ptr; ++ptr)
@@ -4095,21 +4089,25 @@ int process_command_line(int argc, char **argv)
                break;
 
             case dash_val('p'):
-               // Set type to POST
                batch_type = 'p';
                break;
 
             case dash_val('g'):
-               // Set type to GET
                batch_type = 'g';
+               break;
+
+            case dash_val('i'):
+               bash_input_file = *++ptr;
                break;
 
             case dash_val('s'):
                bash_specs_file = *++ptr;
+               setenv("PATH_TRANSLATED", bash_specs_file, true);
                break;
 
             case dash_val('m'):
                bash_mode_name = *++ptr;
+               setenv("QUERY_STRING", bash_mode_name, true);
                break;
                
             case dash_val('v'):
@@ -4134,36 +4132,65 @@ int process_command_line(int argc, char **argv)
    // Prepare FCGI streams to interact with the console:
    reset_fcgi_streams();
 
-   // Force POST method if any value parameters
-   if (batch_value_count)
-      batch_type = 'p';
+   // Make sure headers go to stderr in order to produce a clean XML file:
+   Schema::set_header_out(stderr);
+   
+   // I may want to redo this with a query string built from
+   // the batch_values instead of forcing a POST.
 
+   // Set environment variable, considering overriding conditions
+   if (batch_type=='p' || (batch_value_count || bash_input_file))
+      setenv("REQUEST_METHOD", "POST", 1);
+   else
+      setenv("REQUEST_METHOD", "GET", 1);
+   
    if (bash_mode_name && *bash_mode_name)
       setenv("QUERY_STRING", bash_mode_name, 1);
-   
-   // File handle to close if it was used:
+
    int fh = -1;
    int saved_stdin = -1;
-         
-   // If any values, create a fake stdin for Schema to use:
-   if (true || batch_value_count)
+   
+   // Keep this structure out of "else if" code block to avoid
+   // deinitializing it when the code block context ends.
+   Schema::pipe_cl_struct pcs;
+
+   // Prepare stdin for schema
+   if (bash_input_file && *bash_input_file)
    {
-      Schema::pipe_cl_struct pcs;
+      fh = open(bash_input_file, O_RDONLY);
+      if (fh)
+         initialize_fake_stdin(fh);
+   }
+   // If any values, create a fake stdin for Schema to use:
+   else if (true || batch_value_count)
       fh = Schema::get_fake_stdin_from_command_args(argc, argv, pcs);
-      if (fh!=-1)
-      {
-         saved_stdin = dup(STDIN_FILENO);
-         dup2(fh, STDIN_FILENO);
-      }
+
+   if (fh!=-1)
+   {
+      saved_stdin = dup(STDIN_FILENO);
+      dup2(fh, STDIN_FILENO);
    }
 
-   auto f = [&batch_type](SpecsReader &sr)
-   {
-      Schema::run_single_request(sr, stdout, batch_type);
-   };
 
-   SpecsReader::build(bash_specs_file, f);
-   
+   // Silence the compiler warnings until I decide what to do with this.
+   if (batch_type)
+      batch_type = 'p';
+
+   if (start_mysql())
+   {
+      try
+      {
+         Schema::get_resources_from_environment(stdout);
+      }
+      catch(const schema_exception &se)
+      {
+         Schema::print_error_as_xml(stdout, se.what(), "install_response_mode");
+      }
+      
+      mysql_close(&s_mysql);
+   }
+
+   mysql_library_end();
 
    if (fh!=-1)
    {
@@ -4215,7 +4242,7 @@ int main(int argc, char **argv)
    if (is_command_line_mode(argc, argv))
    {
       reset_fcgi_streams();
-      return process_command_line(argc, argv);
+      return Schema::process_command_line(argc, argv);
    }
    else
    {

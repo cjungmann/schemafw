@@ -199,7 +199,7 @@ void notify_stderr(const char *msg, const char *type, FILE *out);
  *
  * After the Schema has been created, the process continues with
  * Schema::collect_resources(), which begins a chain of function calls that
- * eventually arrives at install_response_mode.  During install_response_mode,
+ * eventually arrives at process_response_mode.  During process_response_mode,
  * all the instructions are available, the Query String, Cookies, and the
  * request mode from the Specs file.  The process branches from here,
  * depending on the request type:
@@ -225,6 +225,19 @@ void notify_stderr(const char *msg, const char *type, FILE *out);
  */
 class Schema : public IParam_Setter
 {
+   struct SFW_Resources
+   {
+      SpecsReader        &m_sreader;
+      const QStringer    *m_qstringer;
+      const ab_handle    *m_mode;
+      const BaseStringer *m_cookies;
+
+      SFW_Resources(SpecsReader &sr)
+         : m_sreader(sr), m_qstringer(nullptr), m_mode(nullptr), m_cookies(nullptr) { }
+
+      long int get_mode_position(void) const;
+   };
+
 public:
    struct pipe_cl_struct;
 
@@ -235,20 +248,11 @@ public:
    Schema(SpecsReader *sr, Multipart_Pull *mpp, FILE *out)
       : Schema(sr, out) { m_puller = mpp; }
 
+   Schema(SFW_Resources &sfwr, FILE *out);
+
    static void set_header_out(FILE *out) { s_header_out = out; }
 
-   struct SFW_Resources
-   {
-      SpecsReader        &m_sreader;
-      const BaseStringer *m_qstringer;
-      const ab_handle    *m_mode;
-      const BaseStringer *m_cookies;
-
-      SFW_Resources(SpecsReader &sr)
-         : m_sreader(sr), m_qstringer(nullptr), m_mode(nullptr), m_cookies(nullptr) { }
-
-      long int get_mode_position(void) const;
-   };
+   static void get_resources_from_environment(FILE *out);
 
    static void t_get_sfw_resources(IGeneric_Callback<SFW_Resources> &cb);
    
@@ -265,7 +269,9 @@ public:
 
    static bool confirm_mysql_connection(void);
    static int wait_for_requests(loop_sentry sentry, FILE *out);
-   static int run_single_request(SpecsReader &sr, FILE *out, char type);
+
+   static int process_command_line(int argc, char **argv);
+
 
    static void report_error(FILE *out, const char *str);
 
@@ -432,10 +438,6 @@ public:
                                        *   CSV for importing into MySQL.
                                        */
 
-   bool m_reqd_CStringer;    /**< Flag to indicate that Cookies have been requested. */
-   bool m_reqd_QStringer;    /**< Flag to indicate that the QueryString has been requested. */
-   bool m_reqd_ResponseMode; /**< Flag to indicate that the response mode has been requested. */
-
    bool m_database_confirmed; /**< Flag indicating that set_requested_database()
                                *   been called.  This is particuarly important
                                *   when confirming a session.
@@ -447,7 +449,7 @@ public:
    Advisor            *m_advisor;     /**< Will be non-null because a request can't run without an advisor. */
    const char         *m_type_value;  /**< The type value of the mode. */
    MODE_ACTION        m_mode_action;  /**< Action to be taken, set from m_type_value. */
-   const char         *m_meta_jump;   /**< Value to be set in install_response_mode()
+   const char         *m_meta_jump;   /**< Value to be set in process_response_mode()
                                        *   that will be added to the document element
                                        *   as a meta-jump attribute (if not null).
                                        */
@@ -477,7 +479,7 @@ protected:
     * @brief This function will be called if a fatal error interrupted Schema setup.
     *
     * For errors that occur before calling finish_header_add_xml_pi() should
-    * be recorded using set_failure_message().  When install_response_mode() returns
+    * be recorded using set_failure_message().  When process_response_mode() returns
     * without writing any records, finish_header_add_xml_pi() will be run, and
     * then this function will be called to write the single document element.
     */
@@ -524,19 +526,17 @@ protected:
    static void clear_for_new_request(void);
    static bool is_web_request(void)           { return nullptr!=getenv("REQUEST_METHOD"); }
    static bool is_post_request(void);
-   static void schema_with_post(SpecsReader &sr, FILE *out);
-   static void schema_without_post(SpecsReader &sr, FILE *out);
-   static void schema_with_cl(FILE *out);
+
+   static void start_schema(SFW_Resources &sfwr);
+
    /**@}*/
 
 
 #pragma push_macro("FILE")
 #undef FILE
-   void write_multipart_preamble(FILE *f);
+   size_t write_multipart_preamble(FILE *f);
 #pragma pop_macro("FILE")
    void save_stdin(const char *target);
-
-   void collect_resources(void);
 
    void clear_session_cookies(void);
    bool create_session_records(void);
@@ -556,7 +556,7 @@ protected:
     * with a > (greater-than operator), so any active session status must
     * follow the last inactive session status enumerator.
     *
-    * @sa Schema::install_response_mode
+    * @sa Schema::process_response_mode
     */
    enum SESSION_STATUS
    {
@@ -575,7 +575,7 @@ protected:
     *
     * An increasing value indicates an increasing restriction.
     *
-    * @sa Schema::install_response_mode
+    * @sa Schema::process_response_mode
     */
    enum SESSION_TYPE
    {
@@ -599,10 +599,16 @@ protected:
 
    void log_missing_mode(const char *mode_name) const;
    void set_instance_mode_values(const ab_handle *mode_handle);
-   void install_response_mode(const char *mode_name);
 
+   bool confirm_multipart_form(void) const;
+   const char *check_for_early_jump(SESSION_TYPE stype, SESSION_STATUS sstatus);
+   void action_save_post(void);
+   void process_response_mode(void);
 
-   // Called by install_response_mode():
+   void process_export(void);
+   void process_import(void);
+   void process_response(SESSION_TYPE stype, SESSION_STATUS sstatus);
+
    SESSION_STATUS get_session_status(SESSION_TYPE stype, bool abandon_session);
    void abandon_session(const char *jump_destination, bool clear_cookies);
 
@@ -620,7 +626,7 @@ protected:
    /**
     * @defgroup Opening_Specs_And_Mode Specs File and Request Mode Setup
     *
-    * These functions are used by install_response_mode to determine which
+    * These functions are used by process_response_mode to determine which
     * specs file and which mode to open based on the query string or
     * default values if there is no query string.
     * @{
@@ -649,7 +655,7 @@ protected:
    static bool s_headers_done;
    static bool s_sfw_xhrequest;
 
-   static inline bool get_sfw_xhrequest(void) { return s_sfw_xhrequest=((getenv("HTTP_SFW_XHREQUEST")) ? true : false); }
+   static inline bool assign_sfw_xhrequest_flag(void) { return s_sfw_xhrequest=((getenv("HTTP_SFW_XHREQUEST")) ? true : false); }
    void set_forbidden_header(void);
    void set_cookie(const char *name, const BindC *value=nullptr, int seconds_to_expire=0) const;
    void write_refresh_header(int64_t seconds, const char *url) const;
