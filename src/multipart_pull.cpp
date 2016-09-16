@@ -83,6 +83,21 @@ void Multipart_Pull::read_initial_boundary_and_prepare_buffers(void)
          *pstr++ = c;
    }
 
+   // // Debug code to confirm that command line and web server get same data
+   // ifputs("Attempting to open initizlize_mpp.txt.\n", stderr);
+   // int fh = open("/tmp/initialize_mpp.txt",
+   //               O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+   // if (fh)
+   // {
+   //    ifputs("Opened initialize_mpp.txt.\n", stderr);
+   //    char msg_boundary[] = "boundary = ";
+   //    write(fh, msg_boundary, strlen(msg_boundary));
+   //    if (errno)
+   //       ifputs(strerror(errno), stderr);
+   //    write(fh, m_workarea, pstr-m_workarea);
+   //    close(fh);
+   // }
+   
    m_boundary_length = m_buffer - m_boundary;
 }
 
@@ -181,7 +196,11 @@ void Multipart_Pull::read_headers(void)
    // the next value begins until we encounter it, so
    // the initial cur value must be saved to the beginning
    // of the buffer.
-   int cur = m_str.getc();
+   int cur;
+   do
+   {
+      cur = m_str.getc();
+   } while (cur=='\n' || cur=='\r');
 
    // On a new line, the value separator is a colon that separates
    // a header name from the header value(s)
