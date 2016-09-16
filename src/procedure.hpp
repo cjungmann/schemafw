@@ -481,6 +481,7 @@ public:
    virtual void register_stmt(MYSQL_STMT *stmt) { m_stmt = stmt; }
    
    void print_string(BindC &bc, unsigned column);
+   void set_output_stream(FILE* strm) { assert(m_out==nullptr); m_out=strm; }
 
    EFFC_2(Result_User_Base)
 };
