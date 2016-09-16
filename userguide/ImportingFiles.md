@@ -3,27 +3,24 @@
 In order to allow clients to efficiently establish an account, they will almost
 certainly appreciate having a usable import function to initialize their tables.
 
-This page is just a stub until I work through the process again.  Until then,
-the following notes were included in a README file that has since been deleted.
-They may serve as a reminder.
-
 ## Importing Data
-
-Most database-based applications will need to import data.  SchemaFW
-does have an import function (in development at the time of this
-writing 2015-10-19) that uses the Libre/Open-Office `unoconv` utility
-to convert files and `LOAD LOCAL DATA` in MySQL.
 
 When a user imports a spreadsheet, he or she should have an opportunity
 to confirm the interpretation of the data before it's committed to
 a permanent table.  SchemaFW does provide this feature.
 
-__NOTE:__ This section is only a start to documenting the import function.
-At the time of writing (2015-10-19) the import feature is not
-yet complete, but some ideas have been worked out, and the intention
-of these ideas will be useful for a developer, even if they are not
-complete.
-      
+## System Setup
+
+Importing data requires several configuration steps, both for the system
+and in scripting
+
+### Spreadsheet Converter
+
+SchemaFW uses a [Gnumeric](www.gnumeric.org) utility, _ssconvert_, to convert
+spreadsheet formats into a consistent CSV format that MySQL can import.  
+refer to the Gnumeric [importing documentation](https://help.gnome.org/users/gnumeric/stable/gnumeric.html#sect-files-ssconvert)
+for information that SchemaFW uses to use _ssconvert_ and for how to determine
+the supported file formats (i.e. `ssconvert --list-importers`).
 
 ## Import Requirements
 
@@ -50,6 +47,11 @@ The developer must provide the following for successful import function:
 The following was copied from the aforementioned, and now deleted, file.
 Several things in the following may prove useful when setting up and documenting
 the import feature.
+
+The SchemaFW user must be given _FILE_ privileges.  Normally, this is a dangerous
+privilege.  However, in the context of running SchemaFW, it should be less
+dangerous because the LOAD DATA INFILE is disabled via the initialization callback
+sent to the _mysql_set_local_infile_handler_ function.  
 
 ##### [mysqld] Section
 
@@ -80,6 +82,13 @@ she can read from using FILE privileges.
 
 
 #### LOAD DATA INFILE Setup
+
+Refer to [LOAD DATA LOCAL INFILE](LoadDataLocalInfile.md) to a discussion
+of security issues surrounding LOAD DATA INFILE, and how SchemaFW
+protects against the issues.
+
+Also refer to [Create webuser](CreateWebUser.md) to see how to configure
+the SchemaFW MySQL client for FILE privileges.
 
 The import feature of SchemaFW uses the _LOAD DATA INFILE_ MySQL
 command to import tables.  _LOAD DATA_ and _OUTFILE_ commands are

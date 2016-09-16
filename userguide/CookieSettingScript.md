@@ -39,6 +39,7 @@ rm /tmp/liresult.txt
 # Start building the HTTP_COOKIE command
 
 ecmd='export HTTP_COOKIE="'
+found=
 
 while read -r line; do
    if [[ "$line" =~ Set-Cookie:\ (.*) ]]
