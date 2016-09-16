@@ -38,7 +38,6 @@
 #include <stdio.h>
 
 #ifdef FASTCGI
-#define GFILE FILE
 
 #include <fcgi_stdio.h>
 inline int  ifgetc(FCGI_FILE* f)                { return FCGI_fgetc(f); }
@@ -54,6 +53,17 @@ void reset_fcgi_streams(void);
 // Functions to access global FILE functions after FASTCGI defines
 #pragma push_macro("FILE")
 #undef FILE
+
+/**
+ * @brief Returns a stdio.h FILE*, even if fcgi_stdio.h has redefined it.
+ *
+ * This function is sometimes necessary in order to use stdio.h functions that
+ * have not been converted to FCGI_FILE.  It was added to work with dup2().
+ *
+ * usage:
+ * `auto* f = get_null_FILE();`
+ */
+inline FILE* get_null_FILE(void) { return static_cast<FILE*>(nullptr); }
 
 #pragma push_macro("fopen")
 #undef fopen
