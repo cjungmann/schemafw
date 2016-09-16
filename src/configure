@@ -103,6 +103,7 @@ install:
 	install -D --mode=644 ../LICENSE             /usr/share/doc/schemafw
 	install -D --mode=644 ../install/default.xsl /usr/local/lib/schemafw/default.xsl
 	install --mode=644 ../install/sys_procs.sql  /usr/local/lib/schemafw/sys_procs.sql
+	cp -r ../install/ods                         /usr/local/lib/schemafw/
 	cp -r ../install/web_includes                /usr/local/lib/schemafw/
 
 	cp -s /usr/local/lib/cgi-bin/schema.fcgi     /usr/bin/schema.fcgi
@@ -130,6 +131,7 @@ stop-update:
 	sudo /etc/init.d/apache2 start
 
 update-client:
+	cp -r ../install/ods                        /usr/local/lib/schemafw/
 	cp -r ../install/web_includes               /usr/local/lib/schemafw/
 
 uninstall:
