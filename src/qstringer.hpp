@@ -140,10 +140,10 @@ public:
                        char separator='&');
 
    template <class Func>
-   static void build(const char *str, const Func &f, char separater='&')
+   static void build(const char *str, const Func &f, char separator='&')
    {
       Generic_User_Const_Pointer<BaseStringer, Func> user(f);
-      BaseStringer::t_build(str, user);
+      BaseStringer::t_build(str, user, separator);
    }
 
    /**@}*/
