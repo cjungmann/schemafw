@@ -9,6 +9,22 @@
  * Templates for creating callback object.
  */
 
+class IGeneric_Void_Callback
+{
+public:
+   virtual void operator()(void) const = 0;
+};
+
+template <class Func>
+class Generic_Void_User : public IGeneric_Void_Callback
+{
+protected:
+   const Func &m_f;
+public:
+   Generic_Void_User(const Func &f) : m_f(f) { }
+   virtual void operator()(void) const       { m_f(); }
+};
+
 
 
 /**
