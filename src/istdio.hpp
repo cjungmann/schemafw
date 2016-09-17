@@ -40,13 +40,20 @@
 #ifdef FASTCGI
 
 #include <fcgi_stdio.h>
-inline int  ifgetc(FCGI_FILE* f)                { return FCGI_fgetc(f); }
-inline bool ifeof(FCGI_FILE* f)                 { return FCGI_feof(f); }
-inline int  iferror(FCGI_FILE* f)               { return FCGI_ferror(f); }
-inline int  ifputs(const char* s, FCGI_FILE* f) { return FCGI_fputs(s,f); }
-inline int  ifputc(char c, FCGI_FILE *f)        { return FCGI_fputc(c,f); }
+inline FCGI_FILE* ifopen(const char *path, const char *mode)
+                                                     { return FCGI_fopen(path,mode); }
+inline FCGI_FILE* ifdopen(int fh, const char* mode)  { return FCGI_fdopen(fh,mode); }
+inline int  ifgetc(FCGI_FILE* f)                     { return FCGI_fgetc(f); }
+inline bool ifeof(FCGI_FILE* f)                      { return FCGI_feof(f); }
+inline int  iferror(FCGI_FILE* f)                    { return FCGI_ferror(f); }
+inline int  ifputs(const char* s, FCGI_FILE* f)      { return FCGI_fputs(s,f); }
+inline int  ifputc(char c, FCGI_FILE *f)             { return FCGI_fputc(c,f); }
 inline size_t ifread(void* bf, size_t s, size_t n, FCGI_FILE *fp)
-                                                { return FCGI_fread(bf,s,n,fp); }
+                                                     { return FCGI_fread(bf,s,n,fp); }
+inline size_t ifwrite(void* bf, size_t s, size_t n, FCGI_FILE *fp)
+                                                     { return FCGI_fwrite(bf,s,n,fp); }
+inline int ifclose (FCGI_FILE* f)                    { return FCGI_fclose(f); }
+
 
 void reset_fcgi_streams(void);
 
@@ -70,6 +77,11 @@ inline FILE* get_null_FILE(void) { return static_cast<FILE*>(nullptr); }
 inline FILE* gfopen(const char* path, const char* mode) { return fopen(path,mode); }
 #pragma pop_macro("fopen")
 
+#pragma push_macro("fdopen")
+#undef fdopen
+inline FILE* gfdopen(int fh, const char* mode)  { return fdopen(fh,mode); }
+#pragma pop_macro("fdopen")
+
 #pragma push_macro("fclose")
 #undef fclose
 inline int gfclose(FILE* f) { return fclose(f); }
@@ -90,6 +102,19 @@ inline int gferror(FILE* f)  { return ferror(f); }
 inline int gfputs(const char *s, FILE* f) { return fputs(s,f); }
 #pragma pop_macro("fputs")
 
+#pragma push_macro("fputc")
+#undef fputc
+inline int gfputc(char c, FILE* f) { return fputc(c,f); }
+#pragma pop_macro("fputc")
+
+#pragma push_macro("fread")
+#undef fread
+inline size_t gfread(void* ptr, size_t size, size_t nmemb, FILE *fp)
+{
+   return fread(ptr,size,nmemb,fp);
+}
+#pragma pop_macro("fread")
+
 #pragma push_macro("fwrite")
 #undef fwrite
 inline size_t gfwrite(void* ptr, size_t size, size_t nmemb, FILE *fp)
@@ -107,22 +132,34 @@ inline size_t gfwrite(void* ptr, size_t size, size_t nmemb, FILE *fp)
 int ifprintf(FCGI_FILE* f, const char *format, ...);
 
 #else   //  ifndef FASTCGI
-inline int  ifgetc(FILE* f)                { return fgetc(f); }
-inline bool ifeof(FILE* f)                 { return feof(f); }
-inline int  iferror(FILE* f)               { return ferror(f); }
-inline int  ifputs(const char* s, FILE* f) { return fputs(s,f); }
-inline int  ifputc(char c, FILE *f)        { return fputc(c,f); }
+inline FILE* ifopen(const char *path, const char *mode)
+                                                { return fopen(path,mode); }
+inline FILE* ifdopen(int fh, const char* mode)  { return fdopen(fh,mode); }
+inline int  ifgetc(FILE* f)                     { return fgetc(f); }
+inline bool ifeof(FILE* f)                      { return feof(f); }
+inline int  iferror(FILE* f)                    { return ferror(f); }
+inline int  ifputs(const char* s, FILE* f)      { return fputs(s,f); }
+inline int  ifputc(char c, FILE *f)             { return fputc(c,f); }
 inline size_t ifread(void* bf, size_t s, size_t n, FILE *fp)
-                                           { return fread(bf,s,n,fp); }
+                                                { return fread(bf,s,n,fp); }
+inline size_t ifwrite(void* bf, size_t s, size_t n, FILE *fp)
+                                                { return fwrite(bf,s,n,fp); }
+inline int ifclose (FILE* f)                    { return fclose(f); }
 
-void reset_fcgi_streams(void)              { ; }
+void reset_fcgi_streams(void)                   { ; }
 
 inline FILE *gfopen(const char* path, const char* mode) { return fopen(path,mode); }
-inline int gfclose(FILE* f) { return fclose(f); }
-inline int gfeof(FILE* f)   { return feof(f); }
-inline int gferror(FILE* f)   { return ferror(f); }
-inline int gfputs(const char *s, FILE* f) { return fputs(s,f); }
-inline size_t gfwrite(void* ptr, size_t size, size_t nmemb, FILE *fp)
+inline FILE* gfdopen(int fh, const char* mode)          { return fdopen(fh,mode); }
+inline int gfclose(FILE* f)                             { return fclose(f); }
+inline int gfeof(FILE* f)                               { return feof(f); }
+inline int gferror(FILE* f)                             { return ferror(f); }
+inline int gfputs(const char *s, FILE* f)               { return fputs(s,f); }
+inline int gfputc(char c, FILE* f)                      { return fputc(c,f); }
+inline int gfread(void* ptr, size_t size, size_t nmemb, FILE* fp)
+{
+   return fread(ptr,size,nmemb,fp);
+}
+inline size_t gfwrite(void* ptr, size_t size, size_t nmemb, FILE* fp)
 {
    return fwrite(ptr,size,nmemb,fp);
 }
