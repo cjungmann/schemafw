@@ -10,11 +10,12 @@ class Result_As_FODS : public Result_User_Base
 {
 private:
    static const char *nspaces[];
+   static const char s_target[];
    char   m_pathbuff[128];
    char   *m_endpath;
 
-   FILE   *m_stream_out;
-   FILE   *m_write_content;
+   FILE   *m_stream_out;    /**< Save constructor _out_ parameter for final copy. */
+   FILE   *m_write_content; /**< Stream to write for content.xml. */
 
 public:
    Result_As_FODS(FILE* out);

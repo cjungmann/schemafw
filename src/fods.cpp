@@ -1,12 +1,12 @@
 // -*- compile-command: "g++ -std=c++11 -Wno-pmf-conversions -Wall -Werror -Weffc++ -pedantic -DINCLUDE_MAIN `mysql_config --cflags` -o fods fods.cpp `mysql_config --libs`" -*-
 
-#include "fods.hpp"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>     // provide date/time functions to write_meta_file()
 #include <sys/wait.h> // provide waitpid() for t_set_pipes()
+#include "fods.hpp"
 
 const char *Result_As_FODS::nspaces[] = {
    "xmlns:office=\"urn:oasis:names:tc:opendocument:xmlns:office:1.0\"",
@@ -16,6 +16,8 @@ const char *Result_As_FODS::nspaces[] = {
    "office:version=\"1.2\"",
    nullptr
 };
+
+const char Result_As_FODS::s_target[] = "output.ods";
 
 /**
  * @brief Class for writing an ODS file to the specified FILE* (typically stdout).
@@ -46,20 +48,19 @@ Result_As_FODS::~Result_As_FODS()
 
 void Result_As_FODS::t_fork_to_zip(IGeneric_Void_Callback &cb)
 {
-   const char target[] = "output.ods";
    // The child process running zip will read from the other size of fifo pipe,
    pid_t pid = fork();
 
    if (pid==0)
    {
       chdir(tmppath());
-      execl("zipit", "zipit", target, static_cast<char*>(nullptr));
+      execl("zipit", "zipit", s_target, static_cast<char*>(nullptr));
    }
    else
    {
       // Wait 'till now to open the fifo file:
       // Have Result_User write to fifo pipe:
-      FILE* contentfifo = open_content_fifo();
+      auto* contentfifo = open_content_fifo();
       
       try
       {
@@ -80,7 +81,7 @@ void Result_As_FODS::t_fork_to_zip(IGeneric_Void_Callback &cb)
       waitpid(pid, &status, 0);
    }
 
-   strcpy(tmpfilename(), target);
+   strcpy(tmpfilename(), s_target);
    send_file_out(m_pathbuff);
 }
 
@@ -128,6 +129,13 @@ void Result_As_FODS::prepare_path_string(void)
 /**
  * @brief Calls _remove()_ on directory named in m_pathbuff.
  *
+ * Unlinks linked files, removes created files, subdirectory, then,
+ * finally, the working temporary diretory.
+ *
+ * Throws an exception for any error except for ENOENT (missing file),
+ * which will be allowed in case there was an error that results in this
+ * function be called before the files are copied.
+ *
  * This should only be called after the m_pathbuff is set and if it's
  * known that the directory named in m_pathbuff exists.  That means in
  * prepare_tmp_directory if the directory already exists, and after the ODS
@@ -136,14 +144,48 @@ void Result_As_FODS::prepare_path_string(void)
  */
 void Result_As_FODS::remove_tmp_directory(void)
 {
-   // Ensure that no filename is sitting after the path:
-   m_endpath = '\0';
-   int result = remove(m_pathbuff);
-   if (result)
+   auto e = [this]()
    {
-      sprintf(get_error_ptr(), " remove failure. errno=%d", errno);
-      throw std::runtime_error(m_pathbuff);
-   }
+      if (errno!=ENOENT)
+      {
+         sprintf(get_error_ptr(), " remove failure. errno=%d", errno);
+         throw std::runtime_error(m_pathbuff);
+      }
+   };
+   
+   auto r = [this, &e](const char *f)
+   {
+      strcpy(m_endpath, f);
+      int result = remove(m_pathbuff);
+      if (result)
+         e();
+   };
+
+   auto u = [this, &e](const char *f)
+   {
+      strcpy(m_endpath, f);
+      int result = unlink(m_pathbuff);
+      if (result)
+         e();
+   };
+
+   // Unlink the linked files
+   u("META-INF/manifest.xml");
+   u("mimetype");
+   u("settings.xml");
+   u("styles.xml");
+   u("zipit");
+   
+   // Remove files
+   r("meta.xml");
+   r("content.xml");
+   r(s_target);
+   
+   // Remove subdirectory
+   r("META-INF");
+
+   // Finally, remove directory
+   r("");
 }
 
 /**
@@ -241,7 +283,7 @@ FILE* Result_As_FODS::open_content_fifo(void)
    }
    else
    {
-      m_write_content = fdopen(fh,"w");
+      m_write_content = ifdopen(fh,"w");
       set_output_stream(m_write_content);
       return m_write_content;
    }
@@ -251,7 +293,7 @@ void Result_As_FODS::close_content_fifo(FILE* fifo)
 {
    if (fifo && fifo==m_write_content)
    {
-      fclose(m_write_content);
+      ifclose(m_write_content);
       m_write_content = nullptr;
    }
 }
@@ -259,21 +301,21 @@ void Result_As_FODS::close_content_fifo(FILE* fifo)
 void Result_As_FODS::send_file_out(const char* path)
 {
    char buff[2048];
-   FILE *fp = fopen(path,"rb");
+   auto* fp = ifopen(path,"rb");
    size_t bread;
    if (fp)
    {
       do
       {
-         bread = fread(buff, 1, sizeof(buff), fp);
-         fwrite(buff, 1, bread, m_stream_out);
+         bread = ifread(buff, 1, sizeof(buff), fp);
+         ifwrite(buff, 1, bread, m_stream_out);
       }
       while (bread>0);
 
-      if (!feof(fp))
-         ifprintf(stderr, "An error (%d) terminated send_file_out.\n", ferror(fp));
+      if (!ifeof(fp))
+         ifprintf(stderr, "An error (%d) terminated send_file_out.\n", iferror(fp));
 
-      fclose(fp);
+      ifclose(fp);
    }
 }
 
@@ -396,7 +438,7 @@ void Result_As_FODS::result_complete(int result_number, DataStack<BindC> &ds)
 
    if (m_write_content)
    {
-      fclose(m_write_content);
+      ifclose(m_write_content);
       m_write_content = nullptr;
    }
 }
