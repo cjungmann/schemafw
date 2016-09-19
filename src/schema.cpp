@@ -2423,7 +2423,16 @@ void Schema::process_response_mode(void)
       }
 
       if (m_mode_action==MACTION_EXPORT)
+      {
+         const char *filename = m_mode->seek_value("file-name");
+         if (filename)
+         {
+            ifputs("Content-Disposition: filename=\"", s_header_out);
+            ifputs(filename, s_header_out);
+            ifputs("\"\n", s_header_out);
+         }
          print_FODS_ContentType();
+      }
       else
          print_XML_ContentType();
             
@@ -2474,10 +2483,14 @@ void Schema::process_export(void)
       auto fsp = [this](StoredProc &sp)
       {
          SimpleProcedure proc(sp.querystr(), sp.bindstack());
-         Result_As_FODS user(m_out);
+         Result_As_FODS rafods(m_out);
 
-         proc.run(&s_mysql, this, &user);
-                            
+         auto frun = [this, &proc, &rafods](void)
+         {
+            proc.run(&s_mysql, this, &rafods);
+         };
+
+         rafods.fork_to_zip(frun);
       };
       Generic_User<StoredProc, decltype(fsp)> spu(fsp);
 
