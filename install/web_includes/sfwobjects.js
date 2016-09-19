@@ -619,12 +619,21 @@ function InitializeSchemaFW(xmld, xslo)
          {
             case "button":
             {
-               if (t.getAttribute("data-type")=="add")
+               var btype = t.getAttribute("data-type");
+               switch(btype)
                {
-                  bndl.url = translate_url(t.getAttribute("data-task"), doc);
-                  bndl.row_host = top.getElementsByTagName("tbody")[0];
-                  start_dialog(bndl);
-                  return false;
+                  case "add":
+                     bndl.url = translate_url(t.getAttribute("data-task"), doc);
+                     bndl.row_host = top.getElementsByTagName("tbody")[0];
+                     start_dialog(bndl);
+                     return false;
+                  case "jump":
+                     return process_button_jump(t);
+                  case "open":
+                     return process_button_open(t);
+                  default:
+                     alert("Unknown button type \"" + btype + "\"");
+                     break;
                }
                break;
             }
