@@ -131,6 +131,9 @@ stop-update:
 	sudo /etc/init.d/apache2 start
 
 update-client:
+	cp ../LICENSE                               /usr/share/doc/schemafw
+	cp ../install/default.xsl                   /usr/local/lib/schemafw/default.xsl
+	cp ../install/sys_procs.sql                 /usr/local/lib/schemafw/sys_procs.sql
 	cp -r ../install/ods                        /usr/local/lib/schemafw/
 	cp -r ../install/web_includes               /usr/local/lib/schemafw/
 
