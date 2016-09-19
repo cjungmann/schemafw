@@ -21,7 +21,9 @@ There are several sections.
   - [An Update Interaction](CSUpdateInteraction.md)
   - [A Delete Interaction](CSDeleteInteraction.md)
   - [L-CRUD Files Listings](LCRUDInteractions.md)
+  - [Enhancing Case Study with Export](ExportingData.md)
 - Advanced Topics
+  - [MySQL Command Line Queries](MySQLCLQueries.md)
   - [Response Mode Type _save-post_](SavePostResponseMode.md)
   - [Running Websites on LocalHost](RunningOnLocalhost.md)
   - [Debugging with Command Line Options](SchemaFCGIOptions.md)
