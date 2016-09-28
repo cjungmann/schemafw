@@ -1,4 +1,4 @@
-// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -pedantic -DINCLUDE_BC_MAIN `mysql_config --cflags` -o bindc bindc.cpp `mysql_config --libs`" -*-
+// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -pedantic -DINCLUDE_BC_MAIN `mysql_config --cflags` -U NDEBUG -o bindc bindc.cpp `mysql_config --libs`" -*-
 
 #include "bindc.hpp"
 
