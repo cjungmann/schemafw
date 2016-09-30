@@ -34,7 +34,7 @@ int ifprintf(FCGI_FILE* f, const char *format, ...)
 }
 
 #else   // ifndef FASTCGI
-inline int  ifprintf(FILE* f, const char *format, ...)
+int  ifprintf(FILE* f, const char *format, ...)
 {
    va_list args;
    va_start(args,format);
