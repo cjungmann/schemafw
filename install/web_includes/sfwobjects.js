@@ -1057,7 +1057,6 @@ function InitializeSchemaFW(xmld, xslo)
 
    function process_button_dialog(t,bundle)
    {
-
       return false;
    }
 
@@ -1722,9 +1721,16 @@ function InitializeSchemaFW(xmld, xslo)
       {
          var arr = get_form_data(form);
          var url = form.getAttribute("action");
+         var enctype = form.getAttribute("enctype");
+         var headers = enctype ? [{name:"enctype", value:enctype}] : null;
+            
          if (!url)
             console.error("attempt to submit form without an action.");
-         xhr_post(url, arr.join("&"), callback_form_submit, callback_data_error);
+         
+         xhr_post(url, arr.join("&"),
+                  callback_form_submit,
+                  callback_data_error,
+                  headers);
       }
 
       function dialog_click_events(e,t,top)
