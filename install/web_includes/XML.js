@@ -16,9 +16,9 @@ function getXMLDocument()                 {}
 function getXSLDocument()                 {}
 
 // XMLHttpRequest quick functions;
-function xhr_get(url,callback, failed_callback)      {}
-function xhr_post(url,data,callback, failed_callback){}
-function xhr_default_req_header(name, value)         {}
+function xhr_get(url,callback,failed_callback,headers)      {}
+function xhr_post(url,data,callback,failed_callback,headers){}
+function xhr_default_req_header(name, value)                {}
 
 // helper/convenience functions:
 function parseXML(str,ns)             {}
@@ -186,9 +186,11 @@ function prepare_xhr_functions()
       }
    }
 
-   function load_request_headers(xhr)
+   function load_request_headers(xhr, headers)
    {
       load_req_headers(xhr, def_headers);
+      if (headers)
+         load_req_headers(xhr, headers);
    }
 
    xhr_default_req_header = function(name, value)
@@ -230,14 +232,14 @@ function prepare_xhr_functions()
       return null;
    }
 
-   xhr_get = function(url,cb,cb_failed)
+   xhr_get = function(url,cb,cb_failed,headers)
    {
       var async = cb?true:false;
       var xhr = getXHRObject();
       if (xhr)
       {
          xhr.open("GET",url,async);
-         load_request_headers(xhr);
+         load_request_headers(xhr,headers);
          if (ie_mode)
             xhr.responseType = "msxml-document";
          xhr.send(null);
@@ -252,14 +254,14 @@ function prepare_xhr_functions()
       return null;
    };
 
-   xhr_post = function(url,data,cb,cb_failed)
+   xhr_post = function(url,data,cb,cb_failed,headers)
    {
       var async = cb?true:false;
       var xhr = getXHRObject();
       if (xhr)
       {
          xhr.open("POST",url,async);
-         load_request_headers(xhr);
+         load_request_headers(xhr,headers);
          if (ie_mode)
             xhr.responseType = "msxml-document";
          xhr.onreadystatechange = function() { return check_xhr(xhr,cb,cb_failed); };
