@@ -29,12 +29,13 @@ CMARK_FLAG := $(shell which cmark 2> /dev/null)
 
 objlist=schema.o istdio.o xmlutils.o qstringer.o advisor.o datastack.o \
 specsreader.o adbranch.o prandstr.o vclasses.o ctyper.o bindc.o \
-bindstack.o procedure.o storedproc.o fods.o multipart_pull.o mysql_loaddata.o
+bindstack.o procedure.o storedproc.o fods.o multipart_pull.o mysql_loaddata.o \
+linebuffer.o
 
 hpplist=xmlutils.hpp istdio.hpp qstringer.hpp genericuser.hpp advisor.hpp \
 adbranch.hpp datastack.hpp specsreader.hpp prandstr.hpp vclasses.hpp \
 ctyper.hpp bindc.hpp bindstack.hpp procedure.hpp storedproc.hpp fods.hpp \
-schema.hpp multipart_pull.hpp  mysql_loaddata.hpp
+schema.hpp multipart_pull.hpp  mysql_loaddata.hpp linebuffer.hpp
 
 all: schema.fcgi
 
@@ -92,6 +93,9 @@ multipart_pull.o : multipart_pull.cpp multipart_pull.hpp vclasses.hpp prandstr.h
 
 mysql_loaddata.o : mysql_loaddata.cpp mysql_loaddata.hpp 
 	$(CXX) $(CXXFLAGS) -c -o mysql_loaddata.o mysql_loaddata.cpp
+
+linebuffer.o : linebuffer.cpp linebuffer.hpp
+	$(CXX) $(CXXFLAGS) -c -o linebuffer.o linebuffer.cpp
 
 storedproc.o : storedproc.cpp ${hpplist}
 	$(CXX) $(CXXFLAGS) -c -o storedproc.o storedproc.cpp
