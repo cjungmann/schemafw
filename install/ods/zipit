@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# Intended for use by SchemaFW to package an export as an ODS file.
+#
+# Usage:
+# zipit [filename]
+
 zip -FI -J -X -0 "$1" mimetype
 zip -FI -J -x mimetype "$0" "$1" -r "$1" *
->&2 echo "Finished compressing"
