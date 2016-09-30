@@ -121,14 +121,14 @@ const Schema::struct_mode_action Schema::map_mode_actions[] =
    { "info",            Schema::MACTION_INFO            },
    { "lookup",          Schema::MACTION_LOOKUP          },
 
-   { "form-submit",     Schema::MACTION_FORM_SUBMIT     },
    { "form-result",     Schema::MACTION_FORM_RESULT     },
+   { "form-submit",     Schema::MACTION_FORM_SUBMIT     },
    
    { "table",           Schema::MACTION_TABLE           },
    { "display",         Schema::MACTION_DISPLAY         },
    { "form-edit",       Schema::MACTION_FORM_EDIT       },
    { "form-new",        Schema::MACTION_FORM_NEW        },
-   { "form-try",        Schema::MACTION_FORM_TRY        },
+   { "form-import",     Schema::MACTION_FORM_IMPORT     },
    { "form-view",       Schema::MACTION_FORM_VIEW       }
 };
 const Schema::struct_mode_action *Schema::end_map_mode_actions =
@@ -610,7 +610,7 @@ void Schema_Printer::print_schema_fields(const ab_handle *fields)
 {
    const ab_handle *field = nullptr;
    const ab_handle *attribute;
-   for (auto *p=m_bindstack.start(); p; p=p->next())
+   for (auto *p=m_bindstack->start(); p; p=p->next())
    {
       const BindC &bind = p->object();
       
@@ -708,12 +708,13 @@ void Schema_Printer::print(const ab_handle *schema, const char *default_name)
 
    if (schema)
    {
-      find_and_print_schema_fields(schema);
+      if (m_bindstack)
+         find_and_print_schema_fields(schema);
 
       print_adhoc_elements(m_out, schema, arr_schema_reserved);
 //      m_specsreader.print_sub_elements(m_out, schema, arr_schema_reserved);
    }
-   else
+   else if (m_bindstack)
       print_schema_fields(nullptr);
 
    ifputs("</schema>\n", m_out);
@@ -851,7 +852,7 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
           || (result_type && string_in_list(result_type, arr_schema_default_types))
           || force_schema_print )
       {
-         Schema_Printer sprinter(dsresult, m_specsreader, *m_mode, m_out);
+         Schema_Printer sprinter(m_specsreader, *m_mode, dsresult, m_out);
          sprinter.print(schema, m_row_name);
       }
    }
@@ -1806,8 +1807,13 @@ void Schema::save_stdin(const char *target)
    size_t total_read = 0;
    size_t total_written = 0;
 
+   mode_t saved_mask = umask(00000);
+
    // Using auto so the FILE return value is not converted to FCGI_FILE:
    auto* ftarget = gfopen(target, "w");
+
+   umask(saved_mask);
+                            
    
    if (ftarget)
    {
@@ -2363,7 +2369,7 @@ void Schema::process_response_mode(void)
    m_type_value = value_from_mode("type");
    m_mode_action = get_mode_type(m_type_value);
 
-   if (m_mode_action==MACTION_SAVE_POST)
+   if (m_mode_action==MACTION_SAVE_POST || m_mode->seek("save-post","true"))
    {
       action_save_post();
       return;
@@ -2707,7 +2713,7 @@ bool Schema::import_table(const char* tablename)
       catch(std::exception &e)
       {
          ifprintf(stderr,
-                 "Unexpected impot_table exception: (%s).\n",
+                 "Unexpected import_table exception: (%s).\n",
                  e.what());
       }
       catch(...)
@@ -2787,11 +2793,18 @@ bool Schema::process_import_form(void)
 
             if (!rval)
             {
-               ifputs("For mode ", stderr);
-               m_qstringer->print_name_at(0,STDERR_FILENO);
-               ifputs(", import failed for upload type ", stderr);
-               ifputs(m_puller->field_content_type(), stderr);
-               ifputc('\n', stderr);
+               ifputs("For mode \"", stderr);
+               ifputs(m_mode->tag(), stderr);
+//               m_qstringer->print_name_at(0,STDERR_FILENO);
+
+               const char *ctype = m_puller->field_content_type();
+               if (ctype)
+               {
+                  ifputs("\", import failed for upload type \"", stderr);
+                  ifputs(ctype, stderr);
+               }
+
+               ifputs("\"\n", stderr);
             }
          }
 
@@ -3213,6 +3226,11 @@ void Schema::process_root_branch(const ab_handle *mode_root,
 
       if (import_confirm)
          print_import_confirm();
+      else if (m_mode_action==MACTION_FORM_IMPORT)
+      {
+         Schema_Printer sprinter(*m_specsreader, *m_mode, m_out);
+         sprinter.print(m_mode->seek("schema"), "form");
+      }
       else
          open_info_procedure();
 
@@ -3542,7 +3560,7 @@ void Schema::resolve_enum_set_references(BindStack *bs_schema)
  */
 void Schema::print_schema_from_bindstack(BindStack *bs)
 {
-   Schema_Printer sprinter(*bs, *m_specsreader, *m_mode, m_out);
+   Schema_Printer sprinter(*m_specsreader, *m_mode, *bs, m_out);
    sprinter.print(m_mode->seek("schema"), "form");
 }
 
@@ -3582,7 +3600,7 @@ void Schema::process_info_procedure(StoredProc &infoproc)
       // Print a form-producing schema for an empty form or a result form:
       if (bindstack && force_schema)
       {
-         Schema_Printer sprinter(*bindstack, *m_specsreader, *m_mode, m_out);
+         Schema_Printer sprinter(*m_specsreader, *m_mode, *bindstack, m_out);
          sprinter.print(m_mode->seek("schema"), "form");
       }
    }

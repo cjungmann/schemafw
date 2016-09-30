@@ -1,4 +1,4 @@
-// -*- compile-command: "g++ -std=c++11 -Wno-pmf-conversions -Wall -Werror -Weffc++ -pedantic -DINCLUDE_MAIN `mysql_config --cflags` -o fods fods.cpp `mysql_config --libs`" -*-
+// -*- compile-command: "g++ -std=c++11 -Wno-pmf-conversions -Wall -Werror -Weffc++ -pedantic -DINCLUDE_MAIN `mysql_config --cflags` -U NDEBUG -o fods fods.cpp `mysql_config --libs`" -*-
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -50,11 +50,31 @@ void Result_As_FODS::t_fork_to_zip(IGeneric_Void_Callback &cb)
 {
    // The child process running zip will read from the other size of fifo pipe,
    pid_t pid = fork();
+   int status;
 
    if (pid==0)
    {
       chdir(tmppath());
-      execl("zipit", "zipit", s_target, static_cast<char*>(nullptr));
+
+      // Read-end==0, write-end == 1
+      int errpipe[2];
+      pipe(errpipe);
+      
+      pid_t piderr = fork();
+      if (piderr==0)
+      {
+         close(errpipe[0]);
+         close(ifileno(stderr));
+         dup2(ifileno(stderr), errpipe[1]);
+         
+         execl("zipit", "zipit", s_target, static_cast<char*>(nullptr));
+      }
+      else
+      {
+         close(errpipe[1]);
+         filter_stderr(errpipe[0]);
+         waitpid(piderr, &status, 0); 
+      }
    }
    else
    {
@@ -77,7 +97,6 @@ void Result_As_FODS::t_fork_to_zip(IGeneric_Void_Callback &cb)
       close_content_fifo(contentfifo);
       
       // Wait for child to complete before letting the destructor clean up:
-      int status;
       waitpid(pid, &status, 0);
    }
 
@@ -181,7 +200,7 @@ void Result_As_FODS::remove_tmp_directory(void)
    r("content.xml");
    r(s_target);
    
-   // Remove subdirectory
+   // Remove subdirectories
    r("META-INF");
 
    // Finally, remove directory
@@ -232,7 +251,7 @@ void Result_As_FODS::prepare_tmp_directory(void)
          sprintf(get_error_ptr(), " mkdir failure. errno=%d", errno);
          throw std::runtime_error(m_pathbuff);
       }
-      
+
       char source[256];
       strcpy(source, "/usr/local/lib/schemafw/ods/");
       char *psource = &source[strlen(source)];
@@ -318,6 +337,99 @@ void Result_As_FODS::send_file_out(const char* path)
       ifclose(fp);
    }
 }
+
+const char* str_ziperror = "zip error: ";
+size_t      len_ziperror = strlen(str_ziperror);
+
+void Result_As_FODS::filter_stderr(int fh, size_t bufflen)
+{
+   bool seeking_endline = false;
+   char* buff = static_cast<char*>(alloca(bufflen));
+   
+   char *ptr = buff;     // pointer to current buffer position
+   char *buff_end = nullptr;  // pointer to end of buffer
+   char *msg_start = nullptr;  // saved pointer to start of line
+   ssize_t chars_read=1;        // initialize so as to initially enter the loop
+   size_t  buff_remaining = 0;;
+
+   auto l_write_msg = [&msg_start, &ptr](void)
+      { ifwrite(msg_start, 1, ptr-msg_start, stderr); };
+   auto l_terminate_msg = [](void)
+      { ifputc('\n', stderr); };
+   auto l_shift_buff_remaining_to_start = [&buff, &ptr, &buff_remaining](void)
+      { memcpy(buff,ptr,buff_remaining); };
+   // Rewrite if more discardable cues read
+   auto l_is_error_line = [&ptr](void) -> bool
+      { return strstr(ptr,str_ziperror) ? true : false; };
+
+   // buff_remaining indicates how many characters were shifted
+   // to the beginning of the buffer.  The value is used here to
+   // preserve those characters and to not overwrite the buffer.
+   while((chars_read=read(fh, buff+buff_remaining, bufflen-buff_remaining))>0)
+   {
+      buff_end = buff + chars_read + buff_remaining;
+      ptr = buff;
+
+      while (ptr < buff_end)
+      {
+         if (seeking_endline)
+         {
+            if (*ptr=='\n' || *ptr=='\r')
+            {
+               if (msg_start)
+               {
+                  l_write_msg();
+                  l_terminate_msg();
+                  
+                  msg_start = nullptr;
+               }
+               seeking_endline = false;
+            }
+         }
+         else if (*ptr!='\n' && *ptr!='\r')
+         {
+            buff_remaining = buff_end - ptr;
+            if (buff_remaining <= len_ziperror)
+            {
+               if (msg_start)
+               {
+                  l_write_msg();
+                  msg_start = buff;
+               }
+
+               break;
+            }
+            else
+            {
+               // We're at the start of a line.
+               
+               if (l_is_error_line())
+                  msg_start = ptr;
+               
+               msg_start = nullptr;
+
+               seeking_endline = true;
+            }
+         }
+
+         ++ptr;
+      }
+
+      buff_remaining = buff_end - ptr;
+      
+      if (seeking_endline && msg_start)
+      {
+         l_write_msg();
+         msg_start = buff;
+      }
+      else if (buff_remaining)
+      {
+         l_shift_buff_remaining_to_start();
+      }
+   }
+}
+
+
 
 void Result_As_FODS::write_meta_file(const char *pathsource, const char *pathtarget)
 {
@@ -466,7 +578,7 @@ int Result_As_FODS::fill_date_buffer(char* buffer, int bufflen)
 
 void Result_As_FODS::doc_element(void) const
 {
-   fods_write("<office:document");
+   fods_write("<office:document-content");
    const char **ptr = nspaces;
    while (*ptr)
    {
@@ -496,7 +608,7 @@ void Result_As_FODS::end_table(void) const
 
 void Result_As_FODS::end_doc_element(void) const
 {
-   fods_write("</office:document>\n");
+   fods_write("</office:document-content>\n");
 }
 
 
@@ -514,7 +626,7 @@ void Result_As_FODS::end_doc_element(void) const
 #include "procedure.cpp"
 
 //@ [Result_As_FODS_Sample]
-void run_test(MYSQL &mysql)
+void execute_export_test(MYSQL &mysql)
 {
    const char *query = "SELECT * FROM information_schema.TABLES";
    Result_As_FODS rafods(stdout);
@@ -522,11 +634,10 @@ void run_test(MYSQL &mysql)
    try
    {
       SimpleProcedure sp(query);
-
       auto func = [&mysql, &rafods, &sp](void)
-      {
-         sp.run(&mysql, rafods);
-      };
+         {
+            sp.run(&mysql, rafods);
+         };
       
       rafods.fork_to_zip(func);
    }
@@ -539,7 +650,7 @@ void run_test(MYSQL &mysql)
 
 
 
-int main(int argc, char** argv)
+void run_export_test(void)
 {
    const char *host = nullptr;
    const char *user = nullptr;
@@ -552,12 +663,50 @@ int main(int argc, char** argv)
 
    if (mysql_real_connect(&mysql, host, user, pword, database, 0, nullptr, 0))
    {
-      run_test(mysql);
-      
+      execute_export_test(mysql);
       mysql_close(&mysql);
    }
 
    mysql_library_end();
+}
+
+const char* fakestderr =
+   "  adding: mimetype (stored 0%)\r\n"
+   "zip warning: Reading FIFO (Named Pipe): content.xml\r\n"
+   "  adding: content.xml (deflated 98%)\r\n"
+   "  adding: META-INF/ (stored 0%)\r\n"
+   "  adding: META-INF/manifest.xml (deflated 68%)\r\n"
+   "  adding: meta.xml (deflated 51%)\r\n"
+   "  adding: settings.xml (deflated 37%)\r\n"
+   "  adding: styles.xml (deflated 33%)\r\n"
+   "zip error: Unknown options.  This is a super-long error message to confirm proper handling.\r\n"
+   "Finished compressing";
+
+void Result_As_FODS::test_stderr_filter(void)
+{
+   int errpipe[2];
+   pipe(errpipe);
+   pid_t pid = fork();
+   if (pid==0)
+   {
+      close(errpipe[0]);
+      write(errpipe[1], fakestderr, strlen(fakestderr));
+      _exit(EXIT_SUCCESS);
+   }
+   else
+   {
+      close(errpipe[1]);
+      filter_stderr(errpipe[0], 32);
+      
+      int status;
+      waitpid(pid, &status, 0);
+   }
+}
+
+int main(int argc, char** argv)
+{
+//   run_export_test();
+   Result_As_FODS::test_stderr_filter();
    return 0;
 }
 

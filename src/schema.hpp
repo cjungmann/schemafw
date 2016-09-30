@@ -120,24 +120,31 @@ class Schema_Printer
 protected:
    static const char *s_field_ignore_list[];
    
-   BindStack       &m_bindstack;
    SpecsReader     &m_specsreader;
    const ab_handle &m_mode;        /**< The current operating mode. */
+   BindStack       *m_bindstack;
 
    FILE        *m_out;
 public:
-   Schema_Printer(BindStack &bs,
-                  SpecsReader &sr,
+   Schema_Printer(SpecsReader &sr,
                   const ab_handle &mode,
+                  BindStack &bs,
                   FILE* out)
-      : m_bindstack(bs), m_specsreader(sr), m_mode(mode), m_out(out)          { }
+      :  m_specsreader(sr), m_mode(mode), m_bindstack(&bs),m_out(out)       { }
    
-   Schema_Printer(DataStack<BindC> &ds,
-                  SpecsReader &sr,
+   Schema_Printer(SpecsReader &sr,
+                  const ab_handle &mode,
+                  DataStack<BindC> &ds,
+                  FILE* out)
+      : m_specsreader(sr), m_mode(mode),
+        m_bindstack(reinterpret_cast<BindStack*>(&ds)),
+        m_out(out)                                                          { }
+   
+   Schema_Printer(SpecsReader &sr,
                   const ab_handle &mode,
                   FILE* out)
-      : m_bindstack(reinterpret_cast<BindStack&>(ds)),
-        m_specsreader(sr), m_mode(mode), m_out(out)                           { }
+      : m_specsreader(sr), m_mode(mode),
+        m_bindstack(nullptr), m_out(out)                                    { }
    
    void print(const ab_handle *schema, const char *default_name=nullptr);
 
@@ -369,7 +376,7 @@ public:
       MACTION_DISPLAY,
       MACTION_FORM_EDIT,
       MACTION_FORM_NEW,
-      MACTION_FORM_TRY,
+      MACTION_FORM_IMPORT,
       MACTION_FORM_VIEW
    };
 

@@ -1,4 +1,4 @@
-// -*- compile-command: "g++ -std=c++11 -Wno-pmf-conversions -Wall -Werror -Weffc++ -pedantic -ggdb -DINCLUDE_MULTIPART_PULL_MAIN `mysql_config --cflags` -o multipart_pull multipart_pull.cpp `mysql_config --libs`" -*-
+// -*- compile-command: "g++ -std=c++11 -Wno-pmf-conversions -Wall -Werror -Weffc++ -pedantic -ggdb -DINCLUDE_MAIN `mysql_config --cflags` -U NDEBUG -o multipart_pull multipart_pull.cpp `mysql_config --libs`" -*-
 
 #include <ctype.h>
 #include <unistd.h>       // fork()
@@ -6,9 +6,15 @@
 #include <fcntl.h>        // open() constant values
 
 #include "multipart_pull.hpp"
+#include "linebuffer.hpp"
+#include "istdio.hpp"
 
 uint16_t Multipart_Pull::s_END_FIELD = 2573; // "\r\n"
 uint16_t Multipart_Pull::s_END_FORM = 11565; // "--"
+const char Multipart_Pull::s_multipart_str[] = "multipart/form-data; ";
+const int Multipart_Pull::s_len_multipart_str = strlen(s_multipart_str);
+const char Multipart_Pull::s_boundary_str[] = "boundary=";
+const int Multipart_Pull::s_len_boundary_str = strlen(s_boundary_str);
 
 /** @brief Constructor */
 Multipart_Pull::Multipart_Pull(IStreamer &s)
@@ -27,14 +33,104 @@ Multipart_Pull::Multipart_Pull(IStreamer &s)
      m_field_cdispo(nullptr),
      m_field_name(nullptr),
      m_field_fname(nullptr),
-     m_field_ctype(nullptr)
+     m_field_ctype(nullptr),
+     m_errors(ECODE_NONE)
 {
+   // Leave 10 characters of slop:
    m_end_workarea = m_workarea + sizeof(m_workarea) - 10;
-   // int sz = sizeof(m_workarea);
-   // m_end_workarea = m_workarea + sz;
+
+#ifdef INCLUDE_MAIN   
+   initialize_from_file();
+#endif   
+
    read_initial_boundary_and_prepare_buffers();
    reset_field_heads();
 }
+
+
+/**
+ * @brief Reads first line from submission to set form meta data.
+ *
+ * Confirms appropriate header format while saving the boundary string
+ * and saving a pointer to the beginning of unused buffer space.
+ */
+#ifdef INCLUDE_MAIN
+void Multipart_Pull::initialize_from_file(void)
+{
+   char *ptr = m_workarea;
+   char *limit = m_end_workarea - 2;
+
+   /********************************************************************/
+   // Returns false if it reaches EOF without finding /r/n.
+   auto read_and_discard_file_preamble = [this, &ptr, &limit](void) -> bool
+   {
+      int c;
+      int nlcount = 0;
+      // Read first line into the workarea:
+      while(EOF!=(c=m_str.getc()) && ptr<limit)
+      {
+         *ptr = static_cast<char>(c);
+      
+         // Detect second EOL:
+         if (*ptr=='\n' && *(ptr-1)=='\r')
+            if (nlcount++)  // postfix++ evaluates to 0 on first pass
+               return true;
+
+         ++ptr;
+      }
+
+      return false;
+   };
+
+   /********************************************************/
+   // Returns true if everything is as expected and m_workarea
+   // starts with the boundary string.
+   auto confirm_multipart_preamble = [this, &ptr](void) -> bool
+   {
+      char *p = strstr(m_workarea, s_multipart_str);
+      if (p)
+      {
+         p += s_len_multipart_str;
+         p = strstr(p, s_boundary_str);
+         if (p)
+            return true;
+      //    {
+      //       p += s_len_boundary_str;
+
+      //       // Shift boundary string to start:
+      //       ptr = m_workarea;
+      //       while ('\r' != (*ptr = *p))
+      //       {
+      //          ++ptr;
+      //          ++p;
+      //       }
+
+      //       if (*ptr=='\r')
+      //       {
+      //          *ptr = '\0';
+
+      //          // Save boundary information
+      //          m_boundary = m_workarea;
+      //          m_boundary_end = ptr;
+      //          m_boundary_length = ptr - m_workarea;
+
+      //          // Save beginning of free buffer area:
+      //          m_buffer = ptr+1;
+
+      //          return true;
+      //       }
+      //    }
+      }
+
+      return false;
+   };
+
+   // Beginning of function execution:
+   if (!read_and_discard_file_preamble() ||
+       !confirm_multipart_preamble() )
+      throw std::runtime_error("Submitted form not encoded as multipart/form-data.");
+}
+#endif // INCLUDE_MAIN
 
 // const mimetypes_map * const Multipart_Pull::s_mtypes_map[] = {
 //    {0, "application/vnd.ms-excel"},
@@ -68,15 +164,16 @@ void Multipart_Pull::read_initial_boundary_and_prepare_buffers(void)
 
    while (EOF!=(c=m_str.getc()) && pstr < limit)
    {
-      if (c=='\r')
+      // Get chars up to \r\n, replacing the \r with \0, but leaving
+      // the file pointer to the beginning of a field description.
+      if (c=='\n')
       {
-         // save useful pointers:
-         m_boundary_end = pstr;
-         *pstr++ = '\0';
-         m_buffer = pstr;
-
-         // dispose of newline:
-         assert((c=m_str.getc())=='\n');
+         if (*(pstr-1)=='\r')
+         {
+            *(pstr-1) = '\0';
+            m_boundary_end = pstr-1;
+            m_buffer = pstr;
+         }
          break;
       }
       else
@@ -119,8 +216,11 @@ void * Multipart_Pull::pthread_create_start_routine(void *data)
    int        i;
    char       c;
 
+   int debug_read_count = 0;
+
    while (EOF!=(i=mpp.getc()))
    {
+      ++debug_read_count;
       if (r==1)
       {
          c = static_cast<char>(i);
@@ -132,12 +232,13 @@ void * Multipart_Pull::pthread_create_start_routine(void *data)
       }
    }
 
+   ifprintf(stderr, "About to close handle (%d), having written %d characters.\n",handle, debug_read_count);
+
    close(handle);
    mpp.flag_field_complete();
 
    return nullptr;
 }
-
 
 
 /**
@@ -155,6 +256,186 @@ void Multipart_Pull::reset_field_heads(void)
    m_match_breaker = -1;
    
    m_buffer = const_cast<char*>(m_boundary_end+1);
+}
+
+
+void Multipart_Pull::read_headers(void)
+{
+   char *ptr = m_buffer; // Progress pointer
+   char *pline;          // pointer to current line
+   char *hname;          // header name
+   char *hvalue;         // header value (to be further parsed)
+
+   /**********************************************/
+   auto discard_spaces = [](const char *p) -> char*
+   {
+      // Don't forget to increment the pointer after
+      // replacing a character with '\0':
+      assert(*p);
+      
+      while (*p && isspace(*p))
+         ++p;
+      return const_cast<char*>(p);
+   };
+
+   /*******************************************/
+   auto unquote_value = [](char *value) -> char*
+   {
+      char *p = value;
+      while (*++p)
+         ;
+      
+      if (*value=='"' && *(p-1)=='"')
+      {
+         *(p-1) = '\0';
+         ++value;
+      } 
+      
+      return value;
+   };
+
+   /*****************************************************/
+   auto read_next_header_line = [this, &ptr, &pline](void) -> bool
+   {
+      int c;
+      pline = ptr;
+      while (ptr < m_end_workarea)
+      {
+         if ((c=m_str.getc())==EOF)
+            break;
+         else if ((*ptr=static_cast<char>(c))=='\n')
+            break;
+
+         ++ptr;
+      }
+      
+      if (*ptr=='\n' && *(ptr-1)=='\r')
+      {
+         *(ptr-1) = '\0';
+         
+         // Leave closure pointer to character following \r\n:
+         ++ptr;
+
+         if (ptr-pline == 2)
+            return false;
+
+         
+         return true;
+      }
+      else
+         return false;
+   };
+
+   /********************************************************************/
+   auto parse_header_line = [this,
+                             &pline,
+                             &hname,
+                             &hvalue,
+                             &discard_spaces](void) -> bool
+   {
+      hname = hvalue = nullptr;
+      
+      char *p = pline;
+      
+      while (*p && *p!=':')
+         ++p;
+
+      if (*p)
+      {
+         hname = pline;
+         *p = '\0';
+
+         p = discard_spaces(p+1);
+
+         if (*p)
+            hvalue = p;
+
+         return true;
+      }
+      return false;
+   };
+
+   /**************************************************************************/
+   auto set_disposition_value = [this, &unquote_value](const char *name,
+                                                       char *value) -> void
+   {
+      if (0==strcasecmp("name", name))
+         m_field_name = unquote_value(value);
+      else if (0==strcasecmp("filename", name))
+         m_field_fname = unquote_value(value);
+   };
+
+   /********************************************************/
+   // Returns true if more settings to retrieve.
+   auto get_next_disposition_value = [this, &discard_spaces, &set_disposition_value](char*& p) -> bool
+   {
+      char *name = p;
+      char *value= nullptr;
+
+      while (*p && *p!='=')
+         ++p;
+
+      if (*p)
+      {
+         *p = '\0';
+         value = ++p;
+
+         while (*p && *p!=';')
+            ++p;
+
+         // Terminate last item in disposition list:
+         if (*p)
+         {
+            *p = '\0';
+            
+            // move to next setting:
+            p = discard_spaces(p+1);
+         }
+
+         set_disposition_value(name, value);
+      }
+
+      return *p!=0;
+   };
+
+   /********************************************/
+   auto parse_disposition = [this,
+                             &hvalue,
+                             &discard_spaces,
+                             &get_next_disposition_value](void)
+   {
+      char *dtype = nullptr;
+      
+      char *p = hvalue;
+      while (*p && *p!=';')
+         ++p;
+      
+      if (*p)
+      {
+         dtype = hvalue;
+         *p = '\0';
+
+         p = discard_spaces(p+1);
+      }
+
+      if (dtype && 0==strcasecmp(dtype, "form-data"))
+      {
+         while (get_next_disposition_value(p))
+            ;
+      }
+   };
+
+
+   while (read_next_header_line())
+   {
+      if (parse_header_line())
+      {
+         if (0==strcasecmp(hname, "Content-Type"))
+            m_field_ctype = hvalue;
+         else if (0==strcasecmp(hname, "Content-Disposition"))
+            parse_disposition();
+      }
+   }
 }
 
 /**
@@ -187,7 +468,7 @@ void Multipart_Pull::reset_field_heads(void)
  * are reminders about setting watch points, which was also useful in
  * debugging this function.
  */
-void Multipart_Pull::read_headers(void)
+void Multipart_Pull::read_headers_old(void)
 {
    char *p = m_buffer;
 
@@ -478,6 +759,8 @@ int Multipart_Pull::get_csv_file_handle(fhandle_payload &pl)
       return -1;
    }
 
+   ifprintf(stderr,"pipe_in[0] = %d\npipe_in[1] = %d\npipe_out[0] = %d\npipe_out[1] = %d\n", pl.pipe_in[0], pl.pipe_in[1], pl.pipe_out[0], pl.pipe_out[1]);
+
    pid_t pid = fork();
    // If fork failed, there are no processes to close,
    // so we can just close the pipes, log the failure,
@@ -500,14 +783,15 @@ int Multipart_Pull::get_csv_file_handle(fhandle_payload &pl)
 
    if (pid==0)    // child process
    {
+      ifputs("Starting child process.\n", stderr);
       // close unneeded pipes:
       close(pl.pipe_in[1]);   // write-end of stdin pipe used by new thread
       close(pl.pipe_out[0]);  // read-end of stdout pipe used by parent process
 
       // Replace the process's stdin and stdout with the pipes:
 
-      close(STDIN_FILENO);
-      if (-1==(result=dup2(pl.pipe_in[0], STDIN_FILENO)))
+      close(ifileno(stdin));
+      if (-1==(result=dup2(pl.pipe_in[0], ifileno(stdin))))
          fprintf(stderr,
                  "multipart_pull stdin dup2 failed: %s\n",
                  strerror(errno));
@@ -515,8 +799,8 @@ int Multipart_Pull::get_csv_file_handle(fhandle_payload &pl)
       // if stdin replaced, do stdout:
       if (result!=-1)
       {
-         close(STDOUT_FILENO);
-         if (-1==(result=dup2(pl.pipe_out[1], STDOUT_FILENO)))
+         close(ifileno(stdout));
+         if (-1==(result=dup2(pl.pipe_out[1], ifileno(stdout))))
             fprintf(stderr,
                     "multipart_pull stdin dup2 failed: %s\n",
                     strerror(errno));
@@ -532,28 +816,30 @@ int Multipart_Pull::get_csv_file_handle(fhandle_payload &pl)
       }
 
       // throw away error messages from ssconvert:
-      if (true)
-      {
-         int fh = open("/dev/null", O_APPEND, O_WRONLY);
-         if (fh==-1)
-            fprintf(stderr, "Open /dev/null failed %s\n", strerror(errno));
-         else
-         {
-            close(STDERR_FILENO);
-            dup2(fh, STDERR_FILENO);
-            close(fh);
-         }
-      }
+      // if (true)
+      // {
+      //    int fh = open("/dev/null", O_APPEND, O_WRONLY);
+      //    if (fh==-1)
+      //       fprintf(stderr, "Open /dev/null failed %s\n", strerror(errno));
+      //    else
+      //    {
+      //       close(ifileno(stderr));
+      //       dup2(fh, ifileno(stderr));
+      //       close(fh);
+      //    }
+      // }
 
       // Start converter:
       execl("/usr/bin/ssconvert", "ssconvert",
             "-T", "Gnumeric_stf:stf_assistant",
             "-O", "quote=\"'\" quoting-mode=always",
+            "-I", "Gnumeric_OpenCalc:openoffice",
             "fd://0",
             "fd://1",
             nullptr);
    }
 
+   ifputs("Starting parent process.\n", stderr);
    // Parent process
    
    // close unnecessary pipes:
@@ -584,6 +870,7 @@ int Multipart_Pull::get_csv_file_handle(fhandle_payload &pl)
    }
    else
    {
+      ifputs("Tread created from parent process.\n", stderr);
       // size_t r;
       // char buff[80];
       // while (0>=(r=read(pl.pipe_out[0], buff, sizeof(buff))))
@@ -599,6 +886,200 @@ int Multipart_Pull::get_csv_file_handle(fhandle_payload &pl)
    }
 }
 
+/**
+ * @brief Thread initialization function for transmitting to stdin.
+ */
+void* Multipart_Pull::start_stdin_thread(void *data)
+{
+   Multipart_Pull &mpp = static_cast<thread_data*>(data)->mpp;
+   int            &fh = static_cast<thread_data*>(data)->fhandle;
+   int            i;
+   ssize_t        cr;
+   ssize_t        totr = 0;
+   ssize_t        totw = 0;
+
+
+   while (EOF!=(i=mpp.getc()))
+   {
+      ++totr;
+      if ((cr=write(fh, static_cast<void*>(&i), 1))!=1)
+      {
+         fprintf(stderr,
+                 "start_stdin_thread write error (%s) wrote %ld chars\n",
+                 strerror(errno),
+                 cr);
+      }
+      else
+         ++totw;
+   }
+   
+   // Close, then set to -1 so it won't be closed again
+   close(fh);
+   fh = -1;
+
+   mpp.m_end_of_field = true;
+
+   fprintf(stderr, "Closed handle, having read %ld and written %ld bytes.\n",
+           totr, totw);
+
+   return static_cast<void*>(nullptr);
+}
+
+/**
+ * @brief Thread initialization function for processing stderr.
+ */
+void* Multipart_Pull::start_stderr_thread(void *data)
+{
+   Multipart_Pull &mpp = static_cast<thread_data*>(data)->mpp;
+   int            &fh = static_cast<thread_data*>(data)->fhandle;
+
+   auto get_line = [&mpp](const char *line)
+   {
+      ifputs("STDERR: ", stderr);
+      
+      if (strncmp(line, "santa claus", 11)==0)
+      {
+         // lock mutex
+         mpp.m_errors = ECODE_FILE_FORMAT;
+         // unlock mutex
+         
+         ifputs("There IS a Santa Claus!", stderr);
+      }
+      else
+         ifputs(line, stderr);
+      
+      ifputc('\n', stderr);
+   };
+
+   linebuffer::BufferFile(get_line, fh);
+
+   close(fh);
+   fh = -1;
+   
+   return static_cast<void*>(nullptr);
+}
+
+/**
+ * @brief Create processes and threads to use ssconvert to process the submitted file.
+ */
+void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& callback)
+{
+   int l_pipe_in[2];
+   int l_pipe_out[2];
+   int l_pipe_err[2];
+
+   int* pipe_in = l_pipe_in;
+   int* pipe_out = l_pipe_out;
+   int* pipe_err = l_pipe_err;
+
+   int* pipes[] = {pipe_in, pipe_out, pipe_err, nullptr};
+   int result;
+
+   /***********************************/
+   auto close_clear = [](int& p) -> void
+   {
+      if (p>-1)
+      {
+         close(p);
+         p = -1;
+      }
+   };
+
+   /*****************************************************/
+   auto close_pipes = [&pipes, &close_clear](void) -> void
+   {
+      for (int** p = pipes; *p; ++p)
+      {
+         close_clear(**p);
+         close_clear(*++*p);
+      }
+   };
+
+   // Open all the pipes
+   for (int** p = pipes; *p; ++p)
+   {
+      if ((result=(pipe(*p))))
+      {
+          fprintf(stderr, "multipart_pull pipe creation failed: %s\n",
+                  strerror(errno));
+          close_pipes();
+          break;
+      }
+   }
+
+   pid_t pid = fork();
+   if (pid==-1)
+   {
+      close_pipes();
+      fprintf(stderr, "multipart_pull fork failed: %s.\n", strerror(errno));
+   }
+   else if (pid==0)  // child process
+   {
+      // Pipe housekeeping:
+      // close(ifileno(stdin));
+      // close(ifileno(stdout));
+      // close(ifileno(stderr));
+      
+      if (-1==dup2(pipe_in[0], ifileno(stdin))   ||
+          -1==dup2(pipe_out[1], ifileno(stdout)) ||
+          -1==dup2(pipe_err[1], ifileno(stderr))   )
+      {
+         fprintf(stderr, "one of the dups failed us (%s).\n", strerror(errno));
+         close_pipes();
+         exit(1);
+      }
+      
+      close_clear(pipe_in[1]);
+      close_clear(pipe_out[0]);
+      close_clear(pipe_err[0]);
+
+      printf("About to start the converter (will be waiting for stdin).\n");
+
+      // Start converter:
+      execl("/usr/bin/ssconvert", "ssconvert",
+            "-T", "Gnumeric_stf:stf_assistant",
+            "-O", "quote=\"'\" quoting-mode=always",
+            "fd://0",
+            "fd://1",
+            nullptr);
+   }
+   else
+   {
+      // Pipe housekeeping, close unused ends of pipes:
+      close_clear(pipe_in[0]);
+      close_clear(pipe_out[1]);
+      close_clear(pipe_err[1]);
+
+      thread_data td_in = { *this, pipe_in[1] };
+      pthread_t pt_in;
+      printf("About to start the stdin thread, will have something for ssconvert to read.\n");
+      if (pthread_create(&pt_in,
+                         nullptr,
+                         start_stdin_thread,
+                         static_cast<void*>(&td_in) ))
+      {
+         throw std::runtime_error("Import stdin pipe failed.");
+      }
+
+      thread_data td_err = { *this, pipe_err[0] };
+      pthread_t pt_err;
+      if (pthread_create(&pt_err,
+                         nullptr,
+                         start_stderr_thread,
+                         static_cast<void*>(&td_err) ))
+      {
+         throw std::runtime_error("Import stderr pipe failed.");
+      }
+
+      // Allow the calling function to start the process:
+      callback(pipe_out[0]);
+
+      int wstatus;
+      
+      waitpid(pid, &wstatus, 0);
+      fprintf(stderr, "Returned from child process.\n");
+   }
+}
 
 void Multipart_Pull::flag_field_complete(void)
 {
@@ -660,7 +1141,8 @@ bool Multipart_Pull::next_field(void)
 
 
 
-#ifdef INCLUDE_MULTIPART_PULL_MAIN
+#ifdef INCLUDE_MAIN
+#undef INCLUDE_MAIN
 
 #include <stdio.h>    // printf
 
@@ -669,7 +1151,8 @@ bool Multipart_Pull::next_field(void)
 
 #include "vclasses.hpp"
 #include "prandstr.cpp"
-
+#include "linebuffer.cpp"
+#include "istdio.cpp"
 
 /**
  * @brief Demonstrate the use of Multipart_Pull, especially for importing
@@ -701,19 +1184,9 @@ void demo_mp_pull(Multipart_Pull &mpp)
          // Special handling for file upload:
          if (mpp.is_file_upload())
          {
-            // Allocate the memory needed to run get_csv_file_handle()
-            // in the current stack frame so it remains in scope while
-            // reading from the returned file handle.
-            Multipart_Pull::fhandle_payload pl(mpp);
-
-            // Call the function to get a file handle to the contents
-            // of the spreadsheet converted to CSV:
-            int fh = mpp.get_csv_file_handle(pl);
-
-            if (fh!=-1)
+            printf("About to convert an ODS file.\n");
+            auto f = [](int fh)
             {
-               printf("Converted File Contents:\n\n");
-               
                char iobuff[256];
                size_t bytes;
 
@@ -725,7 +1198,35 @@ void demo_mp_pull(Multipart_Pull &mpp)
                // Close the file handle to clean up (especially in FASTCGI mode)
                // to clean up
                close(fh);
-            }
+            };
+
+            mpp.send_for_csv_filehandle(f);
+            
+            // // Allocate the memory needed to run get_csv_file_handle()
+            // // in the current stack frame so it remains in scope while
+            // // reading from the returned file handle.
+            // Multipart_Pull::fhandle_payload pl(mpp);
+
+            // // Call the function to get a file handle to the contents
+            // // of the spreadsheet converted to CSV:
+            // int fh = mpp.get_csv_file_handle(pl);
+
+            // if (fh!=-1)
+            // {
+            //    printf("Converted File Contents:\n\n");
+               
+            //    char iobuff[256];
+            //    size_t bytes;
+
+            //    // Keep reading until read returns 0 to indicate
+            //    // that we've reached the end of the field contents.
+            //    while (0!=(bytes=read(fh, iobuff, sizeof(iobuff))))
+            //       write(STDOUT_FILENO, iobuff, bytes);
+
+            //    // Close the file handle to clean up (especially in FASTCGI mode)
+            //    // to clean up
+            //    close(fh);
+            // }
          }
          else
          {
@@ -739,26 +1240,27 @@ void demo_mp_pull(Multipart_Pull &mpp)
             fputc('\n', stdout);
          }
       }
-   }
+   } 
 }
 //@ [Demo_MP_Pull]
 
 
 int main(int argc, char **argv)
 {
-   FILE *f = fopen("multipart_form.txt", "rb");
+//   const char mpform[] = "multipart_form.txt";
+   const char mpform[] = "zz_post.txt";
+   FILE *f = fopen(mpform, "rb");
    if (f)
    {
       StrmStreamer str(f);
-
       Multipart_Pull mpp(str);
       demo_mp_pull(mpp);
       
       fclose(f);
    }
    else
-      printf("Unable to open multipart_form.txt.\n");
+      printf("Unable to open %s.\n", mpform);
 }
 
 
-#endif
+#endif  // INCLUDE_MAIN

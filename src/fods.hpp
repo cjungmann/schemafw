@@ -1,4 +1,4 @@
-// -*- compile-command: "g++ -std=c++11 -Wno-pmf-conversions -Wall -Werror -Weffc++ -pedantic -DINCLUDE_MAIN `mysql_config --cflags` -o fods fods.cpp `mysql_config --libs`" -*-
+// -*- compile-command: "g++ -std=c++11 -Wno-pmf-conversions -Wall -Werror -Weffc++ -pedantic -DINCLUDE_MAIN `mysql_config --cflags` -U NDEBUG -o fods fods.cpp `mysql_config --libs`" -*-
 
 #ifndef FODS_HPP
 #define FODS_HPP
@@ -35,6 +35,8 @@ public:
       t_fork_to_zip(user);
    }
 
+   static void test_stderr_filter(void);
+
 
 
 private:
@@ -52,6 +54,8 @@ private:
    void close_content_fifo(FILE* fifo);
    void send_file_out(const char* source);
    
+   static void filter_stderr(int fh, size_t bufflen=64);
+
    void write_meta_file(const char* pathsource, const char* pathtarget);
    void doc_element(void) const;
    void start_table(void) const;

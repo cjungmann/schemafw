@@ -1,4 +1,4 @@
-// -*- compile-command: "g++ -std=c++11 -Wno-pmf-conversions -Wall -Werror -Weffc++ -pedantic -ggdb -DINCLUDE_MULTIPART_PULL_MAIN `mysql_config --cflags` -o multipart_pull multipart_pull.cpp `mysql_config --libs`" -*-
+// -*- compile-command: "g++ -std=c++11 -Wno-pmf-conversions -Wall -Werror -Weffc++ -pedantic -ggdb -DINCLUDE_MAIN `mysql_config --cflags` -o multipart_pull multipart_pull.cpp `mysql_config --libs`" -*-
 
 #ifndef MULTIPART_PULL_HPP
 #define MULTIPART_PULL_HPP
@@ -42,9 +42,93 @@ struct  mimetypes_map
  */
 class Multipart_Pull
 {
+public:
+   struct fhandle_payload;  // prototype
+   struct thread_data
+   {
+      Multipart_Pull &mpp;
+      int &fhandle;
+   };
+   
+   Multipart_Pull(IStreamer &s);
+   
+   /** @brief Returns the boundary string. */
+   inline const char *boundary(void) const                  { return m_boundary; }
+   /** @brief Returns the Content-Disposition, usually _form-data_. */
+   inline const char *field_content_disposition(void) const { return m_field_cdispo; }
+   /** @brief Returns the name of the current field. */
+   inline const char *field_name(void) const                { return m_field_name; }
+   /** @brief Returns the file name for a file upload. */
+   inline const char *field_file_name(void) const           { return m_field_fname; }
+   /** @brief Returns the Content-Type MIME value of a file upload. */
+   inline const char *field_content_type(void) const        { return m_field_ctype; }
+
+   /** @brief Tells if last EOF marks the end of the form. */
+   inline bool end_of_form(void) const      { return m_end_of_form; }
+   inline bool eof(void) const              { return m_field_name==nullptr; }
+
+   inline bool is_file_upload(void) const   { return m_field_fname!=nullptr; }
+
+   int getc(void);
+   int get_csv_file_handle(fhandle_payload &p);
+   void flag_field_complete(void);
+   bool next_field(void);
+
+
+   void t_send_for_csv_filehandle(const IGeneric_Callback<int>& cb);
+   
+   template <class Func>
+   void send_for_csv_filehandle(const Func &f)
+   {
+      Generic_User<int, Func> user(f);
+      t_send_for_csv_filehandle(user);
+   }
+
+
+   /**
+    * @brief Allocated variables to use with file handle-returning function.
+    *
+    * In particular, this is first used as an argument for get_csv_file_handle
+    * so that the function can use the stack-allocated memory from the calling
+    * function to do its work.  Otherwise, when get_csv_file_handle returns
+    * the file handle, the stack variables in get_csv_file_handle will get
+    * overwritten.
+    */
+public:
+   struct fhandle_payload
+   {
+      Multipart_Pull &mpp;
+      int            pipe_in[2];
+      int            pipe_out[2];
+      int            pipe_err[2];
+
+      /** @brief Constructor to generate error if mpp not set. */
+      fhandle_payload(Multipart_Pull &p)
+         : mpp(p), pipe_in{-1}, pipe_out{-1}, pipe_err{-1} { }
+      
+      /** @brief Default constructor throws an error. */
+      fhandle_payload(void) = delete;
+
+      /** Alias for appropriate pipe-end for thread start routine. */
+      int thread_write(void) const { return pipe_in[1]; }
+      /** Alias for appropriate pipe-end from which to read the conversion result. */
+      int result_read(void) const  { return pipe_out[0]; }
+   };
+
+public:
+   enum ECODE
+   {
+      ECODE_NONE = 0,
+      ECODE_FILE_FORMAT = 1
+   };
+
 protected:
-   static uint16_t s_END_FIELD;
-   static uint16_t s_END_FORM;
+   static uint16_t s_END_FIELD;   // "/r/n"
+   static uint16_t s_END_FORM;    // "--"
+   static const char s_multipart_str[];
+   static const int  s_len_multipart_str;
+   static const char s_boundary_str[];
+   static const int  s_len_boundary_str;
 
    static const mimetypes_map * const s_mtypes_map;
    
@@ -57,7 +141,6 @@ protected:
                                       *   against which a working pointer can be
                                       *   compared to prevent buffer overflow.
                                       */
-   
    IStreamer  &m_str;                /**< Object from which to collect chars. */
    const char *m_boundary;           /**< Pointer to boundary string. */
    
@@ -111,69 +194,23 @@ protected:
    const char *m_field_fname;      /**< Field File name */
    const char *m_field_ctype;      /**< Field Content type */
 
+   ECODE      m_errors;
+
+   static void *pthread_create_stderr_filter(void *data);
    static void *pthread_create_start_routine(void *data);
+
+   static void* start_stdin_thread(void* data);
+   static void* start_stderr_thread(void* data);
 
    void reset_field_heads(void);
    void read_headers(void);
-
-   /**
-    * @brief Allocated variables to use with file handle-returning function.
-    *
-    * In particular, this is first used as an argument for get_csv_file_handle
-    * so that the function can use the stack-allocated memory from the calling
-    * function to do its work.  Otherwise, when get_csv_file_handle returns
-    * the file handle, the stack variables in get_csv_file_handle will get
-    * overwritten.
-    */
-public:
-   struct fhandle_payload
-   {
-      Multipart_Pull &mpp;
-      int            pipe_in[2];
-      int            pipe_out[2];
-
-      /** @brief Constructor to generate error if mpp not set. */
-      fhandle_payload(Multipart_Pull &p) : mpp(p), pipe_in{-1}, pipe_out{-1} { }
-      /** @brief Default constructor throws an error. */
-      fhandle_payload(void) = delete;
-
-      /** Alias for appropriate pipe-end for thread start routine. */
-      int thread_write(void) const { return pipe_in[1]; }
-      /** Alias for appropriate pipe-end from which to read the conversion result. */
-      int result_read(void) const  { return pipe_out[0]; }
-   };
+   void read_headers_old(void);
 
    
-
-public:
-   Multipart_Pull(IStreamer &s);
-   
-   /** @brief Returns the boundary string. */
-   inline const char *boundary(void) const                  { return m_boundary; }
-   /** @brief Returns the Content-Disposition, usually _form-data_. */
-   inline const char *field_content_disposition(void) const { return m_field_cdispo; }
-   /** @brief Returns the name of the current field. */
-   inline const char *field_name(void) const                { return m_field_name; }
-   /** @brief Returns the file name for a file upload. */
-   inline const char *field_file_name(void) const           { return m_field_fname; }
-   /** @brief Returns the Content-Type MIME value of a file upload. */
-   inline const char *field_content_type(void) const        { return m_field_ctype; }
-
-   /** @brief Tells if last EOF marks the end of the form. */
-   inline bool end_of_form(void) const      { return m_end_of_form; }
-   inline bool eof(void) const              { return m_field_name==nullptr; }
-
-   inline bool is_file_upload(void) const   { return m_field_fname!=nullptr; }
-
-   int getc(void);
-   int get_csv_file_handle(fhandle_payload &p);
-   void flag_field_complete(void);
-   bool next_field(void);
-
-
 
 private:
    void read_initial_boundary_and_prepare_buffers(void);
+   void initialize_from_file(void);
 
    
 };
