@@ -43,6 +43,7 @@
 inline FCGI_FILE* ifopen(const char *path, const char *mode)
                                                      { return FCGI_fopen(path,mode); }
 inline FCGI_FILE* ifdopen(int fh, const char* mode)  { return FCGI_fdopen(fh,mode); }
+inline int  ifileno(FCGI_FILE* f)                    { return FCGI_fileno(f); }
 inline int  ifgetc(FCGI_FILE* f)                     { return FCGI_fgetc(f); }
 inline bool ifeof(FCGI_FILE* f)                      { return FCGI_feof(f); }
 inline int  iferror(FCGI_FILE* f)                    { return FCGI_ferror(f); }
@@ -135,6 +136,7 @@ int ifprintf(FCGI_FILE* f, const char *format, ...);
 inline FILE* ifopen(const char *path, const char *mode)
                                                 { return fopen(path,mode); }
 inline FILE* ifdopen(int fh, const char* mode)  { return fdopen(fh,mode); }
+inline int  ifileno(FILE* f)                    { return fileno(f); }
 inline int  ifgetc(FILE* f)                     { return fgetc(f); }
 inline bool ifeof(FILE* f)                      { return feof(f); }
 inline int  iferror(FILE* f)                    { return ferror(f); }
