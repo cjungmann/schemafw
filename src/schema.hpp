@@ -282,6 +282,8 @@ public:
 
    static void report_error(FILE *out, const char *str);
 
+   static void print_method_attribute(FILE *out);
+
    // Static error-reporting functions to enfore consistent composition.
    static void print_message_as_xml(FILE *out,
                                     const char *type,
@@ -363,10 +365,12 @@ public:
       MACTION_SAVE_POST,
       MACTION_ABANDON_SESSION,
       MACTION_DELETE,
-      MACTION_EXPORT,
-      MACTION_IMPORT,
       MACTION_INFO,
       MACTION_LOOKUP,
+      
+      MACTION_EXPORT,
+      MACTION_IMPORT,
+      MACTION_IMPORT_VERDICT,
 
       MACTION_FORM_SUBMIT,
       MACTION_FORM_RESULT,
@@ -377,7 +381,8 @@ public:
       MACTION_FORM_EDIT,
       MACTION_FORM_NEW,
       MACTION_FORM_IMPORT,
-      MACTION_FORM_VIEW
+      MACTION_FORM_VIEW,
+      MACTION_IMPORT_REVIEW
    };
 
    struct struct_mode_action
@@ -532,7 +537,6 @@ protected:
    static void log_new_request(void);
    static void clear_for_new_request(void);
    static bool is_web_request(void)           { return nullptr!=getenv("REQUEST_METHOD"); }
-   static bool is_post_request(void);
 
    static void start_schema(SFW_Resources &sfwr);
 

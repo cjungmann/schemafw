@@ -116,11 +116,13 @@ const Schema::struct_mode_action Schema::map_mode_actions[] =
    { "save-post",       Schema::MACTION_SAVE_POST       },
    { "abandon-session", Schema::MACTION_ABANDON_SESSION },
    { "delete",          Schema::MACTION_DELETE          },
-   { "export",          Schema::MACTION_EXPORT          },
-   { "import",          Schema::MACTION_IMPORT          },
    { "info",            Schema::MACTION_INFO            },
    { "lookup",          Schema::MACTION_LOOKUP          },
 
+   { "export",          Schema::MACTION_EXPORT          },
+   { "import",          Schema::MACTION_IMPORT          },
+   { "import-verdict",  Schema::MACTION_IMPORT_VERDICT  },
+   
    { "form-result",     Schema::MACTION_FORM_RESULT     },
    { "form-submit",     Schema::MACTION_FORM_SUBMIT     },
    
@@ -129,7 +131,8 @@ const Schema::struct_mode_action Schema::map_mode_actions[] =
    { "form-edit",       Schema::MACTION_FORM_EDIT       },
    { "form-new",        Schema::MACTION_FORM_NEW        },
    { "form-import",     Schema::MACTION_FORM_IMPORT     },
-   { "form-view",       Schema::MACTION_FORM_VIEW       }
+   { "form-view",       Schema::MACTION_FORM_VIEW       },
+   { "import-review",   Schema::MACTION_IMPORT_REVIEW   }
 };
 const Schema::struct_mode_action *Schema::end_map_mode_actions =
    map_mode_actions + (sizeof(map_mode_actions) / sizeof(struct_mode_action));
@@ -1306,7 +1309,17 @@ void Schema::report_error(FILE *out, const char *str)
    ifputs("<message type=\"error\"", out);
    if (str && *str)
       print_xml_attribute(out, "where", str);
+   print_method_attribute(out);
    ifputs(" />\n", out);
+}
+
+void Schema::print_method_attribute(FILE *out)
+{
+   const char *type = getenv("REQUEST_METHOD");
+   if (!type)
+      type = "GET";
+   
+   print_xml_attribute(out, "method", type);
 }
 
 /**
@@ -1346,6 +1359,8 @@ void Schema::print_message_as_xml(FILE *out,
    
    if (detail)
       print_xml_attribute(out, "detail", detail);
+
+   print_method_attribute(out);
    
   ifputs(" />\n", out);
 }
@@ -1739,13 +1754,6 @@ void Schema::clear_for_new_request(void)
                           result_user);
 }
 
-/** @brief Discerns if POST by getting REQUEST_METHOD environment variable. */
-bool Schema::is_post_request(void)
-{
-   const char *method = getenv("REQUEST_METHOD");
-   return method && (0==strcmp("POST", method));
-}
-
 
 /**
  * @brief Adds content-type and boundary info for save_stdin, if multipart/form-data.
@@ -1849,7 +1857,7 @@ void Schema::save_stdin(const char *target)
    else
       error = strerror(errno);
 
-   sprintf(buff, "Read %lu, wrote %lu bytes.\n", total_read, total_written);
+   sprintf(buff, "Read %lu, wrote %lu bytes.", total_read, total_written);
 
    print_message_as_xml(m_out,
                         (error ? "error" : "result"),
@@ -3332,8 +3340,7 @@ void Schema::print_document_element(const char *tagname,
    ifputc('<', m_out);
    ifputs(tagname, m_out);
 
-   if (is_post_request())
-      print_xml_attribute(m_out, "post", "true");
+   print_method_attribute(m_out);
 
    if (m_type_value)
       print_xml_attribute(m_out, "mode-type", m_type_value);
