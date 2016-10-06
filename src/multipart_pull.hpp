@@ -43,19 +43,21 @@ struct  mimetypes_map
 class Multipart_Pull
 {
 public:
-   struct fhandle_payload;  // prototype
+   enum ECODE : uintptr_t;
+public:
    struct thread_data
    {
       Multipart_Pull &mpp;
       int &fhandle;
    };
-   
+
    Multipart_Pull(IStreamer &s);
+   ~Multipart_Pull();
+
+   EFFC_2(Multipart_Pull)
    
    /** @brief Returns the boundary string. */
    inline const char *boundary(void) const                  { return m_boundary; }
-   /** @brief Returns the Content-Disposition, usually _form-data_. */
-   inline const char *field_content_disposition(void) const { return m_field_cdispo; }
    /** @brief Returns the name of the current field. */
    inline const char *field_name(void) const                { return m_field_name; }
    /** @brief Returns the file name for a file upload. */
@@ -63,20 +65,23 @@ public:
    /** @brief Returns the Content-Type MIME value of a file upload. */
    inline const char *field_content_type(void) const        { return m_field_ctype; }
 
-   /** @brief Tells if last EOF marks the end of the form. */
-   inline bool end_of_form(void) const      { return m_end_of_form; }
-   inline bool eof(void) const              { return m_field_name==nullptr; }
-
    inline bool is_file_upload(void) const   { return m_field_fname!=nullptr; }
 
+   inline void set_field_incomplete(bool val=true) { m_field_incomplete=val; }
+   inline bool get_field_incomplete(void) const    { return m_field_incomplete; }
+   inline void set_form_complete(bool val=true)    { m_form_complete = val; }
+   inline bool get_form_complete(void) const       { return m_form_complete; }
+
    int getc(void);
-   int get_csv_file_handle(fhandle_payload &p);
-   void flag_field_complete(void);
+
    bool next_field(void);
 
 
    void t_send_for_csv_filehandle(const IGeneric_Callback<int>& cb);
-   
+
+   /**
+    * @brief Functor-creating gateway to t_send_for_csv_filehandle function.
+    */
    template <class Func>
    void send_for_csv_filehandle(const Func &f)
    {
@@ -95,32 +100,6 @@ public:
     * overwritten.
     */
 public:
-   struct fhandle_payload
-   {
-      Multipart_Pull &mpp;
-      int            pipe_in[2];
-      int            pipe_out[2];
-      int            pipe_err[2];
-
-      /** @brief Constructor to generate error if mpp not set. */
-      fhandle_payload(Multipart_Pull &p)
-         : mpp(p), pipe_in{-1}, pipe_out{-1}, pipe_err{-1} { }
-      
-      /** @brief Default constructor throws an error. */
-      fhandle_payload(void) = delete;
-
-      /** Alias for appropriate pipe-end for thread start routine. */
-      int thread_write(void) const { return pipe_in[1]; }
-      /** Alias for appropriate pipe-end from which to read the conversion result. */
-      int result_read(void) const  { return pipe_out[0]; }
-   };
-
-public:
-   enum ECODE
-   {
-      ECODE_NONE = 0,
-      ECODE_FILE_FORMAT = 1
-   };
 
 protected:
    static uint16_t s_END_FIELD;   // "/r/n"
@@ -173,40 +152,18 @@ protected:
                                       * can be copied.  Will follow the boundary string
                                       * and any header values.
                                       */
+   const char *m_field_name;       /**< Field Name                */
+   const char *m_field_fname;      /**< Field File name           */
+   const char *m_field_ctype;      /**< Field Content type        */
 
-   bool       m_end_of_field;        /**< Flag to indicate we've reached the end
-                                      * of a field.  Further calls to getc() will
-                                      * return EOF until read_headers is called.
-                                      * It is the reponsibility of any field reader
-                                      * to ensure that the file pointer is positioned
-                                      * at the beginning of the next field's header
-                                      * lines.
-                                      */
-
-   bool       m_end_of_form;         /**< Flag to indicate we've reached the end
-                                      * of the form.  Check this value when getc()
-                                      * returns EOF to see if more fields are
-                                      * available.
-                                      */
-
-   const char *m_field_cdispo;     /**< Field Content-Disposition */
-   const char *m_field_name;       /**< Field Name */
-   const char *m_field_fname;      /**< Field File name */
-   const char *m_field_ctype;      /**< Field Content type */
-
-   ECODE      m_errors;
-
-   static void *pthread_create_stderr_filter(void *data);
-   static void *pthread_create_start_routine(void *data);
+   bool       m_field_incomplete;  /**< Flag indicating progress reading the field. */
+   bool       m_form_complete;     /**< Flag indicating progress reading the form.  */
 
    static void* start_stdin_thread(void* data);
    static void* start_stderr_thread(void* data);
 
    void reset_field_heads(void);
    void read_headers(void);
-   void read_headers_old(void);
-
-   
 
 private:
    void read_initial_boundary_and_prepare_buffers(void);

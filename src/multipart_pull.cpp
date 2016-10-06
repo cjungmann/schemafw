@@ -28,23 +28,25 @@ Multipart_Pull::Multipart_Pull(IStreamer &s)
      m_end_boundary_chunk(nullptr),
      m_match_breaker(-1),
      m_buffer(nullptr),
-     m_end_of_field(true),
-     m_end_of_form(false),
-     m_field_cdispo(nullptr),
      m_field_name(nullptr),
      m_field_fname(nullptr),
      m_field_ctype(nullptr),
-     m_errors(ECODE_NONE)
+     m_field_incomplete(false),
+     m_form_complete(false)
 {
    // Leave 10 characters of slop:
    m_end_workarea = m_workarea + sizeof(m_workarea) - 10;
 
 #ifdef INCLUDE_MAIN   
    initialize_from_file();
-#endif   
+#endif
 
    read_initial_boundary_and_prepare_buffers();
    reset_field_heads();
+}
+
+Multipart_Pull::~Multipart_Pull()
+{
 }
 
 
@@ -94,32 +96,6 @@ void Multipart_Pull::initialize_from_file(void)
          p = strstr(p, s_boundary_str);
          if (p)
             return true;
-      //    {
-      //       p += s_len_boundary_str;
-
-      //       // Shift boundary string to start:
-      //       ptr = m_workarea;
-      //       while ('\r' != (*ptr = *p))
-      //       {
-      //          ++ptr;
-      //          ++p;
-      //       }
-
-      //       if (*ptr=='\r')
-      //       {
-      //          *ptr = '\0';
-
-      //          // Save boundary information
-      //          m_boundary = m_workarea;
-      //          m_boundary_end = ptr;
-      //          m_boundary_length = ptr - m_workarea;
-
-      //          // Save beginning of free buffer area:
-      //          m_buffer = ptr+1;
-
-      //          return true;
-      //       }
-      //    }
       }
 
       return false;
@@ -143,7 +119,7 @@ void Multipart_Pull::initialize_from_file(void)
  *        the rest as a buffer.
  *
  * The first line of a multipart_form is the boundary string.  We read
- * it and save it to the beginning of the workarea, then keep a pointer
+< * it and save it to the beginning of the workarea, then keep a pointer
  * to the character immediately following to be the memory for buffering
  * the rest of the reads.
  */
@@ -198,63 +174,20 @@ void Multipart_Pull::read_initial_boundary_and_prepare_buffers(void)
    m_boundary_length = m_buffer - m_boundary;
 }
 
-/**
- * @brief Thread start routine for get_csv_file_handle (and perhaps others)
- *
- * @param data Cast this to tf_payload in order to access a Multipart_Pull object
- *             and a file handle with which to write the current field's contents.
- *
- * This function simply reads from a Multipart_Pull object and writes it to
- * the file handle.  In get_csv_file_handle, the file handle part of @p data.
- */
-void * Multipart_Pull::pthread_create_start_routine(void *data)
-{
-   fhandle_payload *pl = static_cast<fhandle_payload*>(data);
-   Multipart_Pull  &mpp = pl->mpp;
-   int             handle = pl->thread_write();
-   size_t     r = 1;
-   int        i;
-   char       c;
-
-   int debug_read_count = 0;
-
-   while (EOF!=(i=mpp.getc()))
-   {
-      ++debug_read_count;
-      if (r==1)
-      {
-         c = static_cast<char>(i);
-         r=write(handle, &c, 1);
-         if (r!=1)
-            fprintf(stderr,
-                    "Wrote %lu character, expected to write 1 (%s)\n",
-                    r, strerror(errno));
-      }
-   }
-
-   ifprintf(stderr, "About to close handle (%d), having written %d characters.\n",handle, debug_read_count);
-
-   close(handle);
-   mpp.flag_field_complete();
-
-   return nullptr;
-}
-
 
 /**
  * @brief Reset all field head pointers to nullptr and reset m_buffer pointer.
  */
 void Multipart_Pull::reset_field_heads(void)
 {
-   m_field_cdispo =
-      m_field_name =
+   m_field_name =
       m_field_fname =
       m_field_ctype = nullptr;
-   
+
    m_boundary_ptr = m_boundary;
    m_end_boundary_chunk = nullptr;
    m_match_breaker = -1;
-   
+
    m_buffer = const_cast<char*>(m_boundary_end+1);
 }
 
@@ -425,7 +358,6 @@ void Multipart_Pull::read_headers(void)
       }
    };
 
-
    while (read_next_header_line())
    {
       if (parse_header_line())
@@ -436,137 +368,6 @@ void Multipart_Pull::read_headers(void)
             parse_disposition();
       }
    }
-}
-
-/**
- * @brief Read field header line(s) to extract certain bits of data.
- *
- * This function reads the header lines, extracting just a few fields.
- *
- * The values are saved in the workarea buffer after the boundary string.
- * Each value, including the boundary string, is terminated with a \0.
- * The values are saved in named member pointer variables, so we won't save
- * the name, only the value.
- *
- * When parsing the header strings, the first value separator is the colon (_:_)
- * that separates the header tag from its value.  For headers that have more
- * than one value (_Content-Disposition_ in particular), subsequent values are
- * separated by an equals-sign (_=_).  When processing a new line, the
- * `value-separator` variable is reset to be the header tag separator.  Once a
- * header tag has been found, the `value-separator` variable is set to '=',
- * until the next line, where it will again be set to ':'.
- *
- * Headers are read until there are two consecutive \r\n pairs, indicating the
- * end of the headers and the beginning of the field data.
- *
- * @note Portability notice: I'm using `strcasecmp` to do a case-insensitive
- * comparison of header tags.  This is a linux-only function.  Apparently
- * Windows has a similar `stricmp` function.  See @ref Portability.
- *
- * @note Debugging child processes is not hard, but not obvious, either.
- * Refer to @ref SchemaFW_Debugging_Hints for reminders.  On the same page
- * are reminders about setting watch points, which was also useful in
- * debugging this function.
- */
-void Multipart_Pull::read_headers_old(void)
-{
-   char *p = m_buffer;
-
-   // The first character must potentially be saveable
-   // because at the end of a value, we don't know when
-   // the next value begins until we encounter it, so
-   // the initial cur value must be saved to the beginning
-   // of the buffer.
-   int cur;
-   do
-   {
-      cur = m_str.getc();
-   } while (cur=='\n' || cur=='\r');
-
-   // On a new line, the value separator is a colon that separates
-   // a header name from the header value(s)
-   char value_separator = ':';
-   
-   while (cur!='\r')
-   {
-      // Get the name first;
-      // Get character to the colon to find the name:
-      do
-         *p++ = cur;
-      while ( p<m_end_workarea && (cur=m_str.getc())!=EOF && cur!=value_separator);
-         
-      if (cur==value_separator)
-      {
-         // replace the colon/= with a \0
-         *p = '\0';
-
-         // Single point to change string comparison function used
-         // for identifying tag names:
-         const auto &tagcmp = strcasecmp;
-
-         // match the name to save the value that follows:
-         
-         // Note that for header tags, the value_separator
-         // changes to '=' for internal values.
-         if (value_separator==':')
-         {
-            if (0==tagcmp(m_buffer, "Content-Disposition"))
-            {
-               m_field_cdispo = m_buffer;
-               value_separator = '=';
-            }
-            else if (0==tagcmp(m_buffer,"Content-Type"))
-            {
-               m_field_ctype = m_buffer;
-               value_separator = '=';
-            }
-         }
-         else
-         {
-            if (0==tagcmp(m_buffer,"name"))
-               m_field_name = m_buffer;
-            else if (0==tagcmp(m_buffer,"filename"))
-               m_field_fname = m_buffer;
-         }
-         
-         // Reset the pointer to overwrite the name, which
-         // we no longer need since we're saving the value that
-         // follows to a named char*:
-         p = m_buffer;
-
-         // throw-away spaces:
-         while ((cur=m_str.getc())==' ')
-            ;
-      }
-
-      // get the value next
-
-      // Get character to the semicolon or ^M to find the value:
-      do
-         *p++ = cur;
-      while (p<m_end_workarea && (cur=m_str.getc())!=EOF && cur!=';' && cur!='\r');
-
-      if (cur!=EOF)
-      {
-         // If a return, a new line will need to look for a header 
-         if (cur=='\r')
-            value_separator = ':';
-
-         // throw-away whitespace:
-         while ((cur=m_str.getc())==' ' || cur=='\n')
-            ;
-         
-         // terminate value string and move m_buffer
-         // to the next position for either the next
-         // value or to be the general buffer for reading
-         // the field content:
-         *p++ = '\0';
-         m_buffer = p;
-      }
-   }
-
-   if (cur=='\r')
-      assert('\n'==(cur=m_str.getc()));
 }
 
 /**
@@ -599,7 +400,7 @@ void Multipart_Pull::read_headers_old(void)
  */
 int Multipart_Pull::getc(void)
 {
-   if (m_end_of_field)
+   if (!get_field_incomplete())
       return EOF;
    
    int c;
@@ -668,7 +469,7 @@ int Multipart_Pull::getc(void)
       // the boundary string.  We're at the end of the current field.
       else
       {
-         m_end_of_field = true;
+         set_field_incomplete(false);
             
          // Reset the m_boundary_ptr to indicate there are
          // no pre-getc-ed characters to read out.
@@ -685,7 +486,7 @@ int Multipart_Pull::getc(void)
 
          if (buff==s_END_FORM)
          {
-            m_end_of_form = true;
+            set_form_complete(true);
          }
          else if (buff!=s_END_FIELD)
          {
@@ -706,13 +507,13 @@ int Multipart_Pull::getc(void)
                     "Unexpected post-boundary characters (uint16_t) %d\n",
                     buff);
 
-            m_end_of_form = true;
+            set_form_complete(true);
          }
 
          // If at end of form, read all remaining characters in the
          // stream so m_str.eof()==true as a cross-process signal that
          // we've reached the end of the form.
-         if (m_end_of_form)
+         if (get_form_complete())
          {
             while (EOF!=(c=m_str.getc()))
                ;
@@ -727,167 +528,11 @@ int Multipart_Pull::getc(void)
 }
 
 /**
- * @brief Get a file handle to read the converted contents of the current field.
- *
- * Use this function to read the CSV results of a spreadsheet conversion.
- *
- * The caller of this function should read from the returned file handle
- * until the read function returns 0 to indicate it has reached the end
- * of the data.  Then the file handle should be closed.
- *
- * Refer to the snippet on the Multipart_Pull.
-*/
-int Multipart_Pull::get_csv_file_handle(fhandle_payload &pl)
-{
-   // Open both pipes:
-   int result;
-   if ((result=pipe(pl.pipe_in)))
-   {
-      fprintf(stderr, "multipart_pull stdin pipe failed: %s\n",
-              strerror(errno));
-
-      return -1;
-   }
-   else if ((result=pipe(pl.pipe_out)))
-   {
-      // If second pipe failed, close first pipe before leaving:
-      close(pl.pipe_in[0]);
-      close(pl.pipe_in[1]);
-      
-      fprintf(stderr, "multipart_pull stdout pipe failed: %s\n", strerror(errno));
-
-      return -1;
-   }
-
-   ifprintf(stderr,"pipe_in[0] = %d\npipe_in[1] = %d\npipe_out[0] = %d\npipe_out[1] = %d\n", pl.pipe_in[0], pl.pipe_in[1], pl.pipe_out[0], pl.pipe_out[1]);
-
-   pid_t pid = fork();
-   // If fork failed, there are no processes to close,
-   // so we can just close the pipes, log the failure,
-   // and return.
-   if (pid==-1)
-   {
-      // Close pipes
-      close(pl.pipe_in[0]);
-      close(pl.pipe_in[1]);
-      close(pl.pipe_out[0]);
-      close(pl.pipe_out[1]);
-
-      fprintf(stderr, "multipart_pull fork failed: %s.\n", strerror(errno));
-      return -1;
-   }
-
-   // If we're here, we have two pipes and a successful fork.
-   // We have to be aware of the multiple processes when we
-   // report errors and abort the function.
-
-   if (pid==0)    // child process
-   {
-      ifputs("Starting child process.\n", stderr);
-      // close unneeded pipes:
-      close(pl.pipe_in[1]);   // write-end of stdin pipe used by new thread
-      close(pl.pipe_out[0]);  // read-end of stdout pipe used by parent process
-
-      // Replace the process's stdin and stdout with the pipes:
-
-      close(ifileno(stdin));
-      if (-1==(result=dup2(pl.pipe_in[0], ifileno(stdin))))
-         fprintf(stderr,
-                 "multipart_pull stdin dup2 failed: %s\n",
-                 strerror(errno));
-
-      // if stdin replaced, do stdout:
-      if (result!=-1)
-      {
-         close(ifileno(stdout));
-         if (-1==(result=dup2(pl.pipe_out[1], ifileno(stdout))))
-            fprintf(stderr,
-                    "multipart_pull stdin dup2 failed: %s\n",
-                    strerror(errno));
-      }
-
-      // If either of the dups failed, close our end of the pipes
-      // and exit with a failure code
-      if (result==-1)
-      {
-         close(pl.pipe_in[0]);
-         close(pl.pipe_out[1]);
-         _exit(EXIT_FAILURE);
-      }
-
-      // throw away error messages from ssconvert:
-      // if (true)
-      // {
-      //    int fh = open("/dev/null", O_APPEND, O_WRONLY);
-      //    if (fh==-1)
-      //       fprintf(stderr, "Open /dev/null failed %s\n", strerror(errno));
-      //    else
-      //    {
-      //       close(ifileno(stderr));
-      //       dup2(fh, ifileno(stderr));
-      //       close(fh);
-      //    }
-      // }
-
-      // Start converter:
-      execl("/usr/bin/ssconvert", "ssconvert",
-            "-T", "Gnumeric_stf:stf_assistant",
-            "-O", "quote=\"'\" quoting-mode=always",
-            "-I", "Gnumeric_OpenCalc:openoffice",
-            "fd://0",
-            "fd://1",
-            nullptr);
-   }
-
-   ifputs("Starting parent process.\n", stderr);
-   // Parent process
-   
-   // close unnecessary pipes:
-   close(pl.pipe_in[0]);    // read-end used as stdin for ssconvert in child process
-   close(pl.pipe_out[1]);   // write-end used as stdout for ssconvert in child process
-
-   // Create thread to file write end into child process:
-   pthread_t pthread;
-   pthread_attr_t *p_pta = nullptr;
-   if (pthread_create(&pthread,
-                      p_pta,
-                      pthread_create_start_routine,
-                      static_cast<void*>(&pl)))
-   {
-      // Closing write end of pipe will result in an EOF
-      // when the child process attempts to read the pipe,
-      // which will end the child process.
-      close(pl.pipe_in[1]);
-
-      // Close the stdout pipe that we no longer need:
-      close(pl.pipe_out[0]);
-
-      // Log the error,
-      fprintf(stderr,"Thread create failed: %s\n", strerror(errno));
-
-      // Return sign of failure:
-      return -1;
-   }
-   else
-   {
-      ifputs("Tread created from parent process.\n", stderr);
-      // size_t r;
-      // char buff[80];
-      // while (0>=(r=read(pl.pipe_out[0], buff, sizeof(buff))))
-      //    write(STDOUT_FILENO, buff, r);
-
-      // return -1;
-      
-      // Thread running, simply return the read end of the stdout pipe.
-      // When the calling function receives an EOF, the child process
-      // will have completed.  Closing the handle will end the pipe
-      // and complete the cleanup.
-      return pl.pipe_out[0];
-   }
-}
-
-/**
  * @brief Thread initialization function for transmitting to stdin.
+ *
+ * Although this function accesses shared memory, especially in set_field_incomplete(),
+ * I am avoiding using mutexes by having the calling thread only accessing member variable
+ * m_field_complete when this thread is complete.
  */
 void* Multipart_Pull::start_stdin_thread(void *data)
 {
@@ -895,13 +540,9 @@ void* Multipart_Pull::start_stdin_thread(void *data)
    int            &fh = static_cast<thread_data*>(data)->fhandle;
    int            i;
    ssize_t        cr;
-   ssize_t        totr = 0;
-   ssize_t        totw = 0;
-
 
    while (EOF!=(i=mpp.getc()))
    {
-      ++totr;
       if ((cr=write(fh, static_cast<void*>(&i), 1))!=1)
       {
          fprintf(stderr,
@@ -909,20 +550,14 @@ void* Multipart_Pull::start_stdin_thread(void *data)
                  strerror(errno),
                  cr);
       }
-      else
-         ++totw;
    }
-   
-   // Close, then set to -1 so it won't be closed again
+
+   // Close pipe to signal ssconvert that the tranmission is complete:
    close(fh);
    fh = -1;
 
-   mpp.m_end_of_field = true;
-
-   fprintf(stderr, "Closed handle, having read %ld and written %ld bytes.\n",
-           totr, totw);
-
-   return static_cast<void*>(nullptr);
+   uintptr_t rval = (i==EOF) ? 1 : 0;
+   return reinterpret_cast<void*>(rval);
 }
 
 /**
@@ -935,32 +570,52 @@ void* Multipart_Pull::start_stderr_thread(void *data)
 
    auto get_line = [&mpp](const char *line)
    {
-      ifputs("STDERR: ", stderr);
+      // Left-trim spaces
+      while (*line && *line==20)
+         ++line;
       
-      if (strncmp(line, "santa claus", 11)==0)
+      if (*line && !strstr(line, "GLib-GObject"))
       {
-         // lock mutex
-         mpp.m_errors = ECODE_FILE_FORMAT;
-         // unlock mutex
-         
-         ifputs("There IS a Santa Claus!", stderr);
+         // Only write the output if the line begins with "E ",
+         // at least until we experience other fatal errors that
+         // begin some other way:
+         if (*line=='E' && *(line+1)==' ')
+         {
+            line+=2;
+            ifputs("Import failed: \"", stderr);
+            ifputs(line, stderr);
+            ifputs("\"\n", stderr);
+         }
       }
-      else
-         ifputs(line, stderr);
-      
-      ifputc('\n', stderr);
    };
 
+   // Start line buffer using the lambda callback function:
    linebuffer::BufferFile(get_line, fh);
 
-   close(fh);
-   fh = -1;
-   
-   return static_cast<void*>(nullptr);
+   return reinterpret_cast<void*>(0);
 }
 
 /**
  * @brief Create processes and threads to use ssconvert to process the submitted file.
+ *
+ * @param callback Lambda function that prepares MySQL_LoadData object with a
+ *                 filehandle, runs the MySQL_LoadData::import() function.
+ *
+ * Initially starts a child process for _ssconvert_, then creates two new threads,
+ * one for stdin, the other for stderr (to filter for important error messages),
+ * then, in the main thread, passes stdout to an instance of MySQL_LoadData to be
+ * used by the MySQL_LoadData::mih_read() when called by MySQL_LoadData::import();
+ *
+ * This function is also a coding experiment, using several lambda functions to
+ * provide context and explanation to small blocks of code that otherwise would
+ * be all in one long loop.  The advantage of this method is that it keeps related
+ * functions grouped together, but it causes an inconvenient separation of the
+ * closure variables from the section at the end of the function that drives it.
+ * It _may_ be a performance benefit because some of the lambda functions may be
+ * implemented inline, and it won't be necessary to calculate an offset to member
+ * variables and functions in order to run.
+ *
+ * If nothing else, it's an example of certain coding strategy.
  */
 void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& callback)
 {
@@ -995,6 +650,9 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
       }
    };
 
+
+   /***** Here starts the actual running of the function: *****/
+   
    // Open all the pipes
    for (int** p = pipes; *p; ++p)
    {
@@ -1013,13 +671,9 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
       close_pipes();
       fprintf(stderr, "multipart_pull fork failed: %s.\n", strerror(errno));
    }
-   else if (pid==0)  // child process
+   else if (pid==0)
+   /*** CHILD PROCESS ***/
    {
-      // Pipe housekeeping:
-      // close(ifileno(stdin));
-      // close(ifileno(stdout));
-      // close(ifileno(stderr));
-      
       if (-1==dup2(pipe_in[0], ifileno(stdin))   ||
           -1==dup2(pipe_out[1], ifileno(stdout)) ||
           -1==dup2(pipe_err[1], ifileno(stderr))   )
@@ -1033,8 +687,6 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
       close_clear(pipe_out[0]);
       close_clear(pipe_err[0]);
 
-      printf("About to start the converter (will be waiting for stdin).\n");
-
       // Start converter:
       execl("/usr/bin/ssconvert", "ssconvert",
             "-T", "Gnumeric_stf:stf_assistant",
@@ -1044,23 +696,14 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
             nullptr);
    }
    else
+   /*** PARENT PROCESS ***/
    {
       // Pipe housekeeping, close unused ends of pipes:
       close_clear(pipe_in[0]);
       close_clear(pipe_out[1]);
       close_clear(pipe_err[1]);
 
-      thread_data td_in = { *this, pipe_in[1] };
-      pthread_t pt_in;
-      printf("About to start the stdin thread, will have something for ssconvert to read.\n");
-      if (pthread_create(&pt_in,
-                         nullptr,
-                         start_stdin_thread,
-                         static_cast<void*>(&td_in) ))
-      {
-         throw std::runtime_error("Import stdin pipe failed.");
-      }
-
+      // Create thread to filter error messages:
       thread_data td_err = { *this, pipe_err[0] };
       pthread_t pt_err;
       if (pthread_create(&pt_err,
@@ -1071,21 +714,42 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
          throw std::runtime_error("Import stderr pipe failed.");
       }
 
-      // Allow the calling function to start the process:
-      callback(pipe_out[0]);
+      // Create thread to pipe the contents of the multipart form to ssconvert:
+      thread_data td_in = { *this, pipe_in[1] };
+      pthread_t pt_in;
+      if (pthread_create(&pt_in,
+                         nullptr,
+                         start_stdin_thread,
+                         static_cast<void*>(&td_in) ))
+      {
+         throw std::runtime_error("Import stdin pipe failed.");
+      }
 
-      int wstatus;
+      // Main thread invokes callback function to send results of ssconvert to MySQL:
+      callback(pipe_out[0]);
+      // Close pipe to signal ssconvert that the file is complete:
+      close_clear(pipe_out[0]);
       
+      int wstatus;
       waitpid(pid, &wstatus, 0);
-      fprintf(stderr, "Returned from child process.\n");
+
+      // Creating an pointer variable makes casting for pthread_join() easier:
+      void *preturn;
+      
+      // Wait for the completion of the stdin thread, clearing the field_incomplete
+      // flag if it returns successfully:
+      pthread_join(pt_in, &preturn);
+      uintptr_t stdin_return = reinterpret_cast<uintptr_t>(preturn);
+      close_clear(pipe_in[1]);
+
+      if (stdin_return)
+         set_field_incomplete(false);
+      
+      // Wait for completion of the stderr thread, logging an error if appropriate.
+      pthread_join(pt_err, &preturn);
+      close_clear(pipe_err[0]);
    }
 }
-
-void Multipart_Pull::flag_field_complete(void)
-{
-   m_end_of_field = true;
-}
-
 
 /**
  * @brief Read the next field's header lines and reset the m_end_of_field flag.
@@ -1110,49 +774,100 @@ void Multipart_Pull::flag_field_complete(void)
 bool Multipart_Pull::next_field(void)
 {
    // Finish reading the current field, if not already done:
-   if (!m_end_of_field)
+   if (get_field_incomplete())
    {
       int c;
       while (EOF!=(c=getc()))
          ;
    }
 
+   set_field_incomplete(false);
+
    // At the end of the field, reset field heads before reading
    // the field meta data from its headers:
    reset_field_heads();
    
-   if (m_end_of_form)
+   if (get_form_complete())
       return false;
    // Check if a child process read to the end of the stream:
    else if (m_str.eof())
    {
-      m_end_of_form = true;
+      set_form_complete(true);
       return false;
    }
    
    read_headers();
-   m_end_of_field = false;
 
+   set_field_incomplete(true);
    return true;
 }
-
-
-
-
 
 
 #ifdef INCLUDE_MAIN
 #undef INCLUDE_MAIN
 
 #include <stdio.h>    // printf
+#include <stdlib.h>   // atoi
 
 #include <sys/types.h> // open()
 #include <sys/stat.h>  // open()
 
 #include "vclasses.hpp"
+#include "mysql_loaddata.hpp"
+
 #include "prandstr.cpp"
 #include "linebuffer.cpp"
 #include "istdio.cpp"
+#include "mysql_loaddata.cpp"
+
+void load_to_table(Multipart_Pull &mpp,
+                   const char *database_to_use,
+                   const char *import_table_to_use,
+                   int session_id)
+{
+   MYSQL mysql;
+
+   auto f = [&mysql, &import_table_to_use, session_id](int fh)
+      {
+         MySQL_LoadData msld(&mysql, fh, session_id, import_table_to_use);
+         msld.import();
+      };
+
+   mysql_init(&mysql);
+   mysql_options(&mysql,MYSQL_READ_DEFAULT_FILE,"/etc/mysql/my.cnf");
+//   mysql_options(&mysql,MYSQL_READ_DEFAULT_FILE,"~/.my.cnf");
+   mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"client");
+   mysql_options(&mysql, MYSQL_OPT_LOCAL_INFILE, nullptr);
+
+
+   const char *host = nullptr;
+   const char *user = nullptr;
+   const char *pword = nullptr;
+   const char *db = database_to_use;
+   int        port = 0;
+   const char *socket = nullptr;
+   unsigned long client_flag = 0;
+
+   MYSQL *handle = mysql_real_connect(&mysql,
+                                      host, user, pword, db,
+                                      port, socket, client_flag);
+
+   if (handle)
+   {
+      MySQL_LoadData::disable_local_infile(&mysql);
+      
+      printf("Host: %s\nUser: %s\n", mysql.host, mysql.user);
+
+      if (import_table_to_use)
+         mpp.send_for_csv_filehandle(f);
+   }
+   else
+      printf("Failed to connect (%s).\n", mysql_error(&mysql));
+   
+   mysql_close(&mysql);
+   mysql_library_end();
+   
+}
 
 /**
  * @brief Demonstrate the use of Multipart_Pull, especially for importing
@@ -1164,18 +879,20 @@ bool Multipart_Pull::next_field(void)
  * function.
  */
 //@ [Demo_MP_Pull]
-void demo_mp_pull(Multipart_Pull &mpp)
+void demo_mp_pull(Multipart_Pull &mpp,
+                  const char *database_to_use,
+                  const char *import_table_to_use,
+                  int session_id)
 {
    printf("          Form Boundary: %s\n", mpp.boundary());
-   
-   while (!mpp.end_of_form())
+
+   while (!mpp.get_form_complete())
    {
       // Load the meta-data of the next field
       if (mpp.next_field())
       {
          // Demonstrate meta-data access:
-         printf("\n***          Field Name: %s\n", mpp.field_name());
-         printf("    Content Disposition: %s\n", mpp.field_content_disposition());
+         printf("\n             Field Name: %s\n", mpp.field_name());
          if (mpp.field_file_name())
             printf("     Uploaded File Name: %s\n", mpp.field_file_name());
          if (mpp.field_content_type())
@@ -1184,54 +901,35 @@ void demo_mp_pull(Multipart_Pull &mpp)
          // Special handling for file upload:
          if (mpp.is_file_upload())
          {
-            printf("About to convert an ODS file.\n");
-            auto f = [](int fh)
+            if (database_to_use && import_table_to_use)
+               load_to_table(mpp,database_to_use,import_table_to_use,session_id);
+            else
             {
-               char iobuff[256];
-               size_t bytes;
+               auto f = [](int fh)
+                  {
+                     char iobuff[256];
+                     size_t bytes = 0;
 
-               // Keep reading until read returns 0 to indicate
-               // that we've reached the end of the field contents.
-               while (0!=(bytes=read(fh, iobuff, sizeof(iobuff))))
-                  write(STDOUT_FILENO, iobuff, bytes);
+                     // Keep reading until read returns 0 to indicate
+                     // that we've reached the end of the field contents.
+                     while (0!=(bytes=read(fh, iobuff, sizeof(iobuff))))
+                        write(STDOUT_FILENO, iobuff, bytes);
 
-               // Close the file handle to clean up (especially in FASTCGI mode)
-               // to clean up
-               close(fh);
-            };
+                     // Close the file handle to clean up (especially in FASTCGI mode)
+                     // to clean up
+                     close(fh);
+                  };
 
-            mpp.send_for_csv_filehandle(f);
-            
-            // // Allocate the memory needed to run get_csv_file_handle()
-            // // in the current stack frame so it remains in scope while
-            // // reading from the returned file handle.
-            // Multipart_Pull::fhandle_payload pl(mpp);
-
-            // // Call the function to get a file handle to the contents
-            // // of the spreadsheet converted to CSV:
-            // int fh = mpp.get_csv_file_handle(pl);
-
-            // if (fh!=-1)
-            // {
-            //    printf("Converted File Contents:\n\n");
+               fputs("            Field Value, converted to CSV:\n", stdout);
                
-            //    char iobuff[256];
-            //    size_t bytes;
-
-            //    // Keep reading until read returns 0 to indicate
-            //    // that we've reached the end of the field contents.
-            //    while (0!=(bytes=read(fh, iobuff, sizeof(iobuff))))
-            //       write(STDOUT_FILENO, iobuff, bytes);
-
-            //    // Close the file handle to clean up (especially in FASTCGI mode)
-            //    // to clean up
-            //    close(fh);
-            // }
+               mpp.send_for_csv_filehandle(f);
+               fputc('\n', stdout);
+            }
          }
          else
          {
             // Display the field value for non-file-upload:
-            printf("            Field Value: \"");
+            fputs("            Field Value: \"", stdout);
             
             int c;
             while (EOF!=(c=mpp.getc()))
@@ -1247,19 +945,51 @@ void demo_mp_pull(Multipart_Pull &mpp)
 
 int main(int argc, char **argv)
 {
-//   const char mpform[] = "multipart_form.txt";
-   const char mpform[] = "zz_post.txt";
-   FILE *f = fopen(mpform, "rb");
-   if (f)
-   {
-      StrmStreamer str(f);
-      Multipart_Pull mpp(str);
-      demo_mp_pull(mpp);
-      
-      fclose(f);
-   }
+   const char *post_file_to_open = nullptr;
+   const char *database_to_use = nullptr;
+   const char *insert_table_to_use = nullptr;
+   int        session_id = 1000;
+
+   if (argc<2)
+      printf("Usage:\n"
+             "To view the CSV output:\n"
+             "multipart_pull [post_file]\n\n"
+             "To import into a table:\n"
+             "multipart_pull [post_file] [database] [quarantine table] [session_id]\n"
+         );
    else
-      printf("Unable to open %s.\n", mpform);
+   {
+      post_file_to_open = argv[1];
+      if (argc>2)
+      {
+         database_to_use = argv[2];
+         if (argc>3)
+         {
+            insert_table_to_use = argv[3];
+            if (argc>4)
+               session_id = atoi(argv[4]);
+         }
+      }
+   }
+
+   if (post_file_to_open)
+   {
+      FILE *f = fopen(post_file_to_open, "rb");
+      if (f)
+      {
+         StrmStreamer str(f);
+         Multipart_Pull mpp(str);
+         demo_mp_pull(mpp, database_to_use, insert_table_to_use, session_id);
+      
+         fclose(f);
+      }
+      else
+         printf("Unable to open %s.\n", post_file_to_open);
+
+      return 0;
+   }
+
+   return 1;
 }
 
 
