@@ -43,6 +43,17 @@ void MySQL_LoadData::discard_line(bool starting_in_apos)
    // of the file is also the end of the line.
 }
 
+/**
+ * @brief Starts the import process.
+ *
+ * Having collected the source file handle and the target table name,
+ * this function creates a query to import, enables **LOAD DATA LOCAL INFILE**
+ * by replacing the disabling infile handler functions with the working
+ * functions, then runs the query with _mysql_real_query_.
+ *
+ * The target quarantine table **must** be prepared with privileges for
+ * the webuser to insert records.  See the User Guide for setup examples.xs
+ */
 bool MySQL_LoadData::import(void)
 {
    // Prepare and run query:
@@ -64,6 +75,10 @@ bool MySQL_LoadData::import(void)
                                   static_cast<void*>(this));
 
    // Call the query:
+   // Debugging note: if mysql_real_connect() has not been
+   // called successfully, the following function will fail
+   // with a SEGMENTATION FAULT!  I wasted two days trying to
+   // solve this.
    int result = mysql_real_query(m_mysql, buff, len);
 
    // Display errors, if any, before disabling infile handler:
@@ -78,6 +93,9 @@ bool MySQL_LoadData::import(void)
    return result==0;
 }
 
+/**
+ * @brief Implements the init() function for mysql_set_local_infile_handler().
+ */
 int MySQL_LoadData::mih_init(void **obj, const char *filename, void *userdata)
 {
    if (is_acceptable_filename(filename))
@@ -98,6 +116,13 @@ int MySQL_LoadData::mih_init(void **obj, const char *filename, void *userdata)
    }
 }
 
+/**
+ * @brief Implements the read() function for mysql_set_local_infile_handler().
+ *
+ * Reads data from m_filehandle, checking for a comment line defined as a row
+ * where the initial character of the column A is an _*_, otherwise passing
+ * the contents directly to MySQL.
+ */
 int MySQL_LoadData::mih_read(void *obj, char *buffer, unsigned int bufflen)
 {
    MySQL_LoadData *mld = static_cast<MySQL_LoadData*>(obj);
@@ -198,6 +223,9 @@ int MySQL_LoadData::mih_read(void *obj, char *buffer, unsigned int bufflen)
    return ptr - buffer;
 }
 
+/**
+ * @brief Implements the clean up function for mysql_set_local_infile_handler().
+ */
 void MySQL_LoadData::mih_end(void *obj)
 {
    MySQL_LoadData *mld = static_cast<MySQL_LoadData*>(obj);
@@ -206,6 +234,9 @@ void MySQL_LoadData::mih_end(void *obj)
       fputs("Reached end of LOAD DATA while still in a line.\n", stderr);
 }
 
+/*
+ * @brief Implements the error() function for mysql_set_local_infile_handler().
+ */
 int MySQL_LoadData::mih_error(void *ptr, char *message_buffer, unsigned int bufflen)
 {
    snprintf(message_buffer, bufflen, "unexpected error request.");
