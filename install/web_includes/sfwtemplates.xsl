@@ -52,7 +52,7 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="/*[@mode-type='form-new']" >
+  <xsl:template match="/*[@mode-type='form-new' or @mode-type='form-import']" >
     <xsl:param name="root" />
 
     <xsl:variable name="form-type">
@@ -364,7 +364,50 @@
     <div>Use mode=&quot;show_document_content&quot; instead of &quot;branch_standard_modes&quot;</div>
   </xsl:template>
 
+  <xsl:template match="/*" mode="make_schemafw_meta">
+    <xsl:element name="div">
+      <xsl:attribute name="id">schemafw-meta</xsl:attribute>
+      <xsl:attribute name="style">display:none</xsl:attribute>
+
+      <xsl:if test="@method='POST'">
+        <xsl:attribute name="data-post">true</xsl:attribute>
+      </xsl:if>
+
+      <xsl:attribute name="data-modeType">
+        <xsl:value-of select="@mode-type" />
+      </xsl:attribute>
+
+      <xsl:if test="@meta-jump">
+        <xsl:attribute name="data-jump">
+        <xsl:value-of select="@meta-jump" />
+        </xsl:attribute>
+      </xsl:if>
+
+      <xsl:if test="local-name()='message'">
+        <xsl:element name="span">
+          
+          <xsl:attribute name="class">message</xsl:attribute>
+          
+          <xsl:if test="@detail">
+            <xsl:attribute name="data-detail">
+              <xsl:value-of select="@detail" />
+            </xsl:attribute>
+          </xsl:if>
+          
+          <xsl:value-of select="@message" />
+        </xsl:element>
+          
+      </xsl:if>
+
+
+
+    </xsl:element>
+  </xsl:template>
+
   <xsl:template match="/*" mode="show_document_content">
+    
+    <xsl:apply-templates select="." mode="make_schemafw_meta" />
+
     <xsl:if test="$result-row">
       <xsl:if test="$result-row/@msg">
         <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
@@ -456,6 +499,10 @@
       </xsl:call-template>
     </xsl:variable>
 
+    <xsl:variable name="importing">
+      <xsl:if test="/*[@mode-type='import-form']">1</xsl:if>
+    </xsl:variable>
+
     <xsl:variable name="action">
       <xsl:choose>
         <xsl:when test="@form-action">
@@ -491,6 +538,9 @@
 
     <xsl:element name="form">
       <xsl:attribute name="method"><xsl:value-of select="$method" /></xsl:attribute>
+      <xsl:if test="$importing">
+        <xsl:attribute name="enctype">multipart/form-data</xsl:attribute>
+      </xsl:if>
       <xsl:if test="$has_action">
         <xsl:attribute name="action"><xsl:value-of select="$action" /></xsl:attribute>
       </xsl:if>
@@ -514,6 +564,13 @@
             <xsl:value-of select="$msg" />
           </div>
           <hr />
+        </xsl:if>
+
+        <xsl:if test="$importing">
+          <p>
+            <label for="upfile">Upload the file</label>
+            <input type="file" name="upfile" />
+          </p>
         </xsl:if>
         
         <xsl:variable name="extra_fields"

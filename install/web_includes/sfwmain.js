@@ -1,11 +1,57 @@
 window.onload = function()
 {
    var xmlDoc=null, xslObj=null;
+   var sfwmeta = null;
+
+   var meta_jump = null;
+   var meta_modeType = null;
+   var meta_post = false;
+
+   var meta_message = null;
 
    function start_app()
    {
       prepare_event_handling();
       resize_table_headers();
+   }
+
+   function parse_meta_data()
+   {
+      var tattr;
+      if ((sfwmeta=document.getElementById("schemafw-meta")))
+      {
+         meta_jump = sfwmeta.getAttribute("data-jump");
+         meta_modeType = sfwmeta.getAttribute("data-modeType");
+         meta_post = (tattr=sfwmeta.getAttribute("data-post")) && tattr=="true";
+                      
+         var nl = sfwmeta.getElementsByTagName("span");
+         for (var i=0, stop=nl.length; i<stop; ++i)
+         {
+            var el = nl[i];
+            switch(el.className)
+            {
+            case "message":
+               meta_message = { text : el.firstChild.data };
+               if ((tattr=el.getAttribute("data-detail")))
+                  meta_message.detail = String(tattr);
+               if ((tattr=el.getAttribute("data-type")))
+                  meta_message.type = String(tattr);
+               break;
+            }
+         }
+      }
+   }
+   
+   function show_message(msgobj)
+   {
+      var text = msgobj.text;
+      if ("type" in msgobj)
+         text = "(" + msgobj.type + ") " + text;
+      
+      if ("detail" in msgobj)
+         text += "\n   " + msgobj + msgobj.detail;
+
+      alert(text);
    }
 
    function seek_embedded_form()
@@ -41,29 +87,6 @@ window.onload = function()
          if ((form=seek_embedded_form()))
              form.xmldoc = xmlDoc;
          
-         var msg = docel.tagName=="message" ? docel : docel.selectSingleNode("message");
-         if (msg)
-         {
-            var type = msg.getAttribute("type");
-            var message = msg.getAttribute("message");
-            var detail = msg.getAttribute("detail");
-
-            var str = null;
-            
-            if (type=="signal")
-               str = message;
-            else
-               str = "Notice type " + type + ": " + message;
-
-            if (str)
-               alert(str);
-            else
-               alert("Undefined error.");
-
-            // if (type!="notice")
-            //    window.history.back();
-         }
-         
          if ((xslObj = new XSL(getXSLDocument())))
          {
             SchemaFW.set_xmldoc(xmlDoc);
@@ -72,8 +95,12 @@ window.onload = function()
       }
    }
 
+   // Page processing starts here:
+
    if (!"body" in document)
       document.body = document.getElementsByTagName("body")[0];
+
+   parse_meta_data();
 
    InitializeSchemaFW();
    
@@ -83,8 +110,11 @@ window.onload = function()
 
    if ("sfwvars" in window)
       process_sfwvars(sfwvars);
-   else
-     getXMLDocs(docs_available);
+   else if (!meta_post)
+      getXMLDocs(docs_available);
+
+   if (meta_message)
+      show_message(meta_message);
 
    xhr_default_req_header("SFW-XHRequest","true");
 
