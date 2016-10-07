@@ -1350,17 +1350,21 @@ void Schema::print_method_attribute(FILE *out)
 void Schema::print_message_as_xml(FILE *out,
                                   const char *type,
                                   const char *message,
-                                  const char *detail)
+                                  const char **extra)
 {
    ifputs("<message", out);
    
    print_xml_attribute(out, "type", type);
    print_xml_attribute(out, "message", message);
    
-   if (detail)
-      print_xml_attribute(out, "detail", detail);
-
    print_method_attribute(out);
+
+   if (extra)
+   {
+      for (const char **i=extra; *i; i+=2)
+         print_xml_attribute(out, *i, *(i+1));
+   }
+   
    
   ifputs(" />\n", out);
 }
@@ -2533,18 +2537,7 @@ void Schema::process_import(void)
          Multipart_Pull mpp(ss);
          m_puller = &mpp;
 
-         if (process_import_form())
-         {
-            // import_table() should have ended by calling a query
-            // to return a confirmation resultset.  Write it out here:
-            process_root_branch(m_mode, nullptr,true);
-         }
-         else
-         {
-            print_message_as_xml(m_out,
-                                 "error",
-                                 "import failed");
-         }
+         process_import_form();
       }
       else
       {
@@ -2701,48 +2694,14 @@ void Schema::clear_quarantine_table(const char *tablename)
    SimpleProcedure::build_query_string(removal_proc, 1, fQuery);
 }
 
-/**
- * @brief Processes the file_upload multipart_form field.
- *
- * @return true if succeessful, false otherwise.
- */
-bool Schema::import_table(const char* tablename)
-{
-   bool rval = false;
-   Multipart_Pull::fhandle_payload pl(*m_puller);
-   int fh = m_puller->get_csv_file_handle(pl);
-   if (fh!=-1)
-   {
-      try
-      {
-         MySQL_LoadData mld(&s_mysql, fh, m_session_id, tablename);
-         rval = mld.import();
-      }
-      catch(std::exception &e)
-      {
-         ifprintf(stderr,
-                 "Unexpected import_table exception: (%s).\n",
-                 e.what());
-      }
-      catch(...)
-      {
-         ifputs("Unexpected anonymous import_table exception.\n",
-               stderr);
-      }
-
-      // Make sure to close the handle to end the pipe:
-      close(fh);
-   }
-
-   return rval;
-}
-
 
 /**
  * @brief Imports a table and return `true` given proper preparation,
  *        otherwise returns `false`.
  *
  * This is the first implementation of multipart-form handling in SchemaFW.
+ *
+ * @return 
  *
  * For this version, it only handles a single file upload, ignoring other
  * form fields.  In the current form, it could process several file upload
@@ -2755,9 +2714,9 @@ bool Schema::import_table(const char* tablename)
  * Doing that, however, would require reorganizing the response sequence
  * so that this function calls the next step with the field info.
  */
-bool Schema::process_import_form(void)
+void Schema::process_import_form(void)
 {
-   bool rval = false;
+   bool found_file_field = false;
 
    if (!m_puller)
       throw schema_exception("No form data from which to import a table.");
@@ -2765,6 +2724,8 @@ bool Schema::process_import_form(void)
    const char *tablename = value_from_mode("target");
    if (!tablename)
       throw schema_exception("No target for import.");
+
+   const char *jump_target = value_from_mode("jump");
    
    // Remove residual records from possible interrupted import:
    clear_quarantine_table(tablename);
@@ -2772,20 +2733,37 @@ bool Schema::process_import_form(void)
    // Common code for catch blocks to clean up.
    auto cleanup = [this](void)
    {
-      while (!m_puller->end_of_form())
+      while (!m_puller->get_form_complete())
          m_puller->next_field();
    };
 
    // Read read all fields
-   while (!m_puller->end_of_form())
+   while (!m_puller->get_form_complete())
    {
       if (m_puller->next_field())
       {
          if (m_puller->is_file_upload())
          {
+            auto f = [this, &tablename](int fh)
+               {
+                  MySQL_LoadData msld(&s_mysql, fh, m_session_id, tablename);
+                  msld.import();
+               };
+
+            found_file_field = true;
+
             try
             {
-               rval = import_table(tablename);
+               m_puller->send_for_csv_filehandle(f);
+
+               const char *cp[] = { "jump", jump_target, nullptr };
+               const char **pcp = jump_target ? cp : nullptr;
+               
+
+               if (m_puller->had_error())
+                  print_message_as_xml(m_out, "error", m_puller->error(), pcp);
+               else
+                  print_message_as_xml(m_out, "result", "Import succeeded.", pcp);
             }
             catch(schema_exception &se)
             {
@@ -2797,31 +2775,12 @@ bool Schema::process_import_form(void)
                cleanup();
                throw e;
             }
-            
-
-            if (!rval)
-            {
-               ifputs("For mode \"", stderr);
-               ifputs(m_mode->tag(), stderr);
-//               m_qstringer->print_name_at(0,STDERR_FILENO);
-
-               const char *ctype = m_puller->field_content_type();
-               if (ctype)
-               {
-                  ifputs("\", import failed for upload type \"", stderr);
-                  ifputs(ctype, stderr);
-               }
-
-               ifputs("\"\n", stderr);
-            }
          }
-
-         // If !m_puller->is_file_upload(), calling m_puller-><next_field()
-         // will discard the unread characters of the non-file-upload field.
       }
    }
-   
-   return rval;
+
+   if (!found_file_field)
+      print_message_as_xml(m_out, "error", "No file field found.");
 }
 
 /**

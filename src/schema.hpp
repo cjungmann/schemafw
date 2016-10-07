@@ -288,13 +288,23 @@ public:
    static void print_message_as_xml(FILE *out,
                                     const char *type,
                                     const char *message,
-                                    const char *detail=nullptr);
+                                    const char **extra = nullptr);
+
+   inline static void print_message_as_xml(FILE* out,
+                                           const char* type,
+                                           const char* message,
+                                           const char* detail)
+   {
+      const char *cp[] = {"detail", detail, nullptr};
+      print_message_as_xml(out,type,message,cp);
+   }
 
    inline static void print_error_as_xml(FILE *out,
                                          const char *message,
-                                         const char *where=nullptr)
+                                         const char *where)
    {
-      print_message_as_xml(out, "fatal", message, where);
+      const char* cp[] = { "where", where, nullptr };
+      print_message_as_xml(out, "fatal", message, cp);
    }
    static void pre_doc_failure(const char *message, const char *where);
 
@@ -497,10 +507,8 @@ protected:
     */
    inline static void write_failure_message(FILE *out)
    {
-      print_message_as_xml(out,
-                           "fatal",
-                           s_failure_message,
-                           s_failure_detail);
+      const char *cp[] = { "detail", s_failure_detail, nullptr };
+      print_message_as_xml(out, "fatal", s_failure_message, cp);
    }
    /**
     * @brief Call this function to immediately output an error.
@@ -512,9 +520,10 @@ protected:
     */
    inline static void write_error_message(FILE *out,
                                           const char *msg,
-                                          const char* where=nullptr)
+                                          const char* where)
    {
-      print_message_as_xml(out, "error", msg, where);
+      const char *cp[] = { "where", where, nullptr };
+      print_message_as_xml(out, "error", msg, cp);
    }
 
    // The following functions are called in roughly
@@ -631,8 +640,7 @@ protected:
    const char *get_jump_destination(SESSION_TYPE st) const;
 
    void clear_quarantine_table(const char *tablename);
-   bool import_table(const char* tablename);
-   bool process_import_form(void);
+   void process_import_form(void);
 
    /**
     * @defgroup Opening_Specs_And_Mode Specs File and Request Mode Setup
