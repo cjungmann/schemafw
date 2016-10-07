@@ -76,7 +76,8 @@ public:
 
    bool next_field(void);
 
-
+   inline bool had_error(void) const    { return *m_errormsg!='\0'; }
+   inline const char* error(void) const { return m_errormsg; }
    void t_send_for_csv_filehandle(const IGeneric_Callback<int>& cb);
 
    /**
@@ -115,6 +116,10 @@ protected:
                                       *   various strings.  These include the boundary
                                       *   string that separates the fields, as well
                                       *   as the meta data that begins each field.
+                                      */
+   char       m_errormsg[128];       /**< Buffer in which a ssconvert-originated
+                                      *   error message can be saved for retrieval
+                                      *   by the calling function.
                                       */
    char       *m_end_workarea;       /**< Pointer to the last character the workarea
                                       *   against which a working pointer can be

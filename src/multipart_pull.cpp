@@ -19,6 +19,7 @@ const int Multipart_Pull::s_len_boundary_str = strlen(s_boundary_str);
 /** @brief Constructor */
 Multipart_Pull::Multipart_Pull(IStreamer &s)
    : m_workarea(),
+     m_errormsg(),
      m_end_workarea(nullptr),
      m_str(s),
      m_boundary(nullptr),
@@ -36,6 +37,7 @@ Multipart_Pull::Multipart_Pull(IStreamer &s)
 {
    // Leave 10 characters of slop:
    m_end_workarea = m_workarea + sizeof(m_workarea) - 10;
+   *m_errormsg = '\0';
 
 #ifdef INCLUDE_MAIN   
    initialize_from_file();
@@ -530,9 +532,10 @@ int Multipart_Pull::getc(void)
 /**
  * @brief Thread initialization function for transmitting to stdin.
  *
- * Although this function accesses shared memory, especially in set_field_incomplete(),
- * I am avoiding using mutexes by having the calling thread only accessing member variable
- * m_field_complete when this thread is complete.
+ * Although this function accesses shared memory, especially in
+ * set_field_incomplete(),  I am avoiding using mutexes by having the
+ * calling thread only accessing member variable m_field_complete
+ * when this thread is complete.
  */
 void* Multipart_Pull::start_stdin_thread(void *data)
 {
@@ -582,9 +585,7 @@ void* Multipart_Pull::start_stderr_thread(void *data)
          if (*line=='E' && *(line+1)==' ')
          {
             line+=2;
-            ifputs("Import failed: \"", stderr);
-            ifputs(line, stderr);
-            ifputs("\"\n", stderr);
+            strncpy(mpp.m_errormsg, line, sizeof(m_errormsg));
          }
       }
    };
@@ -727,6 +728,7 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
 
       // Main thread invokes callback function to send results of ssconvert to MySQL:
       callback(pipe_out[0]);
+      
       // Close pipe to signal ssconvert that the file is complete:
       close_clear(pipe_out[0]);
       
