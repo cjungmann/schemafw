@@ -10,7 +10,7 @@ flags.
 
 ~~~sh
 #!/bin/bash
--*- mode: sh -*-
+# -*- mode: sh -*-
 
 # Exit with hint if not called with 'source'
 if [ "$0" != "bash" ]; then
