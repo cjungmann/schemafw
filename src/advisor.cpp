@@ -387,7 +387,7 @@ void Advisor::scan_buffer_for_ends_and_level(void)
          // that is, if last_non_white has a value.
          if (last_non_white)
          {
-            *curpos = '\0';
+            *(last_non_white+1) = '\0';
             *ptr_cur_len = last_non_white - *ptr_cur_string + 1;
          }
 
@@ -397,11 +397,6 @@ void Advisor::scan_buffer_for_ends_and_level(void)
          if (*terminator==':')
          {
             start_value_processing();
-            // ++cur_termchars;
-            // ptr_cur_string = &m_cur_value;
-            // ptr_cur_len = &m_len_value;
-            // last_non_white = nullptr;
-
             // increment char pointer, then bypass remainer of loop:
             ++curpos;
          }
