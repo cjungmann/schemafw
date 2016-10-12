@@ -2725,8 +2725,6 @@ void Schema::process_import_form(void)
    if (!tablename)
       throw schema_exception("No target for import.");
 
-   const char *jump_target = value_from_mode("jump");
-   
    // Remove residual records from possible interrupted import:
    clear_quarantine_table(tablename);
 
@@ -2756,8 +2754,8 @@ void Schema::process_import_form(void)
             {
                m_puller->send_for_csv_filehandle(f);
 
-               const char *cp[] = { "jump", jump_target, nullptr };
-               const char **pcp = jump_target ? cp : nullptr;
+               const char *cp[] = { "meta-jump", m_meta_jump, nullptr };
+               const char **pcp = m_meta_jump ? cp : nullptr;
                
 
                if (m_puller->had_error())
