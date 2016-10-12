@@ -1,4 +1,4 @@
-// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -pedantic -ggdb -DINCLUDE_ADB_MAIN -o adbranch adbranch.cpp" -*-
+// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -pedantic -pthread -ggdb -DINCLUDE_ADB_MAIN -o adbranch adbranch.cpp" -*-
 
 /** @file adbranch.cpp */
 
@@ -155,10 +155,18 @@ void ab_handle::t_build(Advisor &adv,
       // Save the head, if not already saved:
       if (!head)
          head = tail;
-      
+
       adv.get_next_line();
    }
    while (adv.level() > starting_level);
+
+   tail = head;
+   int count = 0;
+   while (tail)
+   {
+      printf("%d: %s : %s\n", ++count, tail->tag(), tail->value());
+      tail = tail->next();
+   }
 
    // Prepare hierarchical links:
    link_nodes(head);
@@ -191,36 +199,48 @@ ab_handle* ab_handle::link_nodes(ab_handle* ref)
 {
    ab_handle *cur = ref;
    ab_handle *next = ref->next();
-   
+
    while (cur && next)
    {
-      // ab_handle::level() uses address arithmetic,
-      // so it's more efficient to cache the values:
-      int cur_level = cur->level();
-      int next_level = next->level();
-      
-      // If both have same level, they're siblings:
-      if (next_level==cur_level)
+      if (cur->is_continuation())
       {
-         cur->set_sibling(next->lhandle());
-
-         // The sibling is the new reference point
-         cur = next;
-         next = cur->next();
-      }
-      // If next is at higher level, it's a child.
-      // Save as child, then recurse to process at its level.
-      else if (next_level > cur_level)
-      {
+         // If a continuation, then the next line is
+         // a child, regardless of its level.
          cur->set_child(next->lhandle());
-         // cur stays the same in case of siblings:
+
+         // recurse to save current level:
          next = link_nodes(next);
       }
-      // If not equal or greater, it's time to return from
-      // this level: the next item belongs to an item higher on
-      // the hierarchy.
       else
-         return next;
+      {
+         // ab_handle::level() uses address arithmetic,
+         // so it's more efficient to cache the values:
+         int cur_level = cur->level();
+         int next_level = next->level();
+         
+         // If both have same level, they're siblings:
+         if (next_level==cur_level)
+         {
+            cur->set_sibling(next->lhandle());
+
+            // The sibling is the new reference point
+            cur = next;
+            next = cur->next();
+         }
+         // If next is at higher level, it's a child.
+         // Save as child, then recurse to process at its level.
+         else if (next_level > cur_level)
+         {
+            cur->set_child(next->lhandle());
+            // cur stays the same in case of siblings:
+            next = link_nodes(next);
+         }
+         // If not equal or greater, it's time to return from
+         // this level: the next item belongs to an item higher on
+         // the hierarchy.
+         else
+            return next;
+      }
    }
    
    return nullptr;
@@ -379,6 +399,59 @@ void build_index(Advisor &advisor, IDataStack_User<long int> &user)
 }
 // [build_index]
 
+
+/**
+ * @brief Prints value, with consideration for continuing strings.
+ */
+void ab_handle::print_value(FILE* out) const
+{
+   const char* lchar = last_char();
+   if (lchar)
+   {
+      const char* end = *lchar=='\\' ? lchar-1 : lchar;
+      const char* ptr = value();
+   
+      while (ptr <= end)
+         fputc(*ptr++, out);
+
+      if (*lchar=='\\')
+      {
+         const ab_handle* child = first_child();
+         if (child && child->is_tag(Advisor::continuation_tag()))
+         {
+            fputc(' ', out);
+            child->print_value(out);
+         }
+      }
+   }
+}
+
+/**
+ * @brief Prints value with XML-escaping, with consideration for continuing strings.
+ */
+void ab_handle::print_xml_value(FILE* out) const
+{
+   const char* lchar = last_char();
+   if (lchar)
+   {
+      const char* end = *lchar=='\\' ? lchar-1 : lchar;
+      const char* ptr = value();
+   
+      while (ptr <= end)
+         print_char_as_xml(*ptr++, out);
+
+      if (*lchar=='\\')
+      {
+         const ab_handle* child = first_child();
+         if (child && child->is_tag(Advisor::continuation_tag()))
+         {
+            fputc(' ', out);
+            child->print_xml_value(out);
+         }
+      }
+   }
+}
+
 /**
  * @brief Write the handle and its descendants to *out.
  *
@@ -402,14 +475,14 @@ void ab_handle::dump(FILE *out, bool include_refs, int indent, bool is_parent) c
    if (is_setting())
    {
       fputs(" : \"", out);
-      fputs(value(), out);
+      print_value(out);
       fputc('"', out);
    }
    fputc('\n', out);
 
    // Print children, as found;
    const ab_handle *cptr = first_child();
-   if (cptr)
+   if (cptr && !cptr->is_tag(Advisor::continuation_tag()))
    {
       SiblingWalker sw(cptr);
       while ((bool)sw)
@@ -510,6 +583,9 @@ void SiblingWalker::move_next(void)
 #include "datastack.cpp"
 #include "advisor.cpp"
 
+#include <pthread.h>   // for pthread_create
+#include <unistd.h>    // for write()
+
 
 /**
  * @brief Example of using a lambda function as callback for build_index.
@@ -556,9 +632,53 @@ void test_lambda_callback_Advisor_index(Advisor &advisor)
 }
 // [non-recursive-datastack-example]
 
+
+
+// const char fakefile[] =
+// "# -*- mode: sh -*-\n"
+// "$database       : CaseStudy\n"
+// "$xml-stylesheet : default.xsl\n"
+// "$default-mode   : list\n"
+// "\n"
+// "$session-type   : simple\n"
+// "\n"
+// "list\n"
+// "   type          : table\n"
+// "   procedure     : App_Contact_List\n"
+// "   on_line_click : contacts.srm?edit\n"
+// "   legend        : This is a string that\\\n"
+// " continues on to the next line.  It must be very long to test when\\\n"
+// " happens when a string extends past the 256-character buffer we've set\\\n"
+// " aside for processing SRM lines.  What do you think is going to happen?\n"   
+// "   button\n"
+// "      type  : add\n"
+// "      label : Create Contact\n"
+// "      task  : contacts.srm?create\n"
+// "\n"
+//    ;
+
+const char fakefile[] =
+"list\n"
+"   legend        : This\\\n"
+" is a \\\n"
+"string\\\n"   
+" that\\\n"
+" continues.\n"   
+   ;
+
+
+
 int main(int argc, char **argv)
 {
-   FILE *f = fopen("Advisor_Test","r");
+   FILE* f = nullptr;
+
+   if (argc>1)
+      f = fopen(argv[1], "r");
+
+   if (!f)
+      f = fmemopen(const_cast<void*>(static_cast<const void*>(fakefile)),
+                   strlen(fakefile), "r");
+
    if (f)
    {
       // Construct an Advisor object for BranchPool constructor:
@@ -566,9 +686,9 @@ int main(int argc, char **argv)
       Advisor      advisor(af_s);
       
       test_lambda_callback_Advisor_index(advisor);
+
+      // Don't close the stream, af_s will do it when it goes out of scope.
    }
-   else
-      printf("Failed to open Advisor_Test\n");
    
    return 0;
 }

@@ -242,15 +242,21 @@ public:
  */
 class Advisor
 {
+   static const char s_continued_tag[2];
    static const int s_bufflen = 256;     /**< Static variable so its value can be discovered. */
                                
    I_AFile &m_file;
    char  m_buffer[s_bufflen]; /**< workspace for collecting lines from m_file */
-   char  *m_cur_tag;   /**< pointer to start of string in current buffer */
-   char  *m_cur_value; /**< pointer to text following the first colon, if found. */
+   bool  m_line_continuing;   /**< True if previous line ended with a backslash. */
+   const char  *m_cur_tag;          /**< pointer to start of string in current buffer */
+   const char  *m_cur_value;        /**< pointer to text following the first
+                               *   colon, if found. */
    int   m_len_tag;
    int   m_len_value;
-   int   m_cur_level;  /**< informs line and file status.  -1 indicates we've reached the end of the file. */
+   int   m_cur_level;         /**< informs line and file status.
+                               *   -1 indicates we've reached the
+                               *   end of the file.
+                               */
 
 private:
 
@@ -263,6 +269,7 @@ public:
 
    /** @brief Get buffer size in case someone needs to save its values. */
    static int bufflen(void)   { return s_bufflen; }
+   inline static const char* continuation_tag(void) { return s_continued_tag; }
 
    /**
     * @name Iterator functions.
@@ -310,6 +317,8 @@ public:
 
    inline int len_tag(void) const          { return m_len_tag; }
    inline int len_value(void) const        { return m_len_value; }
+
+   inline char last_value_char(void) const { return m_len_value ? m_cur_value[m_len_value-1] : '\0'; }
 
    /** @brief Returns the number of white spaces that preceeds the tag. */
    inline int level(void) const            { return m_cur_level; }

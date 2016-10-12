@@ -1,4 +1,4 @@
-// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -pedantic -ggdb -DINCLUDE_ADB_MAIN -o adbranch adbranch.cpp" -*-
+// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -pedantic -pthread -ggdb -DINCLUDE_ADB_MAIN -o adbranch adbranch.cpp" -*-
 
 /** @file adbranch.hpp */
 
@@ -110,6 +110,36 @@ public:
    inline bool is_setting(void) const          { return has_value(); }
    inline bool is_shared_ref(void) const       { return *value()=='$'; }
    inline bool is_siblings_branch(void) const  { return 0==strcmp(tag(),"siblings"); }
+
+   /**
+    * @brief Returns a pointer to the last character in value.
+    *
+    * @return Pointer to the last character in the value string.  NULL if there is no value.
+    *
+    * Use this function for continuation strings and/or printing.  The pointer can
+    * be used as a termination condition on a printing loop.
+    */
+   inline const char* last_char(void) const
+   {
+      // size_of_string includes '\0', so subtract 2 to get last character
+      int size_of_string = sizeof_extra();
+      const char *str = static_cast<const char*>(_extra());
+      if (size_of_string>1)
+         return &str[size_of_string-2];
+      else
+         return nullptr;
+   }
+   /**
+    * @brief Informs if a string continues to the next response mode line.
+    *
+    * If a value string terminates with a backslash, its contents are continued
+    * on the next line in the SRM file.
+    */
+   inline bool is_continuation(void) const
+   {
+      const char *ptr=last_char();
+      return (ptr && *ptr=='\\');
+   }
 
    /**
     * @defgroup ab_handle_Bool_Testing Boolean Testing for ab_handle
@@ -238,6 +268,9 @@ public:
    ab_handle(const ab_handle&)            = delete;
    ab_handle& operator=(const ab_handle&) = delete;
    /**@}*/
+
+   void print_value(FILE* out) const;
+   void print_xml_value(FILE* out) const;
 
    void dump(FILE* out,
              bool include_refs=false,

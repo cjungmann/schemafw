@@ -297,9 +297,12 @@ void AFile_Handle::build_new_buffer(int handle, IGeneric_Callback<AFile_Handle> 
 }
 
 
+//const char Advisor::s_continued_tag[2] = { 31, 0 };
+const char Advisor::s_continued_tag[2] = { '*', 0 };
 
 Advisor::Advisor(I_AFile &afile)
    : m_file(afile), m_buffer(),
+     m_line_continuing(false),
      m_cur_tag(nullptr), m_cur_value(nullptr),
      m_len_tag(0), m_len_value(0),
      m_cur_level(0)
@@ -318,7 +321,8 @@ Advisor::Advisor(I_AFile &afile)
 const static char line_termination_chars[] = ":#\r\n";
 
 /**
- * @brief Marks the beginning and end of the content of the current line buffer.
+ * @brief Marks beginning and end of content in the buffer, also handling
+ *        continuing lines.
  *
  * Scans m_buffer to find the beginning of content (first non-whitespace)
  * and the end of the content (last non-whitespace).  If a comment token (#)
@@ -329,6 +333,15 @@ const static char line_termination_chars[] = ":#\r\n";
  * content and m_cur_level indicates the number of whitespace characters
  * preceded the content.  m_cur_level==-1 if there is no content on the
  * current line (and m_cur_line will likewise by NULL).
+ *
+ * **Continuing Lines**  as of 2016-10-10
+ *
+ * Advisor now detects the intention to continue a line, indicated by
+ * terminating a line with a backslash ('|').  The line following a
+ * continuing line will have an artificial, untypeable name, and the
+ * entire contents of the line (less trimmed leading- and trailing- spaces)
+ * will be the value of the continued line.
+ 
  */
 void Advisor::scan_buffer_for_ends_and_level(void)
 {
@@ -340,8 +353,29 @@ void Advisor::scan_buffer_for_ends_and_level(void)
 
    // keep pointers to working parts to avoid conditionals
    const char *cur_termchars = line_termination_chars;
-   char **ptr_cur_string = &m_cur_tag;
+   const char **ptr_cur_string = &m_cur_tag;
    int  *ptr_cur_len = &m_len_tag;
+
+   auto start_value_processing = [this, &cur_termchars, &ptr_cur_string,
+                                  &ptr_cur_len, &last_non_white, &curpos]()
+      {
+         ++cur_termchars;
+         ptr_cur_string = &m_cur_value;
+         ptr_cur_len = &m_len_value;
+         last_non_white = nullptr;
+      };
+
+   if (m_line_continuing)
+   {
+      m_line_continuing = false;
+
+      // Fake having already parsed the tag:
+      m_cur_tag = s_continued_tag;
+      m_len_tag = 1;
+      m_cur_level = 256;
+
+      start_value_processing();
+   }
 
    const char *terminator;
       
@@ -349,15 +383,12 @@ void Advisor::scan_buffer_for_ends_and_level(void)
    {
       if ((terminator=strchr(cur_termchars, *curpos)))
       {
+         // A terminator only matters if characters have been saved,
+         // that is, if last_non_white has a value.
          if (last_non_white)
          {
-            // If last_non_white is the same as the terminator,
-            // change the terminator to /0 to terminate the string.
-            // Otherwise, terminate just after last non-whitespace.
-            if (*last_non_white!=*terminator)
-               ++last_non_white;
-            *last_non_white = '\0';
-            *ptr_cur_len = last_non_white - *ptr_cur_string;
+            *curpos = '\0';
+            *ptr_cur_len = last_non_white - *ptr_cur_string + 1;
          }
 
          // if a colon, reset variables and continue:
@@ -365,10 +396,11 @@ void Advisor::scan_buffer_for_ends_and_level(void)
          // have been overwritten with a \0:
          if (*terminator==':')
          {
-            ++cur_termchars;
-            ptr_cur_string = &m_cur_value;
-            ptr_cur_len = &m_len_value;
-            last_non_white = nullptr;
+            start_value_processing();
+            // ++cur_termchars;
+            // ptr_cur_string = &m_cur_value;
+            // ptr_cur_len = &m_len_value;
+            // last_non_white = nullptr;
 
             // increment char pointer, then bypass remainer of loop:
             ++curpos;
@@ -406,6 +438,9 @@ void Advisor::scan_buffer_for_ends_and_level(void)
 
    if (!m_cur_tag || *m_cur_tag=='\0')
       m_cur_level = -1;
+
+   if (last_non_white && *last_non_white == '\\')
+      m_line_continuing = true;
 }
 
 bool Advisor::get_next_line(void)
