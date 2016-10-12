@@ -1,4 +1,4 @@
-// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -pedantic -pthread -ggdb -DINCLUDE_ADB_MAIN -o adbranch adbranch.cpp" -*-
+// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -pedantic -pthread -ggdb -D_DEBUG -DINCLUDE_ADB_MAIN -o adbranch adbranch.cpp" -*-
 
 /** @file adbranch.hpp */
 
@@ -269,8 +269,9 @@ public:
    ab_handle& operator=(const ab_handle&) = delete;
    /**@}*/
 
-   void print_value(FILE* out) const;
-   void print_xml_value(FILE* out) const;
+   void print_value(FILE* out, bool xml) const;
+
+   void print_as_xml_attribute(FILE* out, const char *name=nullptr) const;
 
    void dump(FILE* out,
              bool include_refs=false,
@@ -353,6 +354,10 @@ public:
       return m_cur->seek(str,value);
    }
    
+   inline void print_value(FILE* out, bool xml) const { m_cur->print_value(out,xml); }
+
+   void print_as_xml_attribute(FILE* out, const char *name=nullptr)
+                                                    { m_cur->print_as_xml_attribute(out,name); }
 
    inline const char *safe_tag(void) const          { return m_cur ? m_cur->tag() : nullptr; }
    inline const char *safe_value(void) const        { return m_cur ? m_cur->value() : nullptr; }

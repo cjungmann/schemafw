@@ -1,4 +1,4 @@
-// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -pedantic -pthread -ggdb -DINCLUDE_ADB_MAIN -o adbranch adbranch.cpp" -*-
+// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -pedantic -pthread -ggdb -D_DEBUG -DINCLUDE_ADB_MAIN -o adbranch adbranch.cpp" -*-
 
 /** @file adbranch.cpp */
 
@@ -202,45 +202,47 @@ ab_handle* ab_handle::link_nodes(ab_handle* ref)
 
    while (cur && next)
    {
+      // Detour for continuations, then continue as if there was no continuation.
       if (cur->is_continuation())
       {
-         // If a continuation, then the next line is
-         // a child, regardless of its level.
-         cur->set_child(next->lhandle());
+         // Conserve _cur_ for attaching handles following the last continuation:
+         ab_handle *ptr = cur;
+         
+         while (next && ptr->is_continuation())
+         {
+            ptr->set_child(next->lhandle());
+            ptr = next;
+            next = next->next();
+         }
+      }
+      
+      // ab_handle::level() uses address arithmetic,
+      // so it's more efficient to cache the values:
+      int cur_level = cur->level();
+      int next_level = next->level();
+         
+      // If both have same level, they're siblings:
+      if (next_level==cur_level)
+      {
+         cur->set_sibling(next->lhandle());
 
-         // recurse to save current level:
+         // The sibling is the new reference point
+         cur = next;
+         next = cur->next();
+      }
+      // If next is at higher level, it's a child.
+      // Save as child, then recurse to process at its level.
+      else if (next_level > cur_level)
+      {
+         cur->set_child(next->lhandle());
+         // cur stays the same in case of siblings:
          next = link_nodes(next);
       }
+      // If not equal or greater, it's time to return from
+      // this level: the next item belongs to an item higher on
+      // the hierarchy.
       else
-      {
-         // ab_handle::level() uses address arithmetic,
-         // so it's more efficient to cache the values:
-         int cur_level = cur->level();
-         int next_level = next->level();
-         
-         // If both have same level, they're siblings:
-         if (next_level==cur_level)
-         {
-            cur->set_sibling(next->lhandle());
-
-            // The sibling is the new reference point
-            cur = next;
-            next = cur->next();
-         }
-         // If next is at higher level, it's a child.
-         // Save as child, then recurse to process at its level.
-         else if (next_level > cur_level)
-         {
-            cur->set_child(next->lhandle());
-            // cur stays the same in case of siblings:
-            next = link_nodes(next);
-         }
-         // If not equal or greater, it's time to return from
-         // this level: the next item belongs to an item higher on
-         // the hierarchy.
-         else
-            return next;
-      }
+         return next;
    }
    
    return nullptr;
@@ -403,52 +405,68 @@ void build_index(Advisor &advisor, IDataStack_User<long int> &user)
 /**
  * @brief Prints value, with consideration for continuing strings.
  */
-void ab_handle::print_value(FILE* out) const
+void ab_handle::print_value(FILE* out, bool xml) const
 {
    const char* lchar = last_char();
+   
    if (lchar)
    {
       const char* end = *lchar=='\\' ? lchar-1 : lchar;
       const char* ptr = value();
-   
-      while (ptr <= end)
-         fputc(*ptr++, out);
+
+      if (xml)
+      {
+         while (ptr <= end)
+            print_char_as_xml(*ptr++, out);
+      }
+      else
+      {
+         while (ptr <= end)
+            fputc(*ptr++, out);
+      }
 
       if (*lchar=='\\')
       {
          const ab_handle* child = first_child();
-         if (child && child->is_tag(Advisor::continuation_tag()))
+         if (child)
          {
-            fputc(' ', out);
-            child->print_value(out);
+            const char *tag = child->tag();
+            if (0==strcmp(tag, Advisor::continuation_tag()))
+            {
+               fputc(' ', out);
+               child->print_value(out, xml);
+            }
          }
       }
    }
 }
 
 /**
- * @brief Prints value with XML-escaping, with consideration for continuing strings.
+ * @brief Prints an xml attribute, xml-escaping the value characters as necessary.
+ *
+ * @param out Open FILE* stream
+ * @param name Optional override the tag string.  Leave out (or NULL) to
+ *             simply use the ab_handle::tag() value.
+ *
+ * The function prints an xml attribute, tag="value".  The significance of
+ * this function is that it properly handles continued strings, concatenating
+ * continuing lines, adding a space before each follow-on line.
+ *
+ * If there is no value(), nothing is printed, neither tag nor empty value.
  */
-void ab_handle::print_xml_value(FILE* out) const
+void ab_handle::print_as_xml_attribute(FILE* out, const char *name) const
 {
-   const char* lchar = last_char();
-   if (lchar)
+   if (has_value())
    {
-      const char* end = *lchar=='\\' ? lchar-1 : lchar;
-      const char* ptr = value();
-   
-      while (ptr <= end)
-         print_char_as_xml(*ptr++, out);
+      if (!name)
+         name = tag();
 
-      if (*lchar=='\\')
-      {
-         const ab_handle* child = first_child();
-         if (child && child->is_tag(Advisor::continuation_tag()))
-         {
-            fputc(' ', out);
-            child->print_xml_value(out);
-         }
-      }
+      fputc(' ', out);
+      fputs(name, out);
+      fputc('=', out);
+      fputc('"', out);
+      print_value(out, true);
+      fputc('"', out);
    }
 }
 
@@ -475,7 +493,7 @@ void ab_handle::dump(FILE *out, bool include_refs, int indent, bool is_parent) c
    if (is_setting())
    {
       fputs(" : \"", out);
-      print_value(out);
+      print_value(out, false);
       fputc('"', out);
    }
    fputc('\n', out);
