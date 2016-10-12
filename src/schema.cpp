@@ -430,7 +430,7 @@ void print_adhoc_attributes(FILE *out, const ab_handle *handle, const char **ski
    {
       // Cheap has_value() check before more expensive tag_in_list() check:
       if (sw.has_value() && (!skip || !sw.tag_in_list(skip)))
-         print_xml_attribute(out, sw.tag(), sw.value());
+         sw.print_as_xml_attribute(out);
 
       ++sw;
    }
