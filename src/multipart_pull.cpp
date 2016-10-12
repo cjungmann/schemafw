@@ -675,13 +675,21 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
    else if (pid==0)
    /*** CHILD PROCESS ***/
    {
-      if (-1==dup2(pipe_in[0], ifileno(stdin))   ||
-          -1==dup2(pipe_out[1], ifileno(stdout)) ||
-          -1==dup2(pipe_err[1], ifileno(stderr))   )
+      int arr[] = { pipe_in[0], STDIN_FILENO,
+                    pipe_out[1], STDOUT_FILENO,
+                    pipe_err[1], STDERR_FILENO,
+                    -1 };
+      
+      int count=1;
+      for (int* i=arr; *i>=0; i+=2, ++count)
       {
-         fprintf(stderr, "one of the dups failed us (%s).\n", strerror(errno));
-         close_pipes();
-         exit(1);
+         if (-1==dup2(*i, *(i+1)))
+         {
+            fprintf(stderr, "%d: dup2(%d,%d) failed: (%s).\n",
+                    count, *i, *(i+1), strerror(errno));
+            close_pipes();
+            exit(1);
+         }
       }
       
       close_clear(pipe_in[1]);
