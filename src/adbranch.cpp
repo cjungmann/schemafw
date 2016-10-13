@@ -160,14 +160,6 @@ void ab_handle::t_build(Advisor &adv,
    }
    while (adv.level() > starting_level);
 
-   tail = head;
-   int count = 0;
-   while (tail)
-   {
-      printf("%d: %s : %s\n", ++count, tail->tag(), tail->value());
-      tail = tail->next();
-   }
-
    // Prepare hierarchical links:
    link_nodes(head);
 
