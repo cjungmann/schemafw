@@ -144,6 +144,7 @@ _contacts.srm_.
 ~~~srm
 $database       : CaseStudy
 $xml-stylesheet : default.xsl
+$default-mode   : list
 
 list
    type          : table
