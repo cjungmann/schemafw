@@ -241,7 +241,7 @@ const char *arr_schema_default_types[] = { "table",
  * @todo Add the actual code that includes the IP address from the
  * getenv("REMOTE_ADDR");
  */
-void make_session_string(char *buff, size_t copylen)
+void make_random_string(char *buff, size_t copylen)
 {
    assert(copylen>1);
 

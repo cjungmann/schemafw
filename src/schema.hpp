@@ -32,8 +32,9 @@ void print_field_attributes(FILE *out,
                       const ab_handle *priority_two = nullptr,
                       const ab_handle *priority_three = nullptr);
 
+void make_random_string(char* buff, size_t len);
 
-void make_session_string(char *buff, size_t copylen);
+inline void make_session_string(char *buff, size_t copylen) { make_random_string(buff,copylen); }
 void set_session_seed(MYSQL *mysql, const char* seed);
 
 
