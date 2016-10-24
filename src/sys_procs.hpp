@@ -98,6 +98,31 @@
  */
 
 /**
+ * @brief SchemaFW-generated string variable \@dropped_salt for salting passwords.
+ *
+ * MySQL doesn't have a method for generating a reliable random number, so the
+ * reponsibility for this falls to SchemaFW, which already makes a similar string
+ * for a session hash.
+ *
+ * This variable is set when a SRM response mode includes a _drop-salt_
+ * instruction.  The default name and length are "dropped-salt" and 32, which
+ * will be available in MySQL as `@dropped-salt`, but these settings can
+ * be changed if necessary.  The salt length is limited to 255 characters or
+ * less.
+ *
+ ~~~srm
+ create_login
+    type        : form-new
+    schema-proc : App_Create_Login
+    drop-salt
+       name   : table-salt  # optional value, default=dropped-salt
+       length : 48          # optional value, default=32
+ ~~~
+ *
+ */
+const char *dropped_salt;
+
+/**
  * @brief Session variable \@session_string_seed for preparing to create a new session.
  *
  * @note use as \@session_string_seed
@@ -176,6 +201,16 @@ struct ssys_session_start_result
    int      id;   /**< session ID of new session */
    char[32] hash; /**< session hash of new session */
 };
+
+/**
+ * @brief Leaves a dropped_salt (@dropped_salt) session variable.
+ *
+ * This function leaves a string value to be picked up by a later
+ * stored procedure as a way of allowing the SchemaFW C++ code to
+ * use system resources to generate a random string that can be used
+ * to salt a password hash.
+ */
+void ssys_drop_salt_string(const char *salt_string);
 
 /**
  * @brief Returns parameter information of named procedure.

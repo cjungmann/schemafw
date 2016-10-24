@@ -21,6 +21,18 @@ SELECT ' ' AS '.\n.\nHere begins the real procedures and functions.\nIgnore \'al
 
 /* Find documentation for these functions in sys_procs.hpp */
 
+DROP PROCEDURE IF EXISTS ssys_drop_salt_string $$
+CREATE PROCEDURE ssys_drop_salt_string(salt_string VARCHAR(255))
+BEGIN
+   -- variable names that begin with @ are session variables,
+   -- and persist as long as the connection is open.  For
+   -- FASTCGI, we'll have to be careful to clear or at least
+   -- not reuse the session string seed.
+   SET @dropped_salt = salt_string;
+END $$
+
+
+
 DROP PROCEDURE IF EXISTS ssys_get_procedure_params $$
 CREATE PROCEDURE ssys_get_procedure_params(p_proc_name VARCHAR(64))
 BEGIN
