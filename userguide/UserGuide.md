@@ -1,5 +1,4 @@
 # User Guide
-
 This User Guide is intended to help a website developer understand how to use
 the Schema Framework, also known as _SchemaFW_, to create a website.
 
@@ -33,6 +32,7 @@ There are several sections.
   - [Context References](ContextReferences.md)
   - [Result Dialogs (type:form-result)](ResultDialogs.md)
   - Session Stuff
+    - [Password Handling](PasswordHandling.md)
     - [Session Login Procedure](SessionLoginProc.md)
     This must be fleshed out.  Assumptions I made about how this is
     set up turn out to be obsolete.  Refine the process while working
