@@ -73,6 +73,7 @@ const char *arr_root_reserved[] = {
 const char *arr_result_reserved[] = {
    "name",
    "attributes",
+   "drop-salt",
    "schema",
    "rndx",
    "root",
@@ -281,6 +282,26 @@ void make_random_string(char *buff, size_t copylen)
          }
       }
    }
+}
+
+void drop_salt_string(MYSQL *mysql, uint16_t len)
+{
+   auto f = [](int result_number, DataStack<BindC> &ds)
+   {
+      ; // we don't need to respond.
+   };
+   Result_User_Row<decltype(f)> user(f);
+
+   if (len > 255)
+      throw schema_exception("Salt string length must be less than 256.");
+
+   char *buff = static_cast<char*>(alloca(len+1));
+   make_session_string(buff,len);
+   buff[len] = '\0';
+
+   SimpleProcedure::build(mysql, "CALL ssys_drop_salt_string(?)", "s255",
+                          Adhoc_Setter<1>(ai_text(buff, len )),
+                          user);
 }
 
 void set_session_seed(MYSQL *mysql, const char* seed)
@@ -1779,7 +1800,7 @@ size_t Schema::write_multipart_preamble(FILE *f)
    size_t len = 0;
    const char* bstring = "boundary=";
    const char* ct = getenv("CONTENT_TYPE");
-   if (ct)
+   if (ct && 0==strcmp(ct, "multipart/form-data"))
    {
       gfputs("Content-Type: ", f);  // 14 characters
       
@@ -2475,7 +2496,19 @@ void Schema::process_response_mode(void)
          if (m_mode_action==MACTION_IMPORT)
             process_import();
          else
+         {
+            const ab_handle* ds_branch;
+            const ab_handle* ds_len;
+            if ((ds_branch=m_mode->seek("drop-salt")))
+            {
+               uint16_t len = 32;
+               if ((ds_len=ds_branch->seek("length")) && ds_len->has_value())
+                  len = ds_len->intvalue();
+               
+               drop_salt_string(&s_mysql, len);
+            }
             process_response(stype, sstatus);
+         }
       }
    }
 }
