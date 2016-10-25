@@ -31,6 +31,40 @@ BEGIN
    SET @dropped_salt = salt_string;
 END $$
 
+DROP FUNCTION IF EXISTS ssys_hash_password_with_salt $$
+CREATE FUNCTION ssys_hash_password_with_salt(password VARCHAR(255),
+                                             salt_string VARCHAR(255))
+RETURNS BINARY(16)
+BEGIN
+   RETURN UNHEX(MD5(CONCAT(salt_string,password)));
+END $$
+
+DROP FUNCTION IF EXISTS ssys_confirm_salted_hash $$
+CREATE FUNCTION ssys_confirm_salted_hash(saved_hash BINARY(16),
+                                         saved_salt VARCHAR(255),
+                                         password VARCHAR(255))
+RETURNS BOOLEAN
+BEGIN
+   DECLARE diffs INT DEFAULT 0;
+   DECLARE curdiff INT;
+   DECLARE hpos INT;
+   DECLARE pword_hash BINARY(16);
+   SET pword_hash = ssys_hash_password_with_salt(password, saved_salt);
+
+   SET hpos = 0;
+   WHILE hpos < 16 DO
+      SET hpos = hpos + 1;
+      IF ASCII(SUBSTRING(saved_hash,hpos,1))=ASCII(SUBSTRING(pword_hash,hpos,1)) THEN
+         SET curdiff = 0;
+      ELSE
+         SET curdiff = 1;
+      END IF;
+      SET diffs = diffs + curdiff;
+   END WHILE;
+
+   return diffs=0;
+END $$
+
 
 
 DROP PROCEDURE IF EXISTS ssys_get_procedure_params $$

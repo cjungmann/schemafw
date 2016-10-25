@@ -213,6 +213,27 @@ struct ssys_session_start_result
 void ssys_drop_salt_string(const char *salt_string);
 
 /**
+ * @brief Combines salt and password to make a MD5 hash
+ *
+ * This simple function exists to enforce a consistent order for hashing so
+ * that ssys_confirm_salted_hash() can apply the same algorithm when comparing
+ * passwords.
+ */
+const char* ssys_hash_password_with_salt(const char* password,
+                                         const char* salt_string);
+
+/**
+ * @brief Confirms hashed password with constant string comparison.
+ *
+ * This function performs a constant-time string comparison of hashed
+ * passwords in order to thwart timing-based password cracking.  This
+ * strategy follows some advice on this CrackStation [article](https://crackstation.net/hashing-security.htm)
+ */
+bool ssys_confirm_salted_hash(const char* hash,
+                              const char* salt_string,
+                              const char* password);
+
+/**
  * @brief Returns parameter information of named procedure.
  *
  * @param p_proc_name Name of procedure
