@@ -51,6 +51,7 @@ const char *arr_root_reserved[] = {
    "attributes",
    "root",
    "database",
+   "drop-salt",
    "jump",
    "meta-jump",
    "mode-type",
@@ -73,7 +74,6 @@ const char *arr_root_reserved[] = {
 const char *arr_result_reserved[] = {
    "name",
    "attributes",
-   "drop-salt",
    "schema",
    "rndx",
    "root",
