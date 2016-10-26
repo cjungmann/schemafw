@@ -33,13 +33,7 @@ There are several sections.
   - [Result Dialogs (type:form-result)](ResultDialogs.md)
   - Session Stuff
     - [Password Handling](PasswordHandling.md)
-    - [Session Login Procedure](SessionLoginProc.md)
-    This must be fleshed out.  Assumptions I made about how this is
-    set up turn out to be obsolete.  Refine the process while working
-    on menu order and return to describe the conditions that dictate
-    how and when the procedures are called.
-    - [COMPLETE AFTER menu-order LOGIN Sessions and Authorization](SessionsAndAuthorization.md)
-    - [COMPLETE AFTER menu-order LOGIN SchemaFW Session Processing Procedures](SchemaFWSessionProcs.md)
+    - [SchemaFW Session Processing Procedures](SchemaFWSessionProcs.md)
     - [Cookie-setting Script](CookieSettingScript.md)
   - [Multipart Form](MultipartForm.md)
   - [Multipart Form Section](FormSection.md)
