@@ -12,6 +12,7 @@ There are several sections.
   - [Establish a New SchemaFW Site](CreateNewSite.md)
   - [Using MySQL Procedures](UsingMySQLProcedures.md)
   - [Understanding SRM Files](SRMFiles.md)
+  - [SRM Response Mode Types](ResponseModeTypes.md)
   - [Definitions](Definitions.md)
 - [SchemaFW Case Study](SchemaFWCaseStudy.md)   
   - [A Read Interaction](CSReadInteraction.md)

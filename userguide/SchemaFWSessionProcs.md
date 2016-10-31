@@ -5,6 +5,9 @@ set to "none", either as a global mode or as an discrete line in the response mo
 SchemaFW enters the session mode, where it will restore a previous session or
 establish a new one if no session is in force.
 
+See also [SchemaFW Authorizations](SchemaFWAuthorizations.md) for other MySQL and
+SRM samples that affect sessions.
+
 ## Explanation
 
 A session is identified with a pair of cookies, an integer and a string.  If a page
@@ -32,8 +35,9 @@ The procedures are
 
 - **App_Session_Cleanup()**
   Called before, and most importantly, just after processing a http request,
-  this procedure should at least ensure that any sensitive MySQL session
-  variables are set to a safe public state.
+  this procedure should, at a minimum, protect sensitive MySQL session
+  variables.  The session variables should be set to NULL, an empty string,
+  or, in some cases, a default value.
 
   #### Session Variables
 

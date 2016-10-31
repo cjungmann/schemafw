@@ -5,8 +5,9 @@ persistence, most websites create password-protected user accounts.  Setting up 
 password-protected website is more complicated, especially with the responsibility
 to protect the passwords.
 
-Following are some boilerplate procedures and their associated SRM response modes
-that can get you started with developing a password-protected web application.
+Following is a MySQL script creating two tables and three procedures, then an
+SRM file that invokes the procedures.  Use these examples as templates for your
+own implementations.
 
 ## MySQL Code
 
@@ -32,8 +33,9 @@ CREATE TABLE IF NOT EXISTS Session_Info
    -- either as NULL or with a default value.
    id_user    INT UNSIGNED NULL,
    
-   -- Index the linking field for performace:
-   INDEX(id_session)
+   -- Index the linking field for performance, and use UNIQUE
+   -- to signal an error with mistaken second attempt to INSERT.
+   UNIQUE KEY(id_session)
 );
 ~~~
 
@@ -67,7 +69,9 @@ BEGIN
   -- Use SchemaFW-provided hashing function to confirm credentials
   -- before saving application-specific data:
   IF ssys_confirm_salted_hash(rec_hash, rec_salt, pword) THEN
-     -- Save session information to table for persistence:
+     -- Save session information to table for persistence.
+     -- Add_Session_Start() should have already created the
+     -- record, so use UPDATE instead of INSERT:
      UPDATE Session_Info
         SET id_ruser = rec_id
       WHERE id_session = @session_confirmed_id;
@@ -129,6 +133,26 @@ proc_block : BEGIN
       SELECT 1 AS error, 'Registration failed' AS msg;
    END IF;
 END $$
+
+-- Authorization test must, as the means to return status,
+-- select 1 if authorized, 0 if not.
+-- -------------------------------------------
+DROP PROCEDURE IF EXISTS App_Session_Extant $$
+CREATE PROCEDURE App_Session_Extant(session_id INT UNSIGNED)
+BEGIN
+   DECLARE uid INT UNSIGNED;
+   
+   SELECT id_user INTO uid
+     FROM Session_Info
+    WHERE id_session = session_id;
+
+    IF uid IS NULL THEN
+       SELECT 0;
+    ELSE
+       SELECT 1;
+    END IF;
+END $$
+
 ~~~
 
 Use the above procedures with the following SRM response modes.  Each procedure
@@ -138,10 +162,20 @@ Notice that the submit response modes include a jump instruction.  Generally,
 form submission modes are not suitable for landing.
 
 ~~~srm
-# Excerpt of session.srm
+# file session.srm
 
+$database        : YourDatabase
+$xml-stylesheet  : default.xsl
+$default-mode    : login
+
+$session-type        : identity           # identify users (via login)
+$test_authorized     : App_Session_Extant # name procedure that tests for valid session
+$jump_not_authorized : session.srm?login  # indicate where to go if session not valid
+
+# Login and registration forms and processing take place without a valid
+# session, so set session-type=establish to relax the authorization tests.
 login
-   type : form-new
+   type         : form-new
    session-type : establish
    schema-proc  : App_User_Login
    form-action  : session.srm?login_submit
