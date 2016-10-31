@@ -31,7 +31,11 @@ public:
    
    virtual void  use_result_row(int result_number, DataStack<BindC> &ds) { }
    virtual void result_complete(int result_number, DataStack<BindC> &ds) { }
-   virtual void    report_error(const char *str)                         { }
+   virtual void    report_error(const char *str)
+   {
+      // This is the only way to get the message out.
+      throw std::runtime_error(str);
+   }
 
 
 protected:
