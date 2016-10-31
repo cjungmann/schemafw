@@ -563,6 +563,9 @@ public:
    bool fetch(DataStack<BindC> &ds);
    void conclude(void);
 
+   /** Like bleeding a brake line, get and ignore the remainder of the procedure. */
+   inline void bleed_procedure(void) { conclude(); }
+
    static void t_build_query_string(const char *procname,
                                     int count_params,
                                     const IGeneric_String_Callback &gsb);
