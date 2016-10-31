@@ -335,7 +335,7 @@ void SimpleProcedure::process_current_result(void)
             // BindInfo_result bi_r(mresult);
             // BindCPool::build(bi_r, *this);
          }
-         catch(const std::runtime_error &e)
+         catch(const std::runtime_error &e)  // more e.what() info for runtime_error
          {
             mysql_free_result(mresult);
             throw e;
@@ -356,7 +356,18 @@ void SimpleProcedure::loop_through_results(void)
 {
    if (m_user)
       m_user->register_stmt(m_stmt);
-   
+
+   auto err_rpt = [this](const char *msg)
+   {
+      // Save error to log:
+      ifputs(msg, stderr);
+      ifputc('\n', stderr);
+         
+      // report error to client:
+      if (m_user)
+         m_user->report_error(msg);
+   };
+
    int result = 0;
    while (!result)
    {
@@ -368,17 +379,13 @@ void SimpleProcedure::loop_through_results(void)
       {
          process_current_result();
       }
+      catch(std::runtime_error &e)
+      {
+         err_rpt(e.what());
+      }
       catch(const std::exception &e)
       {
-         const char *msg = e.what();
-
-         // Save error to log:
-         ifputs(msg, stderr);
-         ifputc('\n', stderr);
-         
-         // report error to client:
-         if (m_user)
-            m_user->report_error(msg);
+         err_rpt(e.what());
       }
 
       // If conclude() has been called, m_stmt will be NULL;
@@ -441,8 +448,16 @@ void SimpleProcedure::run(MYSQL *conn, const IParam_Setter *ps, IResult_User *ru
                report_error(result, "execute");
             else
             {
-               m_user = ru;
-               loop_through_results();
+               try
+               {
+                  m_user = ru;
+                  loop_through_results();
+               }
+               catch(const std::runtime_error &e)
+               {
+                  bleed_procedure();
+                  throw e;
+               }
             }
          }
       }
