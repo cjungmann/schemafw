@@ -215,7 +215,10 @@ function InitializeSchemaFW(xmld, xslo)
       var detail = msg_el.getAttribute("detail");
 
       if (type=="error")
-         console.error(msg + (detail?(" "+detail):""));
+      {
+         alert(msg + (detail?(" " + detail):""));
+//         console.error(msg + (detail?(" "+detail):""));
+      }
       else
          console.log(type + " message: " + msg + (detail?(" "+detail):""));
    }
