@@ -3222,15 +3222,26 @@ void Schema::process_root_branch(const ab_handle *mode_root,
       if (schema_proc_name)
          print_schema_from_procedure_name(schema_proc_name);
 
-      if (import_confirm)
-         print_import_confirm();
-      else if (m_mode_action==MACTION_FORM_IMPORT)
+      try
       {
-         Schema_Printer sprinter(*m_specsreader, *m_mode, m_out);
-         sprinter.print(m_mode->seek("schema"), "form");
+         if (import_confirm)
+            print_import_confirm();
+         else if (m_mode_action==MACTION_FORM_IMPORT)
+         {
+            Schema_Printer sprinter(*m_specsreader, *m_mode, m_out);
+            sprinter.print(m_mode->seek("schema"), "form");
+         }
+         else
+            open_info_procedure();
       }
-      else
-         open_info_procedure();
+      catch(const std::runtime_error &e)  // more e.what() info for runtime_error
+      {
+         print_message_as_xml(m_out, "error", e.what(), "unexpected exception");
+      }
+      catch(const std::exception &e)
+      {
+         print_message_as_xml(m_out, "error", e.what(), "unexpected exception");
+      }
 
       // print close tag of document element:
       ifputs("</", m_out);
