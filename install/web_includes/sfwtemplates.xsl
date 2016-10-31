@@ -385,27 +385,19 @@
 
       <xsl:if test="local-name()='message'">
         <xsl:element name="span">
-          
           <xsl:attribute name="class">message</xsl:attribute>
-          
           <xsl:if test="@detail">
             <xsl:attribute name="data-detail">
               <xsl:value-of select="@detail" />
             </xsl:attribute>
           </xsl:if>
-          
           <xsl:value-of select="@message" />
         </xsl:element>
-          
       </xsl:if>
-
-
-
     </xsl:element>
   </xsl:template>
 
   <xsl:template match="/*" mode="show_document_content">
-    
     <xsl:apply-templates select="." mode="make_schemafw_meta" />
 
     <xsl:if test="$result-row">
@@ -432,13 +424,20 @@
             <xsl:with-param name="type" select="'form'" />
           </xsl:apply-templates>
         </xsl:when>
-        <xsl:otherwise>
+        <xsl:when test="*[@rnds=1]">
+          <xsl:apply-templates select="." mode="import_review_head" />
           <xsl:apply-templates select="*[@rndx=1]" />
+        </xsl:when>
+        <xsl:when test="message/@type='error'">
+          <xsl:apply-templates select="message" />
+        </xsl:when>
+        <xsl:otherwise>
+          <div>Don't know what to do.</div>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:if>
   </xsl:template>
-  
+
   <xsl:template match="*[@rndx]">
     <xsl:variable name="row_name">
       <xsl:choose>
@@ -500,7 +499,7 @@
     </xsl:variable>
 
     <xsl:variable name="importing">
-      <xsl:if test="/*[@mode-type='import-form']">1</xsl:if>
+      <xsl:if test="/*[@mode-type='form-import']">1</xsl:if>
     </xsl:variable>
 
     <xsl:variable name="action">
@@ -538,7 +537,7 @@
 
     <xsl:element name="form">
       <xsl:attribute name="method"><xsl:value-of select="$method" /></xsl:attribute>
-      <xsl:if test="$importing">
+      <xsl:if test="$importing='1'">
         <xsl:attribute name="enctype">multipart/form-data</xsl:attribute>
       </xsl:if>
       <xsl:if test="$has_action">
@@ -566,7 +565,7 @@
           <hr />
         </xsl:if>
 
-        <xsl:if test="$importing">
+        <xsl:if test="$importing=1">
           <p>
             <label for="upfile">Upload the file</label>
             <input type="file" name="upfile" />
@@ -596,6 +595,45 @@
         </p>
       </fieldset>
     </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="schema" mode="show_intro">
+    <xsl:param name="class" />
+    <xsl:param name="host-type" select="'tr'" />
+
+    <xsl:variable name="intro">
+      <xsl:choose>
+        <xsl:when test="intro"><xsl:value-of select="intro" /></xsl:when>
+        <xsl:when test="/*/@intro"><xsl:value-of select="/*/@intro" /></xsl:when>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:if test="$intro">
+      <xsl:variable name="host_class">
+        <xsl:if test="$host-type='tr'">
+          <xsl:value-of select="concat(' headfix_', local-name(..),'_',local-name())" />
+        </xsl:if>
+        <xsl:if test="$class">
+          <xsl:value-of select="concat(' ', $class)" />
+        </xsl:if>
+      </xsl:variable>
+
+      <xsl:choose>
+        <xsl:when test="$host-type='tr'">
+          <tr class="{$host_class}">
+            <td colspan="99">
+              <xsl:value-of select="$intro" />
+            </td>
+          </tr>
+        </xsl:when>
+        <xsl:otherwise>
+          <div class="{$host_class}">
+            <xsl:value-of select="$intro" />
+          </div>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
+
   </xsl:template>
 
   <xsl:template match="button/@task" priority="5" mode="data_attribute">
@@ -1620,14 +1658,12 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="@*" mode="make_table_head_buttons">
-    <xsl:variable name="raw_name" select="substring(name(),8)" />
-    <xsl:variable name="name" select="translate($raw_name,'_',' ')" />
-    <button class="Schema" data-action="{.}"><xsl:value-of select="$name" /></button>
-  </xsl:template>
-
   <xsl:template match="schema" mode="make_table_head">
     <xsl:param name="class" />
+
+    <xsl:apply-templates select="." mode="show_intro">
+      <xsl:with-param name="class" select="$class" />
+    </xsl:apply-templates>
 
     <xsl:apply-templates select="." mode="show_buttons">
       <xsl:with-param name="class" select="$class" />
@@ -1935,6 +1971,18 @@ v    </xsl:variable>
         <xsl:with-param name="gids" select="$gids" />
       </xsl:call-template>
     </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="message/@*">
+    <dt><xsl:value-of select="local-name()" /></dt>
+    <dd><xsl:value-of select="." /></dd>
+  </xsl:template>
+
+  <xsl:template match="/*/message">
+    <h2>Message</h2>
+    <dl>
+    <xsl:apply-templates select="@*" />
+    </dl>
   </xsl:template>
 
   <xsl:template name="make_tableEdit_colTypesString">
