@@ -45,5 +45,4 @@ There are several sections.
     - [Result Dialogs (type:form-result)](ResultDialogs.md)
     - [Multipart Form](MultipartForm.md)
     - [Multipart Form Section](FormSection.md)
-    - [Composite Dialogs **NOT DONE**](CompositeDialogs.md)
     - [MySQL Hints](MySQLHints.md)
