@@ -1766,9 +1766,11 @@ function InitializeSchemaFW(xmld, xslo)
          return true;
       }
 
-      function doc_check_for_message(xmldoc)
+      function continue_after_check_for_message(xmldoc)
       {
-         var node = xmldoc.selectSingleNode("*/message");
+         var docel = xmldoc.documentElement;
+         var node = docel.selectSingleNode("message");
+         var jumpurl = docel.getAttribute("meta-jump");
          if (node)
          {
             var type = node.getAttribute("type");
@@ -1782,12 +1784,15 @@ function InitializeSchemaFW(xmld, xslo)
                alert(msg);
          }
 
+         if (jumpurl)
+            window.location = jumpurl;
+
          return true;
       }
 
       function callback_dialog_data(xmldoc)
       {
-         if (doc_check_for_message(xmldoc))
+         if (continue_after_check_for_message(xmldoc))
          {
             var row = "html_row" in bundle ? bundle.html_row : null;
             var form = build_dialog(xmldoc, sfw_host, row);
