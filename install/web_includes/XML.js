@@ -82,7 +82,7 @@ function prepare_helper_functions()
       {
          var arra = de.attributes;
          var match;
-         for (var i=0,stop=arra.length;i<stop;i++)
+         for (var i=0,stop=arra.length; i<stop; ++i)
          {
             var a = arra[i];
             if ((match=re_namespace_prefix.exec(a.name)))
@@ -234,6 +234,9 @@ function prepare_xhr_functions()
 
    xhr_get = function(url,cb,cb_failed,headers)
    {
+      if (!cb_failed)
+         cb_failed = function(xhr) { console.error("Failed to get document"); };
+      
       var async = cb?true:false;
       var xhr = getXHRObject();
       if (xhr)
@@ -242,14 +245,11 @@ function prepare_xhr_functions()
          load_request_headers(xhr,headers);
          if (ie_mode)
             xhr.responseType = "msxml-document";
-         xhr.send(null);
          if (async)
-         {
             xhr.onreadystatechange = function() { return check_xhr(xhr,cb,cb_failed); };
-            return null;
-         }
-         else
-            return check_xhr(xhr,cb,cb_failed);
+         xhr.send(null);
+
+         return async ? null : check_xhr(xhr,cb,cb_failed);
       }
       return null;
    };
@@ -539,8 +539,11 @@ function prepare_getDocument_functions()
       
       function prep_for_ie(doc)
       {
-         doc.setProperty("SelectionLanguage","XPath");
-         prep_namespaces(doc);
+         if ("setProperty" in doc)
+         {
+            doc.setProperty("SelectionLanguage","XPath");
+            prep_namespaces(doc);
+         }
       }
       
       if ("XMLDocument" in document)
@@ -730,9 +733,11 @@ function implement_XSL_methods()
    XSL.prototype.transformReplace = function(target,node)
    {
       var parent = target.parentNode;
-      this.transformInsert(parent,node,target);
+      this.transformFill(parent,node,target);
       parent.removeChild(target);
    };
+
+   // Branch setup between standard and (old) IE versions:
    if ("XSLTProcessor" in window)
    {
       XSL.prototype.get_processor = function()
@@ -793,35 +798,39 @@ function implement_XSL_methods()
             node = node.ownerElement;
          node.removeAttribute("root_one");
       };
-      XSL.prototype.transformFill = function(target,node)
+      XSL.prototype.transformFill = function(target,node,before)
       {
          target.innerHTML = "";
-         var doc = node.ownerDocument;
-         this.make_root_one_fix(node);
+         var target_doc = (target.nodeType==9 ? target : target.ownerDocument);
+         var source_doc, source_node;
+         if (node.nodeType==9)
+         {
+            source_doc = node;
+            source_node = node.documentElement;
+         }
+         else
+         {
+            source_doc = node.ownerDocument;
+            source_node = node;
+            this.make_root_one_fix(node);
+         }
          // protect node in case of error:
          try
          {
-            var ddf = this.get_processor().transformToFragment(doc, target.ownerDocument);
-            target.appendChild(ddf);
+            var ddf = this.get_processor().transformToFragment(source_doc, target_doc);
+            if (before)
+               target.insertBefore(ddf, before);
+            else
+               target.appendChild(ddf);
          }
          catch(e) { alert("transformToFragment failed: " + e.message); }
 
-         this.undo_root_one_fix(node);
+         if (node.nodeType!=9)
+            this.undo_root_one_fix(node);
       };
       XSL.prototype.transformInsert = function(container,node,before)
       {
-         var doc = node.ownerDocument;
-         this.make_root_one_fix(node);
-         try
-         {
-            var ddf = this.get_processor().transformToFragment(doc, container.ownerDocument);
-            if (before)
-               container.insertBefore(ddf,before);
-            else
-               container.appendChild(ddf);
-         }
-         catch(e) { alert("transformToFragment failed: " + e.message); }
-         this.undo_root_one_fix(node);
+         this.transformFill(container,node,before);
       };
    }
    else
