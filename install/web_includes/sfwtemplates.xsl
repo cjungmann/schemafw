@@ -414,6 +414,9 @@
 
     <xsl:if test="not($result-row) or not($result-row/@error=0)">
       <xsl:choose>
+        <xsl:when test="message/@type='error'">
+          <xsl:apply-templates select="message" />
+        </xsl:when>
         <xsl:when test="contains('edit view new', $formtype)">
           <xsl:apply-templates select="/*">
             <xsl:with-param name="root" select="1" />
@@ -427,9 +430,6 @@
         <xsl:when test="*[@rnds=1]">
           <xsl:apply-templates select="." mode="import_review_head" />
           <xsl:apply-templates select="*[@rndx=1]" />
-        </xsl:when>
-        <xsl:when test="message/@type='error'">
-          <xsl:apply-templates select="message" />
         </xsl:when>
         <xsl:otherwise>
           <div>Don't know what to do.</div>
@@ -943,7 +943,10 @@
         <xsl:value-of select="@html-value" />
       </xsl:when>
       <xsl:when test="@value">
-        <xsl:value-of select="@value" />
+        <xsl:call-template name="resolve_refs">
+          <xsl:with-param name="str" select="@value" />
+        </xsl:call-template>
+        <!-- <xsl:value-of select="@value" /> -->
       </xsl:when>
       <xsl:when test="@ref-value">
         <xsl:apply-templates select="$vars" mode="get_value">
