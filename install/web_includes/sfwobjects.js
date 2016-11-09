@@ -236,10 +236,9 @@ function InitializeSchemaFW(xmld, xslo)
       if (!schema)
          schema = docel.selectSingleNode("result/schema");
 
-      var asform = false;
-
-      if (docel.hasAttribute("mode-type"))
-         asform = docel.getAttribute("mode-type").substring(0,4)=="form";
+      var asform = docel.getAttribute("mode-type");
+      if (asform)
+         asform = asform.substring(0,4)=="form";
       else if (schema && schema.getAttribute("form-action"))
          asform = true;
 
@@ -1917,7 +1916,7 @@ function InitializeSchemaFW(xmld, xslo)
             var docel = doc.documentElement;
             var subd = addEl("div", new_host);
 //            var subd = new_host;
-            if (!docel.hasAttribute("form-type"))
+            if (!docel.getAttribute("form-type"))
             {
                docel.setAttribute("form-type","form");
                xslObj.transformFill(subd, docel);
