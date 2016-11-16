@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Replaceable Title</title>
+    <script type="text/javascript" src="includes/xdoc.js"></script>
+    <script type="text/javascript">
+      function its_working()
+      {
+         window.onload();
+      }
+      window.onload = function()
+      {
+         initialize_new_page.func = "its_working";
+         var s = String(window.location.search);
+         if (s) if (s.length)
+            run_xdoc_loader(s.substring(1));
+      }
+    //]]</script>
+  </head>
+  <body>
+    <h1>Replaceable Title</h1>
+    <p>This text should be replaced if this program works.</p>
+  </body>
+</html>
