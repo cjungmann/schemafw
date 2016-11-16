@@ -31,6 +31,13 @@
   <xsl:variable name="result-row"
                 select="/*[@mode-type='form-result']/*[@rndx=1]/*[@error]" />
 
+  <xsl:template name="tag_class">
+    <xsl:param name="type" />
+    <xsl:attribute name="data-sfw-class">
+      <xsl:value-of select="$type" />
+    </xsl:attribute>
+  </xsl:template>
+
   <xsl:template match="/*[@mode-type='form-edit']" >
     <xsl:param name="root" />
 
@@ -230,8 +237,35 @@
     </xsl:call-template>
   </xsl:template>
 
-
   <xsl:template name="js_includes">
+    <script type="text/javascript" src="includes/classes.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/sfw_base.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/sfw_dom.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/sfw_form.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/sfw_table.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/sfw_debug.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/sfw_onload.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/dpicker.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/Events.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/Dialog.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/Moveable.js"></script>
+    <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/XML.js"></script>
+    <xsl:value-of select="$nl" />
+  </xsl:template>
+
+
+  <xsl:template name="old_js_includes">
     <script type="text/javascript" src="includes/sfwmain.js"></script>
     <xsl:value-of select="$nl" />
     <script type="text/javascript" src="includes/classes.js"></script>
@@ -536,6 +570,9 @@
     </xsl:variable>
 
     <xsl:element name="form">
+      <xsl:call-template name="tag_class">
+        <xsl:with-param name="type" select="$class" />
+      </xsl:call-template>
       <xsl:attribute name="method"><xsl:value-of select="$method" /></xsl:attribute>
       <xsl:if test="$importing='1'">
         <xsl:attribute name="enctype">multipart/form-data</xsl:attribute>
@@ -1283,10 +1320,6 @@
     </select>
   </xsl:template>
 
-  <xsl:template match="text()" mode="make_line_of_list">
-    <div><xsl:value-of select="." /></div>
-  </xsl:template>
-
   <xsl:template name="make_list">
     <xsl:param name="str" />
     <xsl:param name="rdelim" />
@@ -1299,7 +1332,9 @@
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:apply-templates select="$val" mode="make_line_of_list" />
+    <xsl:call-template name="make_line_of_list">
+      <xsl:with-param name="str" select="$val" />
+    </xsl:call-template>
 
     <xsl:if test="$before">
       <xsl:call-template name="make_list">
@@ -1334,9 +1369,10 @@
     </div>
   </xsl:template>
 
-  <xsl:template match="*[@rndx]/*" mode="make_line_of_list">
+  <xsl:template name="make_line_of_list">
+    <xsl:param name="str" />
     <div>
-      <xsl:value-of select="./@*[1]" />
+      <xsl:value-of select="$str" />
     </div>
   </xsl:template>
 
@@ -1348,7 +1384,9 @@
     
     <xsl:choose>
       <xsl:when test="count($result/*)">
-        <xsl:apply-templates select="$result/*" mode="make_line_of_list" />
+        <xsl:call-template name="make_line_of_list">
+          <xsl:with-param name="str" select="$result/@*[1]" />
+        </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
         <div>
@@ -1618,6 +1656,9 @@
     </xsl:if>
 
     <xsl:element name="table">
+      <xsl:call-template name="tag_class">
+        <xsl:with-param name="type" select="'default_table'" />
+      </xsl:call-template>
       <xsl:attribute name="data-result-type">table</xsl:attribute>
       <xsl:attribute name="data-result-path">
         <xsl:value-of select="$path" />
