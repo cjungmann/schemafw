@@ -2,23 +2,34 @@ var SFW = { };
 
 function init_SFW(callback)
 {
-   SFW.focus_on_first_field = _focus_on_first_field;
-   SFW.get_form_data        = _get_form_data;
+   SFW.alert                = _alert;
    SFW.seek_anchor          = _seek_anchor;
    SFW.derive               = _derive;
    SFW.add_event            = _add_event;
    SFW.setup_event_handling = _setup_event_handling;
    SFW.process_event        = _process_event;
    SFW.translate_url        = _translate_url;
+   SFW.open_interaction     = _open_interaction;
+   SFW.close_last_view      = _close_last_view;
+   SFW.get_director         = _get_director;
+   SFW.alert_notice         = _alert_notice;
+   SFW.check_for_preempt    = _check_for_preempt;
    SFW.base                 = _base;
 
-   SFW.px = function(num) { return String(num)+"px"; };
+   SFW.types                = {};
+   SFW.views                = [];
+
+   SFW.px = function(num)    { return String(num)+"px"; };
 
    function call_SFW_init_functions()
    {
       // Other inits need the above functions, so only call after they're installed:
-      //   var inits = ["init_SFW_DOM", "init_SFW_Tables", "init_SFW_Debug"];
-      var inits = ["init_SFW_DOM", "init_SFW_Tables"];
+        var inits = ["init_SFW_Debug",
+                     "init_SFW_DOM",
+                     "init_SFW_Tables",
+                     "init_SFW_Forms"];
+      
+      // var inits = ["init_SFW_DOM", "init_SFW_Tables"];
       for (f in inits)
       {
          var s = inits[f];
@@ -27,47 +38,9 @@ function init_SFW(callback)
       }
    }
 
-   function _focus_on_first_field(dlg)
+   function _alert(str)
    {
-      var nl = dlg.getElementsByTagName("label");
-      if (nl && nl.length>0)
-      {
-         var label = nl[0];
-         var name = label.getAttribute("for");
-         function f(n) { return n.getAttribute("name")==name; }
-         var el = getFirstMatchingEl(label.parentNode, f);
-         if (el)
-         {
-            el.focus();
-            if (el.getAttribute("type")=="text")
-            {
-               el.selectionStart = 0;
-               el.selectionEnd = el.value.length;
-            }
-         }
-      }
-   }
-
-   function _get_form_data(form)
-   {
-      var el, els = form.elements;
-      var arr = [];
-      var noninputs = 'submit reset button';
-      for (var i=0, stop=els.length; i<stop; i++)
-      {
-         el = els[i];
-         if (noninputs.search(el.type)==-1)
-         {
-            if (el.type=="checkbox")
-            {
-               if (el.checked)
-                  arr.push(el.name + "=1");
-            }
-            else if ('value' in el && el.value.length>0)
-               arr.push(el.name + "=" + encodeURIComponent(el.value));
-         }
-      }
-      return arr;
+      window.alert(str);
    }
 
    function _seek_anchor(t)
@@ -101,6 +74,17 @@ function init_SFW(callback)
          target.attachEvent("on"+name,f);
    }
 
+   function _resize_table_heads()
+   {
+      var nl, t;
+      if ((nl=document.getElementsByTagName("table")))
+      {
+         for (var i=0,stop=nl.length; i<stop; ++i)
+            if ((t=nl[i]).getAttribute("data-sfw-class"))
+               SFW.fix_table_heads(t);
+      }
+   }
+
    function _setup_event_handling()
    {
       function f(ev)
@@ -109,7 +93,10 @@ function init_SFW(callback)
          var t=e.target||e.srcElement;
 
          if (e.type=="resize")
-            resize_table_headers();
+         {
+            _resize_table_heads();
+            return true;
+         }
 
          if (!process_dpicker(e,t))
             return false;
@@ -156,6 +143,7 @@ function init_SFW(callback)
    function _process_event(e,t)
    {
       var el,  obj;
+
       if ((el=_seek_anchor(t)) && (obj=el.sfwobj))
          return obj.process(e,t);
       else
@@ -186,6 +174,106 @@ function init_SFW(callback)
       return url;
    }
 
+   function _open_interaction(host, url, caller)
+   {
+      var newobj = null;
+      
+      function got(xdoc)
+      {
+         if (_check_for_preempt(xdoc))
+         {
+            var thost = host.ownerDocument.createElement("div");
+            
+            var xdocel = xdoc.documentElement;
+            var type = xdoc.documentElement.getAttribute("mode-type");
+            var xslo = SFW.xslobj;
+            xslo.transformInsert(thost, xdocel);
+
+            var anchor = SFW.first_child_element(thost);
+            if (anchor)
+            {
+               anchor = host.appendChild(anchor);
+               if (type && type in SFW.types)
+               {
+                  newobj = new SFW.types[type](anchor, xdoc, caller);
+                  if (newobj)
+                     SFW.views.push(newobj);
+               }
+            }
+         }
+      }
+
+      xhr_get(url, got);
+   }
+
+   function _close_last_view()
+   {
+      var view = SFW.views.pop();
+      if (view)
+         view.close();
+   }
+
+   function _get_director(xmldoc, htmlanchor)
+   {
+      if (!htmlanchor)
+         htmlanchor = document.sfwanchor;
+      
+      var docel, mtype;
+      if (htmlanchor && xmldoc
+          && (docel=xmldoc.documentElement)
+          && (mtype=docel.getAttribute("mode-type"))
+          && mtype in SFW.types)
+         return new SFW.types[mtype](htmlanchor,xmldoc);
+
+      return null;
+   }
+
+   function _alert_notice(el)
+   {
+      var type = el.getAttribute("type");
+      var msg = el.getAttribute("msg");
+      var where = el.getAttribute("where");
+      var detail = el.getAttribute("detail");
+      var str = type + ":\n" + msg;
+      if (where)
+         str += "\nwhere: " + where;
+      else if (detail)
+         str += "\ndetail: " + detail;
+      SFW.alert(str);
+   }
+
+   function _check_for_preempt(doc)
+   {
+      var docel = doc.documentElement;
+      var tname = docel.tagName.toLowerCase();
+      var jump;
+      if (tname=="notice")
+      {
+         _alert_notice(docel);
+         return false;
+      }
+      else if ((jump=docel.getAttribute("meta-jump")))
+      {
+         window.location = jump;
+         return false;
+      }
+      else
+      {
+         var n = docel.firstChild;
+         while(n)
+         {
+            if (n.nodeType==1 && (tname=n.tagName.toLowerCase())=="message")
+            {
+               _alert_notice(n);
+               return false;
+            }
+
+            n = n.nextSibling;
+         }
+      }
+      return true;
+   }
+
    function _find_schema(doc)
    {
       var schema = doc.selectSingleNode("*/schema");
@@ -195,22 +283,41 @@ function init_SFW(callback)
       return schema;
    }
    
-   function _base(base,doc)
+   function _base(html_base,xml_doc,caller)
    {
-      this._top = base;
-      this._doc = doc;
-      this._schema = _find_schema(doc);
+      this._top = html_base;
+      this._doc = xml_doc;
+      this._caller = caller ? caller : null;
+      this._schema = _find_schema(xml_doc);
       this._baseproto = null;
       this._super = null;
-      base.sfwobj = this;
+      html_base.sfwobj = this;
    };
 
 
    _base.prototype.top = function _top()       { return this._top; };
+   _base.prototype.caller = function _caller() { return this._caller; };
    _base.prototype.stage = function _stage()   { return this._top.parentNode; };
    _base.prototype.doc = function _doc()       { return this._doc; };
    _base.prototype.schema = function _schema() { return this._schema; };
    _base.prototype.baseproto = function _baseproto() { return this._baseproto; };
+   
+   _base.prototype.close = function _close()
+   {
+      var v = this._top;
+      if (v)
+      {
+         // This should release the closure:
+         v.sfwobj = null;
+         v.parentNode.removeChild(v);
+      }
+   };
+   
+   _base.prototype.confirm_owned = function _confirm_owned(el)
+   {
+      var anchor = SFW.get_ancestor_anchor(el);
+      return (anchor && anchor==this._top);
+   };
 
    _base.prototype.process = function _base_process(e,t)
    {
@@ -220,12 +327,22 @@ function init_SFW(callback)
    // _base prototypes must be in place before this line:
    call_SFW_init_functions();
 
-   // These may change if I redo XML.js.  They should all
-   // accept and use a callback in case the documents are
-   // not already resident.
-   SFW.xmldoc = getXMLDocument();
-   SFW.xsldoc = getXSLDocument();
-   SFW.xslobj = new XSL(SFW.xsldoc);
+   function xmldocs_ready()
+   {
+      // These may change if I redo XML.js.  They should all
+      // accept and use a callback in case the documents are
+      // not already resident.
+      SFW.xmldoc = getXMLDocument();
+      if (SFW.xmldoc)
+      {
+         SFW.xsldoc = getXSLDocument();
+         if (SFW.xsldoc)
+            SFW.xslobj = new XSL(SFW.xsldoc);
+      }
 
-   callback();
+      callback();
+   }
+
+   getXMLDocs(xmldocs_ready);
+
 }

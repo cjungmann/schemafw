@@ -1,22 +1,17 @@
 function init_SFW_Tables()
 {
-   SFW.default_table = _table;
+   SFW.types["table"] = _table;
    SFW.fix_table_heads = _fix_table_heads;
-
-   function _init_table(table, doc)
-   {
-      _fix_table_heads(table);
-
-      SFW.process_message = function(e,t)
-      {
-         return _table_process_message(e,t);
-      };
-   }
 
    function _table(base, doc)
    {
       SFW.base.call(this,base,doc);
       SFW.fix_table_heads(base);
+
+      function f(n) {return n.nodeType==1 && n.getAttribute("rndx")!=null;}
+      this._result = SFW.find_child_matches(this._doc, f, true, true);
+      if (this._result)
+         this._schema = SFW.find_child_matches(this._result, "schema", true);
    }
 
    SFW.derive(_table, SFW.base);
@@ -24,11 +19,14 @@ function init_SFW_Tables()
    _table.prototype.open_dialog = function _open_dialog(button, row)
    {
       var stage = this.top().parentNode;
-      
    };
 
    _table.prototype.get_line_id = function _get_line_id(row)
    {
+      var line_id = null;
+      if ((line_id=row.getAttribute("data-id")))
+         return line_id;
+      
       var f, schema = this.schema();
       if ((doc=this.doc()) && (schema=doc.selectSingleNode("*/*[@rndx=1]/schema")))
       {
@@ -42,13 +40,16 @@ function init_SFW_Tables()
             while (a)
             {
                if (a.nodeType==2)
-                  return a.value;
+               {
+                  line_id = a.value;
+                  break;
+               }
                else
                   a = a.nextSibling;
             }
          }
       }
-      return null;
+      return line_id;
    };
 
    _table.prototype.update_row = function _update_row(row, doc)
@@ -59,40 +60,115 @@ function init_SFW_Tables()
           && (newnode=node.selectSingleNode("*[1]")))
       {
          var parent = row.parentNode;
-         SFW.xslobj.transformInsert(parent, doc, row);
+         SFW.xslobj.transformfgInsert(parent, doc, row);
          parent.removeChild(row);
       }
    };
 
-   _table.prototype.process_line_click = function _process_line_click(row)
+   _table.prototype.process_row_click = function _process_row_click(row)
    {
+      var newpage = null;
+      
       function finish(doc)
       {
-         this.update_row(row,doc);
+         if (SFW.check_for_preempt(doc))
+            this.update_row(row,doc);
       }
+
+      function running()
+      {
+         alert("Hi, got to a running dealy");
+      }
+      
       var doc, on_line_click;
-      if ((doc=this.schema())
+      if ((doc=this.doc())
           && (on_line_click=doc.documentElement.getAttribute("on_line_click")))
       {
          var id = this.get_line_id(row);
          if (id)
          {
+            var stage = this.stage();
             var url = on_line_click + "=" + id;
-            
+            newpage = SFW.open_interaction(stage, url, running);
          }
       }
+   };
+
+   _table.prototype.process_add_button = function(button)
+   {
+      var tablehost = this.top().parentNode;
+      var url = SFW.translate_url(button.getAttribute("data-task"),
+                                  this.doc());
+      SFW.open_interaction(tablehost, url, this);
+   };
+
+   _table.prototype.process_line_click = function(tr)
+   {
+      var id, url;
+      if ((id=tr.getAttribute("data-id"))
+          && (url=this._top.getAttribute("data-on_line_click")))
+      {
+         var idname = this._schema ? this._schema.getAttribute("line_click_id") : null;
+         if (!idname)
+            idname = "id";
+
+         url += "=" + id;
+         
+         function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
+         var xrow = SFW.find_child_matches(this._result, f, true);
+
+         this._row_marker = {"tr":tr, "xrow":xrow };
+
+         SFW.open_interaction(this._top.parentNode, url, this);
+      }
+   };
+
+   _table.prototype.add_result_node = function(result)
+   {
+      var n = SFW.first_child_element(result);
+      function f(n) { return n.nodeType==1 && n.getAttribute("rndx")!=null; }
+      
+      var data = SFW.find_child_matches(this._doc, f, true, true);
+      if (data)
+      {
+         if (this._row_marker)
+         {
+         }
+         else
+         {
+            this._result.appendChild(n);
+         }
+      }
+   };
+
+   _table.prototype.child_finished = function(doc)
+   {
+      if (doc)
+      {
+         var type, res = SFW.first_child_element(doc.documentElement);
+         if (res && res.getAtttribute("rndx") && (type=res.getAttribute("type")))
+         {
+            if (type=="update")
+            {
+               this.add_result_node(res);
+            }
+         }
+         SFW.alert("Type = " + result.getAttribute("type"));
+         this._row_marker = null;
+      }
+      
+      window.setTimeout(SFW.close_last_view(), 100);
    };
    
    _table.prototype.process = function _table_process_message(e,t)
    {
-      // For now, only handle clicks (keyboard handled earlier):
-      if (e.type!="click")
+      if (!this.confirm_owned(t))
          return true;
-
+      
       var table_el = this.top();
 
-      // Filter non-owned elements:
-      if (table_el != SFW.get_ancestor_anchor(t))
+      // For now, only handle clicks (keyboard handled earlier):
+      if (e.type!="click")
          return true;
 
       while (t && t!=table_el)
@@ -106,9 +182,7 @@ function init_SFW_Tables()
                switch(btype)
                {
                   case "add":
-                     var url = SFW.translate_url(t.getAttribute("data-task"),doc);
-                     var rowhost = table_el.getElementsByTagName("tbody")[0];
-                     var contenthost = this.top().parentNode;
+                     this.process_add_button(t);
                   
                      // bndl.url = translate_url(t.getAttribute("data-task"), doc);
                      // bndl.row_host = top.getElementsByTagName("tbody")[0];
@@ -125,7 +199,9 @@ function init_SFW_Tables()
                break;
             }
             case "tr":
-               return process_tr_click(t);
+//               return process_line_click(t);
+//               return this.process_row_click(t);
+               return this.process_line_click(t);
 
             case "th":
             {
