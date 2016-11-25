@@ -9,7 +9,7 @@ function init_SFW_DOM()
    SFW.get_relative_offset  = _get_relative_offset;
    
    SFW.el_name              = _el_name;
-   SFW.find_tagged_children = _find_tagged_children;
+   SFW.find_child_matches   = _find_child_matches;
    SFW.first_child_element  = _first_child_element;
    SFW.get_page_anchor      = _get_page_anchor;
    SFW.get_ancestor_anchor  = _get_ancestor_anchor;
@@ -66,18 +66,37 @@ function init_SFW_DOM()
       return _el_name(el);
    }
 
-   function _find_tagged_children(parent, tag, first_only)
+   function _find_child_matches(parent, tag_or_func, first_only, recursive)
    {
+      var compfunc;
+      if (typeof(tag_or_func)=="function")
+         compfunc = tag_or_func;
+      else
+         compfunc = function(el) {
+            return el.nodeType==1 && el.tagName.toLowerCase()==tag_or_func;
+         };
+      
       var rval = [];
       var node = parent.firstChild;
       while (node)
       {
-         if (node.nodeType==1 && node.tagName.toLowerCase()==tag)
+         if (compfunc(node))
          {
             if (first_only)
                return node;
             else
                rval.push(node);
+         }
+         else if (recursive)
+         {
+            var recur =_find_child_matches(node, compfunc, first_only, true);
+            if (recur)
+            {
+               if (first_only)
+                  return recur;
+               else
+                  rval.concat(recur);
+            }
          }
          node = node.nextSibling;
       }
@@ -87,10 +106,15 @@ function init_SFW_DOM()
    function _first_child_element(el)
    {
       var n = el.firstChild;
-      if (n.nodeType==1)
-         return n;
+      if (n)
+      {
+         if (n.nodeType==1)
+            return n;
+         else
+            return _next_sibling_element(n);
+      }
       else
-         return _next_sibling_element(n);
+         return null;
    }
 
    function _next_sibling_element(el)
@@ -161,9 +185,9 @@ function init_SFW_DOM()
    {
       var html = document.documentElement;
       if (!("head" in document))
-         document.head = _find_tagged_children(html, "head", true);
+         document.head = _find_child_matches(html, "head", true);
       if (!("body" in document))
-         document.body = _find_tagged_children(html, "body", true);
+         document.body = _find_child_matches(html, "body", true);
       if (!("sfwanchor" in document))
       {
          var a = _get_page_anchor();
