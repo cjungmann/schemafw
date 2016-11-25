@@ -4,6 +4,9 @@ function process_dpicker(e,t)
    var c_cur_input = null;
    var c_cur_calhost = null;
 
+   if (!t)
+      return true;
+
    // Use parts of today's date as replacements for missing date parts:
    var tdate = new Date();
    var c_rday = tdate.getDate();
@@ -44,12 +47,6 @@ function process_dpicker(e,t)
       addtxt(td,text);
       return td;
    }
-
-   // Prepare closure DOM variables:
-   // Save the HTML document object
-   var c_doc = t.ownerDocument;
-   if (!"body" in c_doc)
-      c_doc.body = c_doc.getElementsByTagName("body")[0];
 
    function ditch_context()
    {
