@@ -39,7 +39,15 @@ implement_functions();
 
 
 // **** XSL class **** //
-function XSL(doc, callback) { if (!doc) { alert("Null XSL document."); return; } this.init(doc,callback); }
+function XSL(doc, callback)
+{
+   if (!doc)
+   {
+      alert("Null XSL document.");
+      return;
+   }
+   this.init(doc,callback);
+}
 XSL.prototype.init                = null;  // (doc, callback)
 XSL.prototype.fix_stylesheet      = null;  // (callback)
 XSL.prototype.find_node           = null;  // (xpath)
@@ -733,7 +741,7 @@ function implement_XSL_methods()
    XSL.prototype.transformReplace = function(target,node)
    {
       var parent = target.parentNode;
-      this.transformFill(parent,node,target);
+      this.transformInsert(parent,node,target);
       parent.removeChild(target);
    };
 
@@ -798,10 +806,9 @@ function implement_XSL_methods()
             node = node.ownerElement;
          node.removeAttribute("root_one");
       };
-      XSL.prototype.transformFill = function(target,node,before)
+      XSL.prototype.transformInsert = function(host,node,before)
       {
-         target.innerHTML = "";
-         var target_doc = (target.nodeType==9 ? target : target.ownerDocument);
+         var host_doc = (host.nodeType==9 ? host : host.ownerDocument);
          var source_doc, source_node;
          if (node.nodeType==9)
          {
@@ -817,20 +824,21 @@ function implement_XSL_methods()
          // protect node in case of error:
          try
          {
-            var ddf = this.get_processor().transformToFragment(source_doc, target_doc);
+            var ddf = this.get_processor().transformToFragment(source_doc, host_doc);
             if (before)
-               target.insertBefore(ddf, before);
+               host.insertBefore(ddf, before);
             else
-               target.appendChild(ddf);
+               host.appendChild(ddf);
          }
          catch(e) { alert("transformToFragment failed: " + e.message); }
 
          if (node.nodeType!=9)
             this.undo_root_one_fix(node);
       };
-      XSL.prototype.transformInsert = function(container,node,before)
+      XSL.prototype.transformFill = function(host,node)
       {
-         this.transformFill(container,node,before);
+         host.innerHTML = "";
+         this.transformInsert(host,node);
       };
    }
    else
