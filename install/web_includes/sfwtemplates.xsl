@@ -623,10 +623,10 @@
           <xsl:choose>
             <xsl:when test="$has_action">
               <input type="submit" value="Submit" />
-              <input type="button" value="Cancel" class="{$class}" />
+              <input type="button" value="Cancel" class="{$class}" data-type="cancel" />
             </xsl:when>
             <xsl:otherwise>
-              <input type="button" value="Close" class="{$class}" />
+              <input type="button" value="Close" class="{$class}" data-type="close" />
             </xsl:otherwise>
           </xsl:choose>
         </p>
