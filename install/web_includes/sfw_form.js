@@ -108,20 +108,10 @@ function init_SFW_Forms()
 
    _form.prototype.process_button = function _process_button(e,t)
    {
-      var val = "value" in t ? t.value : null;
-      if (val=="Cancel" || val=="Close")
-      {
-         if (this._caller)
-            this._caller.child_finished();
-      }
-      else
-      {
-         var dt = t.getAttribute("data-type");
-         switch(t.getAttribute("data-type"))
-         {
-            
-         }
-      }
+      var ths = this;
+      function fdone(cmd) { if (ths._caller) ths._caller.child_finished(cmd||null); }
+      
+      return this.process_clicked_button(t, fdone);
    };
 
    _form.prototype.process = function _form_process_message(e,t)
