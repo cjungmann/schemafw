@@ -3,22 +3,30 @@ function init_SFW_Tables()
    SFW.types["table"] = _table;
    SFW.fix_table_heads = _fix_table_heads;
 
+   function _match_rndx(n) { return n.nodeType==1 && n.getAttribute("rndx"); }
+
    function _table(base, doc)
    {
       SFW.base.call(this,base,doc);
       SFW.fix_table_heads(base);
 
-      function f(n) {return n.nodeType==1 && n.getAttribute("rndx")!=null;}
-      this._result = SFW.find_child_matches(this._doc, f, true, true);
+      this._result = SFW.find_child_matches(this._doc, _match_rndx, true, true);
       if (this._result)
          this._schema = SFW.find_child_matches(this._result, "schema", true);
    }
 
    SFW.derive(_table, SFW.base);
 
-   _table.prototype.open_dialog = function _open_dialog(button, row)
+   _table.prototype.replot = function()
    {
-      var stage = this.top().parentNode;
+      var tbody = SFW.find_child_matches(this._top, "tbody", true);
+      if (tbody)
+      {
+         this._result.setAttribute("make_table_body", "true");
+         SFW.xslobj.transformFill(tbody, this._result);
+         this._result.removeAttribute("make_table_body");
+         _fix_table_heads(this._top);
+      }
    };
 
    _table.prototype.get_line_id = function _get_line_id(row)
@@ -65,35 +73,6 @@ function init_SFW_Tables()
       }
    };
 
-   _table.prototype.process_row_click = function _process_row_click(row)
-   {
-      var newpage = null;
-      
-      function finish(doc)
-      {
-         if (SFW.check_for_preempt(doc))
-            this.update_row(row,doc);
-      }
-
-      function running()
-      {
-         alert("Hi, got to a running dealy");
-      }
-      
-      var doc, on_line_click;
-      if ((doc=this.doc())
-          && (on_line_click=doc.documentElement.getAttribute("on_line_click")))
-      {
-         var id = this.get_line_id(row);
-         if (id)
-         {
-            var stage = this.stage();
-            var url = on_line_click + "=" + id;
-            newpage = SFW.open_interaction(stage, url, running);
-         }
-      }
-   };
-
    _table.prototype.process_add_button = function(button)
    {
       var tablehost = this.top().parentNode;
@@ -102,21 +81,32 @@ function init_SFW_Tables()
       SFW.open_interaction(tablehost, url, this);
    };
 
+   _table.prototype.get_sfw_attribute = function(aname)
+   {
+      var name = null;
+      if (this._schema && !(name=this._schema.getAttribute(aname)))
+         name = this._doc.documentElement.getAttribute(aname);
+      return name || "id";
+   };
+
+   _table.prototype.get_line_click_id_name = function()
+   {
+      return this.get_sfw_attribute("line_click_id");
+   };
+
    _table.prototype.process_line_click = function(tr)
    {
       var id, url;
       if ((id=tr.getAttribute("data-id"))
           && (url=this._top.getAttribute("data-on_line_click")))
       {
-         var idname = this._schema ? this._schema.getAttribute("line_click_id") : null;
-         if (!idname)
-            idname = "id";
-
          url += "=" + id;
-         
+
+         var idname = this.get_line_click_id_name();
          function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
          var xrow = SFW.find_child_matches(this._result, f, true);
 
+         // Save marker for child_finished()
          this._row_marker = {"tr":tr, "xrow":xrow };
 
          SFW.open_interaction(this._top.parentNode, url, this);
@@ -126,13 +116,16 @@ function init_SFW_Tables()
    _table.prototype.add_result_node = function(result)
    {
       var n = SFW.first_child_element(result);
-      function f(n) { return n.nodeType==1 && n.getAttribute("rndx")!=null; }
       
-      var data = SFW.find_child_matches(this._doc, f, true, true);
-      if (data)
+      // var data = SFW.find_child_matches(this._doc, _match_rndx, true, true);
+      if (this._result)
       {
-         if (this._row_marker)
+         var rm, xrow;
+         if ((rm=this._row_marker) && (xrow=rm.xrow))
          {
+            var p = xrow.parentNode;
+            p.insertBefore(n,xrow);
+            p.removeChild(xrow);
          }
          else
          {
@@ -141,19 +134,64 @@ function init_SFW_Tables()
       }
    };
 
-   _table.prototype.child_finished = function(doc)
+   _table.prototype.delete_row = function()
    {
-      if (doc)
+      if (this._result)
       {
-         var type, res = SFW.first_child_element(doc.documentElement);
-         if (res && res.getAtttribute("rndx") && (type=res.getAttribute("type")))
+         var rm, xrow, hrow;
+         if ((rm=this._row_marker) && (xrow=rm.xrow))
          {
-            if (type=="update")
+            xrow.parentNode.removeChild(xrow);
+            if ((hrow=rm.tr))
+               hrow.parentNode.removeChild(hrow);
+         }
+      }
+   };
+
+   _table.prototype.child_finished = function(cmd)
+   {
+      // cmd should have already been checked for messages
+      if (cmd)
+      {
+         var ctype = typeof(cmd);
+         if (ctype=="object" && "documentElement" in cmd)
+         {
+            var docel = cmd.documentElement;
+            var rtype, mtype = docel.getAttribute("mode-type");
+            var res = SFW.find_child_matches(cmd, _match_rndx, true, true);
+            if (res)
             {
-               this.add_result_node(res);
+               var rname = res.getAttribute("row-name") || "row";
+               if (mtype=="delete")
+               {
+                  function f(n) { return n.nodeType==1 && n.tagName==rname; }
+                  var row = SFW.find_child_matches(res, f, true);
+                  if (row && row.getAttribute("deleted"))
+                     this.delete_row();
+               }
+               else if ((rtype=res.getAttribute("type")))
+               {
+                  if (rtype=="update")
+                  {
+                     this.add_result_node(res);
+                     this.replot();
+                  }
+                  else
+                     SFW.alert("Type = " + rtype);
+               }
             }
          }
-         SFW.alert("Type = " + result.getAttribute("type"));
+         else if (ctype=="string")
+         {
+            if (cmd=="delete")
+               this.delete_row(cmd);
+            else if (cmd=="fail")
+            {
+               SFW.alert("Operation failed.");
+               return; // skip deleting marker or view.
+            }
+         }
+         
          this._row_marker = null;
       }
       
@@ -199,8 +237,6 @@ function init_SFW_Tables()
                break;
             }
             case "tr":
-//               return process_line_click(t);
-//               return this.process_row_click(t);
                return this.process_line_click(t);
 
             case "th":
