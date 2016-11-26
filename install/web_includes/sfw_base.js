@@ -3,6 +3,7 @@ var SFW = { };
 function init_SFW(callback)
 {
    SFW.alert                = _alert;
+   SFW.confirm              = _confirm;
    SFW.seek_anchor          = _seek_anchor;
    SFW.derive               = _derive;
    SFW.add_event            = _add_event;
@@ -41,6 +42,11 @@ function init_SFW(callback)
    function _alert(str)
    {
       window.alert(str);
+   }
+
+   function _confirm(str)
+   {
+      return window.confirm(str);
    }
 
    function _seek_anchor(t)
@@ -317,6 +323,44 @@ function init_SFW(callback)
    {
       var anchor = SFW.get_ancestor_anchor(el);
       return (anchor && anchor==this._top);
+   };
+
+   _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
+   {
+      var type = b.getAttribute("data-type");
+      var url = b.getAttribute("data-task") || b.getAttribute("data-url");
+      var cmsg = b.getAttribute("data-confirm");
+
+      if (cmsg && !SFW.confirm(cmsg))
+      {
+         cb("cancel");
+         return false;
+      }
+
+      function fail_cb(xhr) { cb("failed"); }
+      
+      switch(type)
+      {
+         case "jump":
+         case "open":
+            if (url)
+            {
+               window.location = url;
+               return false;
+            }
+            break;
+         case "cancel":
+         case "close":
+            cb(type);
+            return false;
+         
+         default:
+            if (url)
+               xhr_get(url, cb, fail_cb);
+            break;
+      }
+
+      return true;
    };
 
    _base.prototype.process = function _base_process(e,t)
