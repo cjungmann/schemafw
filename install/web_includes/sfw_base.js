@@ -4,7 +4,8 @@ function init_SFW(callback)
 {
    SFW.alert                = _alert;
    SFW.confirm              = _confirm;
-   SFW.seek_anchor          = _seek_anchor;
+   SFW.seek_ancestor_anchor = _seek_ancestor_anchor;
+   SFW.seek_child_anchor    = _seek_child_anchor;
    SFW.derive               = _derive;
    SFW.add_event            = _add_event;
    SFW.setup_event_handling = _setup_event_handling;
@@ -17,8 +18,9 @@ function init_SFW(callback)
    SFW.check_for_preempt    = _check_for_preempt;
    SFW.base                 = _base;
 
-   SFW.types                = {};
    SFW.views                = [];
+   
+   SFW.types                = {};
 
    SFW.px = function(num)    { return String(num)+"px"; };
 
@@ -28,7 +30,9 @@ function init_SFW(callback)
         var inits = ["init_SFW_Debug",
                      "init_SFW_DOM",
                      "init_SFW_Tables",
-                     "init_SFW_Forms"];
+                     "init_SFW_Forms",
+                     "init_SFW_Views"
+                    ];
       
       // var inits = ["init_SFW_DOM", "init_SFW_Tables"];
       for (f in inits)
@@ -49,13 +53,19 @@ function init_SFW(callback)
       return window.confirm(str);
    }
 
-   function _seek_anchor(t)
+   function _seek_ancestor_anchor(t)
    {
       var el = SFW.get_ancestor_anchor(t);
       if (el && el.sfwobj)
          return el;
       else
          return null;
+   }
+
+   function _seek_child_anchor(t)
+   {
+      function f(n) { return n.nodeType==1 && n.getAttribute("data-sfw-class"); }
+      return SFW.find_child_matches(t, f, true);
    }
 
    // Add all base prototypes to dclass, which then can replace them:
@@ -150,7 +160,7 @@ function init_SFW(callback)
    {
       var el,  obj;
 
-      if ((el=_seek_anchor(t)) && (obj=el.sfwobj))
+      if ((el=_seek_ancestor_anchor(t)) && (obj=el.sfwobj))
          return obj.process(e,t);
       else
          return true;
@@ -195,7 +205,7 @@ function init_SFW(callback)
             var xslo = SFW.xslobj;
             xslo.transformInsert(thost, xdocel);
 
-            var anchor = SFW.first_child_element(thost);
+            var anchor = SFW.seek_child_anchor(thost);
             if (anchor)
             {
                anchor = host.appendChild(anchor);
@@ -225,11 +235,15 @@ function init_SFW(callback)
          htmlanchor = document.sfwanchor;
       
       var docel, mtype;
-      if (htmlanchor && xmldoc
-          && (docel=xmldoc.documentElement)
-          && (mtype=docel.getAttribute("mode-type"))
-          && mtype in SFW.types)
-         return new SFW.types[mtype](htmlanchor,xmldoc);
+      if (htmlanchor && xmldoc && (docel=xmldoc.documentElement))
+      {
+         if (!(mtype=docel.getAttribute("mode-type")))
+            console.error("Untyped document");
+         else if (!(mtype in SFW.types))
+            console.error("SFW.types does not include " + mtype);
+         else
+            return new SFW.types[mtype](htmlanchor,xmldoc);
+      }
 
       return null;
    }
@@ -307,6 +321,8 @@ function init_SFW(callback)
    _base.prototype.doc = function _doc()       { return this._doc; };
    _base.prototype.schema = function _schema() { return this._schema; };
    _base.prototype.baseproto = function _baseproto() { return this._baseproto; };
+
+   _base.prototype.button_processors = {};
    
    _base.prototype.close = function _close()
    {
@@ -355,7 +371,9 @@ function init_SFW(callback)
             return false;
          
          default:
-            if (url)
+            if ("process_button_"+type in this)
+               return this["process_button_view"](b,cb);
+            else  if (url)
                xhr_get(url, cb, fail_cb);
             break;
       }

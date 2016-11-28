@@ -1,11 +1,13 @@
 function init_SFW_Tables()
 {
    SFW.types["table"] = _table;
+   SFW.types["import-review"] = _table;
+   
    SFW.fix_table_heads = _fix_table_heads;
 
    function _match_rndx(n) { return n.nodeType==1 && n.getAttribute("rndx"); }
 
-   function _table(base, doc)
+   function _table(base, doc, caller)
    {
       SFW.base.call(this,base,doc);
       SFW.fix_table_heads(base);
@@ -16,6 +18,50 @@ function init_SFW_Tables()
    }
 
    SFW.derive(_table, SFW.base);
+
+   _table.prototype.get_sort_field = function()
+   {
+      function f(n) { return n.nodeType==1
+                      && n.tagName=="field"
+                      && n.getAttribute("sorting"); }
+      return SFW.find_child_matches(this._schema,f,true);
+   };
+
+   _table.prototype.get_named_field = function(name)
+   {
+      function f(n) { return n.nodeType==1
+                      && n.tagName=="field"
+                      && n.getAttribute("name")==name; }
+      return SFW.find_child_matches(this._schema, f, true);
+   };
+
+   _table.prototype.set_sort_column = function(t)
+   {
+      var field = this.get_named_field(t.getAttribute("data-name"));
+      if (field)
+      {
+         var sorted = this.get_sort_field();
+         if (sorted==field)
+         {
+            if (field.getAttribute("descending"))
+               field.removeAttribute("descending");
+            else
+               field.setAttribute("descending", "1");
+         }
+         else
+         {
+            field.setAttribute("sorting", "true");
+            if (sorted)
+            {
+               sorted.removeAttribute("sorting");
+               sorted.removeAttribute("descending");
+            }
+         }
+         return true;
+      }
+      else
+         return false;
+   };
 
    _table.prototype.replot = function()
    {
@@ -35,11 +81,11 @@ function init_SFW_Tables()
       if ((line_id=row.getAttribute("data-id")))
          return line_id;
       
-      var f, schema = this.schema();
-      if ((doc=this.doc()) && (schema=doc.selectSingleNode("*/*[@rndx=1]/schema")))
+      var doc, f;
+      if ((doc=this.doc()) && this._schema)
       {
-         if (!(f=schema.selectSingleNode("field[@line_id]")))
-            f = schema.selectSingleNode("field[@primary-key]");
+         if (!(f=this._schema.selectSingleNode("field[@line_id]")))
+            f = this._schema.selectSingleNode("field[@primary-key]");
          if (f)
             return row.getAttribute(f.getAttribute("name"));
          else // return value of first attribute child
@@ -226,13 +272,8 @@ function init_SFW_Tables()
                      // bndl.row_host = top.getElementsByTagName("tbody")[0];
                      // start_dialog(bndl);
                      return false;
-                  case "jump":
-                     return process_button_jump(t);
-                  case "open":
-                     return process_button_open(t);
                   default:
-                     alert("Unknown button type \"" + btype + "\"");
-                     break;
+                     return this.process_clicked_button(t,function(doc) {SFW.alert(doc.documentElement.tagName); });
                }
                break;
             }
@@ -243,18 +284,16 @@ function init_SFW_Tables()
             {
                if ((class_includes(t,'sortable')))
                {
-                  if (result_is_free_to_replot(bndl.result))
-                  {
-                     set_sort_column(bndl.schema, t);
-                     replot_table_contents(table_el, bndl.result);
+                  // if (result_is_free_to_replot(bndl.result))
+                  // {
+                     this.set_sort_column(t);
+                     this.replot();
                      return false;
-                  }
+                  // }
                }
                break;
             }
          }
-
-         
          t = t.parentNode;
       }
 
@@ -380,7 +419,7 @@ function init_SFW_Tables()
       var re_headfix = /headfix_\S+/;
       function align_paired_rows(thead)
       {
-         var rematch, trmatch;
+         var match, trmatch;
          var currow = SFW.first_child_element(thead);
          while (currow)
          {
