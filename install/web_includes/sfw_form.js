@@ -17,9 +17,9 @@ function init_SFW_Forms()
    function _find_first_editable_field(form)
    {
       var els = form.elements;
-      for (ndx in els)
+      for (var i=0,stop=els.length; i<stop; ++i)
       {
-         var el = els[ndx];
+         var el = els[i];
          if ("value" in el && el.type!="button" && el.type!="hidden" && !el.readOnly)
             return el;
       }
