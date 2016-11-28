@@ -244,9 +244,11 @@
     <xsl:value-of select="$nl" />
     <script type="text/javascript" src="includes/sfw_dom.js"></script>
     <xsl:value-of select="$nl" />
+    <script type="text/javascript" src="includes/sfw_table.js"></script>
+    <xsl:value-of select="$nl" />
     <script type="text/javascript" src="includes/sfw_form.js"></script>
     <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/sfw_table.js"></script>
+    <script type="text/javascript" src="includes/sfw_form_view.js"></script>
     <xsl:value-of select="$nl" />
     <script type="text/javascript" src="includes/sfw_debug.js"></script>
     <xsl:value-of select="$nl" />
@@ -1598,6 +1600,12 @@
     <xsl:choose>
       <xsl:when test="$field">
         <xsl:variable name="aname" select="$field/@name" />
+        <xsl:variable name="dir">
+          <xsl:choose>
+            <xsl:when test="$field/@descending">descending</xsl:when>
+            <xsl:otherwise>ascending</xsl:otherwise>
+          </xsl:choose>
+        </xsl:variable>
         <xsl:variable name="data-type">
           <xsl:choose>
             <xsl:when test="$field/@sort"><xsl:value-of select="$field/@sort" /></xsl:when>
@@ -1610,7 +1618,8 @@
                     data-type="number"
                     order="descending" />
           <xsl:sort select="@*[local-name()=$aname]"
-                    data-type="{$data-type}" />
+                    data-type="{$data-type}"
+                    order="{$dir}" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>
