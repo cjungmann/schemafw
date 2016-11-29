@@ -12,7 +12,6 @@ function init_SFW(callback)
    SFW.process_event        = _process_event;
    SFW.translate_url        = _translate_url;
    SFW.open_interaction     = _open_interaction;
-   SFW.close_last_view      = _close_last_view;
    SFW.get_director         = _get_director;
    SFW.alert_notice         = _alert_notice;
    SFW.check_for_preempt    = _check_for_preempt;
@@ -22,7 +21,9 @@ function init_SFW(callback)
    
    SFW.types                = {};
 
-   SFW.px = function(num)    { return String(num)+"px"; };
+   SFW.px                   = _px;
+
+   function _px(num)    { return String(num)+"px"; };
 
    function call_SFW_init_functions()
    {
@@ -198,7 +199,9 @@ function init_SFW(callback)
       {
          if (_check_for_preempt(xdoc))
          {
-            var thost = host.ownerDocument.createElement("div");
+            var thost = addEl("div",host);
+            thost.className = "SFW_Subhost";
+            thost.style.height = SFW.px(host.offsetHeight);
             
             var xdocel = xdoc.documentElement;
             var type = xdoc.documentElement.getAttribute("mode-type");
@@ -206,27 +209,19 @@ function init_SFW(callback)
             xslo.transformInsert(thost, xdocel);
 
             var anchor = SFW.seek_child_anchor(thost);
-            if (anchor)
+            if (anchor
+                && type
+                && type in SFW.types
+                && (newobj = new SFW.types[type](anchor,xdoc,caller)))
             {
-               anchor = host.appendChild(anchor);
-               if (type && type in SFW.types)
-               {
-                  newobj = new SFW.types[type](anchor, xdoc, caller);
-                  if (newobj)
-                     SFW.views.push(newobj);
-               }
+               ;
             }
+            else
+               host.removeChild(thost);
          }
       }
 
       xhr_get(url, got);
-   }
-
-   function _close_last_view()
-   {
-      var view = SFW.views.pop();
-      if (view)
-         view.close();
    }
 
    function _get_director(xmldoc, htmlanchor)
@@ -302,10 +297,18 @@ function init_SFW(callback)
 
       return schema;
    }
+
+   function _find_subhost(el)
+   {
+      while(el && el.nodeType==1 && !class_includes(el,"SFW_Subhost"))
+         el = el.parentNode;
+      return el && el.nodeType==1 ? el : null;
+   }
    
    function _base(html_base,xml_doc,caller)
    {
       this._top = html_base;
+      this._host = _find_subhost(html_base);
       this._doc = xml_doc;
       this._caller = caller ? caller : null;
       this._schema = _find_schema(xml_doc);
@@ -313,7 +316,6 @@ function init_SFW(callback)
       this._super = null;
       html_base.sfwobj = this;
    };
-
 
    _base.prototype.top = function _top()       { return this._top; };
    _base.prototype.caller = function _caller() { return this._caller; };
@@ -323,10 +325,10 @@ function init_SFW(callback)
    _base.prototype.baseproto = function _baseproto() { return this._baseproto; };
 
    _base.prototype.button_processors = {};
-   
+
    _base.prototype.close = function _close()
    {
-      var v = this._top;
+      var v = this._host;
       if (v)
       {
          // This should release the closure:
@@ -341,7 +343,13 @@ function init_SFW(callback)
       return (anchor && anchor==this._top);
    };
 
-   _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
+   _base.prototype.child_finished = function(child, cmd)
+   {
+      function f() { child.close(); }
+      window.setTimeout(f, 100);
+   };
+    
+  _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
    {
       var type = b.getAttribute("data-type");
       var url = b.getAttribute("data-task") || b.getAttribute("data-url");
@@ -353,8 +361,6 @@ function init_SFW(callback)
          return false;
       }
 
-      function fail_cb(xhr) { cb("failed"); }
-      
       switch(type)
       {
          case "jump":
@@ -367,14 +373,19 @@ function init_SFW(callback)
             break;
          case "cancel":
          case "close":
-            cb(type);
+            if (this._caller)
+               this._caller.child_finished(this,type);
             return false;
          
          default:
-            if ("process_button_"+type in this)
-               return this["process_button_view"](b,cb);
-            else  if (url)
-               xhr_get(url, cb, fail_cb);
+            var pbtype = "process_button_"+type;
+            if (pbtype in this)
+               return this[pbtype](b,cb);
+            else if (url)
+            {
+               url = _translate_url(url, this._doc);
+               _open_interaction(this._top.parentNode, url, this);
+            }
             break;
       }
 
