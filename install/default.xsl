@@ -29,7 +29,7 @@
         <xsl:apply-templates select="." mode="fill_head" />
       </head>
       <body>
-        <div id="SWF_Header">
+        <div id="SFW_Header">
           <h1>**Default SchemaFW Header**</h1>
         </div>
         <div id="SFW_Content">
