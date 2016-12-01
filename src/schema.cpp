@@ -1206,7 +1206,7 @@ void Schema::write_error_element(FILE *out,
 {
    ifputs("<error type=\"", out);
    print_str_as_xml(type, out);
-   ifputs("\" msg=\"", out);
+   ifputs("\" message=\"", out);
    print_str_as_xml(msg, out);
    
    if (detail && *detail)
