@@ -9,7 +9,7 @@ function init_SFW_Tables()
 
    function _table(base, doc, caller)
    {
-      SFW.base.call(this,base,doc);
+      SFW.base.call(this,base,doc,caller);
       SFW.fix_table_heads(base);
 
       this._result = SFW.find_child_matches(this._doc, _match_rndx, true, true);
@@ -35,18 +35,50 @@ function init_SFW_Tables()
       return SFW.find_child_matches(this._schema, f, true);
    };
 
-   _table.prototype.set_sort_column = function(t)
+   var sort_tr_arr = ["sorted_up", "sorted_down"];
+   function _remove_sort_classes(n)
    {
-      var field = this.get_named_field(t.getAttribute("data-name"));
+      for (var i=0; i<2; ++i)
+      {
+         var c = sort_tr_arr[i];
+         if (class_includes(n,c))
+            class_remove(n,c);
+      }
+   }
+
+   function _style_sorted_column_head(tr, descending)
+   {
+      var thead = tr.parentNode;
+      var n = thead.firstChild;
+      var sclass = "sorted_" + (descending?"down":"up");
+      while (n)
+      {
+         if (n.nodeType==1 && n.tagName.toLowerCase()=="th")
+         {
+            _remove_sort_classes(n);
+            if (n==tr)
+               class_add(n,sclass);
+         }
+         n = n.nextSibling;
+      }
+   }
+
+   _table.prototype.set_sort_column = function(th)
+   {
+      var field = this.get_named_field(th.getAttribute("data-name"));
       if (field)
       {
+         var descending = false;
          var sorted = this.get_sort_field();
          if (sorted==field)
          {
             if (field.getAttribute("descending"))
                field.removeAttribute("descending");
             else
+            {
                field.setAttribute("descending", "1");
+               descending = true;
+            }
          }
          else
          {
@@ -57,6 +89,8 @@ function init_SFW_Tables()
                sorted.removeAttribute("descending");
             }
          }
+
+         _style_sorted_column_head(th, descending);
          return true;
       }
       else
@@ -119,13 +153,13 @@ function init_SFW_Tables()
       }
    };
 
-   _table.prototype.process_add_button = function(button)
-   {
-      var tablehost = this.top().parentNode;
-      var url = SFW.translate_url(button.getAttribute("data-task"),
-                                  this.doc());
-      SFW.open_interaction(tablehost, url, this);
-   };
+   // _table.prototype.process_button_add = function(button)
+   // {
+   //    var tablehost = this.top().parentNode;
+   //    var url = SFW.translate_url(button.getAttribute("data-task"),
+   //                                this.doc());
+   //    SFW.open_interaction(tablehost, url, this);
+   // };
 
    _table.prototype.get_sfw_attribute = function(aname)
    {
@@ -194,7 +228,7 @@ function init_SFW_Tables()
       }
    };
 
-   _table.prototype.child_finished = function(cmd)
+   _table.prototype.child_finished = function(child, cmd)
    {
       // cmd should have already been checked for messages
       if (cmd)
@@ -240,8 +274,8 @@ function init_SFW_Tables()
          
          this._row_marker = null;
       }
-      
-      window.setTimeout(SFW.close_last_view(), 100);
+
+      SFW.base.prototype.child_finished.call(this,child,cmd);
    };
    
    _table.prototype.process = function _table_process_message(e,t)
@@ -261,22 +295,7 @@ function init_SFW_Tables()
          switch(tag)
          {
             case "button":
-            {
-               var btype = t.getAttribute("data-type");
-               switch(btype)
-               {
-                  case "add":
-                     this.process_add_button(t);
-                  
-                     // bndl.url = translate_url(t.getAttribute("data-task"), doc);
-                     // bndl.row_host = top.getElementsByTagName("tbody")[0];
-                     // start_dialog(bndl);
-                     return false;
-                  default:
-                     return this.process_clicked_button(t,function(doc) {SFW.alert(doc.documentElement.tagName); });
-               }
-               break;
-            }
+               return this.process_clicked_button(t);
             case "tr":
                return this.process_line_click(t);
 
@@ -414,24 +433,21 @@ function init_SFW_Tables()
             if (ftag=="th" || ftag=="td")
                align_cells(ref, flo);
          }
+
+         flo.style.visibility = "visible";
       }
 
       var re_headfix = /headfix_\S+/;
       function align_paired_rows(thead)
       {
-         var match, trmatch;
+         var match, classname, trmatch;
          var currow = SFW.first_child_element(thead);
          while (currow)
          {
-            if (is_tr_el(currow))
-               if ((match=currow.className.match(re_headfix)))
-                  if ((trmatch=find_matched_headfix_row(currow, match[0])))
-                  {
-                     if (class_includes(currow,"floater"))
-                        align_pair(trmatch,currow,sizer_tr);
-                     else
-                        align_pair(currow,trmatch,sizer_tr);
-                  }
+            if (is_tr_el(currow) && class_includes(currow,"floater"))
+               if ((match=currow.className.match(re_headfix)) && (classname=match[0]))
+                  if ((trmatch=find_matched_headfix_row(currow, classname)))
+                     align_pair(trmatch,currow,sizer_tr);
             currow = SFW.next_sibling_element(currow);
          }
       }
@@ -439,10 +455,18 @@ function init_SFW_Tables()
       // search nextSiblings for match
       function find_matched_headfix_row(tr, hf_name)
       {
-         while ((tr=tr.nextSibling))
-            if (is_tr_el(tr))
-               if (class_includes(tr,hf_name))
-                  return tr;
+         var cname = tr.className;
+         var fpos = cname.lastIndexOf(" floater");
+         cname = cname.substring(0,fpos);
+         
+         var n = tr.parentNode.firstChild;
+         while (n)
+         {
+            if (is_tr_el(n))
+               if (n.className == cname)
+                  return n;
+            n = n.nextSibling;
+         }
 
          return null;
       }

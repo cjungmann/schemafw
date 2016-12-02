@@ -10,6 +10,7 @@ function init_SFW(callback)
    SFW.add_event            = _add_event;
    SFW.setup_event_handling = _setup_event_handling;
    SFW.process_event        = _process_event;
+   SFW.resize_page          = _resize_page;
    SFW.translate_url        = _translate_url;
    SFW.open_interaction     = _open_interaction;
    SFW.get_director         = _get_director;
@@ -91,15 +92,45 @@ function init_SFW(callback)
          target.attachEvent("on"+name,f);
    }
 
+   function _resize_page_head()
+   {
+      var ghost, head = document.getElementById("SFW_Header");
+      if (head)
+      {
+         if (!("ghost_div" in head))
+         {
+            ghost = addEl(head.tagName.toLowerCase(), head.parentNode, head);
+            if (ghost)
+            {
+               head.ghost_div = ghost;
+               ghost.className = "SFW_Ghost";
+            }
+         }
+         else
+            ghost = head.ghost_div;
+         
+         ghost.style.height = _px(head.offsetHeight);
+      }
+   }
+
    function _resize_table_heads()
    {
-      var nl, t;
-      if ((nl=document.getElementsByTagName("table")))
+      if ("fix_table_heads" in SFW)
       {
-         for (var i=0,stop=nl.length; i<stop; ++i)
-            if ((t=nl[i]).getAttribute("data-sfw-class"))
-               SFW.fix_table_heads(t);
+         var nl, t;
+         if ((nl=document.getElementsByTagName("table")))
+         {
+            for (var i=0,stop=nl.length; i<stop; ++i)
+               if ((t=nl[i]).getAttribute("data-sfw-class"))
+                  SFW.fix_table_heads(t);
+         }
       }
+   }
+
+   function _resize_page()
+   {
+      _resize_page_head();
+      _resize_table_heads();
    }
 
    function _setup_event_handling()
@@ -111,7 +142,7 @@ function init_SFW(callback)
 
          if (e.type=="resize")
          {
-            _resize_table_heads();
+            _resize_page();
             return true;
          }
 
@@ -201,7 +232,7 @@ function init_SFW(callback)
          {
             var thost = addEl("div",host);
             thost.className = "SFW_Subhost";
-            thost.style.height = SFW.px(host.offsetHeight);
+            thost.style.minHeight = SFW.px(host.offsetHeight);
             
             var xdocel = xdoc.documentElement;
             var type = xdoc.documentElement.getAttribute("mode-type");
@@ -246,14 +277,14 @@ function init_SFW(callback)
    function _alert_notice(el)
    {
       var type = el.getAttribute("type");
-      var msg = el.getAttribute("msg");
+      var msg = el.getAttribute("message");
       var where = el.getAttribute("where");
       var detail = el.getAttribute("detail");
       var str = type + ":\n" + msg;
       if (where)
-         str += "\nwhere: " + where;
+         str += "\n\nwhere:\n" + where;
       else if (detail)
-         str += "\ndetail: " + detail;
+         str += "\n\ndetail:\n" + detail;
       SFW.alert(str);
    }
 
@@ -326,7 +357,7 @@ function init_SFW(callback)
 
    _base.prototype.button_processors = {};
 
-   _base.prototype.close = function _close()
+   _base.prototype.sfw_close = function _sfw_close()
    {
       var v = this._host;
       if (v)
@@ -345,7 +376,7 @@ function init_SFW(callback)
 
    _base.prototype.child_finished = function(child, cmd)
    {
-      function f() { child.close(); }
+      function f() { if ("sfw_close" in child) child.sfw_close(); }
       window.setTimeout(f, 100);
    };
     
@@ -399,6 +430,7 @@ function init_SFW(callback)
 
    // _base prototypes must be in place before this line:
    call_SFW_init_functions();
+   _resize_page_head();
 
    function xmldocs_ready()
    {

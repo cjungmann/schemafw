@@ -105,7 +105,7 @@ function init_SFW_DOM()
 
    function _first_child_element(el)
    {
-      var n = el.firstChild;
+      var n = el ? el.firstChild : null;
       if (n)
       {
          if (n.nodeType==1)
@@ -149,10 +149,10 @@ function init_SFW_DOM()
 
       if (levels==0)
          return null;
-      
-      if (arguments.length<2)
-         parent = document.getElementById("SFW_Content");
 
+      if (!parent)
+         parent=document.getElementById("SFW_Content");
+      
       var subel, el = _first_child_element(parent);
       while (el)
       {

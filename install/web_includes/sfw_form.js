@@ -9,7 +9,7 @@ function init_SFW_Forms()
    function _form(base, doc, caller)
    {
       SFW.base.call(this, base,doc,caller);
-      _focus_on_first_field(base);
+     _focus_on_first_field(base);
    }
 
    SFW.derive(_form, SFW.base);
@@ -83,18 +83,18 @@ function init_SFW_Forms()
    _form.prototype.process_submit = function _process_submit()
    {
       var form = this.top();
-      var caller = this._caller;
       var arr = _get_form_data(form);
       var url = form.getAttribute("action");
       var enctype = form.getAttribute("enctype");
       var headers = enctype ? [{name:"enctype", value:enctype}] : null;
 
+      var ths = this;
       function cb_good(doc)
       {
          if (SFW.check_for_preempt(doc))
          {
-            if (caller)
-               caller.child_finished(doc);
+            if (ths._caller)
+               ths._caller.child_finished(ths, doc);
          }
       }
 
@@ -109,7 +109,7 @@ function init_SFW_Forms()
    _form.prototype.process_button = function _process_button(e,t)
    {
       var ths = this;
-      function fdone(cmd) { if (ths._caller) ths._caller.child_finished(cmd||null); }
+      function fdone(cmd) {if (ths._caller) ths._caller.child_finished(ths,cmd||null); }
       
       return this.process_clicked_button(t, fdone);
    };
