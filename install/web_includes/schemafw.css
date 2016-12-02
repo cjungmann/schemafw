@@ -1,14 +1,36 @@
+body { margin:0; padding:0; }
+
 #SFW_Content
 {
     position:relative;
 }
 
-div.SFW_Host
+#SFW_Header
+{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    z-index: 99;
+    background-color:#FFFFFF;
+}
+
+.SFW_Ghost
+{
+    position:relative;
+    top:0;
+    left:0;
+    margin:0;
+    width:100%
+}
+
+div.SFW_Host, div.SFW_Subhost
 {
     position:absolute;
     top : 0px;
     left : 0px;
     width : 100%;
+    height:auto;
     background: url(/includes/screen.png) repeat;
 }
 
@@ -25,6 +47,7 @@ div.SFW_Host div.closer
     vertical-align:middle;
 }
 
+
 div.SFW_Host h2 { text-align: center; background-color:#9999FF; margin:0; }
 
 table.Schema { border-collapse:collapse; background-color: #FFFFFF; }
@@ -38,6 +61,11 @@ table.Schema td, table.Schema th
     padding:4px;
     /* border:solid 5px green; */
 }
+
+table.Schema th.sorted_up { background-color: red; }
+table.Schema th.sorted_down { background-color: yellow; }
+
+.floater { visibility : hidden; }
 
 table.Schema thead tr.floater
 {
@@ -86,7 +114,6 @@ form.dialog
     position:fixed;
     top:10px;
     left:10px;
-    z-index:100;
     background-color:#FFFFFF;
 }
 
@@ -95,7 +122,6 @@ form.Moveable
     position:fixed;
     left:10px;
     top:10px;
-    z-index:100;
     background-color:#EEEEEE;
     border:solid 2px #CCCCCC;
 }
