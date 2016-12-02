@@ -191,7 +191,7 @@ edit_submit
       type : update
 
 delete
-   type      : info
+   type      : delete
    procedure : App_Contact_Delete
 ~~~
 

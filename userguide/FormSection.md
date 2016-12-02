@@ -117,7 +117,7 @@ emails_manage
       type : variables
 
 emails_update
-   type      : info
+   type      : update
    procedure : App_Person_Email_Summary
    name      : elist
 

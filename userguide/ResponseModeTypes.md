@@ -12,6 +12,18 @@ schema.fcgi server program to treat the request differently, others simply
 signal how the client-side data handling should proceed.  Others do nothing,
 but by being included in the resulting document, can facilitate custom handling.
 
+## Client-side Handling
+
+The server program _schema.fcgi_ copies the contents of the _info_ instruction
+to the _mode-type_ attribute of the documentElement of the returned XML file.
+In particular, this is used by the _child_finished_ function prototype of the
+default _table_ object in the client-side software to determine how to process
+the result.
+
+Developers are encouraged to use the _info_ instruction to trigger custom
+events in custom collection objects derived from _table_.  Look to the example
+of _child_finished_ the unminified version of _sfw_table.js_.
+
 ## List Response Mode Types
 
 These are the predefined response mode types:

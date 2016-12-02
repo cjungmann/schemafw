@@ -83,13 +83,15 @@ here.
 The confirmation setup is done in the _form request_ mode and the delete stored
 procedure, so the *d*elete interaction response mode is short and simple:
 
-Note the that response type is _info_ instead of _delete_.  The mode type is
-passed to the client-side software and is a general type that delete uses for it
-purposes.
+Upon the successful execution of the procedure in the _delete_ response mode,
+the software will read the _type_ value, set to _delete_ in this case, from the
+returned file.  This will prompt the software to remove the indicated record
+from the client-side representation of the data, to make it match the server
+table contents.
 
 ~~~srm
 delete
-   type      : info
+   type      : delete
    procedure : App_Contact_Delete
 ~~~
 
