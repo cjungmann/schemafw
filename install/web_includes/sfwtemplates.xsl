@@ -31,6 +31,31 @@
   <xsl:variable name="result-row"
                 select="/*[@mode-type='form-result']/*[@rndx=1]/*[@error]" />
 
+  <xsl:variable name="docel_msg" select="/message" />
+  <xsl:variable name="child_msg" select="/*[not($docel_msg)]/message" />
+  <xsl:variable name="msg-el" select="$docel_msg | $child_msg" />
+
+  <xsl:variable name="err_condition">
+    <xsl:choose>
+      <xsl:when test="$result-row and $result-row/@error&gt;0">1</xsl:when>
+      <xsl:when test="$msg-el and $msg-el/@type='error'">1</xsl:when>
+      <xsl:otherwise>0</xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
+
+
+  <xsl:template name="display_error">
+    <xsl:choose>
+      <xsl:when test="$result-row and $result-row/@error&gt;0">
+        <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
+      </xsl:when>
+      <xsl:when test="$msg-el and $msg-el/@type='error'">
+        <xsl:apply-templates select="$msg-el" />
+      </xsl:when>
+      <xsl:otherwise><p>Undefined error</p></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
   <xsl:template name="tag_class">
     <xsl:param name="type" />
     <xsl:attribute name="data-sfw-class">
@@ -293,12 +318,17 @@
     <xsl:value-of select="$nl" />
   </xsl:template>
 
+  <xsl:template match="@meta-jump" mode="make_link">
+    <p>Click <a href="{@meta-jump}">here</a> if you're not taken there.</p>
+  </xsl:template>
+
   <!--Elminate extra output for unmatched elements and attributes -->
   <xsl:template match="*" mode="add_to_head"></xsl:template>
   <xsl:template match="@*" mode="add_to_head"></xsl:template>
 
   <xsl:template match="@meta-jump" mode="add_to_head">
-    <xsl:if test="not($result-row) or $result-row/@error=0">
+    <!-- <xsl:if test="not($result-row) or $result-row/@error=0"> -->
+    <xsl:if test="$err-condition='0'">
       <xsl:variable name="content" select="concat('0; url=', .)" />
       <meta http-equiv="refresh" content="{$content}" />
       <xsl:value-of select="$nl" />
@@ -372,8 +402,11 @@
 
   <xsl:template match="/*" mode="fill_head">
     <xsl:choose>
-
-      <xsl:when test="$result-row and $result-row/@error=0 and @meta-jump">
+      <xsl:when test="$err_condition&gt;0">
+        <!-- do nothing -->
+      </xsl:when>
+      <!-- <xsl:when test="$result-row and $result-row/@error=0 and @meta-jump"> -->
+      <xsl:when test="@meta-jump">
         <script type="text/javascript">
           <xsl:text>location.replace(&quot;</xsl:text>
           <xsl:value-of select="@meta-jump" />
@@ -434,21 +467,23 @@
   </xsl:template>
 
   <xsl:template match="/*" mode="show_document_content">
+    <xsl:variable name="formtype" select="substring-after(/*/@mode-type,'form-')" />
+    
     <xsl:apply-templates select="." mode="make_schemafw_meta" />
 
-    <xsl:if test="$result-row">
-      <xsl:if test="$result-row/@msg">
-        <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
-      </xsl:if>
-
-      <xsl:if test="@meta-jump and $result-row/@error=0">
-        <p>Click <a href="{@meta-jump}">here</a> if you're not taken there.</p>
+    <xsl:if test="$err_condition&gt;0">
+      <xsl:call-template name="display_error" />
+      <xsl:if test="@meta-jump">
+        <xsl:apply-templates select="@meta-jump" mode="make_link" />
       </xsl:if>
     </xsl:if>
 
-    <xsl:variable name="formtype" select="substring-after(/*/@mode-type,'form-')" />
-
-    <xsl:if test="not($result-row) or not($result-row/@error=0)">
+    <!-- <xsl:if test="not($result-row) or not($result-row/@error=0)"> -->
+    <xsl:if test="$err_condition=0 and not(@meta-jump)">
+      <xsl:if test="$result-row and $result-row/@msg">
+        <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
+      </xsl:if>
+      
       <xsl:choose>
         <xsl:when test="message/@type='error'">
           <xsl:apply-templates select="message" />
@@ -622,6 +657,10 @@
         </xsl:apply-templates>
         <hr />
         <p class="buttons">
+          <xsl:if test="button">
+            <xsl:apply-templates select="button" mode="show" />
+          </xsl:if>
+
           <xsl:choose>
             <xsl:when test="$has_action">
               <input type="submit" value="Submit" />
@@ -2031,7 +2070,7 @@ v    </xsl:variable>
     <dd><xsl:value-of select="." /></dd>
   </xsl:template>
 
-  <xsl:template match="/*/message">
+  <xsl:template match="message">
     <h2>Message</h2>
     <dl>
     <xsl:apply-templates select="@*" />
