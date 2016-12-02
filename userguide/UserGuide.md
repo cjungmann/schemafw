@@ -37,7 +37,6 @@ There are several sections.
     - [SchemaFW Session Authorization Strategy](SchemaFWAuthorizations.md)
   - Importing and Exporting
     - [Importing Data](ImportingData.md)
-    - [Using LOAD DATA LOCAL INFILE **NOT DONE**](LoadDataLocalInfile.md)
   - Other Topics
     - [Adding Buttons](AddingButtons.md)
     - [Context References](ContextReferences.md)
