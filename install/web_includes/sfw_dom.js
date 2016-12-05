@@ -95,7 +95,7 @@ function init_SFW_DOM()
                if (first_only)
                   return recur;
                else
-                  rval.concat(recur);
+                  rval = rval.concat(recur);
             }
          }
          node = node.nextSibling;
