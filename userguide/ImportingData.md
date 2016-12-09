@@ -206,7 +206,7 @@ import_contacts
 
 import
    type   : import
-   target : /tmp/QT_People  # Name the quarantine table in a target instruction
+   target : QT_People  # Name the quarantine table in a target instruction
    jump   : import.srm?review
 
 review
