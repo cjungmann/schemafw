@@ -74,13 +74,15 @@
       </xsl:choose>
     </xsl:variable>
 
+    <xsl:variable name="schema" select="schema | *[@rndx]/schema" />
+
     <xsl:choose>
-      <xsl:when test="schema">
-        <xsl:apply-templates select="schema" mode="make_form">
+      <xsl:when test="$schema">
+        <xsl:apply-templates select="$schema" mode="make_form">
           <xsl:with-param name="type" select="$form-type" />
         </xsl:apply-templates>
       </xsl:when>
-      <xsl:otherwise>Unable to construct a form without a schema</xsl:otherwise>
+      <xsl:otherwise>Unable to find the schema for constructing the form.</xsl:otherwise>
     </xsl:choose>
   </xsl:template>
 
@@ -498,7 +500,7 @@
             <xsl:with-param name="type" select="'form'" />
           </xsl:apply-templates>
         </xsl:when>
-        <xsl:when test="*[@rnds=1]">
+        <xsl:when test="*[@rndx=1]">
           <xsl:apply-templates select="." mode="import_review_head" />
           <xsl:apply-templates select="*[@rndx=1]" />
         </xsl:when>
@@ -657,10 +659,6 @@
         </xsl:apply-templates>
         <hr />
         <p class="buttons">
-          <xsl:if test="button">
-            <xsl:apply-templates select="button" mode="show" />
-          </xsl:if>
-
           <xsl:choose>
             <xsl:when test="$has_action">
               <input type="submit" value="Submit" />
