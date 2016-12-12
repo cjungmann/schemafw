@@ -9,7 +9,7 @@ function init_SFW_Forms()
    function _form(base, doc, caller)
    {
       SFW.base.call(this, base,doc,caller);
-     _focus_on_first_field(base);
+     _focus_on_first_field(this.top());
    }
 
    SFW.derive(_form, SFW.base);
@@ -116,9 +116,6 @@ function init_SFW_Forms()
 
    _form.prototype.process = function _form_process_message(e,t)
    {
-      if (!this.confirm_owned(t))
-         return true;
-
       if (e.type!="click")
          return true;
 

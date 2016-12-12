@@ -4,19 +4,16 @@ window.onload = function()
    {
       // if ("get_properties_info" in SFW)
       //    alert(SFW.get_properties_info(SFW).join("\n"));
-      
-      if ("sfwanchor" in document)
-      {
-         var director = SFW.get_director(SFW.xmldoc);
-         if (director)
-            SFW.pageobj = director;
-         
-         // var el = document.sfwanchor;
-         // var className = el.getAttribute("data-sfw-class");
-         // if (className in SFW)
-         //    SFW.pageobj = new SFW[className](el, SFW.xmldoc);
-      }
 
+      var anchor = SFW.seek_page_anchor(3, document.body);
+      if (anchor)
+      {
+         var mtype = SFW.xmldoc.documentElement.getAttribute("mode-type");
+         var p = anchor.parentNode;
+         if (mtype in SFW.types && (p.className=="SFW_Host"))
+            p.sfwobj = new SFW.types[mtype](p,document.XMLDocument,null);
+      }
+         
       SFW.setup_event_handling();
    }
    

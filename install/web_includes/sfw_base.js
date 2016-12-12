@@ -4,7 +4,8 @@ function init_SFW(callback)
 {
    SFW.alert                = _alert;
    SFW.confirm              = _confirm;
-   SFW.seek_ancestor_anchor = _seek_ancestor_anchor;
+   SFW.seek_page_anchor     = _seek_page_anchor;
+   SFW.seek_event_host      = _seek_event_host;
    SFW.seek_child_anchor    = _seek_child_anchor;
    SFW.derive               = _derive;
    SFW.add_event            = _add_event;
@@ -16,11 +17,10 @@ function init_SFW(callback)
    SFW.get_director         = _get_director;
    SFW.alert_notice         = _alert_notice;
    SFW.check_for_preempt    = _check_for_preempt;
-   SFW.base                 = _base;
+   SFW.base                 = _base;  // "base class" for _form, _table, etc.
 
-   SFW.views                = [];
-   
    SFW.types                = {};
+   SFW.stage                = document.getElementById("SFW_Content");
 
    SFW.px                   = _px;
 
@@ -55,19 +55,60 @@ function init_SFW(callback)
       return window.confirm(str);
    }
 
-   function _seek_ancestor_anchor(t)
+   function _is_anchor(n)
    {
-      var el = SFW.get_ancestor_anchor(t);
-      if (el && el.sfwobj)
-         return el;
-      else
+      return n.nodeType==1 && null!=n.getAttribute("data-sfw-class");
+   }
+
+   function _find_anchor(el)
+   {
+      return SFW.find_child_matches(el, _is_anchor, true, true);
+   }
+
+   function _seek_page_anchor(levels, parent)
+   {
+      if (arguments.length==0)
+         levels = 2;
+
+      if (levels==0)
          return null;
+
+      if (!parent)
+         parent=document.getElementById("SFW_Content");
+      
+      var subel, el = SFW.first_child_element(parent);
+      while (el)
+      {
+         if (_is_anchor(el))
+            return el;
+         else if ((subel = _seek_page_anchor(levels-1, el)))
+            return subel;
+         else
+            el = SFW.next_sibling_element(el);
+      }
+
+      return null;
+   }
+
+   function _seek_event_host(t)
+   {
+      
+      while (t)
+      {
+         if (_is_anchor(t))
+         {
+            if ("sfwobj" in t.parentNode)
+               return t.parentNode.sfwobj;
+            break;
+         }
+         t = t.parentNode;
+      }
+      return null;
    }
 
    function _seek_child_anchor(t)
    {
-      function f(n) { return n.nodeType==1 && n.getAttribute("data-sfw-class"); }
-      return SFW.find_child_matches(t, f, true);
+      return SFW.find_child_matches(t, _is_anchor, true);
    }
 
    // Add all base prototypes to dclass, which then can replace them:
@@ -127,9 +168,36 @@ function init_SFW(callback)
       }
    }
 
+   function _resize_hosts()
+   {
+      function f(n) {
+         if (n.nodeType==1)
+         {
+            if (n.tagName.toLowerCase()=="div")
+            {
+               if (class_includes(n,"SFW_Host"))
+                  return true;
+            }
+         }
+
+         return false;
+         
+      }
+      var nl = SFW.find_child_matches(document.body,f,false,true);
+      debugger;
+      if (nl)
+      {
+         var os = SFW.get_doc_offset(document.body);
+         for (var i=0,stop=nl.length; i<stop; ++i)
+         {
+         }
+      }
+   }
+
    function _resize_page()
    {
       _resize_page_head();
+      _resize_hosts();
       _resize_table_heads();
    }
 
@@ -190,9 +258,9 @@ function init_SFW(callback)
 
    function _process_event(e,t)
    {
-      var el,  obj;
+      var obj;
 
-      if ((el=_seek_ancestor_anchor(t)) && (obj=el.sfwobj))
+      if ((obj=_seek_event_host(t)))
          return obj.process(e,t);
       else
          return true;
@@ -231,7 +299,7 @@ function init_SFW(callback)
          if (_check_for_preempt(xdoc))
          {
             var thost = addEl("div",host);
-            thost.className = "SFW_Subhost";
+            thost.className = "SFW_Host";
             thost.style.minHeight = SFW.px(host.offsetHeight);
             
             var xdocel = xdoc.documentElement;
@@ -243,7 +311,7 @@ function init_SFW(callback)
             if (anchor
                 && type
                 && type in SFW.types
-                && (newobj = new SFW.types[type](anchor,xdoc,caller)))
+                && (newobj = new SFW.types[type](thost,xdoc,caller)))
             {
                ;
             }
@@ -329,30 +397,24 @@ function init_SFW(callback)
       return schema;
    }
 
-   function _find_subhost(el)
+   function _base(host,xml_doc,caller)
    {
-      while(el && el.nodeType==1 && !class_includes(el,"SFW_Subhost"))
-         el = el.parentNode;
-      return el && el.nodeType==1 ? el : null;
-   }
-   
-   function _base(html_base,xml_doc,caller)
-   {
-      this._top = html_base;
-      this._host = _find_subhost(html_base);
-      this._doc = xml_doc;
-      this._caller = caller ? caller : null;
-      this._schema = _find_schema(xml_doc);
+      if (!host)
+      {
+         host = addEl("div", SFW.stage);
+         host.className = "SFW_Host";
+      }
+      
+      host.sfwobj = this;
+      
       this._baseproto = null;
-      this._super = null;
-      html_base.sfwobj = this;
+      this._caller = caller ? caller : null;
+      this._host = host;
+      this._xmldoc = xml_doc;
    };
 
-   _base.prototype.top = function _top()       { return this._top; };
-   _base.prototype.caller = function _caller() { return this._caller; };
-   _base.prototype.stage = function _stage()   { return this._top.parentNode; };
-   _base.prototype.doc = function _doc()       { return this._doc; };
-   _base.prototype.schema = function _schema() { return this._schema; };
+   _base.prototype.top = function _top()       { return _find_anchor(this._host); };
+   _base.prototype.schema = function _schema() { return _find_schema(this._xmldoc.documentElement); };
    _base.prototype.baseproto = function _baseproto() { return this._baseproto; };
 
    _base.prototype.button_processors = {};
@@ -368,12 +430,6 @@ function init_SFW(callback)
       }
    };
    
-   _base.prototype.confirm_owned = function _confirm_owned(el)
-   {
-      var anchor = SFW.get_ancestor_anchor(el);
-      return (anchor && anchor==this._top);
-   };
-
    _base.prototype.child_finished = function(child, cmd)
    {
       function f() { if ("sfw_close" in child) child.sfw_close(); }
@@ -414,8 +470,8 @@ function init_SFW(callback)
                return this[pbtype](b,cb);
             else if (url)
             {
-               url = _translate_url(url, this._doc);
-               _open_interaction(this._top.parentNode, url, this);
+               url = _translate_url(url, this._xmldoc);
+               _open_interaction(this.top().parentNode, url, this);
             }
             break;
       }

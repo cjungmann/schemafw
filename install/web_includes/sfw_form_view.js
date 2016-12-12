@@ -53,14 +53,14 @@ function init_SFW_Views()
          function f(n) { return n.nodeType==1
                          && n.tagName=="field"
                          && n.getAttribute("name")==afor; }
-         field = SFW.find_child_matches(this._schema,f,true);
+         field = SFW.find_child_matches(this.schema(),f,true);
       }
 
       if (field && "content" in parts && (content=parts.content))
       {
          var url = b.getAttribute("data-url");
          if (url)
-            SFW.open_interaction(this._top.parentNode, url, this);
+            SFW.open_interaction(SFW.stage, url, this);
       }
    };
 }

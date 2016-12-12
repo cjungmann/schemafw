@@ -12,7 +12,7 @@ function init_SFW_Tables()
       SFW.base.call(this,base,doc,caller);
       SFW.fix_table_heads(base);
 
-      this._result = SFW.find_child_matches(this._doc, _match_rndx, true, true);
+      this._result = SFW.find_child_matches(this._xmldoc, _match_rndx, true, true);
       if (this._result)
          this._schema = SFW.find_child_matches(this._result, "schema", true);
    }
@@ -99,13 +99,18 @@ function init_SFW_Tables()
 
    _table.prototype.replot = function()
    {
-      var tbody = SFW.find_child_matches(this._top, "tbody", true);
+      var tbody = SFW.find_child_matches(this.top(), "tbody", true);
       if (tbody)
       {
          this._result.setAttribute("make_table_body", "true");
          SFW.xslobj.transformFill(tbody, this._result);
          this._result.removeAttribute("make_table_body");
-         _fix_table_heads(this._top);
+         _fix_table_heads(this.top());
+      }
+      else
+      {
+         SFW.xslobj.transformFill(this._host, this._result);
+         _fix_table_heads(this.top());
       }
    };
 
@@ -153,19 +158,11 @@ function init_SFW_Tables()
       }
    };
 
-   // _table.prototype.process_button_add = function(button)
-   // {
-   //    var tablehost = this.top().parentNode;
-   //    var url = SFW.translate_url(button.getAttribute("data-task"),
-   //                                this.doc());
-   //    SFW.open_interaction(tablehost, url, this);
-   // };
-
    _table.prototype.get_sfw_attribute = function(aname)
    {
       var name = null;
       if (this._schema && !(name=this._schema.getAttribute(aname)))
-         name = this._doc.documentElement.getAttribute(aname);
+         name = this._xmldoc.documentElement.getAttribute(aname);
       return name || "id";
    };
 
@@ -174,11 +171,23 @@ function init_SFW_Tables()
       return this.get_sfw_attribute("line_click_id");
    };
 
+   _table.prototype.process_button_add = function(b)
+   {
+      var host = this._host;
+      var url = b.getAttribute("data-task") || b.getAttribute("data-url");
+      this._row_marker = { os   : SFW.get_page_offset(),
+                           host : host };
+
+      empty_el(host);
+
+      SFW.open_interaction(SFW.stage, url, this);
+   };
+
    _table.prototype.process_line_click = function(tr)
    {
       var id, url;
       if ((id=tr.getAttribute("data-id"))
-          && (url=this._top.getAttribute("data-on_line_click")))
+          && (url=this.top().getAttribute("data-on_line_click")))
       {
          url += "=" + id;
 
@@ -186,10 +195,15 @@ function init_SFW_Tables()
          function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
          var xrow = SFW.find_child_matches(this._result, f, true);
 
+         var host = this._host;
          // Save marker for child_finished()
-         this._row_marker = {"tr":tr, "xrow":xrow };
+         this._row_marker = { os   : SFW.get_page_offset(),
+                              xrow : xrow,
+                              host : host };
 
-         SFW.open_interaction(this._top.parentNode, url, this);
+         empty_el(host);
+
+         SFW.open_interaction(SFW.stage, url, this);
       }
    };
 
@@ -197,7 +211,7 @@ function init_SFW_Tables()
    {
       var n = SFW.first_child_element(result);
       
-      // var data = SFW.find_child_matches(this._doc, _match_rndx, true, true);
+      // var data = SFW.find_child_matches(this._xmldoc, _match_rndx, true, true);
       if (this._result)
       {
          var rm, xrow;
@@ -220,11 +234,7 @@ function init_SFW_Tables()
       {
          var rm, xrow, hrow;
          if ((rm=this._row_marker) && (xrow=rm.xrow))
-         {
             xrow.parentNode.removeChild(xrow);
-            if ((hrow=rm.tr))
-               hrow.parentNode.removeChild(hrow);
-         }
       }
    };
 
@@ -272,17 +282,16 @@ function init_SFW_Tables()
             }
          }
          
-         this._row_marker = null;
       }
 
+      this.replot();
+      SFW.set_page_offset(this._row_marker.os);
+      this._row_marker = null;
       SFW.base.prototype.child_finished.call(this,child,cmd);
    };
    
    _table.prototype.process = function _table_process_message(e,t)
    {
-      if (!this.confirm_owned(t))
-         return true;
-      
       var table_el = this.top();
 
       // For now, only handle clicks (keyboard handled earlier):

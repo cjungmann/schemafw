@@ -11,8 +11,6 @@ function init_SFW_DOM()
    SFW.el_name              = _el_name;
    SFW.find_child_matches   = _find_child_matches;
    SFW.first_child_element  = _first_child_element;
-   SFW.get_page_anchor      = _get_page_anchor;
-   SFW.get_ancestor_anchor  = _get_ancestor_anchor;
    SFW.next_sibling_element = _next_sibling_element;
 
    // Sets SFW.get_page_xoffset and SFW.get_page_yoffset
@@ -20,19 +18,33 @@ function init_SFW_DOM()
    {
       if ('pageXOffset' in window)
       {
-         SFW.get_page_xoffset = function() { return window.pageXOffset; };
-         SFW.get_page_yoffset = function() { return window.pageYOffset; };
+         SFW.get_page_xoffset = function()  { return window.pageXOffset; };
+         SFW.get_page_yoffset = function()  { return window.pageYOffset; };
       }
       else if ('body' in document && 'scrollLeft' in document.body)
       {
-         SFW.get_page_xoffset = function() { return document.body.scrollLeft; };
-         SFW.get_page_yoffset = function() { return document.body.scrollTop;  };
+         SFW.get_page_xoffset = function()  { return document.body.scrollLeft; };
+         SFW.get_page_yoffset = function()  { return document.body.scrollTop;  };
       }
       else
       {
-         SFW.get_page_xoffset = void(0);
-         SFW.get_page_yoffset = void(0);
+         SFW.get_page_xoffset = SFW.set_page_xoffset = void(0);
+         SFW.get_page_yoffset = SFW.set_page_yoffset = void(0);
       }
+
+      SFW.set_page_xoffset = function(v) { document.documentElement.scrollLeft=v; };
+      SFW.set_page_yoffset = function(v) { document.documentElement.scrollTop=v; };
+      
+      SFW.get_page_offset = function()
+      {
+         return { osx:SFW.get_page_xoffset(),
+                  osy:SFW.get_page_yoffset() };
+      };
+
+      SFW.set_page_offset = function(o)
+      {
+         window.scrollTo(o.osx, o.osy);
+      };
    };
 
    function _get_doc_offset(el)
@@ -77,7 +89,7 @@ function init_SFW_DOM()
          };
       
       var rval = [];
-      var node = parent.firstChild;
+      var node = parent ? parent.firstChild : null;
       while (node)
       {
          if (compfunc(node))
@@ -142,45 +154,6 @@ function init_SFW_DOM()
       return _next_sibling_element(el);
    }
 
-   function _get_page_anchor(levels, parent)
-   {
-      if (arguments.length==0)
-         levels = 2;
-
-      if (levels==0)
-         return null;
-
-      if (!parent)
-         parent=document.getElementById("SFW_Content");
-      
-      var subel, el = _first_child_element(parent);
-      while (el)
-      {
-         if (el.getAttribute("data-sfw-class"))
-            return el;
-         else if ((subel = _get_page_anchor(levels-1, el)))
-            return subel;
-         else
-            el = _next_sibling_element(el);
-      }
-
-      return null;
-   }
-
-   function _get_ancestor_anchor(el)
-   {
-      while (el)
-      {
-         if (el.nodeType==1 && el.getAttribute("data-sfw-class"))
-            return el;
-         else if (el.nodeType==9)
-            break;
-
-         el = el.parentNode;
-      }
-      return null;
-   }
-
    function set_missing_doc_props()
    {
       var html = document.documentElement;
@@ -188,11 +161,5 @@ function init_SFW_DOM()
          document.head = _find_child_matches(html, "head", true);
       if (!("body" in document))
          document.body = _find_child_matches(html, "body", true);
-      if (!("sfwanchor" in document))
-      {
-         var a = _get_page_anchor();
-         if (a)
-            document.sfwanchor = a;
-      }
    }
 }
