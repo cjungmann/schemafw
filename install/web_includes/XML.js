@@ -26,6 +26,7 @@ function serialize(node)              {}
 function get_namespace_map(doc)       {}
 function prep_namespaces(doc)         {} // only useful in IE for SelectionNamespaces property
 function escape_xml(str)              {}
+function empty_el(el)                 {}
 function replace_node(oldn,newn)      {}
 function add_namespace_el(tag,namespace,parent,before,doc) {};
 
@@ -122,6 +123,11 @@ function prepare_helper_functions()
       return escape_xml(str);
    }
 
+   empty_el = function(el)
+   {
+      el.innerHTML = "";
+   };
+   
    replace_node = function(oldn, newn)
    {
       var parent = oldn.parentNode;
@@ -837,7 +843,7 @@ function implement_XSL_methods()
       };
       XSL.prototype.transformFill = function(host,node)
       {
-         host.innerHTML = "";
+         empty_el(host);
          this.transformInsert(host,node);
       };
    }
@@ -887,7 +893,7 @@ function implement_XSL_methods()
          {
             try
             {
-               node.innerHTML = "";
+               empty_el(host);
             }
             catch(x)
             {
