@@ -88,6 +88,7 @@ will contain the YYYY-MM-DD date.
   </xsl:template>
 
   <xsl:template name="build_day_content" priority="-1">
+    <xsl:param name="date" />
   </xsl:template>
 
   <xsl:template name="build_day">
