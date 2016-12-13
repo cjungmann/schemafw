@@ -215,12 +215,18 @@ will contain the YYYY-MM-DD date.
 
   <xsl:template match="*" mode="build_calendar">
     <xsl:param name="table_class" />
-    <xsl:element name="table">
+    <xsl:param name="sfw_class" select="'calendar'"  />
+
+    <xsl:variable name="class">
+      <xsl:text>Schema</xsl:text>
       <xsl:if test="$table_class">
-        <xsl:attribute name="class">
-          <xsl:value-of select="$table_class" />
-        </xsl:attribute>
+        <xsl:value-of select="concat(' ',$table_class)" />
       </xsl:if>
+    </xsl:variable>
+
+    <xsl:element name="table">
+      <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
+      <xsl:attribute name="data-sfw-class"><xsl:value-of select="$sfw_class" /></xsl:attribute>
       <xsl:apply-templates select="." mode="build_calendar_head" />
       <xsl:call-template name="build_weeks">
         <xsl:with-param name="today" select="@today" />
