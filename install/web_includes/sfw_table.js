@@ -11,20 +11,21 @@ function init_SFW_Tables()
    {
       SFW.base.call(this,base,doc,caller);
       SFW.fix_table_heads(base);
-
-      this._result = SFW.find_child_matches(this._xmldoc, _match_rndx, true, true);
-      if (this._result)
-         this._schema = SFW.find_child_matches(this._result, "schema", true);
    }
 
    SFW.derive(_table, SFW.base);
 
+   _table.prototype.result = function()
+   {
+      return SFW.find_child_matches(this._xmldoc, _match_rndx, true, true);
+   };
+   
    _table.prototype.get_sort_field = function()
    {
       function f(n) { return n.nodeType==1
                       && n.tagName=="field"
                       && n.getAttribute("sorting"); }
-      return SFW.find_child_matches(this._schema,f,true);
+      return SFW.find_child_matches(this.schema(),f,true);
    };
 
    _table.prototype.get_named_field = function(name)
@@ -32,7 +33,7 @@ function init_SFW_Tables()
       function f(n) { return n.nodeType==1
                       && n.tagName=="field"
                       && n.getAttribute("name")==name; }
-      return SFW.find_child_matches(this._schema, f, true);
+      return SFW.find_child_matches(this.schema(), f, true);
    };
 
    var sort_tr_arr = ["sorted_up", "sorted_down"];
@@ -102,14 +103,14 @@ function init_SFW_Tables()
       var tbody = SFW.find_child_matches(this.top(), "tbody", true);
       if (tbody)
       {
-         this._result.setAttribute("make_table_body", "true");
-         SFW.xslobj.transformFill(tbody, this._result);
-         this._result.removeAttribute("make_table_body");
+         this.result().setAttribute("make_table_body", "true");
+         SFW.xslobj.transformFill(tbody, this.result());
+         this.result().removeAttribute("make_table_body");
          _fix_table_heads(this.top());
       }
       else
       {
-         SFW.xslobj.transformFill(this._host, this._result);
+         SFW.xslobj.transformFill(this._host, this.result());
          _fix_table_heads(this.top());
       }
    };
@@ -121,10 +122,10 @@ function init_SFW_Tables()
          return line_id;
       
       var doc, f;
-      if ((doc=this.doc()) && this._schema)
+      if ((doc=this.doc()) && this.schema())
       {
-         if (!(f=this._schema.selectSingleNode("field[@line_id]")))
-            f = this._schema.selectSingleNode("field[@primary-key]");
+         if (!(f=this.schema().selectSingleNode("field[@line_id]")))
+            f = this.schema().selectSingleNode("field[@primary-key]");
          if (f)
             return row.getAttribute(f.getAttribute("name"));
          else // return value of first attribute child
@@ -161,7 +162,7 @@ function init_SFW_Tables()
    _table.prototype.get_sfw_attribute = function(aname)
    {
       var name = null;
-      if (this._schema && !(name=this._schema.getAttribute(aname)))
+      if (this.schema() && !(name=this.schema().getAttribute(aname)))
          name = this._xmldoc.documentElement.getAttribute(aname);
       return name || "id";
    };
@@ -193,7 +194,7 @@ function init_SFW_Tables()
 
          var idname = this.get_line_click_id_name();
          function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
-         var xrow = SFW.find_child_matches(this._result, f, true);
+         var xrow = SFW.find_child_matches(this.result(), f, true);
 
          var host = this._host;
          // Save marker for child_finished()
@@ -212,7 +213,7 @@ function init_SFW_Tables()
       var n = SFW.first_child_element(result);
       
       // var data = SFW.find_child_matches(this._xmldoc, _match_rndx, true, true);
-      if (this._result)
+      if (this.result())
       {
          var rm, xrow;
          if ((rm=this._row_marker) && (xrow=rm.xrow))
@@ -223,14 +224,14 @@ function init_SFW_Tables()
          }
          else
          {
-            this._result.appendChild(n);
+            this.result().appendChild(n);
          }
       }
    };
 
    _table.prototype.delete_row = function()
    {
-      if (this._result)
+      if (this.result())
       {
          var rm, xrow, hrow;
          if ((rm=this._row_marker) && (xrow=rm.xrow))
