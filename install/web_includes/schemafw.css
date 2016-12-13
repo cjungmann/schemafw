@@ -15,6 +15,11 @@ body { margin:0; padding:0; }
     background-color:#FFFFFF;
 }
 
+#SFW_Header nav { text-align:center; }
+#SFW_Header nav a { padding:.5em; }
+#SFW_Header nav a.here { background-color:#999999; }
+
+
 .SFW_Ghost
 {
     position:relative;
