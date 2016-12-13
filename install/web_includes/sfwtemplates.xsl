@@ -431,6 +431,16 @@
     </xsl:choose>
   </xsl:template>
 
+  <xsl:template match="navigation/target" mode="header">
+    <a href="{@url}"><xsl:value-of select="@label" /></a>
+  </xsl:template>
+
+  <xsl:template match="/*/navigation" mode="header">
+    <nav>
+      <xsl:apply-templates select="target" mode="header" />
+    </nav>
+  </xsl:template>
+
   <xsl:template match="/*" mode="branch_standard_modes">
     <div>Use mode=&quot;show_document_content&quot; instead of &quot;branch_standard_modes&quot;</div>
   </xsl:template>
