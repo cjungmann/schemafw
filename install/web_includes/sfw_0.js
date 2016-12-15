@@ -1,18 +1,35 @@
 
-// sfw_base.js
+// sfw_0.js
 
-var SFW = { types:{},
+var SFW = { types     : {},
+            autoloads : {},
+            callback  : null,
+            check_and_callback : function(name)
+            {
+               this.autoloads[name] = true;
+               
+               for (a in this.autoloads)
+                  if (this.autoloads[a]==false)
+                     return;
+               // Callback after return to allow completion of last _init():
+               setTimeout(this.callback, 125);
+            },
             delay_init : function(name, callback, prereq)
             {
                if ("base" in SFW && (!prereq || prereq in SFW.types))
                {
                   console.log("Loading " + name);
+                  this.check_and_callback(name);
                   return false;
                }
                else
                {
+                  // Save name only once
+                  if (!(name in this.autoloads))
+                     this.autoloads[name] = false;
+                  
                   console.log("Waiting to load " + name);
-                  setTimeout(callback, 250);
+                  setTimeout(callback, 125);
                   return true;
                }
             }
@@ -20,6 +37,8 @@ var SFW = { types:{},
 
 function init_SFW(callback)
 {
+   SFW.callback             = callback;
+   
    SFW.alert                = _alert;
    SFW.confirm              = _confirm;
    SFW.seek_page_anchor     = _seek_page_anchor;
