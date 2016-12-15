@@ -1,3 +1,6 @@
+
+// sfw_dom.js
+
 function init_SFW_DOM()
 {
    set_missing_doc_props();
