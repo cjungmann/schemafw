@@ -1,4 +1,22 @@
-var SFW = { };
+
+// sfw_base.js
+
+var SFW = { types:{},
+            delay_init : function(name, callback, prereq)
+            {
+               if ("base" in SFW && (!prereq || prereq in SFW.types))
+               {
+                  console.log("Loading " + name);
+                  return false;
+               }
+               else
+               {
+                  console.log("Waiting to load " + name);
+                  setTimeout(callback, 250);
+                  return true;
+               }
+            }
+          };
 
 function init_SFW(callback)
 {
@@ -19,31 +37,11 @@ function init_SFW(callback)
    SFW.check_for_preempt    = _check_for_preempt;
    SFW.base                 = _base;  // "base class" for _form, _table, etc.
 
-   SFW.types                = {};
    SFW.stage                = document.getElementById("SFW_Content");
 
    SFW.px                   = _px;
 
    function _px(num)    { return String(num)+"px"; };
-
-   function call_SFW_init_functions()
-   {
-      // Other inits need the above functions, so only call after they're installed:
-        var inits = ["init_SFW_Debug",
-                     "init_SFW_DOM",
-                     "init_SFW_Tables",
-                     "init_SFW_Forms",
-                     "init_SFW_Views"
-                    ];
-      
-      // var inits = ["init_SFW_DOM", "init_SFW_Tables"];
-      for (f in inits)
-      {
-         var s = inits[f];
-         if (s in window)
-            window[s]();
-      }
-   }
 
    function _alert(str)
    {
@@ -483,6 +481,22 @@ function init_SFW(callback)
    {
       return true;
    };
+
+
+   function call_SFW_init_functions()
+   {
+      // Other inits need the above functions, so only call after they're installed:
+        var inits = ["init_SFW_Debug",
+                     "init_SFW_DOM"
+                    ];
+      
+      for (f in inits)
+      {
+         var s = inits[f];
+         if (s in window)
+            window[s]();
+      }
+   }
 
    // _base prototypes must be in place before this line:
    call_SFW_init_functions();
