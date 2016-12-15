@@ -2487,7 +2487,7 @@ void Schema::process_response_mode(void)
          
          // The jump instruction will be included as a meta instruction
          // in the HTML head element, and as such, will be a suggestion.
-         // The standard sfwtemplates.xsl will create a meta element in
+         // The standard sfw_templates.xsl will create a meta element in
          // the HTML head element, but custom implementations are not
          // bound to that behavior.
          m_meta_jump = value_from_mode("jump");
