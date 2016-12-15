@@ -135,6 +135,7 @@ stop-update:
 	sudo /etc/init.d/apache2 start
 
 update-client:
+	cat ../install/web_includes/sfw_*.js > ../install/web_includes/sfw.js
 	cp ../LICENSE                               /usr/share/doc/schemafw
 	cp ../install/default.xsl                   /usr/local/lib/schemafw/default.xsl
 	cp ../install/sys_procs.sql                 /usr/local/lib/schemafw/sys_procs.sql
