@@ -6,7 +6,8 @@
     xmlns:html="http://www.w3.org/1999/xhtml"
     exclude-result-prefixes="html">
 
-  <xsl:import href="includes/sfwtemplates.xsl" />
+  <xsl:import href="includes/sfw_templates.xsl" />
+  <xsl:import href="includes/sfw_calendar.xsl" />
   
   <xsl:output
       method="xml"
@@ -31,6 +32,7 @@
       <body>
         <div id="SFW_Header">
           <h1>**Default SchemaFW Header**</h1>
+          <xsl:apply-templates select="navigation" mode="header" />
         </div>
         <div id="SFW_Content">
           <div class="SFW_Host">
