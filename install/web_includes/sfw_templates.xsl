@@ -35,6 +35,10 @@
   <xsl:variable name="child_msg" select="/*[not($docel_msg)]/message" />
   <xsl:variable name="msg-el" select="$docel_msg | $child_msg" />
 
+  <xsl:variable name="jslist_sfw_debug">sfw_base sfw_dom sfw_table sfw_form sfw_form_view sfw_calendar sfw_debug sfw_onload</xsl:variable>
+  <xsl:variable name="jslist_sfw">sfw</xsl:variable>
+  <xsl:variable name="jslist_utils">classes dpicker Events Dialog Moveable XML</xsl:variable>
+
   <xsl:variable name="err_condition">
     <xsl:choose>
       <xsl:when test="$result-row and $result-row/@error&gt;0">1</xsl:when>
@@ -264,53 +268,43 @@
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template name="js_includes">
-    <script type="text/javascript" src="includes/classes.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/sfw_base.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/sfw_dom.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/sfw_table.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/sfw_form.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/sfw_form_view.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/sfw_debug.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/sfw_onload.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/dpicker.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/Events.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/Dialog.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/Moveable.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/XML.js"></script>
-    <xsl:value-of select="$nl" />
+  <xsl:template name="add_js">
+    <xsl:param name="list" />
+
+    <xsl:variable name="before" select="substring-before($list, ' ')" />
+
+    <xsl:variable name="file">
+      <xsl:choose>
+        <xsl:when test="string-length($before)">
+          <xsl:value-of select="$before" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$list" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:if test="string-length($file)&gt;0">
+      <xsl:variable name="path" select="concat('includes/', $file, '.js')" />
+      <script type="text/javascript" src="{$path}"></script>
+    </xsl:if>
+
+    <xsl:if test="string-length($before)">
+      <xsl:value-of select="$nl" />
+      <xsl:call-template name="add_js">
+        <xsl:with-param name="list" select="substring-after($list,' ')" />
+      </xsl:call-template>
+    </xsl:if>
+    
   </xsl:template>
 
-
-  <xsl:template name="old_js_includes">
-    <script type="text/javascript" src="includes/sfwmain.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/classes.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/dpicker.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/Events.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/Dialog.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/Moveable.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/sfwobjects.js"></script>
-    <xsl:value-of select="$nl" />
-    <script type="text/javascript" src="includes/XML.js"></script>
-    <xsl:value-of select="$nl" />
+  <xsl:template name="js_includes">
+    <xsl:call-template name="add_js">
+      <xsl:with-param name="list" select="$jslist_sfw" />
+    </xsl:call-template>
+    <xsl:call-template name="add_js">
+      <xsl:with-param name="list" select="$jslist_utils" />
+    </xsl:call-template>
   </xsl:template>
 
   <xsl:template name="css_includes">
