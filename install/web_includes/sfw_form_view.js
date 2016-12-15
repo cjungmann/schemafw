@@ -1,5 +1,11 @@
-function init_SFW_Views()
+
+// sfw_form_view.js
+
+(function _init()
 {
+   if (SFW.delay_init("sfw_form_view",_init,"form-edit"))
+      return;
+
    SFW.types["form-view"] = _form_view;
 
    function _form_view(base,doc,caller)
@@ -63,4 +69,5 @@ function init_SFW_Views()
             SFW.open_interaction(SFW.stage, url, this);
       }
    };
-}
+})();
+   

@@ -1,5 +1,11 @@
-function init_SFW_Forms()
+
+// sfw_form.js
+
+(function _init()
 {
+   if (SFW.delay_init("sfw_form",_init))
+      return;
+
    SFW.types["form-new"] = _form;
    SFW.types["form-edit"] = _form;
 
@@ -9,7 +15,7 @@ function init_SFW_Forms()
    function _form(base, doc, caller)
    {
       SFW.base.call(this, base,doc,caller);
-     _focus_on_first_field(this.top());
+      _focus_on_first_field(this.top());
    }
 
    SFW.derive(_form, SFW.base);
@@ -109,7 +115,7 @@ function init_SFW_Forms()
    _form.prototype.process_button = function _process_button(e,t)
    {
       var ths = this;
-      function fdone(cmd) {if (ths._caller) ths._caller.child_finished(ths,cmd||null); }
+      function fdone(cmd) {if (ths._caller) ths._caller.child_finished(ths,cmd||null);   }
       
       return this.process_clicked_button(t, fdone);
    };
@@ -121,20 +127,20 @@ function init_SFW_Forms()
 
       switch(t.type)
       {
-         case "button":
-            if (!this.process_button(e,t))
-               return false;
-         case "submit":
-            if (this._caller)
-            {
-               this.process_submit();
-               e.preventDefault();
-               return false;
-            }
-            break;
+      case "button":
+         if (!this.process_button(e,t))
+            return false;
+      case "submit":
+         if (this._caller)
+         {
+            this.process_submit();
+            e.preventDefault();
+            return false;
+         }
+         break;
       }
-         
+      
       return true;
    };
 
-}
+})();

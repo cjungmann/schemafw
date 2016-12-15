@@ -1,5 +1,11 @@
-function init_SFW_Tables()
+
+// sfw_table.js
+
+(function _init()
 {
+   if (SFW.delay_init("sfw_table",_init))
+      return;
+
    SFW.types["table"] = _table;
    SFW.types["import-review"] = _table;
    
@@ -495,4 +501,4 @@ function init_SFW_Tables()
       
    }  // end of _fix_table_heads
 
-}
+})();
