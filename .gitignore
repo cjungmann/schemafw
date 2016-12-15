@@ -1,3 +1,4 @@
+install/web_includes/sfw.js
 *.o
 adbranch
 advisor_test
