@@ -1,3 +1,6 @@
+
+// sfw_onload.js
+
 window.onload = function()
 {
    function begin_app()
