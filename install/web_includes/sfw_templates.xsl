@@ -35,7 +35,7 @@
   <xsl:variable name="child_msg" select="/*[not($docel_msg)]/message" />
   <xsl:variable name="msg-el" select="$docel_msg | $child_msg" />
 
-  <xsl:variable name="jslist_sfw_debug">sfw_base sfw_dom sfw_table sfw_form sfw_form_view sfw_calendar sfw_debug sfw_onload</xsl:variable>
+  <xsl:variable name="jslist_sfw_debug">sfw_0 sfw_dom sfw_table sfw_form sfw_form_view sfw_calendar sfw_debug sfw_onload</xsl:variable>
   <xsl:variable name="jslist_sfw">sfw</xsl:variable>
   <xsl:variable name="jslist_utils">classes dpicker Events Dialog Moveable XML</xsl:variable>
 
