@@ -307,6 +307,17 @@ function init_SFW(callback)
       return url;
    }
 
+   function _arrange_in_host(host, anchor)
+   {
+      var os_host = SFW.get_doc_offset(host);
+      var center_host = host.offsetWidth / 2 + os_host.left;
+      
+      var s = anchor.style;
+      s.top = _px(os_host.top);
+      s.left = _px(center_host - anchor.offsetWidth/2);
+      s.zIndex = 100;
+   }
+
    function _open_interaction(host, url, caller)
    {
       var newobj = null;
@@ -330,6 +341,7 @@ function init_SFW(callback)
                 && type in SFW.types
                 && (newobj = new SFW.types[type](thost,xdoc,caller)))
             {
+               _arrange_in_host(host, anchor);
                ;
             }
             else
