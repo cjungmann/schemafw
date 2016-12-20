@@ -150,7 +150,7 @@ function process_dpicker(e,t)
       }
 
       var mnames = ["Jan","Feb","Mar","Apr","May","Jun",
-                    "Jul","Aug","Sep","Oct","Nov","Dev"];
+                    "Jul","Aug","Sep","Oct","Nov","Dec"];
 
       function autocomprow(host)
       {
@@ -336,6 +336,8 @@ function process_dpicker(e,t)
          else
             --c_pyear;
       }
+
+      fix_parsed();
    };
 
    function ymd_set_parsed_values(y,m,d)
@@ -390,15 +392,17 @@ function process_dpicker(e,t)
       f(s);
    }
 
-   
+   function year_is_leap(year)
+   {
+      return (year%4==0 && year%100!=0) || year%400==0;
+   }
+
    var monmax = [31,29,31,30,31,30,31,31,30,31,30,31];
    function fix_parsed()
    {
       var max;
-      if (c_pdash1) // month + date
-         max = monmax[c_pmon-1];
-      else          // day only
-         max = monmax[c_rmon-1];
+      var mon = (c_pdash1 ? c_pmon : c_rmon) - 1;
+      max = monmax[mon];
 
       if (c_pday>max)
          c_pday = max;
@@ -491,9 +495,26 @@ function process_dpicker(e,t)
 
    function _keyup(e,t)
    {
-      parse_typed(t.value);
-      t.value = get_parsed_as_value();
-      make_calendar(c_cur_calhost);
+      if (c_cur_calhost)
+      {
+         parse_typed(t.value);
+         t.value = get_parsed_as_value();
+         make_calendar(c_cur_calhost);
+      }
+      return true;
+   }
+
+   function _keydown(e,t)
+   {
+      if (c_cur_calhost)
+      {
+         var key = get_key(e);
+         if (key==13 || key==27)
+         {
+            ditch_context();
+            return Events.full_cancel(e);
+         }
+      }
       return true;
    }
 
@@ -539,6 +560,7 @@ function process_dpicker(e,t)
       {
          switch(e.type)
          {
+         case "keydown": return _keydown(e,t);
          case "keyup": return _keyup(e,t);
          default: break;
          }
