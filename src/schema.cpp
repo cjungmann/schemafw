@@ -762,6 +762,7 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
                                                DataStack<BindC> &dsresult,
                                                SimpleProcedure &proc)
 {
+   m_group_name = "result";
    m_row_name = "row";
    const char *result_type = nullptr;
 
@@ -826,7 +827,6 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
       }
 
       // Get m_group_name or set to "result" as a default:
-      m_group_name = "result";
       if (schema && (thandle=schema->seek("name")))
           m_group_name = thandle->value();
       else if ((thandle = result_handle->seek("name")))
@@ -882,7 +882,8 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
    }
    else
    {
-      ifputs("<result", m_out);
+      ifputc('<', m_out);
+      ifputs(m_group_name, m_out);
       print_xml_attribute(m_out, "rndx", result_number);
       if (result_type)
          print_xml_attribute(m_out, "type", result_type);
