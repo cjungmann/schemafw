@@ -8,8 +8,17 @@ function initialize_new_page()
       window.onload();
 }
 
+function dump_text(str)
+{ 
+   var ppre = document.createElement("pre");
+   document.body.appendChild(ppre);
+   ppre.appendChild(document.createTextNode(str));
+}
+
 function empty_function() { }
 function null_return_function()   { return null; }
+
+function xhr_error(xhr) { dump_text(xhr.responseText); alert("failed to get the XML document"); }
 
 function get_get_ie_domdoc()
 {
@@ -220,7 +229,7 @@ function inject_imports(ibefore, docel, impdoc, callback)
    {
       var lval = left.getAttribute(aname);
       var rval = right.getAttribute(aname);
-      return !(lval && rval) || (lval!=rval);
+      return (lval==null && rval==null) ? false : lval!=rval;
    }
 
    var attarr = [ "match", "name", "mode" ];
@@ -238,16 +247,19 @@ function inject_imports(ibefore, docel, impdoc, callback)
       var kid = docel.firstChild;
       while (kid)
       {
-         if (kid.namespaceURI==ns && kid.localName==lname)
+         if (kid.nodeType==1)
          {
-            var matched = true;
-            for (var i=0; matched && i<astop; ++i)
-               matched = !diff_by_attr(el, kid, attarr[i]);
-
-            if (matched)
+            if (kid.namespaceURI==ns && kid.localName==lname)
             {
-               found = true;
-               break;
+               var matched = true;
+               for (var i=0; matched && i<astop; ++i)
+                  matched = !diff_by_attr(el, kid, attarr[i]);
+
+               if (matched)
+               {
+                  found = true;
+                  break;
+               }
             }
          }
 
@@ -303,6 +315,8 @@ function resolve_imports(xsl, callback)
 
 function xhr_get(url, cb_ok, cb_error)
 {
+   if (!cb_error)
+      cb_error = xhr_error;
    function check_xhr_result(xhr)
    {
       if (xhr.readyState==4)
@@ -486,6 +500,14 @@ function transform_doc(xsl, xml)
 
             load_scripts();
          }
+         else
+         {
+            var dser = new XMLSerializer();
+            var xstr = dser.serializeToString(xsl.documentElement);
+            var ppre = document.createElement("pre");
+            document.body.appendChild(ppre);
+            ppre.appendChild(document.createTextNode(xstr));
+         }
       }
    }
    else
@@ -525,8 +547,6 @@ function get_xml_stylesheet(doc)
    }
    return null;
 }
-
-function xhr_error(xhr) { alert("failed to get the XML document"); }
 
 function load_xml_doc(doc)
 {
