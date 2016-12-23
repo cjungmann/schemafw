@@ -7,7 +7,6 @@
     exclude-result-prefixes="html">
 
   <xsl:import href="includes/sfw_templates.xsl" />
-  <xsl:import href="includes/sfw_calendar.xsl" />
   
   <xsl:output
       method="xml"
