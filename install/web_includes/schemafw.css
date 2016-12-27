@@ -1,5 +1,7 @@
 body { margin:0; padding:0; }
 
+h1 { text-align: center; }
+
 #SFW_Content
 {
     position:relative;
@@ -175,3 +177,26 @@ Form.Moveable legend       { cursor: pointer; }
 form.Moveable legend:hover { background-color:#CCCCCC; }
 
 form.Schema td { vertical-align:top; }
+
+table.calendar { border-collapse:collapse; border-spacing:0; font-family:sans-serif; }
+table.calendar tr { height:2em; }
+table.calendar td { padding:0; }
+th.cal_title { font-size: large; font-weight: bold; }
+td.cal_day
+{
+    border:solid 1px black;
+    cursor: pointer;
+    width:14%;
+    vertical-align:top;
+    padding: 0;
+    margin: 0;
+}
+
+td.cal_day div.day_head
+{
+    font-size:small;
+    text-align:right;
+    padding:0 .25em;
+    margin:0;
+    background-color:#99FF99;
+}
