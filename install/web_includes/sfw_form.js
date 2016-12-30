@@ -12,9 +12,9 @@
    SFW.get_form_data        = _get_form_data;
    SFW.focus_on_first_field = _focus_on_first_field;
 
-   function _form(base, doc, caller)
+   function _form(base, doc, caller, data)
    {
-      SFW.base.call(this, base,doc,caller);
+      SFW.base.call(this, base,doc,caller,data);
       _focus_on_first_field(this.top());
    }
 

@@ -13,9 +13,9 @@
 
    function _match_rndx(n) { return n.nodeType==1 && n.getAttribute("rndx"); }
 
-   function _table(base, doc, caller)
+   function _table(base, doc, caller, data)
    {
-      SFW.base.call(this,base,doc,caller);
+      SFW.base.call(this,base,doc,caller,data);
       SFW.fix_table_heads(base);
    }
 
@@ -178,51 +178,14 @@
       return this.get_sfw_attribute("line_click_id");
    };
 
-   _table.prototype.process_button_add = function(b)
-   {
-      var host = this._host;
-      var url = b.getAttribute("data-task") || b.getAttribute("data-url");
-      this._row_marker = { os   : SFW.get_page_offset(),
-                           host : host };
-
-      empty_el(host);
-
-      SFW.open_interaction(SFW.stage, url, this);
-   };
-
-   _table.prototype.process_line_click = function(tr)
-   {
-      var id, url;
-      if ((id=tr.getAttribute("data-id"))
-          && (url=this.top().getAttribute("data-on_line_click")))
-      {
-         url += "=" + id;
-
-         var idname = this.get_line_click_id_name();
-         function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
-         var xrow = SFW.find_child_matches(this.result(), f, true);
-
-         var host = this._host;
-         // Save marker for child_finished()
-         this._row_marker = { os   : SFW.get_page_offset(),
-                              xrow : xrow,
-                              host : host };
-
-         empty_el(host);
-
-         SFW.open_interaction(SFW.stage, url, this);
-      }
-   };
-
-   _table.prototype.add_result_node = function(result)
+   _table.prototype.add_result_node = function(result,xrow)
    {
       var n = SFW.first_child_element(result);
       
       // var data = SFW.find_child_matches(this._xmldoc, _match_rndx, true, true);
       if (this.result())
       {
-         var rm, xrow;
-         if ((rm=this._row_marker) && (xrow=rm.xrow))
+         if (xrow)
          {
             var p = xrow.parentNode;
             p.insertBefore(n,xrow);
@@ -235,18 +198,16 @@
       }
    };
 
-   _table.prototype.delete_row = function()
+   _table.prototype.delete_row = function(xrow)
    {
-      if (this.result())
-      {
-         var rm, xrow, hrow;
-         if ((rm=this._row_marker) && (xrow=rm.xrow))
-            xrow.parentNode.removeChild(xrow);
-      }
+      if (this.result() && xrow)
+         xrow.parentNode.removeChild(xrow);
    };
 
    _table.prototype.child_finished = function(child, cmd)
    {
+      var dobj = ("data" in child) ? child.data : null;
+      
       // cmd should have already been checked for messages
       if (cmd)
       {
@@ -270,7 +231,7 @@
                {
                   if (rtype=="update")
                   {
-                     this.add_result_node(res);
+                     this.add_result_node(res,dobj.xrow);
                      this.replot();
                   }
                   else
@@ -281,22 +242,61 @@
          else if (ctype=="string")
          {
             if (cmd=="delete")
-               this.delete_row(cmd);
+               this.delete_row(cmd,dobj.xrow);
             else if (cmd=="fail")
             {
                SFW.alert("Operation failed.");
                return; // skip deleting marker or view.
             }
          }
-         
       }
 
       this.replot();
-      SFW.set_page_offset(this._row_marker.os);
-      this._row_marker = null;
+      if (dobj && "os" in dobj)
+         SFW.set_page_offset(dobj.os);
       SFW.base.prototype.child_finished.call(this,child,cmd);
    };
    
+   _table.prototype.process_button_add = function(button)
+   {
+      var os = SFW.get_page_offset();  // Get offset before discarding contents
+      var host = this._host;
+      var url = button.getAttribute("data-task") || button.getAttribute("data-url");
+
+      empty_el(host);
+
+      SFW.open_interaction(SFW.stage,
+                           url,
+                           this,
+                           { os:os, host:host }
+                          );
+   };
+
+   _table.prototype.process_line_click = function(tr)
+   {
+      var id, url;
+      if ((id=tr.getAttribute("data-id"))
+          && (url=this.top().getAttribute("data-on_line_click")))
+      {
+         url += "=" + id;
+
+         var idname = this.get_line_click_id_name();
+         function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
+         var xrow = SFW.find_child_matches(this.result(), f, true);
+
+         var os = SFW.get_page_offset();  // Get offset before discarding contents
+         var host = this._host;
+
+         empty_el(host);
+
+         SFW.open_interaction(SFW.stage,
+                              url,
+                              this,
+                              { os:os, host:host, xrow:xrow }
+                             );
+      }
+   };
+
    _table.prototype.process = function _table_process_message(e,t)
    {
       var table_el = this.top();

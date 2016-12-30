@@ -318,7 +318,7 @@ function init_SFW(callback)
       s.zIndex = 100;
    }
 
-   function _open_interaction(host, url, caller)
+   function _open_interaction(host, url, caller, data)
    {
       var newobj = null;
       
@@ -339,7 +339,7 @@ function init_SFW(callback)
             if (anchor
                 && type
                 && type in SFW.types
-                && (newobj = new SFW.types[type](thost,xdoc,caller)))
+                && (newobj = new SFW.types[type](thost,xdoc,caller,data)))
             {
                _arrange_in_host(host, anchor);
                ;
@@ -426,7 +426,7 @@ function init_SFW(callback)
       return schema;
    }
 
-   function _base(host,xml_doc,caller)
+   function _base(host,xml_doc,caller,data)
    {
       if (!host)
       {
@@ -440,6 +440,9 @@ function init_SFW(callback)
       this._caller = caller ? caller : null;
       this._host = host;
       this._xmldoc = xml_doc;
+
+      if (data)
+         this.data = data;
    };
 
    _base.prototype.top = function _top()       { return _find_anchor(this._host); };
@@ -461,7 +464,10 @@ function init_SFW(callback)
    
    _base.prototype.child_finished = function(child, cmd)
    {
-      function f() { if ("sfw_close" in child) child.sfw_close(); }
+      function f() {
+         if ("sfw_close" in child)
+            child.sfw_close();
+      }
       window.setTimeout(f, 100);
    };
     

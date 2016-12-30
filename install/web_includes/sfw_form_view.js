@@ -8,9 +8,9 @@
 
    SFW.types["form-view"] = _form_view;
 
-   function _form_view(base,doc,caller)
+   function _form_view(base,doc,caller,data)
    {
-      SFW.types["form-edit"].call(this,base,doc,caller);
+      SFW.types["form-edit"].call(this,base,doc,caller,data);
    }
 
    SFW.derive(_form_view, SFW.types["form-edit"]);
