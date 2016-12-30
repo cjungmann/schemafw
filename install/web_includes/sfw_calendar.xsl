@@ -73,11 +73,12 @@ will contain the YYYY-MM-DD date.
 
   <xsl:template name="make_day_heads">
     <xsl:param name="day" select="$day_left" />
-    <th>
+    <xsl:variable name="day_name">
       <xsl:call-template name="get_day_name">
         <xsl:with-param name="ndx" select="$day" />
       </xsl:call-template>
-    </th>
+    </xsl:variable>
+    <th><xsl:value-of select="substring($day_name,1,3)" /></th>
     
     <xsl:if test="($day)+1 &lt;=($day_right)">
       <xsl:call-template name="make_day_heads">
@@ -87,7 +88,7 @@ will contain the YYYY-MM-DD date.
     
   </xsl:template>
 
-  <xsl:template name="build_day_content" priority="-1">
+  <xsl:template name="build_day_content">
     <xsl:param name="date" />
   </xsl:template>
 
@@ -144,7 +145,7 @@ will contain the YYYY-MM-DD date.
             <xsl:value-of select="$classes" />
           </xsl:attribute>
         </xsl:if>
-        <xsl:if test="$date&gt;0">
+        <xsl:if test="$date&gt;0 and $date&lt;=$lastday">
           <xsl:attribute name="data-date">
             <xsl:value-of select="$fulldate" />
           </xsl:attribute>
@@ -188,7 +189,7 @@ will contain the YYYY-MM-DD date.
       </xsl:call-template>
     </tr>
 
-    <xsl:if test="($date)+7 &lt; $lastday">
+    <xsl:if test="($date)+7 &lt;= $lastday">
       <xsl:call-template name="build_weeks">
         <xsl:with-param name="today" select="$today" />
         <xsl:with-param name="month" select="$month" />
@@ -201,7 +202,7 @@ will contain the YYYY-MM-DD date.
   <xsl:template match="*" mode="build_calendar_head">
     <xsl:variable name="ndx_month" select="number(substring(@month,6,2))" />
     <tr>
-      <th colspan="7">
+      <th colspan="7" class="cal_title">
         <xsl:call-template name="get_month_name">
           <xsl:with-param name="ndx" select="$ndx_month" />
         </xsl:call-template>
@@ -218,7 +219,7 @@ will contain the YYYY-MM-DD date.
     <xsl:param name="sfw_class" select="'calendar'"  />
 
     <xsl:variable name="class">
-      <xsl:text>Schema</xsl:text>
+      <xsl:text>Schema calendar</xsl:text>
       <xsl:if test="$table_class">
         <xsl:value-of select="concat(' ',$table_class)" />
       </xsl:if>
