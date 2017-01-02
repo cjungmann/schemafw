@@ -4,20 +4,6 @@
 var SFW = { types     : {},
             autoloads : {},
             callback  : null,
-            alert : function(str)
-            {
-               window.alert(str);
-            },
-            add_type : function(name, constructor, allow_replace)
-            {
-               if (name in this.types && !allow_replace)
-               {
-                  SFW.alert("I-class \"" + name + "\" has already been defined.");
-                  return false;
-               }
-               this.types[name] = constructor;
-               return true;
-            },
             check_and_callback : function(name)
             {
                this.autoloads[name] = true;
@@ -52,7 +38,8 @@ var SFW = { types     : {},
 function init_SFW(callback)
 {
    SFW.callback             = callback;
-   
+
+   SFW.alert                = _alert;
    SFW.confirm              = _confirm;
    SFW.seek_page_anchor     = _seek_page_anchor;
    SFW.seek_event_host      = _seek_event_host;
@@ -68,12 +55,18 @@ function init_SFW(callback)
    SFW.alert_notice         = _alert_notice;
    SFW.check_for_preempt    = _check_for_preempt;
    SFW.base                 = _base;  // "base class" for _form, _table, etc.
+   SFW.types["iclass"]      = _base;
 
    SFW.stage                = document.getElementById("SFW_Content");
 
    SFW.px                   = _px;
 
    function _px(num)    { return String(num)+"px"; };
+
+   function _alert(str)
+   {
+      window.alert(str);
+   }
 
    function _confirm(str)
    {
@@ -136,10 +129,37 @@ function init_SFW(callback)
       return SFW.find_child_matches(t, _is_anchor, true);
    }
 
-   // Add all base prototypes to dclass, which then can replace them:
-   function _derive(dclass, base)
+   function _base_class_exists(name)
    {
-      var pro_b = base.prototype;
+      if (!(name in SFW.types))
+      {
+         _alert("Base class \"" + name + "\" is undefined.");
+         return false;
+      }
+      return true;
+   }
+
+   function _new_type_unique(name)
+   {
+      if (name in SFW.types)
+      {
+         _alert("IClass \"" + name + "\" is already defined.");
+         return false;
+      }
+      return true;
+   }
+
+   // Add all base_class prototypes to dclass, which then can replace them:
+   function _derive(dclass, new_class_name, base_class_name, allow_replace)
+   {
+      if (!_base_class_exists(base_class_name))
+         return false;
+      if (!allow_replace && !_new_type_unique(new_class_name))
+         return false;
+
+      this.types[new_class_name] = dclass;
+
+      var pro_b = this.types[base_class_name].prototype;
       var pro_d = dclass.prototype;
       dclass._baseproto = pro_b;
       for (var p in pro_b)
@@ -147,6 +167,7 @@ function init_SFW(callback)
          if (!(p in pro_d))
             pro_d[p] = pro_b[p];
       }
+      return true;
    }
 
    function _add_event(name, f, el)
