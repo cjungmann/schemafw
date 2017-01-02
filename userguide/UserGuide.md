@@ -22,7 +22,14 @@ There are several sections.
   - [A Delete Interaction](CSDeleteInteraction.md)
   - [L-CRUD Files Listings](LCRUDInteractions.md)
   - [Enhancing Case Study with Export](ExportingData.md)
+  - [Creating a Calendar](CalendarCaseStudy.md)
+  - [Using a Form-View](FormViewCaseStudy.md)
 - Advanced Topics
+  - Framework Details
+    - [Interactive Classes](IClasses.md)
+    - [Dependent Module Loading](DependentModuleLoad.md)
+  - Extending the Framework
+    - [Custom Interactive Classes](CustomIClasses.md)
   - Debugging
     - [Running Websites on LocalHost](RunningOnLocalhost.md)
     - [MySQL Command Line Queries](MySQLCLQueries.md)
