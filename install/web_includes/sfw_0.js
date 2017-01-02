@@ -4,6 +4,20 @@
 var SFW = { types     : {},
             autoloads : {},
             callback  : null,
+            alert : function(str)
+            {
+               window.alert(str);
+            },
+            add_type : function(name, constructor, allow_replace)
+            {
+               if (name in this.types && !allow_replace)
+               {
+                  SFW.alert("I-class \"" + name + "\" has already been defined.");
+                  return false;
+               }
+               this.types[name] = constructor;
+               return true;
+            },
             check_and_callback : function(name)
             {
                this.autoloads[name] = true;
@@ -39,7 +53,6 @@ function init_SFW(callback)
 {
    SFW.callback             = callback;
    
-   SFW.alert                = _alert;
    SFW.confirm              = _confirm;
    SFW.seek_page_anchor     = _seek_page_anchor;
    SFW.seek_event_host      = _seek_event_host;
@@ -61,11 +74,6 @@ function init_SFW(callback)
    SFW.px                   = _px;
 
    function _px(num)    { return String(num)+"px"; };
-
-   function _alert(str)
-   {
-      window.alert(str);
-   }
 
    function _confirm(str)
    {
