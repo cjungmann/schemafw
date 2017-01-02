@@ -6,14 +6,13 @@
    if (SFW.delay_init("sfw_calendar",_init, "table"))
       return;
 
-   SFW.types["calendar"] = _calendar;
+   if (!SFW.derive(_calendar, "calendar", "table"))
+      return;
 
    function _calendar(base, doc, caller, data)
    {
       SFW.types["table"].call(this,base,doc,caller,data);
    }
-
-   SFW.derive(_calendar, SFW.types["table"]);
 
    // No need for replot function, which is only used to re-sort table rows
 

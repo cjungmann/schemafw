@@ -6,14 +6,13 @@
    if (SFW.delay_init("sfw_form_view",_init,"form-edit"))
       return;
 
-   SFW.types["form-view"] = _form_view;
+   if (!SFW.derive(_form_view, "form-view", "form-edit"))
+      return;
 
    function _form_view(base,doc,caller,data)
    {
       SFW.types["form-edit"].call(this,base,doc,caller,data);
    }
-
-   SFW.derive(_form_view, SFW.types["form-edit"]);
 
    function _get_field_parts(b)
    {

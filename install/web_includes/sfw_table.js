@@ -6,20 +6,20 @@
    if (SFW.delay_init("sfw_table",_init))
       return;
 
-   SFW.types["table"] = _table;
-   SFW.types["import-review"] = _table;
+   if (!SFW.derive(_table, "table", "iclass") ||
+       !SFW.derive(_table, "import-review", "iclass"))
+      return;
    
-   SFW.fix_table_heads = _fix_table_heads;
-
-   function _match_rndx(n) { return n.nodeType==1 && n.getAttribute("rndx"); }
-
    function _table(base, doc, caller, data)
    {
       SFW.base.call(this,base,doc,caller,data);
       SFW.fix_table_heads(base);
    }
 
-   SFW.derive(_table, SFW.base);
+   // Adding useful local functions to global object
+   SFW.fix_table_heads = _fix_table_heads;
+
+   function _match_rndx(n) { return n.nodeType==1 && n.getAttribute("rndx"); }
 
    _table.prototype.result = function()
    {

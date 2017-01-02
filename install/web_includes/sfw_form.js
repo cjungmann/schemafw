@@ -6,11 +6,9 @@
    if (SFW.delay_init("sfw_form",_init))
       return;
 
-   SFW.types["form-new"] = _form;
-   SFW.types["form-edit"] = _form;
-
-   SFW.get_form_data        = _get_form_data;
-   SFW.focus_on_first_field = _focus_on_first_field;
+   if (!SFW.derive(_form, "form-new", "iclass") ||
+       !SFW.derive(_form, "form-edit", "iclass"))
+      return;
 
    function _form(base, doc, caller, data)
    {
@@ -18,7 +16,9 @@
       _focus_on_first_field(this.top());
    }
 
-   SFW.derive(_form, SFW.base);
+   // Adding useful local functions to global object
+   SFW.get_form_data        = _get_form_data;
+   SFW.focus_on_first_field = _focus_on_first_field;
    
    function _find_first_editable_field(form)
    {
