@@ -3,7 +3,7 @@
 
 (function _init()
 {
-   if (SFW.delay_init("sfw_table",_init))
+   if (SFW.delay_init("sfw_table",_init,"iclass"))
       return;
 
    if (!SFW.derive(_table, "table", "iclass") ||

@@ -3,7 +3,7 @@
 
 (function _init()
 {
-   if (SFW.delay_init("sfw_form",_init))
+   if (SFW.delay_init("sfw_form",_init,"iclass"))
       return;
 
    if (!SFW.derive(_form, "form-new", "iclass") ||
