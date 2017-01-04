@@ -1152,12 +1152,12 @@ Schema::MODE_ACTION Schema::get_mode_type(const char *str)
 
       if (found)
          rval = found->value;
-      else
-      {
-         ifputs("Unknown mode type \"", stderr);
-         ifputs(str, stderr);
-         ifputs("\"\n", stderr);
-      }
+      // else
+      // {
+      //    ifputs("Unknown mode type \"", stderr);
+      //    ifputs(str, stderr);
+      //    ifputs("\"\n", stderr);
+      // }
 
    }
 
