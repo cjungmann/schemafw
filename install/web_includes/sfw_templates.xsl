@@ -193,7 +193,7 @@
     <xsl:variable name="delim">
       <xsl:variable name="after" select="substring(substring-after($str,'{'),1,1)" />
       <!-- <xsl:if test="$after='@' or $after='$'"> -->
-      <xsl:if test="contains('@$!', $after)">
+      <xsl:if test="$after and contains('@$!', $after)">
         <xsl:value-of select="concat('{',$after)" />
       </xsl:if>
     </xsl:variable>
@@ -496,7 +496,7 @@
         <xsl:when test="message/@type='error'">
           <xsl:apply-templates select="message" />
         </xsl:when>
-        <xsl:when test="contains('edit view new', $formtype)">
+        <xsl:when test="$formtype and contains('edit view new', $formtype)">
           <xsl:apply-templates select="/*">
             <xsl:with-param name="root" select="1" />
           </xsl:apply-templates>
@@ -517,7 +517,7 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="*[@rndx]">
+  <xsl:template match="*[@rndx and not(@type='variables' or @type='info')]">
     <xsl:variable name="row_name">
       <xsl:choose>
         <xsl:when test="schema">
@@ -735,7 +735,7 @@
         <xsl:when test="$no-prefix">
           <xsl:variable name="tname" select="concat(' ', local-name(), ' ')" />
           <xsl:choose>
-            <xsl:when test="contains($no-prefix, $tname)">0</xsl:when>
+            <xsl:when test="$tname and contains($no-prefix, $tname)">0</xsl:when>
             <xsl:otherwise>1</xsl:otherwise>
           </xsl:choose>
         </xsl:when>
