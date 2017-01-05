@@ -1,0 +1,28 @@
+#!/bin/bash
+
+testroutine_first=ssys_schemafw_version
+testroutine_backup=ssys_get_procedure_params
+
+function updatedbs
+{
+    db_query="SELECT ROUTINE_SCHEMA FROM ROUTINES WHERE ROUTINE_NAME='$1'"
+    dbs=$(mysql information_schema -NB -e "${db_query}")
+    dbcount=$( echo "${dbs}" | wc -w )
+
+    if [ $dbcount -eq 0  ] ; then
+        if [ $1 == $testroutine_backup ] ; then
+            echo No SchemaFW databases found: done.
+        else
+            echo "No databases, checking for procedure ${testroutine_backup}."
+            updatedbs ${testroutine_backup}
+        fi
+    else
+        while read -r dbname; do
+            mysql -Bf -D ${dbname} < sys_procs.sql
+        done <<< "${dbs}"
+    fi
+}
+
+
+updatedbs ${testroutine_first}
+
