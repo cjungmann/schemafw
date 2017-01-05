@@ -326,7 +326,7 @@
 
   <xsl:template match="@meta-jump" mode="add_to_head">
     <!-- <xsl:if test="not($result-row) or $result-row/@error=0"> -->
-    <xsl:if test="$err-condition='0'">
+    <xsl:if test="$err_condition='0'">
       <xsl:variable name="content" select="concat('0; url=', .)" />
       <meta http-equiv="refresh" content="{$content}" />
       <xsl:value-of select="$nl" />
