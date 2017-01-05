@@ -21,6 +21,12 @@ SELECT ' ' AS '.\n.\nHere begins the real procedures and functions.\nIgnore \'al
 
 /* Find documentation for these functions in sys_procs.hpp */
 
+DROP PROCEDURE IF EXISTS ssys_schemafw_version $$
+CREATE PROCEDURE ssys_schemafw_version()
+BEGIN
+   SELECT 0.95;
+END $$
+
 DROP PROCEDURE IF EXISTS ssys_drop_salt_string $$
 CREATE PROCEDURE ssys_drop_salt_string(salt_string VARCHAR(255))
 BEGIN
@@ -154,6 +160,50 @@ BEGIN
 
    SET @dic_qry = NULL;
 END $$
+
+-- --------------------------
+-- Calendar Helper Procedures
+-- --------------------------
+-- -----------------------------------------------
+DROP PROCEDURE IF EXISTS ssys_month_info_result $$
+CREATE PROCEDURE ssys_month_info_result(ddate DATE)
+BEGIN
+   DECLARE s_first     DATE;
+   DECLARE month       CHAR(7);
+   DECLARE initialDay  INT UNSIGNED;
+   DECLARE countOfDays INT UNSIGNED;
+
+   SET s_first = DATE_SUB(ddate, INTERVAL DAYOFMONTH(ddate)-1 DAY);
+   
+   SET initialDay = DAYOFWEEK(s_first) - 1;  -- a javascript month is 0-based
+   SET countOfDays = DAYOFMONTH(DATE_SUB(DATE_ADD(s_first, INTERVAL 1 MONTH),INTERVAL 1 DAY));
+
+   SET month = CONCAT(YEAR(ddate),'-', SUBSTRING(CONCAT(MONTH(ddate)+100),2));
+
+   SELECT month, initialDay, countOfDays;
+END $$
+
+-- ------------------------------------------------------
+DROP PROCEDURE IF EXISTS ssys_month_get_first_and_last $$
+CREATE PROCEDURE ssys_month_get_first_and_last(tdate DATE,
+                                               OUT first_day DATE,
+                                               OUT last_day DATE)
+BEGIN
+   DECLARE wmonth INT DEFAULT MONTH(tdate);
+   DECLARE wday INT DEFAULT DAY(tdate);
+   DECLARE wyear INT DEFAULT YEAR(tdate);
+
+   DECLARE next_month INT DEFAULT MOD(wmonth,12)+1;
+   DECLARE lyear INT;
+
+   SET lyear = CASE WHEN next_month>wmonth THEN wyear ELSE wyear+1 END;
+
+   SELECT CONCAT_WS('-',wyear,SUBSTR(CONCAT(wmonth+100),2),'01'),
+          CONCAT_WS('-',lyear,SUBSTR(CONCAT(next_month+100),2),'01') - INTERVAL 1 DAY
+     INTO first_day, last_day;
+END $$
+
+
 
 
 

@@ -344,6 +344,34 @@ void ssys_default_import_removal(char[64] p_table_name);
  */
 table ssys_default_import_confirm(char[64] p_table_name, int p_limit);
 
+/**
+ * @brief Makes single-row table for building a calendar with sfw_calendar.xsl
+ *
+ * This procedure returns a single-row table with values used by sfw_calendar.xsl
+ * to construct a calendar.  The values in the single row are:
+ * - **month** string of form YYYY-MM
+ * - **initialDay** the day-of-week of the first of the month (Sunday=0)
+ * - **countOfDays** the number of the last day of the month.
+ */
+table ssys_month_into_result(DATE mdate);
+
+/**
+ * @brief Calculates DATE values for the first and last days of the month.
+ *
+ * @param mdate     Date value of the month to process.
+ * @param first_day OUTPUT parameter in which is returned the date value
+ *                  of the first day of the month.
+ * @param last_day  OUTPUT parameter in which is returned the date value
+ *                  of the last day of the month.
+ *
+ * @return void
+ *
+ * These values are used by sfw_calendar.xsl to build a calendar.  It does
+ * not create a result, running it does not affect the position of other
+ * result queries in a procedure.
+ */
+void ssys_month_get_first_and_last(DATE mdate, DATE &first_day, DATE &last_day);
+
 
 /**
  * @brief SchemaFW System procedure that is called with each new http request.
