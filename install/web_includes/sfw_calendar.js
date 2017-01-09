@@ -46,9 +46,18 @@
       }
    };
 
+   _calendar.prototype.process_month_jump = function(month)
+   {
+      var url = SFW.update_location_arg("mdate", month);
+      if (url)
+         window.location = url;
+
+      return false;
+   };
+
    _calendar.prototype.process = function (e,t)
    {
-      var did, tag, top = this.top();
+      var did, tag, mon, top = this.top();
       
       if (e.type!="click")
          return true;
@@ -59,11 +68,14 @@
          {
             if (tag=="td" && (did=t.getAttribute("data-date")))
                return this.process_day_click(t, did);
+            if (tag=="button" && (mon=t.getAttribute("data-jump")))
+               return this.process_month_jump(mon);
          }
 
          t = t.parentNode;
       }
-      return true;
+
+      return this.call_super_event("table", "process", arguments);
    };
    
 })();

@@ -54,6 +54,7 @@ function init_SFW(callback)
    SFW.get_director         = _get_director;
    SFW.alert_notice         = _alert_notice;
    SFW.check_for_preempt    = _check_for_preempt;
+   SFW.update_location_arg  = _update_location_arg;
    SFW.base                 = _base;  // "base class" for _form, _table, etc.
    SFW.types["iclass"]      = _base;
 
@@ -161,10 +162,10 @@ function init_SFW(callback)
 
       var pro_b = this.types[base_class_name].prototype;
       var pro_d = dclass.prototype;
-      dclass._baseproto = pro_b;
+      pro_d._baseproto = pro_b;
       for (var p in pro_b)
       {
-         if (!(p in pro_d))
+         if (p!="_baseproto" && !(p in pro_d))
             pro_d[p] = pro_b[p];
       }
       return true;
@@ -455,6 +456,42 @@ function init_SFW(callback)
       return schema;
    }
 
+   function _update_location_arg(name, value)
+   {
+      var loc = window.location;
+      var newarg = name + (value ? ("="+encodeURIComponent(value)):"");
+      var set = false;
+      var qsearch = loc.search.split("?");
+      var args, subpage;
+      var qlen = qsearch.length;
+      if (qlen>1)
+      {
+         args = qsearch[qlen-1].split('&');
+         if (qlen>2)
+            subpage = qsearch[1];
+      }
+
+      if (args)
+      {
+         var aarr, i, stop;
+         for (i=0,stop=args.length; !set && i<stop; ++i)
+         {
+            if ((aarr=args[i].split('=')) && aarr[0]==name)
+            {
+               args[i] = newarg;
+               set = true;
+            }
+         }
+      }
+      else
+         args = [];
+
+      if (!set)
+         args.push(newarg);
+
+      return loc.pathname + "?" + (subpage?(subpage+"?"):"") + args.join('&');
+   }
+
    function _base(host,xml_doc,caller,data)
    {
       if (!host)
@@ -465,7 +502,6 @@ function init_SFW(callback)
       
       host.sfwobj = this;
       
-      this._baseproto = null;
       this._caller = caller ? caller : null;
       this._host = host;
       this._xmldoc = xml_doc;
@@ -474,10 +510,9 @@ function init_SFW(callback)
          this.data = data;
    };
 
-   _base.prototype.top = function _top()       { return _find_anchor(this._host); };
-   _base.prototype.schema = function _schema() { return _find_schema(this._xmldoc.documentElement); };
-   _base.prototype.baseproto = function _baseproto() { return this._baseproto; };
-
+   _base.prototype.top        = function _top()      { return _find_anchor(this._host); };
+   _base.prototype.schema     = function _schema()   { return _find_schema(this._xmldoc.documentElement); };
+   _base.prototype.baseproto  = function _baseproto(){ return this._baseproto; };
    _base.prototype.button_processors = {};
 
    _base.prototype.sfw_close = function _sfw_close()
@@ -490,14 +525,63 @@ function init_SFW(callback)
          v.parentNode.removeChild(v);
       }
    };
-   
-   _base.prototype.child_finished = function(child, cmd)
+
+   function _child_close(child)
    {
-      function f() {
-         if ("sfw_close" in child)
-            child.sfw_close();
+      if ("sfw_close" in child)
+         window.setTimeout(function(){child.sfw_close();}, 100);
+   }
+
+   function _confirm_delete(rowone)
+   {
+      return rowone && rowone.getAttribute("deleted");
+   }
+   
+   _base.prototype.cfobj_from_doc = function(doc)
+   {
+      var docel = doc.documentElement;
+      var result = docel.selectSingleNode("*[@rndx=1]");
+      
+      var rval = { cfobj  : true,
+                   child  : this,
+                   cdata  : "data" in this ? this.data : null,
+
+                   docel  : docel,
+                   mtype  : docel.getAttribute("mode-type"),
+
+                   close  : function() { _child_close(this.child); }
+                 };
+
+      if (result)
+      {
+         var rname = result.getAttribute("row-name") || "row";
+         var xpathrow = "*[local-name()='" + rname + "']";
+         rval["result"] = result;
+         rval["rtype"] = result.getAttribute("type") || null;
+         rval["rname"] = rname;
+         rval["rowone"] = result.selectSingleNode(xpathrow);
+         rval["confirm_delete"] = function() { return _confirm_delete(this.rowone); };
       }
-      window.setTimeout(f, 100);
+
+      return rval;
+   };
+
+   _base.prototype.cfobj_from_cmd = function(cmd)
+   {
+      if (typeof(cmd)=="object" && "documentElement" in cmd)
+         return this.cfobj_from_doc(cmd);
+      else
+         return { cfobj : true,
+                  child : this,
+                  cdata : "data" in this ? this.data : null,
+                  cmd   : cmd || null,
+                  close : function() { _child_close(this.child); }
+                };
+   };
+
+   _base.prototype.child_finished = function(cfobj)
+   {
+      cfobj.close();
    };
     
   _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
@@ -525,10 +609,13 @@ function init_SFW(callback)
          case "cancel":
          case "close":
             if (this._caller)
-               this._caller.child_finished(this,type);
+               this._caller.child_finished(this.cfobj_from_cmd(type));
             return false;
          
          default:
+            // Gotta detect delete-type buttons and process without _open_interaction!
+
+         
             var pbtype = "process_button_"+type;
             if (pbtype in this)
                return this[pbtype](b,cb);
@@ -548,6 +635,14 @@ function init_SFW(callback)
       return true;
    };
 
+   _base.prototype.call_super_event = function(itype, fname, args)
+   {
+      var proto = (itype in SFW.types) ? SFW.types[itype].prototype : null;
+      if (proto && fname in proto)
+         return proto[fname].apply(this, args);
+
+      return true;
+   };
 
    function call_SFW_init_functions()
    {

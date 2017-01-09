@@ -100,7 +100,7 @@
          if (SFW.check_for_preempt(doc))
          {
             if (ths._caller)
-               ths._caller.child_finished(ths, doc);
+               ths._caller.child_finished(ths.cfobj_from_doc(doc));
          }
       }
 
@@ -112,10 +112,20 @@
                cb_good, cb_bad, headers);
    };
 
+   _form.prototype.process_button_delete = function(t,cb)
+   {
+      var url = t.getAttribute("data-task") || t.getAttribute("data-url");
+      xhr_get(url,cb);
+   };
+
    _form.prototype.process_button = function _process_button(e,t)
    {
       var ths = this;
-      function fdone(cmd) {if (ths._caller) ths._caller.child_finished(ths,cmd||null);   }
+      function fdone(cmd)
+      {
+         if (ths._caller)
+            ths._caller.child_finished(ths.cfobj_from_cmd(cmd));
+      }
       
       return this.process_clicked_button(t, fdone);
    };
