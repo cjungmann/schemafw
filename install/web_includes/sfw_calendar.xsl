@@ -201,12 +201,90 @@ will contain the YYYY-MM-DD date.
 
   <xsl:template match="*" mode="build_calendar_head">
     <xsl:variable name="ndx_month" select="number(substring(@month,6,2))" />
+    <xsl:variable name="ndx_year" select="number(substring(@month,1,4))" />
+    <xsl:variable name="str_month" select="substring(string(100+$ndx_month),2,2)" />
+
+    <xsl:variable name="month_next">
+      <xsl:variable name="mon" select="($ndx_month mod 12)+1" />
+      <xsl:variable name="year">
+        <xsl:choose>
+          <xsl:when test="$mon &gt; $ndx_month">
+          <xsl:value-of select="$ndx_year" />
+          </xsl:when>
+          <xsl:otherwise><xsl:value-of select="1 + $ndx_year" /></xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
+      <xsl:value-of select="concat($year,'-',substring(string(100+$mon),2,2),'-01')" />
+    </xsl:variable>
+
+    <xsl:variable name="month_last">
+      <xsl:variable name="mon" select="(($ndx_month+10) mod 12)+1" />
+      <xsl:variable name="year">
+        <xsl:choose>
+          <xsl:when test="$mon &gt; $ndx_month">
+          <xsl:value-of select="-1+$ndx_year" />
+          </xsl:when>
+          <xsl:otherwise><xsl:value-of select="$ndx_year" /></xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
+      <xsl:value-of select="concat($year,'-',substring(string(100+$mon),2,2),'-01')" />
+    </xsl:variable>
+
+    <xsl:variable name="year_next">
+      <xsl:value-of select="concat(1+$ndx_year,'-',$str_month,'-01')" />
+    </xsl:variable>
+
+    <xsl:variable name="year_last">
+      <xsl:value-of select="concat(-1+$ndx_year,'-',$str_month,'-01')" />
+    </xsl:variable>
+
     <tr>
-      <th colspan="7" class="cal_title">
+      <td colspan="2" class="calnav cn_left">
+        <xsl:element name="button">
+          <xsl:attribute name="data-jump">
+            <xsl:value-of select="$year_last" />
+          </xsl:attribute>
+          <xsl:attribute name="title">
+            <xsl:value-of select="concat('last year (', $year_last, ')')" />
+          </xsl:attribute>
+          <xsl:text> &lt;&lt;&lt; </xsl:text>
+        </xsl:element>
+        <xsl:element name="button">
+          <xsl:attribute name="data-jump">
+            <xsl:value-of select="$month_last" />
+          </xsl:attribute>
+          <xsl:attribute name="title">
+            <xsl:value-of select="concat('last month (', $month_last, ')')" />
+          </xsl:attribute>
+          <xsl:text> &lt; </xsl:text>
+        </xsl:element>
+      </td>
+      <th colspan="3" class="cal_title">
         <xsl:call-template name="get_month_name">
           <xsl:with-param name="ndx" select="$ndx_month" />
         </xsl:call-template>
+        <xsl:value-of select="$ndx_year" />
       </th>
+      <td colspan="2" class="calnav cn_right">
+        <xsl:element name="button">
+          <xsl:attribute name="data-jump">
+            <xsl:value-of select="$month_next" />
+          </xsl:attribute>
+          <xsl:attribute name="title">
+            <xsl:value-of select="concat('next month (', $month_next, ')')" />
+          </xsl:attribute>
+          <xsl:text> &gt; </xsl:text>
+        </xsl:element>
+        <xsl:element name="button">
+          <xsl:attribute name="data-jump">
+            <xsl:value-of select="$year_next" />
+          </xsl:attribute>
+          <xsl:attribute name="title">
+            <xsl:value-of select="concat('next year (', $year_next, ')')" />
+          </xsl:attribute>
+          <xsl:text> &gt;&gt;&gt; </xsl:text>
+        </xsl:element>
+      </td>
     </tr>
     <tr>
        <xsl:call-template name="make_day_heads" />
