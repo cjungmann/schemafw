@@ -181,6 +181,14 @@ form.Schema td { vertical-align:top; }
 table.calendar { border-collapse:collapse; border-spacing:0; font-family:sans-serif; }
 table.calendar tr { height:2em; }
 table.calendar td { padding:0; }
+
+table.calendar td.calnav button { margin:.5em; }
+
+table.calendar td.cn_left { text-align:left; }
+table.calendar td.cn_right { text-align:right; }
+
+table.calendar td.calnav_left 
+
 th.cal_title { font-size: large; font-weight: bold; }
 td.cal_day
 {
