@@ -182,7 +182,6 @@
    {
       var n = SFW.first_child_element(result);
       
-      // var data = SFW.find_child_matches(this._xmldoc, _match_rndx, true, true);
       if (this.result())
       {
          if (xrow)
@@ -198,63 +197,151 @@
       }
    };
 
+   function _empty_node(node)
+   {
+      // Remove attribtes separately, since they are not included in the child list:
+      // Iterate in reverse or removing each attribute will change the position of
+      // the remainder of the attributes.
+      for (var s=node.attributes,i=s.length-1; i>=0; --i)
+         node.removeAttribute(s[i].nodeName);
+      
+      var n, a = node.firstChild;
+      while ((n=a))
+      {
+         a = a.nextSibling;
+         node.removeChild(n);
+      }
+   }
+
+   function _copy_node(target, source)
+   {
+      // Copy attribtes separately, since they are not included in the child list:
+      for (var s,i=0,sa=source.attributes,stop=sa.length; i<stop && (s=sa[i]); ++i)
+         target.setAttribute(s.nodeName,s.nodeValue);
+
+      var n, a = source.firstChild;
+      var doc = "documentElement" in target ? target : target.documentObject;
+      while((n=a))
+      {
+         a = a.nextSibling;
+         switch(n.nodeType)
+         {
+            case 1: // element
+               var newel = addEl(n.tagName,target);
+               _copy_node(newel, n);
+               break;
+
+            // Handled in for-loop at top of function
+            // case 2: // attribute
+            //    target.setAttribute(n.nodeName,n.nodeValue);
+            //    break;
+
+            case 3: // text
+               addText(n.nodeValue, target);
+               break;
+
+            // case 4: // CDataSection
+            //    break;
+
+            case 5: // EntityReference
+               target.appendChild(doc.createEntityReference(n.nodeName));
+               break;
+
+            default:
+               break;
+         }
+      }
+   }
+
+   _table.prototype.copy_result_node = function(result,xrow)
+   {
+      var n = SFW.first_child_element(result);
+      
+      if (this.result())
+      {
+         if (xrow)
+            _empty_node(xrow);
+         else
+            xrow = addEl(n.tagName, this.result());
+
+         _copy_node(xrow, n);
+      }
+   };
+
    _table.prototype.delete_row = function(xrow)
    {
       if (this.result() && xrow)
          xrow.parentNode.removeChild(xrow);
    };
 
-   _table.prototype.child_finished = function(child, cmd)
+   _table.prototype.child_finished = function(cfobj)
    {
-      var dobj = ("data" in child) ? child.data : null;
-      
-      // cmd should have already been checked for messages
-      if (cmd)
+      var dobj = cfobj.cdata;
+
+      if ("docel" in cfobj)
       {
-         var ctype = typeof(cmd);
-         if (ctype=="object" && "documentElement" in cmd)
+         if (cfobj.mtype=="delete" && cfobj.confirm_delete())
+            this.delete_row(dobj.xrow);
+         else if ("result" in cfobj)
          {
-            var docel = cmd.documentElement;
-            var rtype, mtype = docel.getAttribute("mode-type");
-            var res = SFW.find_child_matches(cmd, _match_rndx, true, true);
-            if (res)
-            {
-               var rname = res.getAttribute("row-name") || "row";
-               if (mtype=="delete")
-               {
-                  function f(n) { return n.nodeType==1 && n.tagName==rname; }
-                  var row = SFW.find_child_matches(res, f, true);
-                  if (row && row.getAttribute("deleted"))
-                     this.delete_row();
-               }
-               else if ((rtype=res.getAttribute("type")))
-               {
-                  if (rtype=="update")
-                  {
-                     this.add_result_node(res,dobj.xrow);
-                     this.replot();
-                  }
-                  else
-                     SFW.alert("Type = " + rtype);
-               }
-            }
-         }
-         else if (ctype=="string")
-         {
-            if (cmd=="delete")
-               this.delete_row(cmd,dobj.xrow);
-            else if (cmd=="fail")
-            {
-               SFW.alert("Operation failed.");
-               return; // skip deleting marker or view.
-            }
+            if (cfobj.rtype=="update")
+               this.add_result_node(cfobj.result, dobj.xrow);
          }
       }
+      else if ("cmd" in cfobj)
+      {
+         switch(cfobj.cmd)
+         {
+            case "delete": this.delete_row(dobj.xrow); break;
+            case "fail":
+               SFW.alert(cfobj.rtype + " operation failed.");
+               return;   // skip replot() at end of function
+         }
+      }
+      
+      // cmd should have already been checked for messages
+      // if (cmd)
+      // {
+      //    var docel = this.get_cmd_docel(cmd);
+      //    if (docel)
+      //    {
+      //       var rtype, mtype = docel.getAttribute("mode-type");
+      //       var res = SFW.find_child_matches(cmd, _match_rndx, true, true);
+      //       if (res)
+      //       {
+      //          var rname = res.getAttribute("row-name") || "row";
+      //          if (mtype=="delete")
+      //          {
+      //             function f(n) { return n.nodeType==1 && n.tagName==rname; }
+      //             var row = SFW.find_child_matches(res, f, true);
+      //             if (row && row.getAttribute("deleted"))
+      //                this.delete_row();
+      //          }
+      //          else if ((rtype=res.getAttribute("type")))
+      //          {
+      //             if (rtype=="update")
+      //             {
+      //                this.add_result_node(res,dobj.xrow);
+      //                this.replot();
+      //             }
+      //             else
+      //                SFW.alert("Type = " + rtype);
+      //          }
+      //       }
+      //    }
+      //    else if (this.cmd_is_value(cmd,"delete"))
+      //       this.delete_row(cmd,dobj.xrow);
+      //    else if (this.cmd_is_value(cmd,"fail"))
+      //    {
+      //       SFW.alert("Operation failed.");
+      //       return; // skip deleting marker or view.
+      //    }
+      // }
 
       this.replot();
       if (dobj && "os" in dobj)
          SFW.set_page_offset(dobj.os);
-      SFW.base.prototype.child_finished.call(this,child,cmd);
+      SFW.base.prototype.child_finished.call(this,cfobj);
    };
    
    _table.prototype.process_button_add = function(button)
@@ -263,13 +350,19 @@
       var host = this._host;
       var url = button.getAttribute("data-task") || button.getAttribute("data-url");
 
-      empty_el(host);
+      if (url)
+      {
+         empty_el(host);
 
-      SFW.open_interaction(SFW.stage,
-                           url,
-                           this,
-                           { os:os, host:host }
-                          );
+         SFW.open_interaction(SFW.stage,
+                              url,
+                              this,
+                              { os:os, host:host }
+                             );
+         return false;
+      }
+      
+      return true;
    };
 
    _table.prototype.process_line_click = function(tr)
@@ -294,7 +387,11 @@
                               this,
                               { os:os, host:host, xrow:xrow }
                              );
+
+         return false;
       }
+
+      return true;
    };
 
    _table.prototype.process = function _table_process_message(e,t)
