@@ -21,9 +21,20 @@
 
    function _match_rndx(n) { return n.nodeType==1 && n.getAttribute("rndx"); }
 
-   _table.prototype.result = function()
+   _table.prototype.result = function(match)
    {
-      return SFW.find_child_matches(this._xmldoc, _match_rndx, true, true);
+      var mfunc = _match_rndx;
+      if (match)
+      {
+         var str = ("tagName" in match)?match.tagName:match;
+         mfunc = function(n) {
+            return n.nodeType==1
+               && n.getAttribute("rndx")
+               && n.getAttribute("row-name")==str;
+         };
+      }
+      
+      return SFW.find_child_matches(this._xmldoc, mfunc, true, true);
    };
    
    _table.prototype.get_sort_field = function()
@@ -104,19 +115,19 @@
          return false;
    };
 
-   _table.prototype.replot = function()
+   _table.prototype.replot = function(match)
    {
       var tbody = SFW.find_child_matches(this.top(), "tbody", true);
       if (tbody)
       {
-         this.result().setAttribute("make_table_body", "true");
-         SFW.xslobj.transformFill(tbody, this.result());
-         this.result().removeAttribute("make_table_body");
+         this.result(match).setAttribute("make_table_body", "true");
+         SFW.xslobj.transformFill(tbody, this.result(match));
+         this.result(match).removeAttribute("make_table_body");
          _fix_table_heads(this.top());
       }
       else
       {
-         SFW.xslobj.transformFill(this._host, this.result());
+         SFW.xslobj.transformFill(this._host, this.result(match));
          _fix_table_heads(this.top());
       }
    };
@@ -181,8 +192,9 @@
    _table.prototype.add_result_node = function(result,xrow)
    {
       var n = SFW.first_child_element(result);
+      var res = this.result(n);
       
-      if (this.result())
+      if (res)
       {
          if (xrow)
          {
@@ -192,7 +204,7 @@
          }
          else
          {
-            this.result().appendChild(n);
+            this.res.appendChild(n);
          }
       }
    };
@@ -253,92 +265,86 @@
       }
    }
 
-   _table.prototype.copy_result_node = function(result,xrow)
+   _table.prototype.copy_result_node = function(result,row_to_replace)
    {
       var n = SFW.first_child_element(result);
+      var res = this.result(n);
       
-      if (this.result())
+      if (res)
       {
-         if (xrow)
-            _empty_node(xrow);
+         if (row_to_replace)
+            _empty_node(row_to_replace);
          else
-            xrow = addEl(n.tagName, this.result());
+            row_to_replace = addEl(n.tagName, res);
 
-         _copy_node(xrow, n);
+         _copy_node(row_to_replace, n);
       }
    };
 
    _table.prototype.delete_row = function(xrow)
    {
-      if (this.result() && xrow)
+      if (this.result(xrow) && xrow)
          xrow.parentNode.removeChild(xrow);
    };
 
-   _table.prototype.child_finished = function(cfobj)
+   _table.prototype.find_matching_data_row = function(cfobj)
    {
-      var dobj = cfobj.cdata;
+      var id, res, el = ("rowone" in cfobj) ? cfobj.rowone : null;
+      if (el)
+      {
+         var xpath = "*/*[@rndx and @row-name='" + el.tagName + "']";
+         res = this._xmldoc.selectSingleNode(xpath);
+         id = el.getAttribute("id");
+         if ((res=this.result(el)) && (id=el.getAttribute("id")))
+         {
+            function f(n) { return n.nodeType==1 && n.getAttribute("id")==id; }
+            return SFW.find_child_matches(res, f, true, false);
+         }
+      }
 
+      return null;
+   };
+
+   _table.prototype.update_row = function(cfobj, preserve_result)
+   {
+      var xrow = this.find_matching_data_row(cfobj);
       if ("docel" in cfobj)
       {
          if (cfobj.mtype=="delete" && cfobj.confirm_delete())
-            this.delete_row(dobj.xrow);
-         else if ("result" in cfobj)
+         {
+            debugger;
+            // find the selected row:
+            this.delete_row(xrow);
+         }
+         else if (xrow)
          {
             if (cfobj.rtype=="update")
-               this.add_result_node(cfobj.result, dobj.xrow);
+            {
+               if (preserve_result)
+                  this.copy_result_node(cfobj.result, xrow);
+               else
+                  this.add_result_node(cfobj.result, xrow);
+            }
          }
       }
       else if ("cmd" in cfobj)
       {
          switch(cfobj.cmd)
          {
-            case "delete": this.delete_row(dobj.xrow); break;
+            case "delete": this.delete_row(cfobj.cdata.xrow); break;
             case "fail":
                SFW.alert(cfobj.rtype + " operation failed.");
                return;   // skip replot() at end of function
          }
       }
-      
-      // cmd should have already been checked for messages
-      // if (cmd)
-      // {
-      //    var docel = this.get_cmd_docel(cmd);
-      //    if (docel)
-      //    {
-      //       var rtype, mtype = docel.getAttribute("mode-type");
-      //       var res = SFW.find_child_matches(cmd, _match_rndx, true, true);
-      //       if (res)
-      //       {
-      //          var rname = res.getAttribute("row-name") || "row";
-      //          if (mtype=="delete")
-      //          {
-      //             function f(n) { return n.nodeType==1 && n.tagName==rname; }
-      //             var row = SFW.find_child_matches(res, f, true);
-      //             if (row && row.getAttribute("deleted"))
-      //                this.delete_row();
-      //          }
-      //          else if ((rtype=res.getAttribute("type")))
-      //          {
-      //             if (rtype=="update")
-      //             {
-      //                this.add_result_node(res,dobj.xrow);
-      //                this.replot();
-      //             }
-      //             else
-      //                SFW.alert("Type = " + rtype);
-      //          }
-      //       }
-      //    }
-      //    else if (this.cmd_is_value(cmd,"delete"))
-      //       this.delete_row(cmd,dobj.xrow);
-      //    else if (this.cmd_is_value(cmd,"fail"))
-      //    {
-      //       SFW.alert("Operation failed.");
-      //       return; // skip deleting marker or view.
-      //    }
-      // }
+   };
 
+   _table.prototype.child_finished = function(cfobj)
+   {
+      this.update_row(cfobj);
       this.replot();
+
+      var dobj = cfobj.cdata;
       if (dobj && "os" in dobj)
          SFW.set_page_offset(dobj.os);
       SFW.base.prototype.child_finished.call(this,cfobj);
@@ -375,6 +381,10 @@
 
          var idname = this.get_line_click_id_name();
          function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
+
+
+         // Somehow get row-name, perhaps saved in the attributes of the table,
+         // and pass it as an argument to result():
          var xrow = SFW.find_child_matches(this.result(), f, true);
 
          var os = SFW.get_page_offset();  // Get offset before discarding contents
