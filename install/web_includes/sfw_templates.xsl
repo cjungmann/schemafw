@@ -507,7 +507,6 @@
           </xsl:apply-templates>
         </xsl:when>
         <xsl:when test="*[@rndx=1]">
-          <xsl:apply-templates select="." mode="import_review_head" />
           <xsl:apply-templates select="*[@rndx=1]" />
         </xsl:when>
         <xsl:otherwise>
