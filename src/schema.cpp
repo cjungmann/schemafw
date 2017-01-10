@@ -842,9 +842,8 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
       if (result_type)
          print_xml_attribute(m_out, "type", result_type);
 
-      // If no schema, we need to identify the row name in the result element:
-      if (!schema)
-         print_xml_attribute(m_out, "row-name", m_row_name);
+      // Always include row-name attribute for more efficient searches:
+      print_xml_attribute(m_out, "row-name", m_row_name);
 
       // The following items should only be printed if we're
       // in a real result branch, not a response-mode substitute:
