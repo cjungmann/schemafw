@@ -50,6 +50,7 @@ function init_SFW(callback)
    SFW.process_event        = _process_event;
    SFW.resize_page          = _resize_page;
    SFW.translate_url        = _translate_url;
+   SFW.render_interaction   = _render_interaction;
    SFW.open_interaction     = _open_interaction;
    SFW.get_director         = _get_director;
    SFW.alert_notice         = _alert_notice;
@@ -348,6 +349,35 @@ function init_SFW(callback)
       s.zIndex = 100;
    }
 
+   /**
+    * Use instead of _open_interaction() for more control.
+    *
+    * For data that is extracted from local sources.
+    */ 
+   function _render_interaction(doc, host, caller, data)
+   {
+      var thost = addEl("div",host);
+      thost.className = "SFW_Host";
+      thost.style.minHeight = SFW.px(host.offsetHeight);
+      
+      var docel = doc.documentElement;
+      var type = doc.documentElement.getAttribute("mode-type");
+      var xslo = SFW.xslobj;
+      xslo.transformInsert(thost, docel);
+
+      var anchor = SFW.seek_child_anchor(thost);
+      if (anchor
+          && type
+          && type in SFW.types
+          && (newobj = new SFW.types[type](thost,doc,caller,data)))
+      {
+         _arrange_in_host(host, anchor);
+         ;
+      }
+      else
+         host.removeChild(thost);
+   }
+
    function _open_interaction(host, url, caller, data)
    {
       var newobj = null;
@@ -355,28 +385,7 @@ function init_SFW(callback)
       function got(xdoc)
       {
          if (_check_for_preempt(xdoc))
-         {
-            var thost = addEl("div",host);
-            thost.className = "SFW_Host";
-            thost.style.minHeight = SFW.px(host.offsetHeight);
-            
-            var xdocel = xdoc.documentElement;
-            var type = xdoc.documentElement.getAttribute("mode-type");
-            var xslo = SFW.xslobj;
-            xslo.transformInsert(thost, xdocel);
-
-            var anchor = SFW.seek_child_anchor(thost);
-            if (anchor
-                && type
-                && type in SFW.types
-                && (newobj = new SFW.types[type](thost,xdoc,caller,data)))
-            {
-               _arrange_in_host(host, anchor);
-               ;
-            }
-            else
-               host.removeChild(thost);
-         }
+            _render_interaction(xdoc, host, caller, data);
       }
 
       xhr_get(url, got);
