@@ -25,7 +25,9 @@ There are several sections.
   - [Creating a Calendar](CalendarCaseStudy.md)
   - [Using a Form-View](FormViewCaseStudy.md)
 - Advanced Topics
+  - [Data Security Measures](DataSecurity.md)
   - Framework Details
+    - [Data Modeling](DataModeling.md)
     - [Interactive Classes](IClasses.md)
     - [Dependent Module Loading](DependentModuleLoad.md)
   - Extending the Framework
@@ -38,6 +40,7 @@ There are several sections.
     - [Response Mode Type _save-post_](SavePostResponseMode.md)
     - [Script to Simulate Cookies for Command-line Debugging of Sessions](CookieSettingScript.md)
     - [Debugging Hints for SQL Procedures](DebuggingSQLHints.md)
+    - [Showing XML Source with Template Output](XMLOutputTemplates.md)
   - Sessions
     - [Explanation of Password Handling](PasswordHandling.md)
     - [SchemaFW Session Processing Procedures](SchemaFWSessionProcs.md)

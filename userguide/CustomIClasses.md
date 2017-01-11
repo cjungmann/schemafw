@@ -7,6 +7,12 @@ The fundamental iclasses, _table_ and _form_, handle multiple or single records,
 respectively.  These classes work on their own, but have been designed to be
 extended using Javascript prototype inheritance.
 
+## Overview
+
+There are several steps to implementing a custom interaction.
+
+1. **Data Model Design**  
+
 ## Definitions
 
 <dl>
@@ -37,6 +43,13 @@ An iclass must typically provide the follwing three methods:
 - a **child_finished** method through which a child iclass object
 
 ## Creating a New IClass
+
+
+## Method Overriding
+
+When a new iclass replaces an existing prototype function with its own custom
+implementation, the base class function can still be accessed using the
+
 
 
 ### Packaging the IClass
