@@ -62,8 +62,16 @@ function init_SFW(callback)
    SFW.stage                = document.getElementById("SFW_Content");
 
    SFW.px                   = _px;
+   SFW.addXMLEl             = _addXMLEl;
 
    function _px(num)    { return String(num)+"px"; };
+
+   // Alternative to XML.js::addEl() to create elements without XHTML namespace:
+   function _addXMLEl(tag,parent,before,ns)
+   {
+      // The following function is from XML.js (in case of error):
+      return add_namespace_el(tag,ns||"",parent,before);
+   }
 
    function _alert(str)
    {

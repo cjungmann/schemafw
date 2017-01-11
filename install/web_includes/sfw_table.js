@@ -189,26 +189,6 @@
       return this.get_sfw_attribute("line_click_id");
    };
 
-   _table.prototype.add_result_node = function(result,xrow)
-   {
-      var n = SFW.first_child_element(result);
-      var res = this.result(n);
-      
-      if (res)
-      {
-         if (xrow)
-         {
-            var p = xrow.parentNode;
-            p.insertBefore(n,xrow);
-            p.removeChild(xrow);
-         }
-         else
-         {
-            this.res.appendChild(n);
-         }
-      }
-   };
-
    function _empty_node(node)
    {
       // Remove attribtes separately, since they are not included in the child list:
@@ -239,7 +219,7 @@
          switch(n.nodeType)
          {
             case 1: // element
-               var newel = addEl(n.tagName,target);
+               var newel = SFW.addXMLEl(n.tagName,target);
                _copy_node(newel, n);
                break;
 
@@ -265,19 +245,38 @@
       }
    }
 
+   _table.prototype.add_result_node = function(result,xrow)
+   {
+      var n, p, res;
+      if ((n=SFW.first_child_element(result)))
+      {
+         if (xrow)
+         {
+            if ((p=xrow.parentNode))
+            {
+               p.insertBefore(n,xrow);
+               p.removeChild(xrow);
+            }
+         }
+         else if ((res=this.result(n)))
+            res.appendChild(n);
+      }
+   };
+
    _table.prototype.copy_result_node = function(result,row_to_replace)
    {
-      var n = SFW.first_child_element(result);
-      var res = this.result(n);
-      
-      if (res)
+      var res, n;
+      if ((n=SFW.first_child_element(result)))
       {
-         if (row_to_replace)
-            _empty_node(row_to_replace);
-         else
-            row_to_replace = addEl(n.tagName, res);
+         if ((res=this.result(n)))
+         {
+            if (row_to_replace)
+               _empty_node(row_to_replace);
+            else
+               row_to_replace = SFW.addXMLEl(n.tagName,res);
 
-         _copy_node(row_to_replace, n);
+            _copy_node(row_to_replace, n);
+         }
       }
    };
 
@@ -310,21 +309,19 @@
       var xrow = this.find_matching_data_row(cfobj);
       if ("docel" in cfobj)
       {
-         if (cfobj.mtype=="delete" && cfobj.confirm_delete())
+         if (cfobj.mtype=="delete" && cfobj.confirm_delete() && xrow)
          {
             debugger;
             // find the selected row:
             this.delete_row(xrow);
          }
-         else if (xrow)
+         else if (cfobj.rtype=="update")
          {
-            if (cfobj.rtype=="update")
-            {
-               if (preserve_result)
-                  this.copy_result_node(cfobj.result, xrow);
-               else
-                  this.add_result_node(cfobj.result, xrow);
-            }
+            // If xrow is NULL, the new result will be appended:
+            if (preserve_result)
+               this.copy_result_node(cfobj.result, xrow);
+            else
+               this.add_result_node(cfobj.result, xrow);
          }
       }
       else if ("cmd" in cfobj)
