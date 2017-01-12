@@ -288,10 +288,14 @@
 
    _table.prototype.find_matching_data_row = function(cfobj)
    {
-      var id, res, el = ("rowone" in cfobj) ? cfobj.rowone : null;
+
+      var el = ("cdata" in cfobj && "xrow" in cfobj.cdata) ? cfobj.cdata.xrow : null;
+      if (!el)
+         el = ("rowone" in cfobj) ? cfobj.rowone : null;
+      
       if (el)
       {
-         var xpath = "*/*[@rndx and @row-name='" + el.tagName + "']";
+         var id, res, xpath = "*/*[@rndx and @row-name='" + el.tagName + "']";
          res = this._xmldoc.selectSingleNode(xpath);
          id = el.getAttribute("id");
          if ((res=this.result(el)) && (id=el.getAttribute("id")))
@@ -309,11 +313,10 @@
       var xrow = this.find_matching_data_row(cfobj);
       if ("docel" in cfobj)
       {
-         if (cfobj.mtype=="delete" && cfobj.confirm_delete() && xrow)
+         if (cfobj.mtype=="delete")
          {
-            debugger;
-            // find the selected row:
-            this.delete_row(xrow);
+            if (cfobj.confirm_delete() && xrow)
+               this.delete_row(xrow);
          }
          else if (cfobj.rtype=="update")
          {
