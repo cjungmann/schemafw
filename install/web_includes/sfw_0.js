@@ -475,38 +475,46 @@ function init_SFW(callback)
 
    function _update_location_arg(name, value)
    {
-      var loc = window.location;
       var newarg = name + (value ? ("="+encodeURIComponent(value)):"");
-      var set = false;
-      var qsearch = loc.search.split("?");
-      var args, subpage;
-      var qlen = qsearch.length;
-      if (qlen>1)
-      {
-         args = qsearch[qlen-1].split('&');
-         if (qlen>2)
-            subpage = qsearch[1];
-      }
+      
+      var loc = window.location;
+      
+      // strip leading '?' to avoid empty initial element
+      var qsearch = ((loc.search.length) ? loc.search.substring(1) : "").split('?');
 
-      if (args)
+      var page = loc.pathname;
+      var args_ndx = -1;
+      if ("run_xdoc_loader" in window)
       {
-         var aarr, i, stop;
-         for (i=0,stop=args.length; !set && i<stop; ++i)
+         page += "?" + qsearch[0];
+         if (qsearch.length>1)
+            args_ndx = 1;
+      }
+      else if (qsearch.length==1)
+         args_ndx = 0;
+
+      var set=false, args = [];
+      if (args_ndx>-1)
+      {
+         args = qsearch[args_ndx].split('&');
+         if (args)
          {
-            if ((aarr=args[i].split('=')) && aarr[0]==name)
+            var aarr;
+            for (var i=0,stop=args.length; !set && i<stop; ++i)
             {
-               args[i] = newarg;
-               set = true;
+               if ((aarr=args[i].split('=')) && aarr[0]==name)
+               {
+                  args[i] = newarg;
+                  set = true;
+               }
             }
          }
       }
-      else
-         args = [];
-
+      
       if (!set)
          args.push(newarg);
 
-      return loc.pathname + "?" + (subpage?(subpage+"?"):"") + args.join('&');
+      return page + "?" + args.join('&');
    }
 
    function _base(host,xml_doc,caller,data)
