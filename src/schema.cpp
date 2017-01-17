@@ -1523,7 +1523,7 @@ void Schema::get_resources_from_environment(FILE *out)
       else
       {
          Generic_User_Const_Pointer<ab_handle, decltype(f_rmode)> user(f_rmode);
-         p_sfwr->m_sreader.get_branch(pos_mode, user);
+         p_sfwr->m_sreader.build_branch(pos_mode, user);
       }
    };
 
