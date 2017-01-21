@@ -19,7 +19,105 @@ mode
       grandchild1 : Ellen
       grandchild2 : Ralph
    child3 :
-~~~   
+~~~
+
+## Shared Modes
+
+To allow a branch to be shared between multiple modes, make a named **$shared** node.
+This example creates a shared schema branch named _day_table_schema_.
+
+~~~srm
+# For named share example below
+$shared : schema_parts
+   on_line_click : cal.srm?edit
+   button
+      type  : add
+      label : Add Event
+      task  : cal.srm?add
+   button
+      type  : close
+      label : Close
+
+# For sibling share example below
+
+$shared : buttons
+   button
+      type  : add
+      label : Add Event
+      task  : cal.srm?add
+   button
+      type  : close
+      label : Close
+         
+~~~
+
+There are two ways to include a shared mode, either a **named share** or a
+**sibling share**.
+
+### Named Share
+
+A named share adds a branch with the name, and the contents of the share are
+descendents of the new branch.
+
+Using the shares modes above, a named share is invoked like this:
+
+~~~srm
+day
+   type       : table
+   procedure  : App_Calendar_Day
+   schema     : $schema_parts
+~~~
+
+with the following result:
+
+~~~srm
+day
+   type       : table
+   procedure  : App_Calendar_Day
+   schema
+      on_line_click : cal.srm?edit
+      button
+         type  : add
+         label : Add Event
+         task  : cal.srm?add
+      button
+         type  : close
+         label : Close
+~~~
+
+The name of the named share is used as a branch node, with the contents of the
+share as descendents of the branch.
+
+### Sibling Share
+
+~~~srm
+day
+   type   : table
+   procedure : App_Calendar_Day
+   siblings : $buttons
+~~~
+
+results in:
+
+~~~srm
+day
+   type       : table
+   procedure  : App_Calendar_Day
+   button
+      type  : add
+      label : Add Event
+      task  : cal.srm?add
+   button
+      type  : close
+      label : Close
+~~~
+
+Notice that the contents of the share are included at the same indentation level as
+the share invocation to includes it.
+
+Use a named shares to add a section to a response mode, use a sibling share to 
+
+
 
 --------------------------------------------------------------------------------
 

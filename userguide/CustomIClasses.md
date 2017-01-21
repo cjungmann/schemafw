@@ -11,44 +11,61 @@ extended using Javascript prototype inheritance.
 
 There are several steps to implementing a custom interaction.
 
-1. **Data Model Design**  
+(See the [Definitions](Definitions.md) page for an explanation of the following
+terms, **class**, **object**, **iclass**, and **iobject**, used on this page.)
 
-## Definitions
+### The Basic Interaction
 
-<dl>
-<dt>Class</dt>
-<dd>
-  A Javascript function with a defined prototype that includes methods and properties
-  that are added to any object created using the class constructor.
-</dd>
-<dt>Object</dt>
-<dd>
-  An associated array, a list of named values.  Some of the named values may be
-  functions, known as methods when applied to an object.
-</dd>
-<dt>IClass</dt>
-<dd>
-  A Javascript class designed to handle interactions in SchemaFW.
-</dd>
-<dt>IzObject</dt>
-<dd>
-  An object instantiated from an iclass.
-</dd>
-</dl>
+The typical SchemaFW interaction consists of the following events:
 
-An iclass must typically provide the follwing three methods:
+1. User sends http request to SchemaFW server.
+2. SchemaFW returns an XML document based on the indicated _response mode_.
+3. The browser renders the XML using the *xml-stylesheet* processing instruction
+   included in a SchemaFW _resultset_
+   a. Client-side software opens the xslt stylesheet, reconciles imports.
+   b. The _resultset_ document is submitted to the transformation processor
+      to render the page.
+   c. The stylesheet renders that page according to the content and optional
+      included hints to generate tables or forms.  **The is the step where
+      customization begins.**
+4. The client-side framework _animates_ the page by activating a message
+   processing Javascript function.  **Custom interactions will provide custom
+   message-processing functions.**
+5. The browser waits for user input.   
 
-- A **constructor** function that instantiates an object,
-- a **process** method for handling events, and
-- a **child_finished** method through which a child iclass object
+### Custom Interaction
 
-## Creating a New IClass
+A custom interaction will typically include several parts, though not all are
+necessary.
 
+1. Custom XSL templates to render the data as HTML.
+   - The custom template should match the name of an SFW result element that
+     has been renamed in the response mode.
+   - The custom template must identify the _iclass_ that will animate the HTML.
+2. A custom IClass to _animate_ the HTML.  The custom class should be ultimately
+   derived from "SFW.iclass", but that is likely to be through intermediate classes.
 
-## Method Overriding
+### Custom IClass
 
-When a new iclass replaces an existing prototype function with its own custom
-implementation, the base class function can still be accessed using the
+Prototype methods to be handled by an *iobject* instantiated from an *iclass*.  In
+order of importance rather than invocation.
+1. Method **process**: to which all windows messages will be sent.  The base-class's
+   *process* method will be used if *process* is not defined for the custom iclass.
+2. Method **child_finished** is called when a child interaction is transferring
+   control back to the custom iclass.  This is **the opportunity to update data
+   based on the outcome of the child interaction**. The default *child_finished*
+   method closes the child interaction, and a custom *child_finished* method should
+   either invoke its base-class *child_finished* or explicitely close te child.
+3. Method **child_ready** is called when the XSL transformation is complete
+   and the framework.  This is an opportunity to do **final preparation** or to
+   **stash some data** for the eventual replot.
+4. Method **pre_transform** will be called just before an XSL transformation
+   for an **opportunity to set flags in the resultset or XSL file** for additional
+   control over the output.
+
+The **child_ready** and **pre_transform** procedures often work together.
+**please fill this out when you have a prototype.**
+
 
 
 
