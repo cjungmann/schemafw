@@ -14,6 +14,8 @@
          omit-xml-declaration="yes"
          encoding="UTF-8"/>
 
+  <xsl:variable name="table_lines" select="/" />
+
   <xsl:variable name="nl">
     <xsl:text>
 </xsl:text>
@@ -1675,7 +1677,13 @@
   <xsl:template match="*" mode="make_table_body">
     <xsl:param name="group" />
     <xsl:variable name="elname" select="schema/@name" />
-    <xsl:variable name="lines" select="*[local-name()=$elname]" />
+
+    <xsl:variable
+        name="lines"
+        select="*[$table_lines=/][local-name()=$elname] | $table_lines[not($table_lines=/)]"
+        />
+    
+    <!-- <xsl:variable name="lines" select="*[local-name()=$elname]" /> -->
     <xsl:apply-templates select="schema" mode="schema_make_table_body">
       <xsl:with-param name="group" select="$group" />
       <xsl:with-param name="lines" select="$lines" />
@@ -1698,7 +1706,7 @@
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:if test="$title">
+    <xsl:if test="string-length($title)&gt;0">
       <h2>
         <xsl:call-template name="resolve_refs">
           <xsl:with-param name="str" select="$title" />
