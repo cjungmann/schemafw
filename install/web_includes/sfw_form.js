@@ -6,15 +6,21 @@
    if (SFW.delay_init("sfw_form",_init,"iclass"))
       return;
 
-   if (!SFW.derive(_form, "form-new", "iclass") ||
-       !SFW.derive(_form, "form-edit", "iclass"))
+   if (!SFW.derive(_form, "form", "iclass"))
       return;
+
+   // derive() is not called for _form_new or _form_edit until the prototypes
+   // of their base classes are complete.  Look for those derives at the end
+   // of the module.
 
    function _form(base, doc, caller, data)
    {
       SFW.base.call(this, base,doc,caller,data);
-      _focus_on_first_field(this.top());
    }
+
+   // Make copies of _form for prototype property "class_name" (RTTI).
+   function _form_new(base, doc, caller, data) { _form.apply(this, arguments); }
+   function _form_edit(base, doc, caller, data) { _form.apply(this, arguments); }
 
    // Adding useful local functions to global object
    SFW.get_form_data        = _get_form_data;
@@ -86,6 +92,11 @@
       return arr;
    }
 
+   _form.prototype.focus_on_first_field = function()
+   {
+      _focus_on_first_field(this.top());
+   };
+
    _form.prototype.process_submit = function _process_submit()
    {
       var form = this.top();
@@ -118,16 +129,32 @@
       xhr_get(url,cb);
    };
 
+   var _xpath_delete_check = "/*[@mode-type='delete']/*[@rndx=1]/*[1]/@deleted";
+   function _is_failed_delete_request(cmd)
+   {
+      var a;
+      return ("documentElement" in cmd
+              && (a=cmd.selectSingleNode(_xpath_delete_check))
+                 && a.nodeValue=="0");
+   }
+
    _form.prototype.process_button = function _process_button(e,t)
    {
       var ths = this;
       function fdone(cmd)
       {
-         if (ths._caller)
+         if (_is_failed_delete_request(cmd))
+            SFW.alert("Delete operation failed.");
+         else if (ths._caller)
             ths._caller.child_finished(ths.cfobj_from_cmd(cmd));
       }
       
       return this.process_clicked_button(t, fdone);
+   };
+
+   _form.prototype.post_transform = function()
+   {
+      this.focus_on_first_field();
    };
 
    _form.prototype.process = function _form_process_message(e,t)
@@ -153,4 +180,8 @@
       return true;
    };
 
+   // With _form prototype complete, we can derive other classes from it:
+   if(!SFW.derive(_form_new, "form-new", "form") ||
+      !SFW.derive(_form_edit, "form-edit", "form"))
+      return;
 })();
