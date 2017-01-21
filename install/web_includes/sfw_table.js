@@ -33,6 +33,12 @@
                && n.getAttribute("row-name")==str;
          };
       }
+      else
+      {
+         var xpath, top = this.top();
+         if (top && (xpath=top.getAttribute("data-result-path")))
+            return this._xmldoc.selectSingleNode(xpath);
+      }
       
       return SFW.find_child_matches(this._xmldoc, mfunc, true, true);
    };
@@ -115,8 +121,32 @@
          return false;
    };
 
+   _table.prototype.get_table_lines_node = function()
+   {
+      var xpath = "/xsl:stylesheet/xsl:variable[@name='table_lines']";
+      return SFW.xslobj.find_node(xpath);
+   };
+
+   _table.prototype.set_table_lines = function(xpath)
+   {
+      var n;
+      if ((n=this.get_table_lines_node()))
+         n.setAttribute("select", xpath);
+   };
+
+   _table.prototype.clear_table_lines = function()
+   {
+      var n;
+      if ((n=this.get_table_lines_node()))
+         n.removeAttribute("select");
+   };
+
    _table.prototype.replot = function(match)
    {
+      this.pre_transform();
+
+      var res = this.result(match);
+      
       var tbody = SFW.find_child_matches(this.top(), "tbody", true);
       if (tbody)
       {
@@ -130,6 +160,8 @@
          SFW.xslobj.transformFill(this._host, this.result(match));
          _fix_table_heads(this.top());
       }
+
+      this.post_transform();
    };
 
    _table.prototype.get_line_id = function _get_line_id(row)
@@ -171,7 +203,7 @@
           && (newnode=node.selectSingleNode("*[1]")))
       {
          var parent = row.parentNode;
-         SFW.xslobj.transformfgInsert(parent, doc, row);
+         SFW.xslobj.transformInsert(parent, doc, row);
          parent.removeChild(row);
       }
    };
@@ -363,7 +395,7 @@
          SFW.open_interaction(SFW.stage,
                               url,
                               this,
-                              { os:os, host:host }
+                              { os:os, host:host, button:button }
                              );
          return false;
       }
@@ -607,5 +639,4 @@
       _fix_table_heads(table);
       
    }  // end of _fix_table_heads
-
 })();
