@@ -21,6 +21,10 @@
       return this._xmldoc.documentElement.getAttribute("on_day_click");
    };
 
+   // _calendar.prototype.child_ready = function(child)
+   // {
+   // };
+
    _calendar.prototype.child_finished = function(child, cmd)
    {
       this.replot();
@@ -29,12 +33,6 @@
 
    _calendar.prototype.process_day_click = function(t, did)
    {
-      var xslo = SFW.xslobj;
-
-      // set mode.
-      // set date.
-      // open dialog.
-
       var odc = this.get_on_day_click_url();
       if (odc)
       {
