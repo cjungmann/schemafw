@@ -239,7 +239,8 @@ will contain the YYYY-MM-DD date.
     </xsl:variable>
 
     <tr>
-      <td colspan="2" class="calnav cn_left">
+      <td />
+      <td class="calnav cn_left">
         <xsl:element name="button">
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$year_last" />
@@ -265,7 +266,7 @@ will contain the YYYY-MM-DD date.
         </xsl:call-template>
         <xsl:value-of select="$ndx_year" />
       </th>
-      <td colspan="2" class="calnav cn_right">
+      <td class="calnav cn_right">
         <xsl:element name="button">
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$month_next" />
@@ -285,6 +286,7 @@ will contain the YYYY-MM-DD date.
           <xsl:text> &gt;&gt;&gt; </xsl:text>
         </xsl:element>
       </td>
+      <td></td>
     </tr>
     <tr>
        <xsl:call-template name="make_day_heads" />
