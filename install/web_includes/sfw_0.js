@@ -45,6 +45,7 @@ function init_SFW(callback)
    SFW.seek_event_host      = _seek_event_host;
    SFW.seek_child_anchor    = _seek_child_anchor;
    SFW.derive               = _derive;
+   SFW.document_object      = _document_object;
    SFW.add_event            = _add_event;
    SFW.setup_event_handling = _setup_event_handling;
    SFW.process_event        = _process_event;
@@ -60,7 +61,6 @@ function init_SFW(callback)
    SFW.types["iclass"]      = _base;
 
    SFW.stage                = document.getElementById("SFW_Content");
-
    SFW.px                   = _px;
    SFW.addXMLEl             = _addXMLEl;
 
@@ -159,7 +159,21 @@ function init_SFW(callback)
       return true;
    }
 
-   // Add all base_class prototypes to dclass, which then can replace them:
+   /**
+    * Registers new_class_name to SFW.types map with pointer to dclass constructor.
+    *
+    * @param dclass          constructor of object
+    * @param new_class_name  name by which the constructor is accessed
+    * @param base_class_name previously registered object from which the new
+    *                        class is derived.
+    * @param allow_replace   flag to allow new class to replace an existing
+    *                        class with the same class_name.
+    *
+    * @return false if base_class does not exist
+    *               OR if the new class name is already registered
+    *                  AND allow_replace is false/undefined
+    *         true  for success registering name and copying prototype members.
+    */
    function _derive(dclass, new_class_name, base_class_name, allow_replace)
    {
       if (!_base_class_exists(base_class_name))
@@ -171,6 +185,7 @@ function init_SFW(callback)
 
       var pro_b = this.types[base_class_name].prototype;
       var pro_d = dclass.prototype;
+      pro_d.class_name = new_class_name;
       pro_d._baseproto = pro_b;
       for (var p in pro_b)
       {
@@ -357,43 +372,56 @@ function init_SFW(callback)
       s.zIndex = 100;
    }
 
-   /**
-    * Use instead of _open_interaction() for more control.
-    *
-    * For data that is extracted from local sources.
-    */ 
-   function _render_interaction(doc, host, caller, data)
+   function _make_sfw_host(host, to_cover)
    {
+      if (to_cover && to_cover.top())
+         to_cover = to_cover.top();
+      else
+         to_cover = host;
+      
       var thost = addEl("div",host);
       thost.className = "SFW_Host";
-      thost.style.minHeight = SFW.px(host.offsetHeight);
-      
-      var docel = doc.documentElement;
-      var type = doc.documentElement.getAttribute("mode-type");
-      var xslo = SFW.xslobj;
-      xslo.transformInsert(thost, docel);
+      thost.style.minHeight = SFW.px(to_cover.offsetHeight);
+      return thost;
+   }
 
-      var anchor = SFW.seek_child_anchor(thost);
-      if (anchor
-          && type
-          && type in SFW.types
-          && (newobj = new SFW.types[type](thost,doc,caller,data)))
+   function _render_interaction(type,doc,host,caller,data)
+   {
+      var thost, newobj, anchor;
+      if (type in SFW.types)
       {
-         _arrange_in_host(host, anchor);
-         ;
+         if ((thost=_make_sfw_host(host, caller)))
+         {
+            if ((newobj=new SFW.types[type](thost,doc,caller,data)))
+            {
+               newobj.pre_transform();
+               SFW.xslobj.transformInsert(thost,doc.documentElement);
+               newobj.post_transform();
+
+               if ((anchor=SFW.seek_child_anchor(thost)))
+               {
+                  caller.child_ready(newobj);
+                  _arrange_in_host(host, anchor);
+               }
+            }
+            else
+               host.removeChild(thost);
+         }
       }
-      else
-         host.removeChild(thost);
    }
 
    function _open_interaction(host, url, caller, data)
    {
-      var newobj = null;
-      
       function got(xdoc)
       {
          if (_check_for_preempt(xdoc))
-            _render_interaction(xdoc, host, caller, data);
+         {
+            var type = xdoc.documentElement.getAttribute("mode-type");
+            if (type)
+            {
+               _render_interaction(type, xdoc, host, caller, data);
+            }
+         }
       }
 
       xhr_get(url, got);
@@ -517,6 +545,51 @@ function init_SFW(callback)
       return page + "?" + args.join('&');
    }
 
+   var _re_func = /function\s*([^\(]+)\(([^\)]+)/;
+   function _document_object(obj)
+   {
+      function funcargs(f)
+      {
+         var s = f.toString();
+         var m = _re_func.exec(s);
+         if (m)
+            return m[2];
+         else
+            return "void";
+      }
+      
+      arrF = [];
+      arrO = [];
+      arrS = [];
+      arrX = [];
+      
+      var p = obj.prototype;
+      for (prop in p)
+      {
+         switch(typeof(p[prop]))
+         {
+            case "function":
+               arrF.push(prop + "(" + funcargs(p[prop]) + ")");
+               break;
+            case "object":
+               arrO.push(prop);
+               break;
+            case "string":
+               arrS.push(prop);
+               break;
+            default:
+               arrX.push(prop + " (" + typeof(p[prop]) + ")");
+               break;                             
+         }
+      }
+
+      _alert( "Object " + ("class_name" in p ? p.class_name  : "") + "\n"
+             + (arrF.length ? ("Functions\n   " + arrF.join("\n   ")) : "")
+             + (arrO.length ? ("\nObjects\n   " + arrO.join("\n   ")) : "")
+             + (arrS.length ? ("\nStrings\n   " + arrS.join("\n   ")) : "")
+             + (arrX.length ? ("\nOther\n   "   + arrX.join("\n   ")) : ""));
+   }
+
    function _base(host,xml_doc,caller,data)
    {
       if (!host)
@@ -534,6 +607,8 @@ function init_SFW(callback)
       if (data)
          this.data = data;
    };
+
+   _base.prototype.class_name = "iclass";
 
    _base.prototype.top        = function _top()      { return _find_anchor(this._host); };
    _base.prototype.schema     = function _schema()   { return _find_schema(this._xmldoc.documentElement); };
@@ -559,7 +634,7 @@ function init_SFW(callback)
 
    function _confirm_delete(rowone)
    {
-      return rowone && rowone.getAttribute("deleted");
+      return rowone && ("0"!=rowone.getAttribute("deleted"));
    }
    
    _base.prototype.cfobj_from_doc = function(doc)
@@ -604,11 +679,6 @@ function init_SFW(callback)
                 };
    };
 
-   _base.prototype.child_finished = function(cfobj)
-   {
-      cfobj.close();
-   };
-    
   _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
    {
       var type = b.getAttribute("data-type");
@@ -655,6 +725,16 @@ function init_SFW(callback)
       return true;
    };
 
+   _base.prototype.pre_transform = function() { };
+   _base.prototype.post_transform = function() { };
+
+   _base.prototype.child_ready = function(child) { };
+
+   _base.prototype.child_finished = function(cfobj)
+   {
+      cfobj.close();
+   };
+    
    _base.prototype.process = function _base_process(e,t)
    {
       return true;
