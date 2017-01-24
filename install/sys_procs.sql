@@ -180,7 +180,7 @@ BEGIN
 
    SET month = CONCAT(YEAR(ddate),'-', SUBSTRING(CONCAT(MONTH(ddate)+100),2));
 
-   SELECT month, initialDay, countOfDays;
+   SELECT month, initialDay, countOfDays, DATE_FORMAT(NOW(),'%Y-%m-%d') AS 'today';
 END $$
 
 -- ------------------------------------------------------
