@@ -17,9 +17,17 @@ function updatedbs
             updatedbs ${testroutine_backup}
         fi
     else
-        while read -r dbname; do
-            mysql -Bf -D ${dbname} < sys_procs.sql
-        done <<< "${dbs}"
+        echo About to update databases "${dbs}"
+
+        read -rsp $"Press space to continue..." -n1 key
+        if [ "$key" = '' ] ; then
+            while read -r dbname; do
+                echo
+                echo
+                echo "Updating ${dbname}"
+                mysql -Bf -D ${dbname} < sys_procs.sql
+            done <<< "${dbs}"
+        fi
     fi
 }
 
