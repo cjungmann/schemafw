@@ -508,6 +508,9 @@
             <xsl:with-param name="type" select="'form'" />
           </xsl:apply-templates>
         </xsl:when>
+        <xsl:when test="*[@rndx=1 and local-name()='calendar']">
+          <xsl:apply-templates select="*[@rndx=1]/*[1]" mode="build_calendar" />
+        </xsl:when>
         <xsl:when test="*[@rndx=1]">
           <xsl:apply-templates select="*[@rndx=1]" />
         </xsl:when>
