@@ -292,11 +292,12 @@ will contain the YYYY-MM-DD date.
        <xsl:call-template name="make_day_heads" />
     </tr>
   </xsl:template>
-               
 
-  <xsl:template match="*" mode="build_calendar">
+  <xsl:template match="*[@rndx]/*" mode="build_calendar">
     <xsl:param name="table_class" />
     <xsl:param name="sfw_class" select="'calendar'"  />
+
+    <xsl:variable name="buttons" select="../buttons | ../schema/buttons" />
 
     <xsl:variable name="class">
       <xsl:text>Schema calendar</xsl:text>
@@ -308,6 +309,7 @@ will contain the YYYY-MM-DD date.
     <xsl:element name="table">
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:attribute name="data-sfw-class"><xsl:value-of select="$sfw_class" /></xsl:attribute>
+      <xsl:apply-templates select="$buttons" mode="show_buttons" />
       <xsl:apply-templates select="." mode="build_calendar_head" />
       <xsl:call-template name="build_weeks">
         <xsl:with-param name="today" select="@today" />
@@ -316,7 +318,11 @@ will contain the YYYY-MM-DD date.
         <xsl:with-param name="date" select="1-(@initialDay)" />
       </xsl:call-template>
     </xsl:element>
-    
+  </xsl:template>
+
+  <xsl:template match="*[@rndx]" mode="build_calendar">
+    <xsl:variable name="row" select="*[local-name()=current()/@row-name][1]" />
+    <xsl:apply-templates select="$row" mode="build_calendar" />
   </xsl:template>
 
 
