@@ -503,13 +503,18 @@
             <xsl:with-param name="root" select="1" />
           </xsl:apply-templates>
         </xsl:when>
+        <xsl:when test="@mode-type and *[@rndx and local-name()=current()/@mode-type]">
+          <xsl:apply-templates select="*[@rndx and local-name()=current()/@mode-type]" />
+        </xsl:when>
         <xsl:when test="schema">
           <xsl:apply-templates select="schema" mode="make_form">
             <xsl:with-param name="type" select="'form'" />
           </xsl:apply-templates>
         </xsl:when>
         <xsl:when test="*[@rndx=1 and local-name()='calendar']">
-          <xsl:apply-templates select="*[@rndx=1]/*[1]" mode="build_calendar" />
+          <xsl:apply-templates
+              select="*[@rndx=1 and local-name()='calendar']"
+              mode="build_calendar" />
         </xsl:when>
         <xsl:when test="*[@rndx=1]">
           <xsl:apply-templates select="*[@rndx=1]" />
