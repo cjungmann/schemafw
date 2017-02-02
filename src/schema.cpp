@@ -827,9 +827,7 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
       }
 
       // Get m_group_name or set to "result" as a default:
-      if (schema && (thandle=schema->seek("name")))
-          m_group_name = thandle->value();
-      else if ((thandle = result_handle->seek("name")))
+      if ((thandle = result_handle->seek("name")))
          m_group_name = thandle->value();
       else if (result_type && strcmp(result_type,"ref")==0)
          m_group_name = "ref";
