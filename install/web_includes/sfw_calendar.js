@@ -60,17 +60,19 @@
       if (e.type!="click")
          return true;
 
-      while (t && t!=top)
+      // Don't disturb the arguments array:
+      var tel = t;
+      while (tel && tel!=top)
       {
-         if (t.nodeType==1 && (tag=t.tagName.toLowerCase()))
+         if (tel.nodeType==1 && (tag=tel.tagName.toLowerCase()))
          {
-            if (tag=="td" && (did=t.getAttribute("data-date")))
-               return this.process_day_click(t, did);
-            if (tag=="button" && (mon=t.getAttribute("data-jump")))
+            if (tag=="td" && (did=tel.getAttribute("data-date")))
+               return this.process_day_click(tel, did);
+            if (tag=="button" && (mon=tel.getAttribute("data-jump")))
                return this.process_month_jump(mon);
          }
 
-         t = t.parentNode;
+         tel = tel.parentNode;
       }
 
       return this.call_super_event("table", "process", arguments);
