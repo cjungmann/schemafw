@@ -92,5 +92,41 @@ pages for explanations of *delay_init* and *derive* functions in the sample belo
 
    // Add or replace prototypes after this.
 
+   // Define this function to make temporary changes before a transformation.
+   _demo.prototype.pre_transform = function()
+   {
+   };
+
+   // Define this function to undo changes by pre_transform after the transformation.
+   _demo.prototype.post_transform = function()
+   {
+   };
+
+   // Define this function if steps are required after an object is up-and-running.
+   _demo.prototype.child_ready = function(child)
+   {
+   };
+
+   // Called by the framework when a child is about to be closed.
+   // This is the chance to harvest info from the child and restore
+   // the parent to operational mode, like default table that is cleared
+   // when a dialog is opened and restored when the child is done.
+   _demo.prototype.child_finished = function(child, cmd)
+   {
+      this.replot();
+      SFW.base.prototype.child_finished.call(this,child,cmd);
+   };
+
+   // Define to handle custom events, passing unhandled events to the base class.
+   _demo.prototype.process = function(e,t)
+   {
+      return this.call_super_event("table","process",arguments);
+   };
+
+   // For calendar-derived classes
+   _demo.prototype.process_day_click = function(target_td, dayid)
+   {
+   };
+
 })();
 ~~~
