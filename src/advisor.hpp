@@ -27,6 +27,7 @@ public:
    virtual ~I_AFile()  { }
    virtual bool is_open(void) = 0;
    virtual void rewind(void) = 0;
+   virtual void close(void) = 0;
 
 protected:
    /**
@@ -66,6 +67,8 @@ public:
 
    virtual bool is_open(void);
    virtual void rewind(void);
+   virtual void close(void)    { } // do nothing for deprecated class
+   
    virtual long int _get_position(void);
    virtual void _set_position(long int pos);
    virtual char * _read_line(char *buff, int buffsize);
@@ -177,12 +180,12 @@ private:
    static BaseBuffer *s_buffer;
    
 protected:
-   int               m_handle;
+   int               &m_handle;
    BaseBuffer        *m_buffer;
 
 private:
    /** An AFile_Handle object can only be constructed in a build() function. */
-   AFile_Handle(int handle, BaseBuffer *buff)
+   AFile_Handle(int& handle, BaseBuffer *buff)
       : I_AFile(), m_handle(handle), m_buffer(buff)   { buff->start(handle); }
 
 public:
@@ -215,13 +218,16 @@ public:
             // static buffer, reset to make it available later.
             s_buffer->finish();
          }
-         
-         ::close(handle);
+
+         // Only close if not already closed by include-file-collecting user:
+         if (handle>0)
+            ::close(handle);
       }
    }
 
    virtual bool is_open(void)               { return m_handle>0; }
    virtual void rewind(void)                { m_buffer->rewind(m_handle); }
+   virtual void close(void)                 { if (is_open()) ::close(m_handle); m_handle=0; }
    virtual long int _get_position(void)     { return m_buffer->get_position(); }
    virtual void _set_position(long int pos) { m_buffer->set_position(m_handle, pos); }
    virtual char* _read_line(char *buff,
@@ -270,6 +276,8 @@ public:
    /** @brief Get buffer size in case someone needs to save its values. */
    static int bufflen(void)   { return s_bufflen; }
    inline static const char* continuation_tag(void) { return s_continued_tag; }
+
+   void close(void)  { m_file.close(); }
 
    /**
     * @name Iterator functions.
