@@ -14,6 +14,9 @@ void print_xml_attribute(FILE *out,
                          const char *name,
                          unsigned long value);
 
+class Path_List;
+
+
 /**
  * @brief Index of mode lines from an Advisor/Specs file.
  *
@@ -29,13 +32,16 @@ void print_xml_attribute(FILE *out,
  * @sa SpecsReader
  * @ref Specs_Shared_Mode.
  */
+
 class Advisor_Index
 {
 public:
    struct info
    {
       long int   m_position;
+      const char *m_filepath;
       const char *m_value;
+      bool       m_has_children;
 
       inline bool is_equal_to(const char *v) const { return 0==strcmp(v,m_value); }
       inline bool operator==(const char* v) const  { return 0==strcmp(v,m_value); }
@@ -49,19 +55,45 @@ public:
       inline bool is_setting(void) const           { return m_value!=nullptr; }
    };
 
+   typedef t_handle<info> ninfo;
+
+   friend class Path_List;
+
+   struct BEnds
+   {
+      ninfo *m_head;
+      ninfo *m_tail;
+      int   m_includes;
+      BEnds(ninfo* mode=nullptr) : m_head(mode), m_tail(mode), m_includes(0) {}
+
+      void append(ninfo *node);
+      void scan_for_includes(Path_List &pl, IGeneric_Callback<ninfo*> &callback);
+      bool is_empty(void) const { return m_head==m_tail; }
+   };
+
+   static void t_collect_modes(Advisor &advisor,
+                               IGeneric_Callback<BEnds&> &callback,
+                               const char *filepath = nullptr);
+   
+   static void t_collect_include_modes(const char *filename,
+                                       IGeneric_Callback<BEnds&> &callback);
+
 protected:
    DataStack<info> &m_ds;
    Advisor_Index(DataStack<info> &ds)
       : m_ds(ds)   { }
 
 public:
-   static void t_build(Advisor &advisor, IGeneric_Callback<Advisor_Index> &callback);
+   static void t_build_new(Advisor &advisor,
+                           IGeneric_Callback<Advisor_Index> &callback);
+   
+   static void t_build_old(Advisor &advisor, IGeneric_Callback<Advisor_Index> &callback);
    
    template <class Func>
    inline static void build(Advisor &advisor, const Func &f)
    {
       Generic_User<Advisor_Index, Func> user(f);
-      t_build(advisor, user);
+      t_build_new(advisor, user);
    }
 
 public:
@@ -97,6 +129,78 @@ public:
    void print_modes(FILE *f, bool include_shared=false) const;
       
 };
+
+/**
+ * @brief Class to manage a stack-allocated list of advisor file names.
+ */
+class Path_List
+{
+   const char           *m_path;      /**< path to include file **/
+   Advisor_Index::ninfo *m_precedent; /**< t_handle that points to the include mode
+                                       *   Will have its next pointer replaced with
+                                       *   the head of the contents of the include file.
+                                       */
+   Path_List  *m_next;      /**< Pointer to the next include file, if any.*/
+
+public:
+   Path_List(const char *npath=nullptr, Advisor_Index::ninfo *precedent=nullptr)
+      : m_path(npath), m_precedent(precedent), m_next(nullptr)
+   {}
+
+   inline bool is_not_equal(const char *cpath) const { return !m_path || strcmp(cpath,m_path)!=0; }
+   inline bool is_equal(const char* cpath) const     { return m_path && strcmp(cpath,m_path)==0; }
+   inline bool operator==(const char* cpath) const   { return is_equal(cpath); }
+
+   inline Path_List* attach_next(Path_List &npl)
+   {
+      Path_List *save = m_next;
+      m_next = &npl;
+      return save;
+   }
+
+   /**
+    * @brief Scans list for matching name.
+    *
+    * @param cname Candidate name for which to search
+    * @return Matching node if found, last element if not found.
+    *         It will be necessary to check the return value for
+    *         a match to distinguish between a successful or failed
+    *         search.
+    */
+   Path_List *scan(const char *cpath)
+   {
+      if (m_next && !is_equal(cpath))
+         return m_next->scan(cpath);
+      else
+         return this;
+   }
+
+   /**
+    * @brief Add, if unique, a stack-allocated Path_List element to the end of the list.
+    *
+    * Must be called from the root of the Path_List in order that the new path
+    * name is checked against existing inventory.  If that rule is followed, each
+    * path string will only be represented once in the list.
+    */
+   void append(Path_List &pl)
+   {
+      if (pl.m_path)
+      {
+         Path_List *tail = scan(pl.m_path);
+         if (tail && tail->is_not_equal(pl.m_path))
+            tail->attach_next(pl);
+      }
+   }
+
+   void process(Advisor_Index::ninfo* head,
+                int count,
+                IGeneric_Callback<Advisor_Index> &callback);
+
+   void send_index(Advisor_Index::ninfo* root,
+                   IGeneric_Callback<Advisor_Index> &callback);
+};
+
+
 
 /**
  * @brief This class speeds access to the contents of a Specs file by making
@@ -137,7 +241,6 @@ protected:
    /** @brief Protected constructor to prevent direct instantiation. */
    SpecsReader(Advisor &advisor, const Advisor_Index &index)
       : m_advisor(advisor), m_index(index)     {  }
-
 
 public:
    /**
@@ -191,7 +294,7 @@ public:
          };
          Generic_User<Advisor_Index,decltype(fGotIndex)> gu(fGotIndex);
 
-         Advisor_Index::t_build(advisor, gu);
+         Advisor_Index::t_build_new(advisor, gu);
       };
 
       AFile_Handle::build(path, fGotFile);

@@ -26,13 +26,253 @@ void print_xml_attribute(FILE *out,
    fputc('"', out);
 }
 
+void Path_List::process(Advisor_Index::ninfo* head,
+                        int count,
+                        IGeneric_Callback<Advisor_Index> &callback)
+{
+   auto* ptr = head;
+   while (count>0 && ptr)
+   {
+      if (ptr->is_equal_to("$include"))
+      {
+         const char *val = static_cast<const char*>(ptr->extra());
+         Path_List *pl = scan(val);
+         if (pl && pl->is_not_equal(val))
+         {
+            printf("Adding %s.\n", val);
+         }
+      }
+      ptr = ptr->next();
+   }
+}
+
+
+void Path_List::send_index(Advisor_Index::ninfo* root,
+                           IGeneric_Callback<Advisor_Index> &callback)
+{
+   int count = 0;
+   auto *ptr = root;
+   while (ptr)
+   {
+      ++count;
+      ptr = ptr->next();
+   }
+
+   int arrlen = count * sizeof(line_handle);
+   line_handle *array = static_cast<line_handle*>(alloca(arrlen));
+   base_handle::fill_array(array, count, root->lhandle());
+
+   DataStack<Advisor_Index::info> ds(array, count);
+   Advisor_Index ai(ds);
+   callback(ai);
+}
+
+void Advisor_Index::BEnds::append(ninfo *node)
+{
+   if (node->is_equal_to("$include"))
+      ++m_includes;
+   
+   if (!m_head)
+      m_tail = m_head = node;
+   else
+   {
+      m_tail->next(node);
+      m_tail = node;
+   }
+}
+
+void Advisor_Index::BEnds::scan_for_includes(Path_List &pl,
+                                             IGeneric_Callback<ninfo*> &callback)
+{
+   ninfo **ptrptr = &m_head;
+
+   // Declare pointer to wrapped lambda function as a forward declaration:
+   IGeneric_Void_Callback *pgu_fscan = nullptr;
+
+   auto f_incr_ptrptr = [&ptrptr]()  { ptrptr = (*ptrptr)->pp_next(); };
+
+   auto finsert_includes = [this, &pgu_fscan, &ptrptr, &f_incr_ptrptr](BEnds &bends)
+   {
+      ninfo *include = *ptrptr;
+
+      // There's no way to recover from unexpected mode, so assert and don't check:
+      assert(include->is_equal_to("$include"));
+
+      // Save what follows to skip around the include:
+      ninfo **after_include = include->pp_next();
+
+      // Set follower of ptr according results of previous collection:
+      if (!bends.is_empty())
+      {
+         // Don't copy the root, but rather use the mode to which the root points:
+         *ptrptr = bends.m_head->next();
+         bends.m_tail->next(*after_include);
+      }
+      else
+         *ptrptr = *after_include;
+
+      // Update pointer for loop re-entry then re-enter:
+      f_incr_ptrptr();
+      
+      (*pgu_fscan)();
+   };
+   Generic_User<BEnds&, decltype(finsert_includes)> gu_inserter(finsert_includes);
+
+   // This lambda function may be repeatedly called as a result of
+   // inserting include files.  The closure variable *ptrptr* should be
+   // appropriately set whenever the fscan function is reentered to
+   // ensure all modes are visited.
+   auto fscan = [this, &pl, &ptrptr, &f_incr_ptrptr, &gu_inserter, &callback]()
+   {
+      while (*ptrptr)
+      {
+         if ((*ptrptr)->is_equal_to("$include"))
+         {
+            info& robj = (*ptrptr)->object();
+            const char *fname = robj.value();
+            Path_List *sought_pl = pl.scan(fname);
+            if (sought_pl->is_not_equal("$include"))  // ie, we have a unique path
+            {
+               Path_List newpl(fname, *ptrptr);
+               sought_pl->append(newpl);
+               t_collect_include_modes(fname, gu_inserter);
+
+               // The following is a re-think of the process, but it seems
+               // logical, so let's do it.
+
+               // Returning from (*pgu_fscan)() means that everything that
+               // needed the info from this function has finished and the
+               // local data is no longer needed.  It's time to invoke
+               // "return" to unwind the stack.
+               return;
+            }
+         }
+         
+         f_incr_ptrptr();
+      }
+
+      callback(m_head);
+   };
+   Generic_Void_User<decltype(fscan)> gu_scan(fscan);
+   
+   pgu_fscan = &gu_scan;
+
+   fscan();
+}
+
+
+/**
+ * @brief Scan entire Advisor file to make a list of modes (column-0 instructions)
+ *
+ * This function will simply collects modes, passing the resultant head and
+ * tail modes to the callback function for continued processing.
+ *
+ * If BEnds::scan_for_includes finds an $include instruction, it will call
+ * t_collect_include_modes(), which will in turn call this function with the
+ * @p filename parameter set.  Thus @p filename will serve as a flag indicating
+ * that the Advisor object's file handle shouldl be closed when this function
+ * is finished reading the file.
+ */
+void Advisor_Index::t_collect_modes(Advisor &advisor,
+                                    IGeneric_Callback<BEnds&> &callback,
+                                    const char *filepath)
+{
+   BEnds bends;
+   advisor.rewind();
+
+   while (!advisor.end())
+   {
+      // Only saving modes
+      if (advisor.level()==0)
+      {
+         const char *name = advisor.tag();
+         const char *value = advisor.value();
+
+         size_t len_extra = (value) ? 1+strlen(value) : 0;
+         size_t len = ninfo::line_size(name, len_extra);
+         ninfo* node = ninfo::init_handle(alloca(len),name,len_extra,nullptr);
+         info& i = node->object();
+         i.m_position = advisor.get_position();
+         i.m_filepath = filepath;
+         
+         if (len_extra)
+         {
+            i.m_value = static_cast<const char*>(node->extra());
+            memcpy(const_cast<char*>(i.m_value), value, len_extra);
+         }
+         else
+            i.m_value = nullptr;
+
+         // Get next line to see if its level is 0, meaning it's a new mode, or
+         // above 0, meaning that it's a child and that the mode has children.
+         
+         // Wait to get the next line until we've saved the
+         // first mode's info because get_next_line() will overwrite
+         // the name, value, and position values.
+         advisor.get_next_line();
+         i.m_has_children = advisor.level() > 0;
+         if (!i.m_has_children)
+            i.m_filepath = nullptr;
+
+         bends.append(node);
+      }
+      else
+         advisor.get_next_line();
+   }
+
+   callback(bends);
+}
+
+void Advisor_Index::t_build_new(Advisor &advisor,
+                                IGeneric_Callback<Advisor_Index> &callback)
+{
+   Path_List pathlist;
+
+   auto f_build_done = [&callback](ninfo *head)
+   {
+      int count = base_handle::count(head->lhandle());
+      line_handle *array = static_cast<line_handle*>(alloca(count*sizeof(line_handle)));
+      base_handle::fill_array(array, count, head->lhandle());
+
+      DataStack<info> ds(array, count);
+      Advisor_Index ai(ds);
+      callback(ai);
+   };
+
+   auto f_scan_done = [&pathlist, &f_build_done](BEnds &bends)
+   {
+      if (!bends.is_empty())
+      {
+         Generic_User<ninfo*, decltype(f_build_done)> gu_build_done(f_build_done);
+         bends.scan_for_includes(pathlist, gu_build_done);
+      }
+      else
+         f_build_done(bends.m_head);
+   };
+   Generic_User<BEnds&,decltype(f_scan_done)> gu_scan_done(f_scan_done);
+
+   t_collect_modes(advisor, gu_scan_done);
+}
+
+void Advisor_Index::t_collect_include_modes(const char *filename,
+                                            IGeneric_Callback<BEnds&> &callback)
+{
+   auto f_got_file = [&filename, &callback](AFile_Handle &afh)
+   {
+      Advisor adv(afh);
+      t_collect_modes(adv, callback, filename);
+   };
+
+   AFile_Handle::build(filename, f_got_file);
+}
+
 
 /**
  * @brief Build an index of the modes in an advisor file.
  */
 //! [DataStack_Building_Snippet_Advisor_Index]
-void Advisor_Index::t_build(Advisor &advisor,
-                            IGeneric_Callback<Advisor_Index> &callback)
+void Advisor_Index::t_build_old(Advisor &advisor,
+                                IGeneric_Callback<Advisor_Index> &callback)
 {
    advisor.rewind();
    
@@ -51,13 +291,8 @@ void Advisor_Index::t_build(Advisor &advisor,
          const char *value = advisor.value();
 
          size_t len_extra = (value) ? 1+strlen(value) : 0;
-         
          size_t len = t_handle<info>::line_size(name, len_extra);
-
-         tail = t_handle<info>::init_handle(alloca(len),
-                                            name,
-                                            len_extra,
-                                            tail);
+         tail = t_handle<info>::init_handle(alloca(len),name,len_extra,tail);
 
          if (!head)
             head = tail;
@@ -147,7 +382,6 @@ void Advisor_Index::print_modes(FILE *f, bool include_shared) const
    if (!first)
       fputc('\n', f);
 }
-
 
 /** @brief Use this static member function to create an instance of SpecsReader. */
 void SpecsReader::t_build(Advisor &advisor, IGeneric_Callback<SpecsReader> &user)
@@ -615,6 +849,22 @@ void list_modes(SpecsReader &sr)
    }
 }
 
+void list_modes(t_handle<Advisor_Index::info>* ptr)
+{
+   while (ptr)
+   {
+      Advisor_Index::info &i = ptr->object();
+      printf("%5ld: %s : %s  %s children  %s\n",
+             i.position(),
+             ptr->str(),
+             i.value(),
+             (i.m_has_children ? "has" : "NO"),
+             (i.m_filepath ? i.m_filepath : "")
+         );
+      ptr = ptr->next();
+   }
+}
+
 void show_mode(SpecsReader &sr, const char *name)
 {
    auto f = [](const ab_handle *mode)
@@ -699,7 +949,7 @@ void test_build_branch(SpecsReader &sreader, const char *mode="new")
 
 // If testing for memory usage, 568 bytes alloced for fopen()
 // and 72,704 bytes left from loading the library, I think.
-int main(int argc, char** argv)
+int old_main(int argc, char** argv)
 {
    const char *schema = "default.spec";
    const char *mode = nullptr;
@@ -780,7 +1030,30 @@ int main(int argc, char** argv)
 }
 
 
+int main(int argc, char** argv)
+{
+   const char *file = "zz_test.srm";
+   if (argc>1)
+      file = argv[1];
 
+   auto f_got_file = [](AFile_Handle &afh)
+   {
+      Advisor adv(afh);
+      
+      auto f_got_index = [&adv](Advisor_Index &ai)
+      {
+         printf("Got the advisor index!\n");
+         // SpecsReader sr(adv, ai);
+      };
+      Generic_User<Advisor_Index,decltype(f_got_index)> gu_got_index(f_got_index);
+      
+      Advisor_Index::t_build_old(adv, gu_got_index);
+   };
+
+
+   AFile_Handle::build(file, f_got_file);
+      
+}
 
 
 
