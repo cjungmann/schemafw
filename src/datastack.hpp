@@ -86,6 +86,7 @@ public:
                                        size_t size_extra,
                                        line_handle parent = nullptr);
 
+   static int count(line_handle bh);
    static void fill_array(line_handle *array, int count, line_handle top);
 /**@}*/
 
@@ -93,6 +94,7 @@ public:
    
 protected:
    /** @name Functions for calculating fundamental addresses. @{ */
+
    inline const char* _addr(void) const    { return reinterpret_cast<const char*>(this); }
    inline const char *_origin(void) const  { return _addr() - _oset(); }
    inline const DMAP* _cp_map(void) const  { return reinterpret_cast<const DMAP*>(_addr()-sizeof(DMAP)); }
@@ -116,6 +118,7 @@ protected:
 
    /** @brief Returns handle to next line of the linked line_handle set. */
    static inline line_link get_link(line_handle h)            { return _cp_map(h)->link; }
+   static inline line_link* get_pp_link(line_handle h)        { return &_p_map(h)->link; }
 
    /** @brief Non-const set_link should only be used by StackPool::update_link_pointers. */
    static inline void set_link(line_handle h, line_link l)    { _p_map(h)->link = l; }
@@ -171,6 +174,27 @@ public:
 
    inline const t_handle<T>* next(void) const { return cp_cast(link()); }
    inline t_handle<T>* next(void)             { return p_cast(link()); }
+
+   inline t_handle<T>** pp_next(void)
+   {
+      char **p = const_cast<char**>(get_pp_link(_addr()));
+      return reinterpret_cast<t_handle<T>**>(p);
+   }
+
+   /**
+    * @brief Very late addition to support adding or abandoning nodes.
+    *
+    * @param h A t_handle node that will now serve as the next link.
+    * @return The pointer value of the previous next link.
+    */
+   inline t_handle<T>* next(t_handle<T>* h)
+   {
+      t_handle<T>* s = p_cast(link());
+      // Copied from init_line_handle().  May not be
+      // clearest expression, but it should work.
+      get_dmap_from_line_handle(*this)->link = reinterpret_cast<char*>(h);
+      return s;
+   }
 
    inline operator const char*(void) const    { return _addr(); }
    inline const char* str(void) const         { return _addr(); }

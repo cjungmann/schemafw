@@ -53,6 +53,18 @@ line_handle base_handle::init_line_handle(char *buffer, const char *name,
    return reinterpret_cast<line_handle>(h);
 }
 
+int base_handle::count(line_handle bh)
+{
+   int count=0;
+   line_handle ptr = bh;
+   while (ptr)
+   {
+      ++count;
+      ptr = base_handle::get_link(ptr);
+   }
+   return count;
+}
+
 void base_handle::fill_array(line_handle *array, int count, line_handle top)
 {
    line_handle cur = top;
