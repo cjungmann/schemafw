@@ -1481,6 +1481,19 @@ void Schema::get_resources_from_environment(FILE *out)
 
       Schema schema(*p_sfwr, out);
 
+      switch(schema.s_debug_action)
+      {
+         case DEBUG_ACTION_PRINT_MODE_TYPES:
+            return schema.print_mode_types(stderr);
+         case DEBUG_ACTION_PRINT_RESPONSE_MODES:
+            return schema.m_specsreader->print_modes(stderr, false);
+         case DEBUG_ACTION_PRINT_ALL_MODES:
+            return schema.m_specsreader->print_modes(stderr, true);
+         case DEBUG_ACTION_LINT:
+            return schema.print_lint(stderr, schema.m_specsreader);
+         default: break;
+      }
+      
       // Select and clear from installed response mode:
       schema.set_requested_database();
       schema.clear_for_new_request();
@@ -1506,7 +1519,7 @@ void Schema::get_resources_from_environment(FILE *out)
    };
 
    // Third...save query string object, use query string to get a response mode
-   auto f_qstring = [&p_sfwr, &f_rmode](const BaseStringer *querystring)
+   auto f_qstring = [&p_sfwr, &f_rmode, &f_cookies](const BaseStringer *querystring)
    {
       if (querystring)
          p_sfwr->m_qstringer = static_cast<const QStringer*>(querystring);
@@ -1515,8 +1528,7 @@ void Schema::get_resources_from_environment(FILE *out)
       // No response mode? Leave message and return:
       if (pos_mode==-1)
       {
-//         print_message_as_xml();
-         return;
+         f_cookies(nullptr);
       }
       else
       {
@@ -1524,8 +1536,6 @@ void Schema::get_resources_from_environment(FILE *out)
          p_sfwr->m_sreader.build_branch(pos_mode, user);
       }
    };
-
-   
 
    // Second...get QueryString
    auto f_sreader = [&p_sfwr, &f_qstring](SpecsReader &sr)
@@ -2379,24 +2389,10 @@ void Schema::process_response_mode(void)
 {
    assert(m_specsreader);
    assert(m_mode);
-   
-   // If debug action, print mode and return/terminate:
-   switch(s_debug_action)
-   {
-      case DEBUG_ACTION_PRINT_MODE:
-         return m_mode->dump(stderr, false);
-      case DEBUG_ACTION_PRINT_MODE_TYPES:
-         return print_mode_types(stderr);
-      case DEBUG_ACTION_PRINT_RESPONSE_MODES:
-         return m_specsreader->print_modes(stderr, false);
-      case DEBUG_ACTION_PRINT_ALL_MODES:
-         return m_specsreader->print_modes(stderr, true);
-      case DEBUG_ACTION_LINT:
-         return print_lint(stderr, m_specsreader);
-      case DEBUG_ACTION_IGNORE:
-         break;
-   }
 
+   if (s_debug_action==DEBUG_ACTION_PRINT_MODE)
+      return m_mode->dump(stderr, false);
+   
    m_type_value = value_from_mode("type");
    m_mode_action = get_mode_type(m_type_value);
 
