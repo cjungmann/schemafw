@@ -2053,10 +2053,13 @@ bool Schema::confirm_session(uint32_t id, const char *hash) const
 const char *Schema::value_from_mode(const char *name) const
 {
    const char *rval = nullptr;
-   
-   const ab_handle *handle = m_mode->seek(name);
-   if (handle && handle->is_setting())
-      rval = handle->value();
+
+   if (m_mode)
+   {
+      const ab_handle *handle = m_mode->seek(name);
+      if (handle && handle->is_setting())
+         rval = handle->value();
+   }
    
    return rval;
 }
@@ -2387,8 +2390,16 @@ bool Schema::confirm_multipart_form(void) const
  */
 void Schema::process_response_mode(void)
 {
-   assert(m_specsreader);
-   assert(m_mode);
+   if (!m_specsreader)
+   {
+      ifputs("No SpecsReader.\n", stderr);
+      return;
+   }
+   else if (!m_mode)
+   {
+      ifputs("No response mode selected.\n", stderr);
+      return;
+   }
 
    if (s_debug_action==DEBUG_ACTION_PRINT_MODE)
       return m_mode->dump(stderr, false);
