@@ -253,8 +253,7 @@ ab_handle* ab_handle::make_handle(void *buff,
    if (adv.len_value())
    {
       char *vstring = static_cast<char*>(rval->extra());
-      if (adv.len_value())
-         memcpy(vstring, adv.value(), adv.len_value());
+      memcpy(vstring, adv.value(), adv.len_value());
       vstring[adv.len_value()] = '\0';
    }
 
