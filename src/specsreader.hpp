@@ -49,8 +49,11 @@ public:
       inline operator const char*(void) const      { return m_value; }
       inline operator long int(void) const         { return m_position; }
 
-      inline const char *value(void) const         { return m_value; }
       inline long position(void) const             { return m_position; }
+      inline const char *filepath(void) const      { return m_filepath; }
+      inline const char *value(void) const         { return m_value; }
+      inline bool has_children(void) const         { return m_has_children; }
+      inline bool is_external(void) const          { return m_filepath!=nullptr; }
 
       inline bool is_setting(void) const           { return m_value!=nullptr; }
    };
@@ -384,8 +387,12 @@ public:
          callback(nullptr);
    }
    
+   const t_handle<Advisor_Index::info>* seek_advisor_mode(const char *tag,
+                                                          const char *value) const;
+   
    const Advisor_Index::info* seek_mode_info(const char *name,
                                              const char *value=nullptr) const;
+
    
    long int get_mode_position(const char *name, const char *value=nullptr) const;
    long int get_global_mode_position(const char *name, const char *value=nullptr) const;
@@ -401,6 +408,11 @@ public:
    long int get_shared_mode_position(const char *name) const
    {
       return get_mode_position("$shared", ++name);
+   }
+
+   const t_handle<Advisor_Index::info>* get_shared_advisor_mode(const char *name) const
+   {
+      return seek_advisor_mode("$shared", ++name);
    }
 
    /**

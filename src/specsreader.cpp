@@ -104,8 +104,7 @@ void Advisor_Index::BEnds::scan_for_includes(Path_List &pl,
       // Set follower of ptr according results of previous collection:
       if (!bends.is_empty())
       {
-         // Don't copy the root, but rather use the mode to which the root points:
-         *ptrptr = bends.m_head->next();
+         *ptrptr = bends.m_head;
          bends.m_tail->next(*after_include);
       }
       else
@@ -472,6 +471,12 @@ void SpecsReader::print_sub_elements(FILE *out,
    }
 }
 
+const t_handle<Advisor_Index::info>*
+SpecsReader::seek_advisor_mode(const char *tag, const char *value) const
+{
+   return m_index.seek(tag,value);
+}
+
 /**
 * @brief This function returns an Advisor_Index::info pointer to learn its
 * position or value.
@@ -759,6 +764,49 @@ void SpecsReader::t_build_branch(long position, abh_callback &callback) const
       head->set_level(shared_count);
    }
 
+   int saved_handle = -1;
+   auto f_prep_advisor = [this, &saved_handle](const Advisor_Index::ninfo *p) -> bool
+   {
+      // Ensure code always resets m_advisor file handle to it's original value:
+      if (saved_handle!=-1)
+         throw std::runtime_error("Error: parked saved_handle value.");
+      
+      auto &obj = p->object();
+      int pos = obj.position();
+      if (pos==-1)
+         return false;
+      
+      if (obj.is_external())
+      {
+         int handle = open(obj.filepath(), O_RDONLY);
+         if (handle<0)
+         {
+            fprintf(stderr,
+                    "Unable to open \"%s\": %s\n",
+                    obj.filepath(),
+                    strerror(errno));
+            throw std::runtime_error("failed to open file");
+         }
+         else
+            saved_handle = m_advisor.replace_handle(handle);
+      }
+
+      m_advisor.restore_state(pos);
+
+      return true;
+   };
+
+   auto f_drop_advisor = [this, &saved_handle](void)
+   {
+      if (saved_handle>-1)
+      {
+         int handle_to_close = m_advisor.replace_handle(saved_handle);
+         close(handle_to_close);
+         saved_handle = -1;
+      }
+   };
+
+   
    while (mode_chain_link)
    {
       int shared_countdown = mode_chain_link->level();
@@ -776,11 +824,11 @@ void SpecsReader::t_build_branch(long position, abh_callback &callback) const
             if (!find_shared_link(head, ptr->value()))
             {
                shared_count = 0;
-               long pos = get_shared_mode_position(ptr->value());
-               if (pos!=-1)
+
+               auto *amode = get_shared_advisor_mode(ptr->value());
+               
+               if (f_prep_advisor(amode))
                {
-                  adv.restore_state(pos);
-                  
                   void *buff = alloca(len_shared_handle(adv));
                   ab_handle *shead = make_shared_handle(buff, adv, nullptr);
                   ab_handle *stail = shead;
@@ -798,6 +846,8 @@ void SpecsReader::t_build_branch(long position, abh_callback &callback) const
                
                   mode_chain_tail->set_sibling(shead);
                   mode_chain_tail = shead;
+
+                  f_drop_advisor();
                }
             }
          }
