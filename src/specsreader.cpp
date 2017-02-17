@@ -374,6 +374,12 @@ void Advisor_Index::print_modes(FILE *f, bool include_shared) const
             fputs(", ", f);
             
          fputs(name, f);
+         if (strcmp("$shared",name)==0)
+         {
+            auto &obj = ptr->object();
+            ifputc(':', f);
+            ifputs(obj.value(), f);
+         }
       }
    }
 
