@@ -19,6 +19,7 @@
  */
 class I_AFile
 {
+protected:
    long int m_cur_line_pos;
 public:
    I_AFile(void) : m_cur_line_pos(-1) { }
@@ -28,6 +29,20 @@ public:
    virtual bool is_open(void) = 0;
    virtual void rewind(void) = 0;
    virtual void close(void) = 0;
+
+   /** @ brief Use the allocated memory with a different open file handle.
+    *
+    * @param new_handle An open file handle to an advisor file.
+    * @return The previously-held file handle, the value of which
+    *         can be used later to restore the original file when
+    *         the new one is finished.
+    *
+    * This function is intended to allow include files to be read using
+    * the main I_AFile handle and its allocated memory.  The implementations
+    * of this function should also reset the m_cur_line_pos to -1 to
+    * indicate that the file pointer is invalid.
+    */
+   virtual int replace_handle(int new_handle) = 0;
 
 protected:
    /**
@@ -88,7 +103,7 @@ class BaseBuffer
 private:
    char*  m_buffer;           /**< To be set by derived class. */
    size_t m_buffer_size;      /**< To be set by derived class, for calls to read(). */
-   
+
    char*  m_buffer_end;       /**< Marks end of data in m_buffer. */
    char*  m_buffer_ptr;       /**< Points to next character to be read. */
    off_t  m_buffer_file_pos;  /**< File position of byte 0 of m_buffer. */
@@ -228,6 +243,14 @@ public:
    virtual bool is_open(void)               { return m_handle>0; }
    virtual void rewind(void)                { m_buffer->rewind(m_handle); }
    virtual void close(void)                 { if (is_open()) ::close(m_handle); m_handle=0; }
+   virtual int replace_handle(int handle)
+   {
+      int rval = m_handle;
+      m_cur_line_pos=-1;
+      m_handle=handle;
+      return rval;
+   }
+   
    virtual long int _get_position(void)     { return m_buffer->get_position(); }
    virtual void _set_position(long int pos) { m_buffer->set_position(m_handle, pos); }
    virtual char* _read_line(char *buff,
@@ -245,6 +268,14 @@ public:
  *
  * The ab_handle class was designed to work with a section of an Advisor
  * file.  An ab_handle class is constructed using the BranchPool class.
+ *
+ * 2017-02-17: A new method, replace_handle() is added to allow the reuse
+ * of the buffer when processing include files.  I considered saving the
+ * original file path for comparison in case a circular include references
+ * the original file to avoid opening a second handle to the same file.
+ * After a short time, I decided that the complications involved in developing
+ * this out-weighed the rare and unlikely occurance that suggested the idea.
+ * It works as-is, so I'm leaving it.
  */
 class Advisor
 {
@@ -277,7 +308,8 @@ public:
    static int bufflen(void)   { return s_bufflen; }
    inline static const char* continuation_tag(void) { return s_continued_tag; }
 
-   void close(void)  { m_file.close(); }
+   void close(void)                   { m_file.close(); }
+   int replace_handle(int new_handle) { return m_file.replace_handle(new_handle); }
 
    /**
     * @name Iterator functions.
