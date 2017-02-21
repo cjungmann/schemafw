@@ -43,6 +43,9 @@
   <xsl:variable name="jslist_sfw" select="$jslist_sfw_debug" /> 
   <xsl:variable name="jslist_utils">classes dpicker Events Dialog Moveable XML</xsl:variable>
 
+  <xsl:variable name="lowers">abcdefghijklmnopqrstuvwxyz</xsl:variable>
+  <xsl:variable name="uppers">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
+
   <xsl:variable name="err_condition">
     <xsl:choose>
       <xsl:when test="$result-row and $result-row/@error&gt;0">1</xsl:when>
@@ -1274,6 +1277,7 @@
         <xsl:when test="@type='DATE'">input</xsl:when>
         <xsl:when test="@type='DATETIME'">datetime</xsl:when>
         <xsl:when test="@type='BOOL'">checkbox</xsl:when>
+        <xsl:when test="translate(@type,$lowers,$uppers)='PASSWORD'">password</xsl:when>
         <xsl:otherwise>text</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
