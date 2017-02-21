@@ -71,7 +71,7 @@ public:
 
       void append(ninfo *node);
       void scan_for_includes(Path_List &pl, IGeneric_Callback<ninfo*> &callback);
-      bool is_empty(void) const { return m_head==m_tail; }
+      bool is_empty(void) const { return 0==m_head; }
    };
 
    static void t_collect_modes(Advisor &advisor,
