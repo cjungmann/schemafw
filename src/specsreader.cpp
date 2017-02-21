@@ -110,9 +110,6 @@ void Advisor_Index::BEnds::scan_for_includes(Path_List &pl,
       else
          *ptrptr = *after_include;
 
-      // Update pointer for loop re-entry then re-enter:
-      f_incr_ptrptr();
-      
       (*pgu_fscan)();
    };
    Generic_User<BEnds&, decltype(finsert_includes)> gu_inserter(finsert_includes);
