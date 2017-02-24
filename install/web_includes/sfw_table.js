@@ -21,9 +21,11 @@
 
    function _match_rndx(n) { return n.nodeType==1 && n.getAttribute("rndx"); }
 
+   _table.prototype.get_result_path = function() { return null; };
+
    _table.prototype.result = function(match)
    {
-      var mfunc = _match_rndx;
+      var xpath, top, mfunc = _match_rndx;
       if (match)
       {
          var str = ("tagName" in match)?match.tagName:match;
@@ -33,12 +35,11 @@
                && n.getAttribute("row-name")==str;
          };
       }
-      else
-      {
-         var xpath, top = this.top();
-         if (top && (xpath=top.getAttribute("data-result-path")))
-            return this._xmldoc.selectSingleNode(xpath);
-      }
+      // Use either xpath from overridden get_result_path(),
+      // or use reuse xpath from top() that generated the current table.
+      else if ((xpath=this.get_result_path()) 
+               || ((top=this.top()) && (xpath=top.getAttribute("data-result-path"))))
+         return this._xmldoc.selectSingleNode(xpath);
       
       return SFW.find_child_matches(this._xmldoc, mfunc, true, true);
    };
@@ -141,25 +142,26 @@
          n.removeAttribute("select");
    };
 
-   _table.prototype.replot = function(match)
+   // Figure how to flag a forced full replot:
+   _table.prototype.replot = function(full_replot, match)
    {
       this.pre_transform();
 
-      var res = this.result(match);
+      var selected_result = this.result(match);
       
       var tbody = SFW.find_child_matches(this.top(), "tbody", true);
-      if (tbody)
+      if (tbody && !full_replot)
       {
-         this.result(match).setAttribute("make_table_body", "true");
-         SFW.xslobj.transformFill(tbody, this.result(match));
-         this.result(match).removeAttribute("make_table_body");
-         _fix_table_heads(this.top());
+         selected_result.setAttribute("make_table_body", "true");
+         SFW.xslobj.transformFill(tbody, selected_result);
+         selected_result.removeAttribute("make_table_body");
       }
       else
-      {
-         SFW.xslobj.transformFill(this._host, this.result(match));
-         _fix_table_heads(this.top());
-      }
+         SFW.xslobj.transformFill(this._host, selected_result);
+
+      var top = this.top();
+      if (top)
+         _fix_table_heads(top);
 
       this.post_transform();
    };
