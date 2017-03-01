@@ -21,27 +21,42 @@
 
    function _match_rndx(n) { return n.nodeType==1 && n.getAttribute("rndx"); }
 
+   _table.prototype.result_from_match = function(match)
+   {
+      var mfunc = _match_rndx;
+      var str = ("tagName" in match)?match.tagName:match;
+      mfunc = function(n) {
+         return n.nodeType==1
+            && n.getAttribute("rndx")
+            && n.getAttribute("row-name")==str;
+         };
+      return SFW.find_child_matches(this._xmldoc, mfunc, true, true);
+   };
+
+   // Can be overridden in derived classes:
    _table.prototype.get_result_path = function() { return null; };
+
+   _table.prototype.get_result_xpath_from_top = function()
+   {
+      var top = this.top();
+      if (top)
+         return top.getAttribute("data-result-path");
+      else
+         return null;
+   };
 
    _table.prototype.result = function(match)
    {
-      var xpath, top, mfunc = _match_rndx;
       if (match)
+         return this.result_from_match(match);
+      else
       {
-         var str = ("tagName" in match)?match.tagName:match;
-         mfunc = function(n) {
-            return n.nodeType==1
-               && n.getAttribute("rndx")
-               && n.getAttribute("row-name")==str;
-         };
-      }
-      // Use either xpath from overridden get_result_path(),
-      // or use reuse xpath from top() that generated the current table.
-      else if ((xpath=this.get_result_path()) 
-               || ((top=this.top()) && (xpath=top.getAttribute("data-result-path"))))
+         var xpath = this.get_result_path()
+            || this.get_result_xpath_from_top()
+            || "/*/*[@rndx=1]";
+         
          return this._xmldoc.selectSingleNode(xpath);
-      
-      return SFW.find_child_matches(this._xmldoc, mfunc, true, true);
+      }
    };
    
    _table.prototype.get_sort_field = function()
