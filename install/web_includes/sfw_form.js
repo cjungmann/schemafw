@@ -138,6 +138,21 @@
                  && a.nodeValue=="0");
    }
 
+   _form.prototype.set_field = function _set_field(name,value)
+   {
+      var form = this.top();
+      var el, els = form.elements;
+      for (var i=0, stop=els.length; i<stop; i++)
+      {
+         el = els[i];
+         if (el.name == name)
+         {
+            el.value = value;
+            break;
+         }
+      }
+   };
+
    _form.prototype.process_button = function _process_button(e,t)
    {
       var ths = this;
