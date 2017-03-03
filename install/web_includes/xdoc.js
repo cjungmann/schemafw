@@ -463,17 +463,10 @@ function get_links()
 function transform_doc(xsl, xml)
 {
    // Allow window.onload to return so we can access the new window.onload:
-   function transform_complete() { setTimeout(initialize_new_page, 200); }
-
-   function load_styles()
+   function transform_complete()
    {
-      var sl = get_links();
-      if (sl)
-         force_sslinks_to_load(sl, transform_complete);
-      else
-         transform_complete();
+      setTimeout(initialize_new_page, 200);
    }
-
 
    // Save scripts for comparison
    var original_scripts = get_scripts();
@@ -481,10 +474,20 @@ function transform_doc(xsl, xml)
    {
       var sl = get_scripts();
       if (sl && sl[0]!=original_scripts[0])
-         force_scripts_to_load(sl, load_styles);
+         force_scripts_to_load(sl, transform_complete);
       else
-         load_styles();
+         transform_complete();
    }
+
+   function load_styles()
+   {
+      var sl = get_links();
+      if (sl)
+         force_sslinks_to_load(sl, load_scripts);
+      else
+         load_scripts();
+   }
+
 
    if ("XSLTProcessor" in window)
    {
@@ -497,8 +500,7 @@ function transform_doc(xsl, xml)
          {
             document.removeChild(document.documentElement);
             document.appendChild(ddf);
-
-            load_scripts();
+            load_styles();
          }
          else
          {
@@ -519,7 +521,7 @@ function transform_doc(xsl, xml)
       document.removeChild(document.documentElement);
       document.appendChild(onode);
 
-      load_scripts();
+      load_styles();
    }
 }
 
