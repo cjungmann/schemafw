@@ -442,6 +442,30 @@
     </nav>
   </xsl:template>
 
+  <xsl:template name="write_title">
+    <xsl:param name="title" />
+
+    <xsl:variable name="resolved">
+      <xsl:call-template name="resolve_refs">
+        <xsl:with-param name="str" select="$title" />
+      </xsl:call-template>
+    </xsl:variable>
+
+    <h2 class="sfw_title"><xsl:value-of select="$resolved" /></h2>
+  </xsl:template>
+
+  <xsl:template match="*[@rndx and @title]" mode="add_title">
+    <xsl:call-template name="write_title">
+      <xsl:with-param name="title" select="@title" />
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="*[@rndx and schema/@title]" mode="add_title">
+    <xsl:call-template name="write_title">
+      <xsl:with-param name="title" select="schema/@title" />
+    </xsl:call-template>
+  </xsl:template>
+
   <xsl:template match="/*" mode="branch_standard_modes">
     <div>Use mode=&quot;show_document_content&quot; instead of &quot;branch_standard_modes&quot;</div>
   </xsl:template>
@@ -506,25 +530,34 @@
             <xsl:with-param name="root" select="1" />
           </xsl:apply-templates>
         </xsl:when>
-        <xsl:when test="@mode-type and *[@rndx and local-name()=current()/@mode-type]">
-          <xsl:apply-templates select="*[@rndx and local-name()=current()/@mode-type]" />
-        </xsl:when>
         <xsl:when test="schema">
           <xsl:apply-templates select="schema" mode="make_form">
             <xsl:with-param name="type" select="'form'" />
           </xsl:apply-templates>
         </xsl:when>
-        <xsl:when test="*[@rndx=1 and local-name()='calendar']">
-          <xsl:apply-templates
-              select="*[@rndx=1 and local-name()='calendar']"
-              mode="build_calendar" />
-        </xsl:when>
-        <xsl:when test="*[@rndx=1]">
-          <xsl:apply-templates select="*[@rndx=1]" />
-        </xsl:when>
         <xsl:otherwise>
-          <div>Don't know what to do.</div>
+          <xsl:variable name="mt" select="@mode-type" />
+          <xsl:variable name="mtr" select="*[@rndx and local-name()=$mt]" />
+          <xsl:variable name="result" select="$mtr | *[@rndx=1 and not($mtr)]" />
+          <xsl:choose>
+            <xsl:when test="$result">
+              <xsl:apply-templates select="$result" mode="add_title" />
+              <xsl:apply-templates select="$result" />
+            </xsl:when>
+            <xsl:otherwise>
+              <div>Don't know what to do.</div>
+            </xsl:otherwise>
+          </xsl:choose>
         </xsl:otherwise>
+        <!-- <xsl:when test="@mode-type and *[@rndx and local-name()=current()/@mode-type]"> -->
+        <!--   <xsl:apply-templates select="*[@rndx and local-name()=current()/@mode-type]" /> -->
+        <!-- </xsl:when> -->
+        <!-- <xsl:when test="*[@rndx=1]"> -->
+        <!--   <xsl:apply-templates select="*[@rndx=1]" /> -->
+        <!-- </xsl:when> -->
+        <!-- <xsl:otherwise> -->
+        <!--   <div>Don't know what to do.</div> -->
+        <!-- </xsl:otherwise> -->
       </xsl:choose>
     </xsl:if>
   </xsl:template>
@@ -540,6 +573,8 @@
         </xsl:when>
       </xsl:choose>
     </xsl:variable>
+
+    <xsl:apply-templates select="." mode="add_title" />
 
     <xsl:choose>
       <xsl:when test="@form">
@@ -1719,11 +1754,9 @@
     </xsl:variable>
 
     <xsl:if test="string-length($title)&gt;0">
-      <h2>
-        <xsl:call-template name="resolve_refs">
-          <xsl:with-param name="str" select="$title" />
-        </xsl:call-template>
-      </h2>
+      <xsl:call-template name="write_title">
+        <xsl:with-param name="title" select="$title" />
+      </xsl:call-template>
     </xsl:if>
 
     <xsl:element name="table">
