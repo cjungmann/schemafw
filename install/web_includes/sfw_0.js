@@ -204,25 +204,51 @@ function init_SFW(callback)
          target.attachEvent("on"+name,f);
    }
 
-   function _resize_page_head()
+   function _manage_content_spacer(el)
    {
-      var ghost, head = document.getElementById("SFW_Header");
-      if (head)
+      var ghost;
+      if (el && !class_includes(el,"ghost"))
       {
-         if (!("ghost_div" in head))
+         if (!("ghost_el" in el))
          {
-            ghost = addEl(head.tagName.toLowerCase(), head.parentNode, head);
+            var next_el = SFW.next_sibling_element(el);
+            ghost = addEl(el.tagName.toLowerCase(), el.parentNode, next_el);
             if (ghost)
             {
-               head.ghost_div = ghost;
-               ghost.className = "SFW_Ghost";
+               ghost.className = el.className;
+               class_add(ghost,"ghost");
+               
+               el.ghost_el = ghost;
             }
          }
          else
-            ghost = head.ghost_div;
+            ghost = el.ghost_el;
          
-         ghost.style.height = _px(head.offsetHeight);
+         el.style.position = "fixed";
+         el.style.width = "100%";
+         ghost.style.height = _px(el.offsetHeight);
       }
+   }
+
+   function _resize_host_titles()
+   {
+      function f(n) {
+         if (n.nodeType==1 && class_includes(n,"sfw_title"))
+            _manage_content_spacer(n);
+      }
+
+      function g(n) {
+         if (n.nodeType==1 && class_includes(n,"SFW_Host"))
+            SFW.find_child_matches(n,f,false,true);
+      }
+
+      SFW.find_child_matches(document.getElementById("SFW_Content"),g,false,true);
+   }
+
+   function _resize_page_head()
+   {
+      _manage_content_spacer(document.getElementById("SFW_Header"));
+      _resize_host_titles();
    }
 
    function _resize_table_heads()
@@ -247,15 +273,15 @@ function init_SFW(callback)
             if (n.tagName.toLowerCase()=="div")
             {
                if (class_includes(n,"SFW_Host"))
+               {
                   return true;
+               }
             }
          }
-
          return false;
-         
       }
+debugger;
       var nl = SFW.find_child_matches(document.body,f,false,true);
-      debugger;
       if (nl)
       {
          var os = SFW.get_doc_offset(document.body);
