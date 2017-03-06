@@ -163,20 +163,24 @@
       this.pre_transform();
 
       var selected_result = this.result(match);
-      
-      var tbody = SFW.find_child_matches(this.top(), "tbody", true);
-      if (tbody && !full_replot)
+      if (selected_result)
       {
-         selected_result.setAttribute("make_table_body", "true");
-         SFW.xslobj.transformFill(tbody, selected_result);
-         selected_result.removeAttribute("make_table_body");
+         var tbody = SFW.find_child_matches(this.top(), "tbody", true);
+         if (tbody && !full_replot)
+         {
+            selected_result.setAttribute("make_table_body", "true");
+            SFW.xslobj.transformFill(tbody, selected_result);
+            selected_result.removeAttribute("make_table_body");
+         }
+         else
+            SFW.xslobj.transformFill(this._host, selected_result);
+
+         var top = this.top();
+         if (top)
+            _fix_table_heads(top);
       }
       else
-         SFW.xslobj.transformFill(this._host, selected_result);
-
-      var top = this.top();
-      if (top)
-         _fix_table_heads(top);
+         console.log("Failed to find result named \"" + this.mode + "\"");
 
       this.post_transform();
    };
