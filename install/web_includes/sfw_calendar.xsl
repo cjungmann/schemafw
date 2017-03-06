@@ -78,7 +78,7 @@ will contain the YYYY-MM-DD date.
         <xsl:with-param name="ndx" select="$day" />
       </xsl:call-template>
     </xsl:variable>
-    <th><xsl:value-of select="substring($day_name,1,3)" /></th>
+    <td class="cal_day_head"><xsl:value-of select="substring($day_name,1,3)" /></td>
     
     <xsl:if test="($day)+1 &lt;=($day_right)">
       <xsl:call-template name="make_day_heads">
@@ -239,8 +239,7 @@ will contain the YYYY-MM-DD date.
     </xsl:variable>
 
     <tr>
-      <td />
-      <td class="calnav cn_left">
+      <td colspan="2" class="calnav cn_left">
         <xsl:element name="button">
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$year_last" />
@@ -260,13 +259,13 @@ will contain the YYYY-MM-DD date.
           <xsl:text> &lt; </xsl:text>
         </xsl:element>
       </td>
-      <th colspan="3" class="cal_title">
+      <td colspan="3" class="cal_title">
         <xsl:call-template name="get_month_name">
           <xsl:with-param name="ndx" select="$ndx_month" />
         </xsl:call-template>
         <xsl:value-of select="$ndx_year" />
-      </th>
-      <td class="calnav cn_right">
+      </td>
+      <td colspan="2" class="calnav cn_right">
         <xsl:element name="button">
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$month_next" />
@@ -286,7 +285,6 @@ will contain the YYYY-MM-DD date.
           <xsl:text> &gt;&gt;&gt; </xsl:text>
         </xsl:element>
       </td>
-      <td></td>
     </tr>
     <tr>
        <xsl:call-template name="make_day_heads" />
@@ -309,8 +307,10 @@ will contain the YYYY-MM-DD date.
     <xsl:element name="table">
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:attribute name="data-sfw-class"><xsl:value-of select="$sfw_class" /></xsl:attribute>
-      <xsl:apply-templates select="$buttons" mode="show_buttons" />
-      <xsl:apply-templates select="." mode="build_calendar_head" />
+      <thead>
+        <xsl:apply-templates select="$buttons" mode="show_buttons" />
+        <xsl:apply-templates select="." mode="build_calendar_head" />
+      </thead>
       <xsl:call-template name="build_weeks">
         <xsl:with-param name="today" select="@today" />
         <xsl:with-param name="month" select="@month" />
