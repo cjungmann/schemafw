@@ -541,7 +541,6 @@
           <xsl:variable name="result" select="$mtr | *[@rndx=1 and not($mtr)]" />
           <xsl:choose>
             <xsl:when test="$result">
-              <xsl:apply-templates select="$result" mode="add_title" />
               <xsl:apply-templates select="$result" />
             </xsl:when>
             <xsl:otherwise>
@@ -573,8 +572,6 @@
         </xsl:when>
       </xsl:choose>
     </xsl:variable>
-
-    <xsl:apply-templates select="." mode="add_title" />
 
     <xsl:choose>
       <xsl:when test="@form">
@@ -737,7 +734,7 @@
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:if test="$intro">
+    <xsl:if test="string-length($intro)">
       <xsl:variable name="host_class">
         <xsl:if test="$host-type='tr'">
           <xsl:value-of select="concat(' headfix_', local-name(..),'_',local-name())" />
@@ -861,6 +858,7 @@
       <xsl:if test="$host-type='tr'">
         <xsl:value-of select="concat(' headfix_', local-name(..),'_',local-name())" />
       </xsl:if>
+      <xsl:value-of select="concat(' sfwid_', generate-id())" />
       <xsl:if test="$class">
         <xsl:value-of select="concat(' ', $class)" />
       </xsl:if>
