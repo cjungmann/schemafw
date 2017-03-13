@@ -437,10 +437,39 @@
   </xsl:template>
 
   <xsl:template match="/*/navigation" mode="header">
-    <nav>
-      <xsl:apply-templates select="target" mode="header" />
-    </nav>
+    <xsl:if test="count(target)">
+      <nav><xsl:apply-templates select="target" mode="header" /></nav>
+    </xsl:if>
   </xsl:template>
+
+  <xsl:template match="views/view" mode="header">
+    <xsl:param name="current" />
+    <xsl:element name="div">
+      <xsl:attribute name="data-name"><xsl:value-of select="@name" /></xsl:attribute>
+      <xsl:attribute name="class">
+        <xsl:text>view_selector</xsl:text>
+        <xsl:if test="generate-id()=generate-id($current)"> selected</xsl:if>
+      </xsl:attribute>
+      <xsl:value-of select="@label" />
+    </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="/*/views" mode="header">
+    <xsl:variable name="explicit" select="view[@name=current()/@selected]" />
+    <xsl:variable name="default" select="view[not($explicit)][view[@default]][1]" />
+    <xsl:variable name="lasttry" select="view[not($explicit) and not($default)][1]" />
+    <xsl:variable name="view" select="$explicit|$default|$lasttry" />
+    <xsl:if test="$view">
+      <nav class="views">
+        <h2><xsl:value-of select="$view/@title" /></h2>
+        <xsl:apply-templates select="view" mode="header">
+          <xsl:with-param name="current" select="$view" />
+        </xsl:apply-templates>
+      </nav>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="*" mode="header"></xsl:template>
 
   <xsl:template name="write_title">
     <xsl:param name="title" />
@@ -520,7 +549,7 @@
       <xsl:if test="$result-row and $result-row/@msg">
         <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
       </xsl:if>
-      
+
       <xsl:choose>
         <xsl:when test="message/@type='error'">
           <xsl:apply-templates select="message" />
@@ -536,12 +565,24 @@
           </xsl:apply-templates>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:variable name="mt" select="@mode-type" />
-          <xsl:variable name="mtr" select="*[@rndx and local-name()=$mt]" />
-          <xsl:variable name="result" select="$mtr | *[@rndx=1 and not($mtr)]" />
+          <xsl:apply-templates select="views" mode="header" />
+          <xsl:variable name="eview" select="views/view[@selected]" />
+          <xsl:variable name="fview" select="views/view[not($eview)][1]" />
+          <xsl:variable name="view" select="$eview|$fview" />
+          <xsl:variable name="vr" select="*[$view][@rndx][local-name()=$view/@result]" />
+          <xsl:variable name="result" select="$vr | *[not($vr)][@rndx=1]" />
+          <!-- <xsl:variable name="mt" select="@mode-type" /> -->
+          <!-- <xsl:variable name="mtr" select="*[@rndx and local-name()=$mt]" /> -->
+          <!-- <xsl:variable name="result" select="$mtr | *[@rndx=1 and not($mtr)]" /> -->
           <xsl:choose>
             <xsl:when test="$result">
-              <xsl:apply-templates select="$result" />
+              <pre>
+                 eview       :<xsl:value-of select="$eview/@name" />
+                 fview       :<xsl:value-of select="$fview/@name" />
+                 view-result :<xsl:value-of select="$view/@result" />
+                 result name :<xsl:value-of select="local-name($result)" />
+              </pre>
+              <xsl:apply-templates id="view_renderer" select="$result" />
             </xsl:when>
             <xsl:otherwise>
               <div>Don't know what to do.</div>
@@ -2273,6 +2314,11 @@ v    </xsl:variable>
       <xsl:with-param name="data" select="$data-row" />
       <xsl:with-param name="result-schema" select="$result-schema" />
     </xsl:apply-templates>
+  </xsl:template>
+
+  <xsl:template match="views/view">
+<div>Processing a view</div>    
+    <xsl:apply-templates select="/*" mode="show_document_content" />
   </xsl:template>
 
 </xsl:stylesheet>
