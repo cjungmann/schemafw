@@ -27,6 +27,25 @@ h2 { text-align: center; margin:0; }
 #SFW_Header nav a { padding:.5em; }
 #SFW_Header nav a.here { background-color:#999999; }
 
+nav.views { text-align: center; }
+nav.views div
+{
+    display: inline-block;
+    font-size:large;
+    font-weight: bold;
+    padding: .25em 1em;
+    margin: .5em;
+    border:solid 1px black;
+    cursor: pointer;
+    background-color:#FFFFFF;
+}
+
+nav.views div.selected
+{
+    cursor: default;
+    background-color: #DDDDDD;
+    
+}
 
 .SFW_Ghost
 {
