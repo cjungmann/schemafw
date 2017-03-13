@@ -27,8 +27,8 @@
 
    _calendar.prototype.child_finished = function(child, cmd)
    {
-      this.replot();
       SFW.base.prototype.child_finished.call(this,child,cmd);
+      this.replot();
    };
 
    _calendar.prototype.process_day_click = function(t, did)
