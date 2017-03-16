@@ -233,13 +233,13 @@
    {
       var name = null;
       if (this.schema() && !(name=this.schema().getAttribute(aname)))
-         name = this._xmldoc.documentElement.getAttribute(aname);
-      return name || "id";
+         name = this.xmldocel().getAttribute(aname);
+      return name;
    };
 
    _table.prototype.get_line_click_id_name = function()
    {
-      return this.get_sfw_attribute("line_click_id");
+      return this.get_sfw_attribute("line_click_id") || "id";
    };
 
    function _empty_node(node)
