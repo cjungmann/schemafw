@@ -1800,7 +1800,7 @@
 
     <xsl:element name="table">
       <xsl:call-template name="tag_class">
-        <xsl:with-param name="type" select="'default_table'" />
+        <xsl:with-param name="type" select="'table'" />
       </xsl:call-template>
       <xsl:attribute name="data-result-type">table</xsl:attribute>
       <xsl:attribute name="data-result-path">
