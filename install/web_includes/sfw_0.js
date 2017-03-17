@@ -41,14 +41,24 @@ function init_SFW(callback)
 
    SFW.alert                = _alert;
    SFW.confirm              = _confirm;
+   SFW.log_error            = _log_error;
+   SFW.confirm_not_null     = _confirm_not_null;
+   SFW.seek_top_sfw_host    = _seek_top_sfw_host;
    SFW.seek_page_anchor     = _seek_page_anchor;
+   SFW.seek_event_anchor    = _seek_event_anchor;
    SFW.seek_event_host      = _seek_event_host;
    SFW.seek_child_anchor    = _seek_child_anchor;
    SFW.derive               = _derive;
    SFW.document_object      = _document_object;
    SFW.add_event            = _add_event;
    SFW.setup_event_handling = _setup_event_handling;
+
+   SFW.set_view_renderer    = _set_view_renderer;
+   SFW.update_selected_view = _update_selected_view;
+   SFW.change_view          = _change_view;
    SFW.process_event        = _process_event;
+
+   SFW.get_last_SFW_Host    = _get_last_SFW_Host;
    SFW.resize_page          = _resize_page;
    SFW.translate_url        = _translate_url;
    SFW.render_interaction   = _render_interaction;
@@ -83,6 +93,23 @@ function init_SFW(callback)
       return window.confirm(str);
    }
 
+   function _log_error(msg)
+   {
+      console.error(msg);
+      if (SFW.debugging)
+         debugger;
+   }
+
+   function _confirm_not_null(obj, msg)
+   {
+      if (obj==null)
+      {
+         _log_error(msg);
+         return false;
+      }
+      return true;
+   }
+
    function _is_anchor(n)
    {
       return n.nodeType==1 && null!=n.getAttribute("data-sfw-class");
@@ -91,6 +118,12 @@ function init_SFW(callback)
    function _find_anchor(el)
    {
       return SFW.find_child_matches(el, _is_anchor, true, true);
+   }
+
+   function _seek_top_sfw_host()
+   {
+      function f(node) { return node.nodeType==1 && node.className=="SFW_Host"; }
+      return SFW.find_child_matches(document, f, true, true);
    }
 
    function _seek_page_anchor(levels, parent)
@@ -102,7 +135,7 @@ function init_SFW(callback)
          return null;
 
       if (!parent)
-         parent=document.getElementById("SFW_Content");
+         parent=SFW.stage;
       
       var subel, el = SFW.first_child_element(parent);
       while (el)
@@ -118,19 +151,32 @@ function init_SFW(callback)
       return null;
    }
 
-   function _seek_event_host(t)
+   function _seek_event_anchor(t)
    {
-      
       while (t)
       {
          if (_is_anchor(t))
-         {
-            if ("sfwobj" in t.parentNode)
-               return t.parentNode.sfwobj;
-            break;
-         }
+            return t;
          t = t.parentNode;
       }
+      return null;
+   }
+
+   function _seek_event_host(t)
+   {
+      while (t && t.nodeType < 9)
+      {
+         if (t.nodeType==1)
+         {
+            if (t.className=="SFW_Host")
+               return t;
+         }
+         else if (t.nodeType==9)
+            break;
+
+         t = t.parentNode;
+      }
+
       return null;
    }
 
@@ -230,6 +276,18 @@ function init_SFW(callback)
       }
    }
 
+   function _get_last_SFW_Host()
+   {
+      var n = SFW.stage.lastChild;
+      while(n)
+      {
+         if (n.nodeType==1 && class_includes(n,"SFW_Host"))
+            return n;
+         n = n.previousSibling;
+      }
+      return null;
+   }
+
    function _resize_host_titles()
    {
       function f(n) {
@@ -242,7 +300,7 @@ function init_SFW(callback)
             SFW.find_child_matches(n,f,false,true);
       }
 
-      SFW.find_child_matches(document.getElementById("SFW_Content"),g,false,true);
+      SFW.find_child_matches(SFW.stage,g,false,true);
    }
 
    function _resize_page_head()
@@ -280,7 +338,6 @@ function init_SFW(callback)
          }
          return false;
       }
-debugger;
       var nl = SFW.find_child_matches(document.body,f,false,true);
       if (nl)
       {
@@ -353,12 +410,124 @@ debugger;
       window.onresize = f;
    }
 
+   function _show_view_content(viewlist)
+   {
+      function istr(level)
+      {
+         var str = "";
+         for (var i=0; i<level; ++i)
+            str += "  ";
+         return str;
+      }
+      
+      var arr = [];
+      function show_attr(attr, level)
+      {
+         arr.push(istr(level) + attr.name + "=\"" + attr.value + "\"");
+      }
+      
+      function show_el(el, level)
+      {
+         arr.push(istr(level) + "<" + el.localName);
+         var attrs = el.attributes;
+         if (attrs.length)
+         {
+            for (var i=0,stop=attrs.length; i<stop; ++i)
+               show_attr(attrs[i],level+3);
+         }
+
+         var child_count = 0;
+         var c = el.firstChild;
+         while (c)
+         {
+            if (c.nodeType==1)
+            {
+               if (!child_count)
+                  arr.push(istr(level+1) + ">");
+               ++child_count;
+               
+               show_el(c,level+1);
+            }
+            c = c.nextSibling;
+         }
+
+         if (child_count)
+            arr.push(istr(level) + "<" + el.localName + ">");
+         else
+            arr.push(istr(level+1) + "/>");
+      }
+
+      show_el(viewlist,0);
+
+      alert(arr.join("\n"));
+   }
+
+   function _set_view_renderer(view)
+   {
+      var el = SFW.xsldoc.getElementById("view_renderer");
+      var mode = view.getAttribute("mode");
+      if (mode)
+         el.setAttribute("mode", mode);
+      else if (el.getAttribute("mode"))
+         el.removeAttribute("mode");
+   }
+
+   function _update_selected_view(view)
+   {
+      var n = view.parentNode.firstChild;
+      while(n)
+      {
+         if (n.nodeType==1)
+         {
+            if (n.getAttribute("selected"))
+            {
+               if (n==view)
+                  break; // the only early-exit is if there is no view change
+               else
+                  n.removeAttribute("selected");
+            }
+            else if (n==view)
+               n.setAttribute("selected", "true");
+         }
+
+         n = n.nextSibling;
+      }
+   }
+
+   function _change_view(view_name)
+   {
+      var xpath = "/*/views/view[@name='" + view_name + "']";
+      var view = SFW.xmldoc.selectSingleNode(xpath);
+      if (view)
+      {
+         var host = _get_last_SFW_Host();
+         if (host)
+         {
+            _show_view_content(view.parentNode);
+         
+            _set_view_renderer(view);
+            _update_selected_view(view);
+
+            _show_view_content(view.parentNode);
+            
+            SFW.xslobj.transformFill(host,view);
+         }
+      }
+   }
+
    function _process_event(e,t)
    {
-      var obj;
+      if (class_includes(t,"view_selector"))
+      {
+         if (!class_includes(t,"selected"))
+            _change_view(t.getAttribute("data-name"));
+         
+         return false;
+      }
 
-      if ((obj=_seek_event_host(t)))
-         return obj.process(e,t);
+      var host = _seek_event_host(t);
+      if (host)
+         return (new SFW.base(host)).type_and_process(e,t);
       else
          return true;
    }
@@ -398,25 +567,31 @@ debugger;
       s.zIndex = 100;
    }
 
-   function _make_sfw_host(host, to_cover)
+   function _size_to_cover(over, under)
    {
-      if (to_cover && to_cover.top())
-         to_cover = to_cover.top();
-      else
-         to_cover = host;
-      
+      over.style.minHeight = SFW.px(under.offsetHeight);
+   }
+
+   function _make_sfw_host(host, xmldoc, caller, data)
+   {
       var thost = addEl("div",host);
-      thost.className = "SFW_Host";
-      thost.style.minHeight = SFW.px(to_cover.offsetHeight);
+      
+      // Calling function to report errors.
+      if (thost)
+      {
+         var obj = new SFW.base(thost);
+         obj.setup(xmldoc,caller,data);
+      }
+      
       return thost;
    }
 
-   function _render_interaction(type,doc,host,caller,data)
+   function _old_render_interaction(type,doc,host,caller,data)
    {
       var thost, newobj, anchor;
       if (type in SFW.types)
       {
-         if ((thost=_make_sfw_host(host, caller)))
+         if ((thost=_make_sfw_host(host,caller,data)))
          {
             if ((newobj=new SFW.types[type](thost,doc,caller,data)))
             {
@@ -616,40 +791,72 @@ debugger;
              + (arrX.length ? ("\nOther\n   "   + arrX.join("\n   ")) : ""));
    }
 
-   function _base(host,xml_doc,caller,data)
+   function _base(host)
    {
-      if (!host)
-      {
-         host = addEl("div", SFW.stage);
-         host.className = "SFW_Host";
-      }
-      
-      host.sfwobj = this;
-      
-      this._caller = caller ? caller : null;
-      this._host = host;
-      this._xmldoc = xml_doc;
-
-      if (data)
-         this.data = data;
+      this._host_el = host;
    };
 
-   _base.prototype.class_name = "iclass";
+   _base.prototype.host = function() { return this._host_el; };
+   _base.prototype.xmldoc = function() { return this._host_el._xmldoc; };
+   _base.prototype.xmldocel = function() { return this._host_el._xmldoc.documentElement; };
 
-   _base.prototype.top        = function _top()      { return _find_anchor(this._host); };
-   _base.prototype.schema     = function _schema()   { return _find_schema(this._xmldoc.documentElement); };
-   _base.prototype.baseproto  = function _baseproto(){ return this._baseproto; };
+   _base.prototype.class_name = "iclass";
+   _base.prototype.top    = function() { return _find_anchor(this.host()); };
+   _base.prototype.schema = function() { return _find_schema(this.xmldocel()); };
+   _base.prototype.baseproto  = function() { return this._baseproto; };
    _base.prototype.button_processors = {};
+
+   _base.prototype.setup = function(xmldoc, caller, data)
+   {
+      var e = this._host_el;
+      e._xmldoc = xmldoc;
+      if (caller)
+         e.caller = caller;
+      if (data)
+         e.data = data;
+   };
+
+   _base.prototype.get_hosted_type = function()
+   {
+      var anchor = _seek_page_anchor(3,this.host());
+      if (anchor)
+         return anchor.getAttribute("data-sfw-class");
+      else
+         return null;
+   };
+
+   _base.prototype.get_hosted_class = function()
+   {
+      var cls = null;
+      var type = this.get_hosted_type();
+      if (_confirm_not_null(type,"No type in anchor."))
+      {
+         if (type in SFW.types)
+            cls = SFW.types[type];
+         else
+            _log_error("\"" + type + "\" not a registered type.");
+            
+      }
+      return cls;
+   };
+
+   _base.prototype.type_and_process = function(e,t)
+   {
+      var cls = this.get_hosted_class();
+      if (cls)
+      {
+         var obj = new cls(this.host());
+         return obj.process(e,t);
+      }
+      else
+         return true;
+   };
 
    _base.prototype.sfw_close = function _sfw_close()
    {
-      var v = this._host;
+      var v = this.host();
       if (v)
-      {
-         // This should release the closure:
-         v.sfwobj = null;
          v.parentNode.removeChild(v);
-      }
    };
 
    function _child_close(child)
@@ -742,7 +949,7 @@ debugger;
                return this[pbtype](b,cb);
             else if (url)
             {
-               url = _translate_url(url, this._xmldoc);
+               url = _translate_url(url, this.xmldoc());
                _open_interaction(this.top().parentNode, url, this);
             }
             break;
@@ -753,6 +960,7 @@ debugger;
 
    _base.prototype.pre_transform = function() { };
    _base.prototype.post_transform = function() { };
+   _base.prototype.initialize = function() { };
 
    _base.prototype.child_ready = function(child) { };
 
@@ -774,6 +982,55 @@ debugger;
 
       return true;
    };
+
+   function _get_class_from_name(name)
+   {
+      if (name in SFW.types)
+         return SFW.types[name];
+      else
+      {
+         console.error("Failed to find registered class \"" + name + ".\"");
+         return null;
+      }
+   }
+
+   function _get_class_from_doc(doc)
+   {
+      var docel = doc.documentElement;
+      var name = docel.getAttribute("mode-type");
+      if (name)
+         return _get_class_from_name(name);
+      else
+      {
+         console.error("Missing mode-type attribute.");
+         return null;
+      }
+   }
+
+   function _render_interaction(type,doc,host,caller,data)
+   {
+      var lhost = _make_sfw_host(host,doc,caller,data);
+      if (_confirm_not_null(lhost, "Failed to make a new SFW_Host."))
+      {
+         _size_to_cover(lhost, caller||host);
+
+         var obj = null;
+         var iclass = _get_class_from_doc(doc);
+         if (iclass)
+            obj = new iclass(lhost);
+
+         if (obj)
+            obj.pre_transform();
+         
+         SFW.xslobj.transformFill(lhost, doc);
+
+         if (obj)
+         {
+            obj.post_transform();
+            obj.initialize();
+         }
+      }
+   }
 
    function call_SFW_init_functions()
    {

@@ -13,9 +13,9 @@
    // of their base classes are complete.  Look for those derives at the end
    // of the module.
 
-   function _form(base, doc, caller, data)
+   function _form(host)
    {
-      SFW.base.call(this, base,doc,caller,data);
+      SFW.base.call(this, host);
    }
 
    // Make copies of _form for prototype property "class_name" (RTTI).

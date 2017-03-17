@@ -10,10 +10,9 @@
        !SFW.derive(_table, "import-review", "iclass"))
       return;
    
-   function _table(base, doc, caller, data)
+   function _table(host)
    {
-      SFW.base.call(this,base,doc,caller,data);
-      SFW.fix_table_heads(base);
+      SFW.base.call(this, host);
    }
 
    // Adding useful local functions to global object
@@ -30,7 +29,7 @@
             && n.getAttribute("rndx")
             && n.getAttribute("row-name")==str;
          };
-      return SFW.find_child_matches(this._xmldoc, mfunc, true, true);
+      return SFW.find_child_matches(this.xmldoc(), mfunc, true, true);
    };
 
    // Can be overridden in derived classes:
@@ -55,7 +54,7 @@
             || this.get_result_xpath_from_top()
             || "/*/*[@rndx=1]";
          
-         return this._xmldoc.selectSingleNode(xpath);
+         return this.xmldoc().selectSingleNode(xpath);
       }
    };
    
@@ -173,7 +172,7 @@
             selected_result.removeAttribute("make_table_body");
          }
          else
-            SFW.xslobj.transformFill(this._host, selected_result);
+            SFW.xslobj.transformFill(this.host(), selected_result);
 
          var top = this.top();
          if (top)
@@ -349,7 +348,7 @@
       if (el)
       {
          var id, res, xpath = "*/*[@rndx and @row-name='" + el.tagName + "']";
-         res = this._xmldoc.selectSingleNode(xpath);
+         res = this.xmldoc().selectSingleNode(xpath);
          id = el.getAttribute("id");
          if ((res=this.result(el)) && (id=el.getAttribute("id")))
          {
@@ -392,6 +391,13 @@
       }
    };
 
+   _table.prototype.initialize = function()
+   {
+      var anchor = SFW.seek_child_anchor(this.host());
+      if (SFW.confirm_not_null(anchor))
+         SFW.fix_table_heads(anchor);
+   };
+
    _table.prototype.child_finished = function(cfobj)
    {
       this.update_row(cfobj);
@@ -406,7 +412,7 @@
    _table.prototype.process_button_add = function(button)
    {
       var os = SFW.get_page_offset();  // Get offset before discarding contents
-      var host = this._host;
+      var host = this.host();
       var url = button.getAttribute("data-task") || button.getAttribute("data-url");
 
       if (url)
@@ -441,7 +447,7 @@
          var xrow = SFW.find_child_matches(this.result(), f, true);
 
          var os = SFW.get_page_offset();  // Get offset before discarding contents
-         var host = this._host;
+         var host = this.host();
 
          empty_el(host);
 
