@@ -340,11 +340,13 @@
 
    _table.prototype.find_matching_data_row = function(cfobj)
    {
+      var el =
+         ("cdata" in cfobj && "xrow" in cfobj.cdata)
+         ? cfobj.cdata.xrow
+         : (("rowone" in cfobj)
+            ? cfobj.rowone
+            : null);
 
-      var el = ("cdata" in cfobj && "xrow" in cfobj.cdata) ? cfobj.cdata.xrow : null;
-      if (!el)
-         el = ("rowone" in cfobj) ? cfobj.rowone : null;
-      
       if (el)
       {
          var id, res, xpath = "*/*[@rndx and @row-name='" + el.tagName + "']";
