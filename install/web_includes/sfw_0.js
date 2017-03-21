@@ -4,13 +4,20 @@
 var SFW = { types     : {},
             autoloads : {},
             callback  : null,
+            continuing_autoloads : function()
+            {
+               for (a in this.autoloads)
+                  if (this.autoloads[a]==false)
+                     return true;
+               return false;
+            },
             check_and_callback : function(name)
             {
                this.autoloads[name] = true;
+
+               if (SFW.continuing_autoloads())
+                  return;
                
-               for (a in this.autoloads)
-                  if (this.autoloads[a]==false)
-                     return;
                // Callback after return to allow completion of last _init():
                setTimeout(this.callback, 125);
             },
@@ -24,7 +31,6 @@ var SFW = { types     : {},
                }
                else
                {
-                  // Save name only once
                   if (!(name in this.autoloads))
                      this.autoloads[name] = false;
                   
@@ -462,14 +468,36 @@ function init_SFW(callback)
       alert(arr.join("\n"));
    }
 
+   function _get_view_renderer_element(xsldoc)
+   {
+      if (!"view_renderer" in xsldoc)
+      {
+         var arr = [ "/xsl:stylesheet",
+                     "xsl:template[@mode='show_document_content']",
+                     "xsl:if",
+                     "xsl:choose",
+                     "xsl:otherwise",
+                     "xsl:choose",
+                     "xsl:when[@test='$result']",
+                     "xsl:apply-templates[@select='$result']" ];
+                     
+         xsldoc.view_renderer = xsldoc.selectSingleNode(arr.join('/'));
+      }
+
+      return xsldoc.view_renderer;
+   }
+
    function _set_view_renderer(view)
    {
-      var el = SFW.xsldoc.getElementById("view_renderer");
-      var mode = view.getAttribute("mode");
-      if (mode)
-         el.setAttribute("mode", mode);
-      else if (el.getAttribute("mode"))
-         el.removeAttribute("mode");
+      var el = _get_view_renderer_element(SFW.xsldoc);
+      if (_confirm_not_null(el, "Unable to find view_renderer element."))
+      {
+         var mode = view.getAttribute("mode");
+         if (mode)
+            el.setAttribute("mode", mode);
+         else if (el.getAttribute("mode"))
+            el.removeAttribute("mode");
+      }
    }
 
    function _update_selected_view(view)
@@ -526,6 +554,7 @@ function init_SFW(callback)
       }
 
       var host = _seek_event_host(t);
+
       if (host)
          return (new SFW.base(host)).type_and_process(e,t);
       else
@@ -575,6 +604,7 @@ function init_SFW(callback)
    function _make_sfw_host(host, xmldoc, caller, data)
    {
       var thost = addEl("div",host);
+      thost.className = "SFW_Host";
       
       // Calling function to report errors.
       if (thost)
@@ -801,11 +831,19 @@ function init_SFW(callback)
    _base.prototype.xmldocel = function() { return this._host_el._xmldoc.documentElement; };
 
    _base.prototype.class_name = "iclass";
-   _base.prototype.top    = function() { return _find_anchor(this.host()); };
-   _base.prototype.schema = function() { return _find_schema(this.xmldocel()); };
-   _base.prototype.baseproto  = function() { return this._baseproto; };
+   _base.prototype.top       = function() { return _find_anchor(this.host()); };
+   _base.prototype.schema    = function() { return _find_schema(this.xmldocel()); };
+   _base.prototype.baseproto = function() { return this._baseproto; };
    _base.prototype.button_processors = {};
 
+   _base.prototype.caller = function()
+   {
+      if ("caller" in this._host_el)
+         return this._host_el.caller;
+      else
+         return null;
+   };
+   
    _base.prototype.setup = function(xmldoc, caller, data)
    {
       var e = this._host_el;
@@ -845,6 +883,7 @@ function init_SFW(callback)
       var cls = this.get_hosted_class();
       if (cls)
       {
+         var host = this.host();
          var obj = new cls(this.host());
          return obj.process(e,t);
       }
@@ -869,7 +908,7 @@ function init_SFW(callback)
    {
       return rowone && ("0"!=rowone.getAttribute("deleted"));
    }
-   
+
    _base.prototype.cfobj_from_doc = function(doc)
    {
       var docel = doc.documentElement;
@@ -877,13 +916,14 @@ function init_SFW(callback)
       
       var rval = { cfobj  : true,
                    child  : this,
-                   cdata  : "data" in this ? this.data : null,
-
                    docel  : docel,
                    mtype  : docel.getAttribute("mode-type"),
 
                    close  : function() { _child_close(this.child); }
                  };
+      
+      if ("data" in this)
+         rval["cdata"] = this.data;
 
       if (result)
       {
@@ -901,15 +941,22 @@ function init_SFW(callback)
 
    _base.prototype.cfobj_from_cmd = function(cmd)
    {
+      var rval;
       if (typeof(cmd)=="object" && "documentElement" in cmd)
-         return this.cfobj_from_doc(cmd);
+         rval =this.cfobj_from_doc(cmd);
       else
-         return { cfobj : true,
+      {
+         rval = { cfobj : true,
                   child : this,
-                  cdata : "data" in this ? this.data : null,
                   cmd   : cmd || null,
                   close : function() { _child_close(this.child); }
                 };
+         
+         if ("data" in this)
+            rval["cdata"] = this.data;
+      }
+
+      return rval;
    };
 
   _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
@@ -936,8 +983,8 @@ function init_SFW(callback)
             break;
          case "cancel":
          case "close":
-            if (this._caller)
-               this._caller.child_finished(this.cfobj_from_cmd(type));
+            if (this.caller())
+               this.caller().child_finished(this.cfobj_from_cmd(type));
             return false;
          
          default:
@@ -1010,6 +1057,7 @@ function init_SFW(callback)
    function _render_interaction(type,doc,host,caller,data)
    {
       var lhost = _make_sfw_host(host,doc,caller,data);
+      
       if (_confirm_not_null(lhost, "Failed to make a new SFW_Host."))
       {
          _size_to_cover(lhost, caller||host);
@@ -1022,13 +1070,20 @@ function init_SFW(callback)
          if (obj)
             obj.pre_transform();
          
-         SFW.xslobj.transformFill(lhost, doc);
+         SFW.xslobj.transformFill(lhost, doc.documentElement);
 
          if (obj)
          {
             obj.post_transform();
             obj.initialize();
+
+            if (caller)
+               caller.child_ready(obj);
          }
+
+         var anchor = SFW.seek_child_anchor(lhost);
+         if (anchor)
+            _arrange_in_host(host, anchor);
       }
    }
 
