@@ -18,7 +18,7 @@
 
    _calendar.prototype.get_on_day_click_url = function()
    {
-      return this._xmldoc.documentElement.getAttribute("on_day_click");
+      return this.xmldocel().getAttribute("on_day_click");
    };
 
    // _calendar.prototype.child_ready = function(child)
@@ -39,8 +39,8 @@
          var url = odc + "=" + did;
          var ths = this;
          
-         empty_el(this._host);
-         SFW.open_interaction(SFW.stage, url, this, this._xmldoc);
+         empty_el(this.host());
+         SFW.open_interaction(SFW.stage, url, this, this.xmldoc());
       }
    };
 

@@ -94,6 +94,7 @@
 
    _form.prototype.focus_on_first_field = function()
    {
+      var top = this.top();
       _focus_on_first_field(this.top());
    };
 
@@ -110,8 +111,8 @@
       {
          if (SFW.check_for_preempt(doc))
          {
-            if (ths._caller)
-               ths._caller.child_finished(ths.cfobj_from_doc(doc));
+            if (ths.caller())
+               ths.caller().child_finished(ths.cfobj_from_doc(doc));
          }
       }
 
@@ -160,8 +161,8 @@
       {
          if (_is_failed_delete_request(cmd))
             SFW.alert("Delete operation failed.");
-         else if (ths._caller)
-            ths._caller.child_finished(ths.cfobj_from_cmd(cmd));
+         else if (ths.caller())
+            ths.caller().child_finished(ths.cfobj_from_cmd(cmd));
       }
       
       return this.process_clicked_button(t, fdone);
@@ -183,7 +184,7 @@
          if (!this.process_button(e,t))
             return false;
       case "submit":
-         if (this._caller)
+         if (this.caller())
          {
             this.process_submit();
             e.preventDefault();
