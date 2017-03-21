@@ -67,14 +67,14 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template name="tag_class">
+  <xsl:template name="tag_sfw_class">
     <xsl:param name="type" />
     <xsl:attribute name="data-sfw-class">
       <xsl:value-of select="$type" />
     </xsl:attribute>
   </xsl:template>
 
-  <xsl:template match="/*[@mode-type='form-edit']" >
+  <xsl:template match="/*[@mode-type='form-edit']">
     <xsl:param name="root" />
 
     <xsl:variable name="form-type">
@@ -87,10 +87,12 @@
 
     <xsl:variable name="schema" select="schema | *[@rndx]/schema" />
 
+    <div>MAKE_FORM: [@mode-type='form-edit']</div>
+
     <xsl:choose>
       <xsl:when test="$schema">
         <xsl:apply-templates select="$schema" mode="make_form">
-          <xsl:with-param name="type" select="$form-type" />
+          <xsl:with-param name="type" select="@mode-type" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>Unable to find the schema for constructing the form.</xsl:otherwise>
@@ -107,6 +109,8 @@
         <xsl:otherwise>dialog</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
+
+    <div>MAKE_FORM: [@mode-type='form-new or 'form-import']</div>
 
     <xsl:choose>
       <xsl:when test="schema">
@@ -132,6 +136,8 @@
     <xsl:variable name="fschema" select="schema" />
     <xsl:variable name="rschema" select="*[not($fschema)][@rndx=1]/schema" />
     <xsl:variable name="schema" select="$fschema | $rschema" />
+
+    <div>MAKE_FORM: [@mode-type='form-view']</div>
 
     <xsl:choose>
       <xsl:when test="$schema">
@@ -560,6 +566,9 @@
           </xsl:apply-templates>
         </xsl:when>
         <xsl:when test="schema">
+          <div>MAKE_FORM: show_document_content test="schema"</div>
+
+
           <xsl:apply-templates select="schema" mode="make_form">
             <xsl:with-param name="type" select="'form'" />
           </xsl:apply-templates>
@@ -582,7 +591,7 @@
                  view-result :<xsl:value-of select="$view/@result" />
                  result name :<xsl:value-of select="local-name($result)" />
               </pre>
-              <xsl:apply-templates id="view_renderer" select="$result" />
+              <xsl:apply-templates select="$result" />
             </xsl:when>
             <xsl:otherwise>
               <div>Don't know what to do.</div>
@@ -616,6 +625,8 @@
 
     <xsl:choose>
       <xsl:when test="@form">
+        <div>MAKE_FORM: [test="@form"]</div>
+
         <xsl:variable name="result" select="*[@rndx][local-name()=current()/@form]" />
         <xsl:choose>
           <xsl:when test="not($result)">
@@ -694,15 +705,13 @@
 
     <xsl:variable name="class">
       <xsl:choose>
-        <xsl:when test="$type='dialog'">Moveable</xsl:when>
-        <xsl:otherwise>Embedded</xsl:otherwise>
+        <xsl:when test="$type='form'">Embedded</xsl:when>
+        <xsl:otherwise>Moveable</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
 
     <xsl:element name="form">
-      <xsl:call-template name="tag_class">
-        <xsl:with-param name="type" select="$class" />
-      </xsl:call-template>
+      <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:attribute name="method"><xsl:value-of select="$method" /></xsl:attribute>
       <xsl:if test="$importing='1'">
         <xsl:attribute name="enctype">multipart/form-data</xsl:attribute>
@@ -711,12 +720,15 @@
         <xsl:attribute name="action"><xsl:value-of select="$action" /></xsl:attribute>
       </xsl:if>
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
+      <xsl:attribute name="data-sfw-class">
+        <xsl:value-of select="$type" />
+      </xsl:attribute>
       <xsl:attribute name="data-result-type">form</xsl:attribute>
 
       <fieldset class="Schema">
         <xsl:element name="legend">
-          <xsl:if test="$type='dialog'">
-            <xsl:attribute name="class">Moveable</xsl:attribute>
+          <xsl:if test="$type='form'">
+            <xsl:attribute name="class">Embedded</xsl:attribute>
           </xsl:if>
           <xsl:value-of select="$legend" />
         </xsl:element>
@@ -1799,7 +1811,7 @@
     </xsl:if>
 
     <xsl:element name="table">
-      <xsl:call-template name="tag_class">
+      <xsl:call-template name="tag_sfw_class">
         <xsl:with-param name="type" select="'table'" />
       </xsl:call-template>
       <xsl:attribute name="data-result-type">table</xsl:attribute>
@@ -2286,6 +2298,8 @@ v    </xsl:variable>
     <xsl:variable name="elname" select="schema/@name" />
     <xsl:variable name="el" select="./*[local-name()=$elname]" />
 
+    <div>MAKE_FORM: [@make_dialog][schema]</div>
+    
     <xsl:choose>
       <xsl:when test="@mode-type='form-edit'">
         <xsl:variable name="row-name" select="schema/@name" />
@@ -2310,6 +2324,8 @@ v    </xsl:variable>
     <xsl:variable name="form-schema" select="../schema" />
     <xsl:variable name="result-schema" select="schema" />
 
+    <div>MAKE_FORM: [@make_node_dialog]</div>
+    
     <xsl:apply-templates select="$form-schema" mode="make_form">
       <xsl:with-param name="data" select="$data-row" />
       <xsl:with-param name="result-schema" select="$result-schema" />
