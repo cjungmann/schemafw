@@ -3,12 +3,15 @@
 
 window.onload = function()
 {
+   SFW.debugging = true;
+
    function begin_app()
    {
-      // if ("get_properties_info" in SFW)
-      //    alert(SFW.get_properties_info(SFW).join("\n"));
-
-      SFW.debugging = true;
+      if (SFW.continuing_autoloads())
+      {
+         setTimeout(begin_app, 125);
+         return;
+      }
 
       var sfwhost = SFW.seek_top_sfw_host();
       if (sfwhost)
@@ -22,20 +25,9 @@ window.onload = function()
             obj.initialize();
          }
       }
-
-      // var anchor = SFW.seek_page_anchor(3, document.body);
-      // if (anchor)
-      // {
-      //    var mtype = SFW.xmldoc.documentElement.getAttribute("mode-type");
-      //    var p = anchor.parentNode;
-      //    if (mtype in SFW.types && (p.className=="SFW_Host"))
-      //       p.sfwobj = new SFW.types[mtype](p,document.XMLDocument,null);
-      // }
-         
       SFW.setup_event_handling();
    }
-   
-   init_SFW(begin_app);
 
+   init_SFW(begin_app);
 };
 
