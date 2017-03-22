@@ -131,6 +131,16 @@ public:
    char *read_line(int handle, char *buff, int buffsize);
    void set_position(int handle, off_t pos);
    void finish(void);
+   inline void scrub(void)
+   {
+      m_buffer_end = m_buffer_ptr = nullptr;
+      m_buffer_file_pos = -1;
+   }
+   inline void replace_handle(int handle)
+   {
+      m_buffer_file_size = file_size(handle);
+      scrub();
+   }
 
    /**
     * @brief Returns in_use value.
@@ -246,8 +256,11 @@ public:
    virtual int replace_handle(int handle)
    {
       int rval = m_handle;
-      m_cur_line_pos=-1;
+      
       m_handle=handle;
+      m_cur_line_pos=-1;
+      m_buffer->replace_handle(handle);
+      
       return rval;
    }
    
