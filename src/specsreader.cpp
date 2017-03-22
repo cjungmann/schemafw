@@ -537,7 +537,6 @@ long int SpecsReader::get_mode_position(const char *name, const char *value) con
 {
    const auto *ptr = m_index.seek(name,value);
    if (ptr)
-
       return ptr->object().position();
    else
       return -1;
@@ -770,7 +769,7 @@ void SpecsReader::t_build_branch(long position, abh_callback &callback) const
    int saved_handle = -1;
    auto f_prep_advisor = [this, &saved_handle](const Advisor_Index::ninfo *p) -> bool
    {
-      // Ensure code always resets m_advisor file handle to it's original value:
+      // Ensure code always resets m_advisor file handle to its original value:
       if (saved_handle!=-1)
          throw std::runtime_error("Error: parked saved_handle value.");
       
