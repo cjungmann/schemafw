@@ -43,6 +43,13 @@
   <xsl:variable name="jslist_sfw" select="$jslist_sfw_debug" /> 
   <xsl:variable name="jslist_utils">classes dpicker Events Dialog Moveable XML</xsl:variable>
 
+  <xsl:variable name="view_name">
+    <xsl:variable name="eview" select="/*/views/view[@selected]" />
+    <xsl:variable name="fview" select="/*/views/view[not($eview)][1]" />
+    <xsl:variable name="view" select="$eview|$fview" />
+    <xsl:if test="$view"><xsl:value-of select="$view/@name" /></xsl:if>
+  </xsl:variable>
+
   <xsl:variable name="lowers">abcdefghijklmnopqrstuvwxyz</xsl:variable>
   <xsl:variable name="uppers">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
 
@@ -54,6 +61,151 @@
     </xsl:choose>
   </xsl:variable>
 
+  <xsl:template match="*[@rndx]" mode="result_fill_sfw_host">
+    <xsl:param name="primary" />
+    <xsl:apply-templates select=".">
+      <xsl:with-param name="primary" select="$primary" />
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <xsl:template match="schema" mode="form_fill_sfw_host">
+    <xsl:param name="primary" />
+    <div>Incomplete Form-building template called.</div>
+  </xsl:template>
+
+
+  <xsl:template name="fill_sfw_host">
+    <xsl:param name="result" select="/.." />
+    <xsl:param name="primary" />
+
+    <xsl:variable name="view" select="/*/views/view[@name=$view_name]" />
+    
+    <xsl:variable
+        name="r_vw"
+        select="/*[not($result)]/*[@rndx][$view][local-name()=$view/@result]" />
+
+    <xsl:variable
+        name="r_mt"
+        select="/*[not($result|$r_vw)]/*[@rndx][local-name()=/*/@mode-type]" />
+
+    <xsl:variable name="r_ps" select="/*[not($result|$r_vw|$r_mt)]/*[@rndx=1]" />
+
+    <xsl:variable name="use_result" select="$result|$r_ps|$r_mt|$r_vw" />
+
+    <div>fill_sfw_host</div>
+
+    <xsl:choose>
+      <xsl:when test="$use_result">
+
+        <xsl:apply-templates select="$use_result" mode="top_stuff" />
+        <xsl:apply-templates select="$use_result" mode="result_fill_sfw_host">
+          <xsl:with-param name="primary" select="$primary" />
+        </xsl:apply-templates>
+      </xsl:when>
+      <xsl:otherwise>
+        <pre>
+          view.result  = <xsl:value-of select="$view/@result" />
+          mode-type    = <xsl:value-of select="/*/@mode-type" />
+
+          not($result) = <xsl:value-of select="not($result)" />
+
+          result (passed as param): <xsl:value-of select="$result/@rndx" />
+          r_vw (by selected view) : <xsl:value-of select="$r_mt/@rndx" />
+          r_mt (by mode-type)     : <xsl:value-of select="$r_mt/@rndx" />
+          r_ps (by position)      : <xsl:value-of select="$r_ps/@rndx" />
+        </pre>
+        <div>No result, don't know what to do. View name = <xsl:value-of select="$view_name" /></div>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <!-- result templates can/should call this template for consistency. -->
+  <xsl:template match="*[@rndx]" mode="top_stuff">
+    <xsl:param name="schema" select="/.." />
+    <xsl:param name="view" select="/.." />
+
+    <xsl:variable name="sview" select="/*[not($view)]/views/view[@selected]" />
+    <xsl:variable name="fview" select="/*[not($view|$sview)]/views/view[1]" />
+    <xsl:variable name="selview" select="$view|$sview|$fview" />
+
+    <xsl:variable name="rschema" select="schema[not($schema)]" />
+    <xsl:variable name="dschema" select="/*[not($schema|$rschema)]/schema" />
+    <xsl:variable name="selschema" select="$schema|$rschema|$dschema" />
+
+    <xsl:variable name="rtitle" select="./@title" />
+    <xsl:variable name="stitle" select="$selschema[not($rtitle)]/@title" />
+    <xsl:variable name="dtitle" select="/*[not($stitle|$rtitle)]/@title" />
+    <xsl:variable name="seltitle" select="$stitle|$rtitle|$dtitle" />
+
+    <xsl:if test="$seltitle">
+      <xsl:call-template name="write_title">
+        <xsl:with-param name="title" select="$seltitle" />
+      </xsl:call-template>
+    </xsl:if>
+
+    <xsl:if test="$selview">
+      <xsl:apply-templates select="$selview" mode="build" />
+    </xsl:if>
+    
+  </xsl:template>
+
+
+  <xsl:template match="/*" mode="show_document_content">
+    <xsl:variable name="formtype" select="substring-after(/*/@mode-type,'form-')" />
+    
+    <xsl:apply-templates select="." mode="make_schemafw_meta" />
+
+    <xsl:if test="$err_condition&gt;0">
+      <xsl:call-template name="display_error" />
+      <xsl:if test="@meta-jump">
+        <xsl:apply-templates select="@meta-jump" mode="make_link" />
+      </xsl:if>
+    </xsl:if>
+
+    <!-- <xsl:if test="not($result-row) or not($result-row/@error=0)"> -->
+    <xsl:if test="$err_condition=0 and not(@meta-jump)">
+      <xsl:if test="$result-row and $result-row/@msg">
+        <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
+      </xsl:if>
+
+      <xsl:choose>
+        <xsl:when test="message/@type='error'">
+          <xsl:apply-templates select="message" />
+        </xsl:when>
+
+        <xsl:when test="$formtype and contains('edit view new', $formtype)">
+          <div>show_document_content formtype</div>
+          <xsl:apply-templates select="/*">
+            <xsl:with-param name="primary" select="1" />
+            <xsl:with-param name="root" select="1" />
+          </xsl:apply-templates>
+        </xsl:when>
+
+        <xsl:when test="schema">
+          <div>MAKE_FORM: show_document_content test="schema"</div>
+          <xsl:apply-templates select="schema" mode="make_form">
+            <xsl:with-param name="primary" select="1" />
+          </xsl:apply-templates>
+        </xsl:when>
+
+        <xsl:otherwise>
+          <div>show_document_content otherwise clause</div>
+          <xsl:call-template name="fill_sfw_host">
+            <xsl:with-param name="primary" select="1" />
+          </xsl:call-template>
+        </xsl:otherwise>
+        <!-- <xsl:when test="@mode-type and *[@rndx and local-name()=current()/@mode-type]"> -->
+        <!--   <xsl:apply-templates select="*[@rndx and local-name()=current()/@mode-type]" /> -->
+        <!-- </xsl:when> -->
+        <!-- <xsl:when test="*[@rndx=1]"> -->
+        <!--   <xsl:apply-templates select="*[@rndx=1]" /> -->
+        <!-- </xsl:when> -->
+        <!-- <xsl:otherwise> -->
+        <!--   <div>Don't know what to do.</div> -->
+        <!-- </xsl:otherwise> -->
+      </xsl:choose>
+    </xsl:if>
+  </xsl:template>
 
   <xsl:template name="display_error">
     <xsl:choose>
@@ -75,15 +227,8 @@
   </xsl:template>
 
   <xsl:template match="/*[@mode-type='form-edit']">
+    <xsl:param name="primary" />
     <xsl:param name="root" />
-
-    <xsl:variable name="form-type">
-      <xsl:choose>
-        <xsl:when test="@form-type"><xsl:value-of select="@form-type" /></xsl:when>
-        <xsl:when test="$root">form</xsl:when>
-        <xsl:otherwise>dialog</xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
 
     <xsl:variable name="schema" select="schema | *[@rndx]/schema" />
 
@@ -92,6 +237,7 @@
     <xsl:choose>
       <xsl:when test="$schema">
         <xsl:apply-templates select="$schema" mode="make_form">
+          <xsl:with-param name="primary" select="$primary" />
           <xsl:with-param name="type" select="@mode-type" />
         </xsl:apply-templates>
       </xsl:when>
@@ -100,22 +246,16 @@
   </xsl:template>
 
   <xsl:template match="/*[@mode-type='form-new' or @mode-type='form-import']" >
+    <xsl:param name="primary" />
     <xsl:param name="root" />
-
-    <xsl:variable name="form-type">
-      <xsl:choose>
-        <xsl:when test="@form-type"><xsl:value-of select="@form-type" /></xsl:when>
-        <xsl:when test="$root">form</xsl:when>
-        <xsl:otherwise>dialog</xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
 
     <div>MAKE_FORM: [@mode-type='form-new or 'form-import']</div>
 
     <xsl:choose>
       <xsl:when test="schema">
         <xsl:apply-templates select="schema" mode="make_form">
-          <xsl:with-param name="type" select="$form-type" />
+          <xsl:with-param name="primary" select="$primary" />
+          <xsl:with-param name="type" select="@mode-type" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>Unable to construct a form without a schema</xsl:otherwise>
@@ -123,15 +263,8 @@
   </xsl:template>
 
   <xsl:template match="/*[@mode-type='form-view']">
+    <xsl:param name="primary" />
     <xsl:param name="root" />
-
-    <xsl:variable name="form-type">
-      <xsl:choose>
-        <xsl:when test="@form-type"><xsl:value-of select="@form-type" /></xsl:when>
-        <xsl:when test="$root">form</xsl:when>
-        <xsl:otherwise>dialog</xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
 
     <xsl:variable name="fschema" select="schema" />
     <xsl:variable name="rschema" select="*[not($fschema)][@rndx=1]/schema" />
@@ -142,7 +275,8 @@
     <xsl:choose>
       <xsl:when test="$schema">
         <xsl:apply-templates select="$schema" mode="make_form">
-          <xsl:with-param name="type" select="$form-type" />
+          <xsl:with-param name="primary" select="$primary" />
+          <xsl:with-param name="type" select="@mode-type" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>Unable to construct a form without a schema</xsl:otherwise>
@@ -153,6 +287,8 @@
     <xsl:variable name="rt" select="*[@rndx][@type='table']" />
     <xsl:variable name="r1" select="*[not($rt)][@rndx=1]" />
     <xsl:variable name="result" select="$rt | $r1" />
+
+    <div>Matching documentElement with mode-type==table</div>
 
     <xsl:choose>
       <xsl:when test="$result and $result/schema">
@@ -448,7 +584,7 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="views/view" mode="header">
+  <xsl:template match="views/view" mode="add_choice">
     <xsl:param name="current" />
     <xsl:element name="div">
       <xsl:attribute name="data-name"><xsl:value-of select="@name" /></xsl:attribute>
@@ -460,18 +596,42 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="/*/views" mode="header">
-    <xsl:variable name="explicit" select="view[@name=current()/@selected]" />
-    <xsl:variable name="default" select="view[not($explicit)][view[@default]][1]" />
-    <xsl:variable name="lasttry" select="view[not($explicit) and not($default)][1]" />
-    <xsl:variable name="view" select="$explicit|$default|$lasttry" />
+  <xsl:template match="views" mode="build">
+    <xsl:param name="view" />
+    <nav class="views">
+      <h2><xsl:value-of select="$view/@title" /></h2>
+      <xsl:apply-templates select="view" mode="add_choice">
+        <xsl:with-param name="current" select="$view" />
+      </xsl:apply-templates>
+    </nav>
+  </xsl:template>
+
+  <xsl:template match="view" mode="build">
+    <xsl:apply-templates select=".." mode="build">
+      <xsl:with-param name="view" select="." />
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <xsl:template match="*[@rndx]" mode="show_views">
+    <xsl:variable name="view" select="*/views/view[@name=current()/@view]" />
     <xsl:if test="$view">
-      <nav class="views">
-        <h2><xsl:value-of select="$view/@title" /></h2>
-        <xsl:apply-templates select="view" mode="header">
-          <xsl:with-param name="current" select="$view" />
-        </xsl:apply-templates>
-      </nav>
+      <xsl:apply-templates select="/*/view" mode="build">
+        <xsl:with-param name="view" select="$view" />
+      </xsl:apply-templates>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="/*/views" mode="header">
+    <xsl:param name="view" />
+
+    <xsl:variable name="defview" select="view[not($view)][@default][1]" />
+    <xsl:variable name="use_view"
+                  select="$view|$defview|view[not($view|$defview)][1]" />
+
+    <xsl:if test="$use_view">
+      <xsl:apply-templates select="." mode="build">
+        <xsl:with-param name="view" select="$use_view" />
+      </xsl:apply-templates>
     </xsl:if>
   </xsl:template>
 
@@ -538,80 +698,11 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="/*" mode="show_document_content">
-    <xsl:variable name="formtype" select="substring-after(/*/@mode-type,'form-')" />
-    
-    <xsl:apply-templates select="." mode="make_schemafw_meta" />
-
-    <xsl:if test="$err_condition&gt;0">
-      <xsl:call-template name="display_error" />
-      <xsl:if test="@meta-jump">
-        <xsl:apply-templates select="@meta-jump" mode="make_link" />
-      </xsl:if>
-    </xsl:if>
-
-    <!-- <xsl:if test="not($result-row) or not($result-row/@error=0)"> -->
-    <xsl:if test="$err_condition=0 and not(@meta-jump)">
-      <xsl:if test="$result-row and $result-row/@msg">
-        <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
-      </xsl:if>
-
-      <xsl:choose>
-        <xsl:when test="message/@type='error'">
-          <xsl:apply-templates select="message" />
-        </xsl:when>
-        <xsl:when test="$formtype and contains('edit view new', $formtype)">
-          <xsl:apply-templates select="/*">
-            <xsl:with-param name="root" select="1" />
-          </xsl:apply-templates>
-        </xsl:when>
-        <xsl:when test="schema">
-          <div>MAKE_FORM: show_document_content test="schema"</div>
-
-
-          <xsl:apply-templates select="schema" mode="make_form">
-            <xsl:with-param name="type" select="'form'" />
-          </xsl:apply-templates>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:apply-templates select="views" mode="header" />
-          <xsl:variable name="eview" select="views/view[@selected]" />
-          <xsl:variable name="fview" select="views/view[not($eview)][1]" />
-          <xsl:variable name="view" select="$eview|$fview" />
-          <xsl:variable name="vr" select="*[$view][@rndx][local-name()=$view/@result]" />
-          <xsl:variable name="result" select="$vr | *[not($vr)][@rndx=1]" />
-          <!-- <xsl:variable name="mt" select="@mode-type" /> -->
-          <!-- <xsl:variable name="mtr" select="*[@rndx and local-name()=$mt]" /> -->
-          <!-- <xsl:variable name="result" select="$mtr | *[@rndx=1 and not($mtr)]" /> -->
-          <xsl:choose>
-            <xsl:when test="$result">
-              <pre>
-                 eview       :<xsl:value-of select="$eview/@name" />
-                 fview       :<xsl:value-of select="$fview/@name" />
-                 view-result :<xsl:value-of select="$view/@result" />
-                 result name :<xsl:value-of select="local-name($result)" />
-              </pre>
-              <xsl:apply-templates select="$result" />
-            </xsl:when>
-            <xsl:otherwise>
-              <div>Don't know what to do.</div>
-            </xsl:otherwise>
-          </xsl:choose>
-        </xsl:otherwise>
-        <!-- <xsl:when test="@mode-type and *[@rndx and local-name()=current()/@mode-type]"> -->
-        <!--   <xsl:apply-templates select="*[@rndx and local-name()=current()/@mode-type]" /> -->
-        <!-- </xsl:when> -->
-        <!-- <xsl:when test="*[@rndx=1]"> -->
-        <!--   <xsl:apply-templates select="*[@rndx=1]" /> -->
-        <!-- </xsl:when> -->
-        <!-- <xsl:otherwise> -->
-        <!--   <div>Don't know what to do.</div> -->
-        <!-- </xsl:otherwise> -->
-      </xsl:choose>
-    </xsl:if>
-  </xsl:template>
-
   <xsl:template match="*[@rndx and not(@type='variables' or @type='info')]">
+    <xsl:param name="primary" />
+
+    <div>Modeless match of a result (not variables or info) <xsl:value-of select="local-name()" /></div>
+    
     <xsl:variable name="row_name">
       <xsl:choose>
         <xsl:when test="schema">
@@ -636,7 +727,9 @@
             <div>In form mode, unable to find the schema in form result &quot;<xsl:value-of select="@form" />&quot;</div>
           </xsl:when>
           <xsl:otherwise>
-            <xsl:apply-templates select="$result/schema" mode="make_form" />
+            <xsl:apply-templates select="$result/schema" mode="make_form">
+              <xsl:with-param name="primary" select="$primary" />
+            </xsl:apply-templates>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
@@ -654,7 +747,8 @@
   <xsl:template match="schema" mode="make_form">
     <xsl:param name="result-schema" />
     <xsl:param name="method" select="'post'" />
-    <xsl:param name="type" select="'dialog'" />
+    <xsl:param name="type" />
+    <xsl:param name="primary" />
 
     <!-- Get first of 1. if current() is first gen schema, look for first row of first result
                       2. sibling of schema with proper name
@@ -666,6 +760,8 @@
     <xsl:variable name="rdata" select="../*[not($fdata|$sdata|$ddata)][@rndx='1']/*[1]" />
     <!-- since each _data variable is set only if previous ones not set, union gives only one result -->
     <xsl:variable name="data" select="$fdata|$sdata|$ddata|$rdata" />
+
+    <xsl:variable name="mt-type" select="/*/@mode-type" />
 
     <xsl:variable name="msg">
       <xsl:call-template name="get_var_value">
@@ -705,7 +801,7 @@
 
     <xsl:variable name="class">
       <xsl:choose>
-        <xsl:when test="$type='form'">Embedded</xsl:when>
+        <xsl:when test="$primary">Embedded</xsl:when>
         <xsl:otherwise>Moveable</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
@@ -727,7 +823,7 @@
 
       <fieldset class="Schema">
         <xsl:element name="legend">
-          <xsl:if test="$type='form'">
+          <xsl:if test="$primary">
             <xsl:attribute name="class">Embedded</xsl:attribute>
           </xsl:if>
           <xsl:value-of select="$legend" />
@@ -1788,27 +1884,14 @@
     </xsl:apply-templates>
   </xsl:template>
                 
-  <xsl:template match="*" mode="make_table">
+  <xsl:template match="*[@rndx]" mode="make_table">
     <xsl:param name="host" select="'page'" />
-    
+
     <xsl:variable name="path">
       <xsl:apply-templates select="." mode="get_path" />
     </xsl:variable>
 
     <xsl:variable name='schema' select="./schema" />
-
-    <xsl:variable name="title">
-      <xsl:choose>
-        <xsl:when test="$schema/@title"><xsl:value-of select="$schema/@title" /></xsl:when>
-        <xsl:when test="/*/@title"><xsl:value-of select="/*/@title" /></xsl:when>
-      </xsl:choose>
-    </xsl:variable>
-
-    <xsl:if test="string-length($title)&gt;0">
-      <xsl:call-template name="write_title">
-        <xsl:with-param name="title" select="$title" />
-      </xsl:call-template>
-    </xsl:if>
 
     <xsl:element name="table">
       <xsl:call-template name="tag_sfw_class">
@@ -2199,7 +2282,7 @@ v    </xsl:variable>
       <xsl:if test="$first=0">|</xsl:if>
       <xsl:value-of select="$field/@name" />
 
-      <xsl:call-template name="make_tableEdit_colTypesString">
+      <xsl:call-template name="make_table">
         <xsl:with-param name="gids" select="substring-after($gids,'-')" />
         <xsl:with-param name="first" select="0" />
       </xsl:call-template>
@@ -2227,7 +2310,7 @@ v    </xsl:variable>
     </xsl:variable>
 
     <xsl:variable name="colstring">
-      <xsl:call-template name="make_tableEdit_colTypesString">
+      <xsl:call-template name="make_table">
         <xsl:with-param name="gids" select="$gids" />
       </xsl:call-template>
     </xsl:variable>
@@ -2295,6 +2378,7 @@ v    </xsl:variable>
        -->
 
   <xsl:template match="*[@make_dialog][schema]">
+    <xsl:param name="primary" />
     <xsl:variable name="elname" select="schema/@name" />
     <xsl:variable name="el" select="./*[local-name()=$elname]" />
 
@@ -2304,7 +2388,9 @@ v    </xsl:variable>
       <xsl:when test="@mode-type='form-edit'">
         <xsl:variable name="row-name" select="schema/@name" />
         
-        <xsl:apply-templates select="schema" mode="make_form" />
+        <xsl:apply-templates select="schema" mode="make_form">
+          <xsl:with-param name="primary" select="$primary" />
+        </xsl:apply-templates>
 
         <!-- <xsl:apply-templates select="schema" mode="make_form"> -->
         <!--   <xsl:with-param name="data" select="*[@rndx='1']/*[position()=1]" /> -->
@@ -2312,6 +2398,7 @@ v    </xsl:variable>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="schema" mode="make_form">
+          <xsl:with-param name="primary" select="$primary" />
           <xsl:with-param name="data" select="$el" />
         </xsl:apply-templates>
       </xsl:otherwise>
@@ -2319,6 +2406,7 @@ v    </xsl:variable>
   </xsl:template>
 
   <xsl:template match="*[@make_node_dialog]">
+    <xsl:param name="primary" />
     <xsl:variable name="data-row" select="*[not(self::schema)][1]" />
 
     <xsl:variable name="form-schema" select="../schema" />
@@ -2327,14 +2415,15 @@ v    </xsl:variable>
     <div>MAKE_FORM: [@make_node_dialog]</div>
     
     <xsl:apply-templates select="$form-schema" mode="make_form">
+      <xsl:with-param name="primary" select="$primary" />
       <xsl:with-param name="data" select="$data-row" />
       <xsl:with-param name="result-schema" select="$result-schema" />
     </xsl:apply-templates>
   </xsl:template>
 
   <xsl:template match="views/view">
-<div>Processing a view</div>    
-    <xsl:apply-templates select="/*" mode="show_document_content" />
+    <xsl:call-template name="fill_sfw_host">
+    </xsl:call-template>
   </xsl:template>
 
 </xsl:stylesheet>
