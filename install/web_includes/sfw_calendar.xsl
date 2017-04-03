@@ -321,8 +321,11 @@ will contain the YYYY-MM-DD date.
   </xsl:template>
 
   <xsl:template match="*[@rndx]" mode="build_calendar">
+    <xsl:param name="sfw_class" />
     <xsl:variable name="row" select="*[local-name()=current()/@row-name][1]" />
-    <xsl:apply-templates select="$row" mode="build_calendar" />
+    <xsl:apply-templates select="$row" mode="build_calendar">
+      <xsl:with-param name="sfw_class" select="$sfw_class" />
+    </xsl:apply-templates>
   </xsl:template>
 
 
