@@ -470,17 +470,12 @@ function init_SFW(callback)
 
    function _get_view_renderer_element(xsldoc)
    {
-      if (!"view_renderer" in xsldoc)
+      if (!("view_renderer" in xsldoc))
       {
          var arr = [ "/xsl:stylesheet",
-                     "xsl:template[@mode='show_document_content']",
-                     "xsl:if",
-                     "xsl:choose",
-                     "xsl:otherwise",
-                     "xsl:choose",
-                     "xsl:when[@test='$result']",
-                     "xsl:apply-templates[@select='$result']" ];
-                     
+                     "xsl:template[@match='*[@rndx]'][@mode='result_fill_sfw_host']",
+                     "xsl:apply-templates[@select='.']" ];
+
          xsldoc.view_renderer = xsldoc.selectSingleNode(arr.join('/'));
       }
 
@@ -531,12 +526,10 @@ function init_SFW(callback)
          var host = _get_last_SFW_Host();
          if (host)
          {
-            _show_view_content(view.parentNode);
-         
             _set_view_renderer(view);
             _update_selected_view(view);
 
-            _show_view_content(view.parentNode);
+//            _show_view_content(view.parentNode);
             
             SFW.xslobj.transformFill(host,view);
          }
@@ -909,6 +902,8 @@ function init_SFW(callback)
       return rowone && ("0"!=rowone.getAttribute("deleted"));
    }
 
+   _base.prototype.has_data = function() { return "data" in this.host(); };
+
    _base.prototype.cfobj_from_doc = function(doc)
    {
       var docel = doc.documentElement;
@@ -922,8 +917,8 @@ function init_SFW(callback)
                    close  : function() { _child_close(this.child); }
                  };
       
-      if ("data" in this)
-         rval["cdata"] = this.data;
+      if (this.has_data())
+         rval.cdata = this.host().data;
 
       if (result)
       {
@@ -952,8 +947,8 @@ function init_SFW(callback)
                   close : function() { _child_close(this.child); }
                 };
          
-         if ("data" in this)
-            rval["cdata"] = this.data;
+         if (this.has_data())
+            rval.cdata = this.host().data;
       }
 
       return rval;
