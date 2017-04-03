@@ -1,7 +1,8 @@
 # SchemaFW
 
+**Definition:**
 **schema** an underlying organizational pattern or structure; conceptual framework
-[dictionary.com](http://dictionary.reference.com/browse/schema)
+[source: dictionary.com](http://dictionary.reference.com/browse/schema)
 
 The Schema Framework (SchemaFW) includes several parts that, working together and
 using MySQL as the database, define a protocol by which the server workload is
