@@ -2267,7 +2267,7 @@ v    </xsl:variable>
     </dl>
   </xsl:template>
 
-  <xsl:template name="make_tableEdit_colTypesString">
+  <xsl:template name="make_table">
     <xsl:param name="gids" />
     <xsl:param name="first" select="1" />
     
