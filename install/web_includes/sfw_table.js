@@ -161,25 +161,37 @@
    {
       this.pre_transform();
 
-      var selected_result = this.result(match);
-      if (selected_result)
+      if (true)
       {
-         var tbody = SFW.find_child_matches(this.top(), "tbody", true);
-         if (tbody && !full_replot)
-         {
-            selected_result.setAttribute("make_table_body", "true");
-            SFW.xslobj.transformFill(tbody, selected_result);
-            selected_result.removeAttribute("make_table_body");
-         }
-         else
-            SFW.xslobj.transformFill(this.host(), selected_result);
-
+         SFW.xslobj.transformFill(this.host(), SFW.xmldoc.documentElement);
+         
          var top = this.top();
          if (top)
             _fix_table_heads(top);
       }
       else
-         console.log("Failed to find result named \"" + this.mode + "\"");
+      {
+         var selected_result = this.result(match);
+         if (selected_result)
+         {
+            var tbody = SFW.find_child_matches(this.top(), "tbody", true);
+            if (tbody && !full_replot)
+            {
+               selected_result.setAttribute("make_table_body", "true");
+               SFW.xslobj.transformFill(tbody, selected_result);
+               selected_result.removeAttribute("make_table_body");
+            }
+            else
+               SFW.xslobj.transformFill(this.host(), selected_result);
+
+            var top = this.top();
+            if (top)
+               _fix_table_heads(top);
+         }
+         else
+            console.log("Failed to find result named \"" + this.mode + "\"");
+      }
+
 
       this.post_transform();
    };
