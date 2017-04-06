@@ -6,6 +6,8 @@
    xmlns:html="http://www.w3.org/1999/xhtml"
    exclude-result-prefixes="html">
 
+  <xsl:import href="sfw_table.xsl" />
+
   <xsl:output method="xml"
          doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
          doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
@@ -14,21 +16,99 @@
          omit-xml-declaration="yes"
          encoding="UTF-8"/>
 
-  <xsl:variable name="table_lines" select="/" />
-
-  <xsl:variable name="nl">
-    <xsl:text>
-</xsl:text>
-  </xsl:variable>
-
-  <xsl:variable name="vars_obj" select="'sfwvars'" />
-  <xsl:variable name="vars" select="/*/*[@rndx][@type='variables']" />
-  <xsl:variable name="empty-list-value" select="'-- empty list --'" />
+  <!-- migrated to sfw_generics.xsl -->
+  <xsl:variable name="nl"><xsl:text>
+</xsl:text></xsl:variable>
 
   <xsl:variable name="apos"><xsl:text>&apos;</xsl:text></xsl:variable>
   <xsl:variable name="aposcomapos">&apos;,&apos;</xsl:variable>
   <xsl:variable name="apospair">&apos;&apos;</xsl:variable>
   <xsl:variable name="aposaka">&#127;</xsl:variable>
+
+  <xsl:variable name="lowers">abcdefghijklmnopqrstuvwxyz</xsl:variable>
+  <xsl:variable name="uppers">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
+
+
+  <xsl:template name="translate_apospairs">
+    <!-- sfw_templates.xsl -->
+    <xsl:param name="str" />
+    
+    <xsl:variable name="left" select="substring-before($str,$apospair)" />
+    <xsl:variable name="lenleft" select="string-length($left)" />
+
+    <xsl:choose>
+      <xsl:when test="$lenleft=0">
+        <xsl:value-of select="$str" />
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:variable name="right" select="substring-after($str,$apospair)" />
+        <xsl:variable name="last_of_left" select="substring($left,$lenleft,1)" />
+        <xsl:variable name="first_of_right" select="substring($right,1,1)" />
+        
+        <xsl:value-of select="$left" />
+        
+        <!-- see what comes just before and just after the apostrophe pair -->
+        <xsl:choose>
+          <!-- pathological case ',''', keep first apos after comma, convert next two -->
+          <xsl:when test="$last_of_left=',' and $first_of_right=$apos">
+            <xsl:value-of select="concat($apos,$aposaka)" />
+            <xsl:call-template name="translate_apospairs">
+              <xsl:with-param name="str" select="substring($right,2)" />
+            </xsl:call-template>
+          </xsl:when>
+          <!-- convert '' to single placeholder -->
+          <xsl:otherwise>
+            <xsl:value-of select="$aposaka" />
+            <xsl:call-template name="translate_apospairs">
+              <xsl:with-param name="str" select="$right" />
+            </xsl:call-template>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="*" mode="get_path">
+    <!-- sfw_templates.xsl -->
+    <xsl:if test="parent::*">
+      <xsl:apply-templates select="parent::*" mode="get_path" />
+    </xsl:if>
+    <xsl:value-of select="concat('/', name())" />
+    <xsl:if test="name()='result'">
+      <xsl:value-of select="concat('[@rndx=', @rndx, ']')" />
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template name="next_gid">
+    <!-- sfw_templates.xsl -->
+    <xsl:param name="gids" />
+    <xsl:if test="string-length($gids) &gt; 0">
+      <xsl:choose>
+        <xsl:when test="contains($gids,'-')">
+          <xsl:value-of select="substring-before($gids,'-')" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$gids" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
+  </xsl:template>
+  
+
+  <!-- end of migration to sfw_generics.xsl -->
+
+
+  <!-- migrated out to sfw_utilities.xsl -->
+  <xsl:variable name="vars" select="/*/*[@rndx][@type='variables']" />
+
+  <!-- end of migration to sfw_utilities.xsl -->
+  
+
+
+  <xsl:variable name="table_lines" select="/" />
+
+  <xsl:variable name="vars_obj" select="'sfwvars'" />
+  <xsl:variable name="empty-list-value" select="'-- empty list --'" />
 
   <xsl:variable name="result-row"
                 select="/*[@mode-type='form-result']/*[@rndx=1]/*[@error]" />
@@ -49,9 +129,6 @@
     <xsl:variable name="view" select="$eview|$fview" />
     <xsl:if test="$view"><xsl:value-of select="$view/@name" /></xsl:if>
   </xsl:variable>
-
-  <xsl:variable name="lowers">abcdefghijklmnopqrstuvwxyz</xsl:variable>
-  <xsl:variable name="uppers">ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:variable>
 
   <xsl:variable name="err_condition">
     <xsl:choose>
@@ -1335,44 +1412,6 @@
 
   </xsl:template>
 
-  <xsl:template name="translate_apospairs">
-    <xsl:param name="str" />
-    
-    <xsl:variable name="left" select="substring-before($str,$apospair)" />
-    <xsl:variable name="lenleft" select="string-length($left)" />
-
-    <xsl:choose>
-      <xsl:when test="$lenleft=0">
-        <xsl:value-of select="$str" />
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:variable name="right" select="substring-after($str,$apospair)" />
-        <xsl:variable name="last_of_left" select="substring($left,$lenleft,1)" />
-        <xsl:variable name="first_of_right" select="substring($right,1,1)" />
-        
-        <xsl:value-of select="$left" />
-        
-        <!-- see what comes just before and just after the apostrophe pair -->
-        <xsl:choose>
-          <!-- pathological case ',''', keep first apos after comma, convert next two -->
-          <xsl:when test="$last_of_left=',' and $first_of_right=$apos">
-            <xsl:value-of select="concat($apos,$aposaka)" />
-            <xsl:call-template name="translate_apospairs">
-              <xsl:with-param name="str" select="substring($right,2)" />
-            </xsl:call-template>
-          </xsl:when>
-          <!-- convert '' to single placeholder -->
-          <xsl:otherwise>
-            <xsl:value-of select="$aposaka" />
-            <xsl:call-template name="translate_apospairs">
-              <xsl:with-param name="str" select="$right" />
-            </xsl:call-template>
-          </xsl:otherwise>
-        </xsl:choose>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-
   <xsl:template name="make_enum_options">
     <xsl:param name="value" />
     <xsl:param name="str" />
@@ -1791,16 +1830,6 @@
     
   </xsl:template>
 
-  <xsl:template match="*" mode="get_path">
-    <xsl:if test="parent::*">
-      <xsl:apply-templates select="parent::*" mode="get_path" />
-    </xsl:if>
-    <xsl:value-of select="concat('/', name())" />
-    <xsl:if test="name()='result'">
-      <xsl:value-of select="concat('[@rndx=', @rndx, ']')" />
-    </xsl:if>
-  </xsl:template>
-
   <xsl:template match="schema" mode="get_id_field_name">
     <xsl:variable name="lid" select="./field[@line_id]" />
     <xsl:variable name="pid" select="./field[@primary-key]" />
@@ -1885,6 +1914,7 @@
   </xsl:template>
                 
   <xsl:template match="*[@rndx]" mode="make_table">
+    <!-- sfw_templates.xsl -->
     <xsl:param name="host" select="'page'" />
 
     <xsl:variable name="path">
@@ -2105,20 +2135,6 @@ v    </xsl:variable>
     <xsl:value-of select="substring($t,2)" />
   </xsl:template>
 
-  <xsl:template name="next_gid">
-    <xsl:param name="gids" />
-    <xsl:if test="string-length($gids) &gt; 0">
-      <xsl:choose>
-        <xsl:when test="contains($gids,'-')">
-          <xsl:value-of select="substring-before($gids,'-')" />
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="$gids" />
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:if>
-  </xsl:template>
-  
   <!-- add generic attributes with html- prefix to current element: -->
   <xsl:template match="@*" mode="add_html_attributes">
     <xsl:param name="skip" />
@@ -2268,6 +2284,7 @@ v    </xsl:variable>
   </xsl:template>
 
   <xsl:template name="make_table">
+    <!-- sfw_templates.xsl -->
     <xsl:param name="gids" />
     <xsl:param name="first" select="1" />
     
