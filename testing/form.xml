@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<?xml-stylesheet type="text/xsl" href="default.xsl" ?>
+<resultset method="POST" mode-type="form-edit" form-action="contacts.srm?edit_submit">
+<schema name="form" form-action="contacts.srm?edit_submit" title="{@fname} from {$address} {$city}, {$state}">
+<field name="id" type="INT" length="4" />
+<field name="fname" type="VARCHAR" length="32" />
+<field name="lname" type="VARCHAR" length="32" />
+<field name="phone" type="VARCHAR" length="25" />
+<button type="delete" label="Delete" confirm="Delete {@fname} {@lname} from contacts?" task="contacts.srm?delete&amp;id={@id}&amp;fname={@fname}" />
+</schema>
+<result rndx="1" row-name="row">
+<row id="1" fname="Chuck" lname="Jungmann" phone="612-719-3157" />
+</result>
+<info rndx="2" type="variables" row-name="row">
+  <row address="1234 Main Street" city="Hopkins" state="MA" />
+</info>
+</resultset>

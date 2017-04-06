@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<?xml-stylesheet type="text/xsl" href="default.xsl" ?>
+<resultset method="POST" mode-type="table" on_line_click="contacts.srm?edit" title="List of Contacts">
+<navigation>
+<target label="Contacts" url="xdoc.htm?contacts.srm" />
+<target label="Calendar" url="xdoc.htm?cal.srm" />
+</navigation>
+<buttons>
+<button label="bogus" type="bogus" />
+<button label="fake" type="bogus" />
+</buttons>
+<buttons>
+<button type="add" label="Create Contact" task="contacts.srm?create" />
+<button type="jump" label="Export" url="contacts.srm?export_contacts" />
+<button type="jump" label="Export Tables" url="contacts.srm?export_big" />
+<button type="jump" label="Import" url="xdoc.htm?contacts.srm?import_contacts_form" />
+</buttons>
+<result rndx="1" row-name="row">
+<schema name="row" title="{$name} Family ({$city}, {$state})">
+<field name="id" type="INT" primary-key="true" auto-increment="true" sort="number" not-null="true" length="4" />
+<field name="fname" type="VARCHAR" length="32" />
+<field name="lname" type="VARCHAR" length="32" />
+<field name="phone" type="VARCHAR" length="25" />
+</schema>
+<row id="1" fname="Chuck" lname="Jungmann" phone="612-719-3157" />
+<row id="2" fname="Jessie" lname="Dunnagan" phone="612-581-8040" />
+<row id="3" fname="Rachel" lname="Jungmann" phone="612-555-5555" />
+<row id="7" fname="Mary" lname="Jungmann" phone="651-631-0653" />
+<row id="8" fname="Gary" lname="Brown-Green" phone="651-451-7360" />
+</result>
+<info rndx="2" type="variables" row-name="family">
+  <family name="Jungmann" address="1234 Main Street" city="Hopkins" state="MA" />
+</info>
+</resultset>

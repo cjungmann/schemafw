@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<?xml-stylesheet type="text/xsl" href="default.xsl" ?>
+<resultset method="POST" mode-type="cs_calendar" on_day_click="cal.srm?day">
+<navigation>
+<target label="Contacts" url="xdoc.htm?contacts.srm" />
+<target label="Calendar" url="xdoc.htm?cal.srm" />
+</navigation>
+<calendar rndx="1" row-name="row" title="Calendar of Events for {$name} Family">
+<row month="2017-03" initialDay="3" countOfDays="31" today="2017-03-02" />
+</calendar>
+<range rndx="2" type="info" row-name="row">
+<row start_date="2017-03-01" end_date="2017-03-31" />
+</range>
+<events rndx="3" type="info" row-name="event">
+<schema name="event" title="Day Editor" on_line_click="cal.srm?edit" row-name="event">
+<field name="id" type="INT" primary-key="true" auto-increment="true" sort="number" not-null="true" length="4" hidden="true" />
+<field name="ename" type="VARCHAR" length="80" label="Event Name" />
+<field name="edate" type="DATE" length="40" />
+<button type="add" label="Add Event" task="cal.srm?add" />
+<button type="close" label="Done" />
+</schema>
+<event id="58" ename="Ash Wednesday" edate="2017-03-01" />
+<event id="59" ename="St Patrick&apos;s Day" edate="2017-03-17" />
+</events>
+<info rndx="4" type="variables" row-name="family">
+  <family name="Jungmann" address="1234 Main Street" city="Hopkins" state="MA" />
+</info>
+</resultset>

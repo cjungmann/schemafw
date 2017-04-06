@@ -1,0 +1,18 @@
+When this directory was created in early April 2017, its
+intention was to collect some stylesheet tests.  Other
+tests may find their way into the directory in the future.
+
+Run the tests by typing at the command line prompt:
+
+To test the form stylesheet
+$ ./test form
+
+To test the table stylesheet
+$ ./test table
+
+To test the calendar stylesheet
+$ ./test calendar
+
+DON'T add the extension because the test script uses
+the name to invoke both the XML file and the XSL stylesheet
+to be used for translation.

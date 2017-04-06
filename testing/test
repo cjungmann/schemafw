@@ -1,0 +1,8 @@
+#! /bin/bash
+
+stylesheet="../install/web_includes/sfw_${1}.xsl"
+document="${1}.xml"
+
+xsltproc $stylesheet $document
+echo
+echo
