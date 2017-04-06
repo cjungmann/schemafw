@@ -35,12 +35,19 @@ This template will be called with a single 'date' parameter which
 will contain the YYYY-MM-DD date.
  -->
 
+  <!--
+      Change these variables by defining them in the stylesheet
+      that imports this stylesheet.
+
+      1 is Sunday, 7 is Saturday.  Display weekdays only by using
+      day_left="2" day_right="6"
+  -->
   <xsl:variable name="day_left" select="1" />
   <xsl:variable name="day_right" select="7" />
 
+  <!-- The variables for day and month names precede templates that use them. -->
   <xsl:variable name="day_names"
                 select="'Sunday   Monday   Tuesday  WednesdayThursday Friday   Saturday '" />
-  
   <xsl:template name="get_day_name">
     <xsl:param name="ndx" />
     <xsl:value-of select="normalize-space(substring($day_names,1+((($ndx)-1)*9),9))" />
@@ -48,6 +55,7 @@ will contain the YYYY-MM-DD date.
 
   <xsl:variable name="month_names"
                 select="'January  February March    April    May      June     July     August   SeptemberOctober  November December '" />
+
   <xsl:template name="get_month_name">
     <xsl:param name="ndx" />
     <xsl:value-of select="substring($month_names,1+((($ndx)-1)*9),9)" />
@@ -328,6 +336,17 @@ will contain the YYYY-MM-DD date.
     </xsl:apply-templates>
   </xsl:template>
 
+  <!--
+      This template will be discarded when sfw_calendar.xsl is imported
+      to a stylesheet that already includes <xsl:template match="/">.
+  -->
+  <xsl:template match="/">
+    <html>
+      <head><title>Test Calendar</title></head>
+      <body>
+        <xsl:apply-templates select="*/*[@rndx='1']" mode="build_calendar" />
+      </body>
+    </html>
+  </xsl:template>
 
-  
 </xsl:stylesheet>
