@@ -101,6 +101,69 @@
       </xsl:choose>
     </xsl:if>
   </xsl:template>
+
+  <!--
+  The following variable and three templates will output a hierarchical
+  view of the node or element selected with mode="dump".  Call it from
+  within a <pre> element.
+
+  To customize the spacer-span, simply define it in the stylesheet that
+  imports sfw_generics.xsl (this stylesheet) and the spacer-span variable
+  in the importing stylesheet will take precedence.
+
+  A possible useful alternative spacer-span value might be '.  ' to more
+  clearly indicate the indentation level.
+
+  The process could be modified to translate certain entities that are not
+  allowed in a pre element, or to output JSON.  I'm leaving that for later
+  if needed.
+  -->
+  <xsl:variable name="spacer-span" select="'  '" />
+
+  <xsl:template name="spacer">
+    <xsl:param name="num" />
+
+    <xsl:if test="$num &gt; 0">
+      <xsl:value-of select="$spacer-span" />
+      <xsl:call-template name="spacer">
+        <xsl:with-param name="num" select="($num)-1" />
+      </xsl:call-template>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="@*" mode="dump">
+    <xsl:param name="level" select="0" />
+    
+    <xsl:variable name="spaces">
+      <xsl:call-template name="spacer">
+        <xsl:with-param name="num" select="($level)" />
+      </xsl:call-template>
+    </xsl:variable>
+
+    <xsl:value-of select="concat($spaces,local-name(),': ', .,$nl)" />
+
+  </xsl:template>
+
+  <xsl:template match="*" mode="dump">
+    <xsl:param name="level" select="0" />
+    
+    <xsl:variable name="spaces">
+      <xsl:call-template name="spacer">
+        <xsl:with-param name="num" select="($level)" />
+      </xsl:call-template>
+    </xsl:variable>
+
+    <xsl:value-of select="concat($nl,$spaces, local-name(), $nl)" />
+    
+    <xsl:apply-templates select="@*" mode="dump">
+      <xsl:with-param name="level" select="($level)+1" />
+    </xsl:apply-templates>
+    
+    <xsl:apply-templates select="*" mode="dump">
+      <xsl:with-param name="level" select="($level)+1" />
+    </xsl:apply-templates>
+    
+  </xsl:template>
   
 </xsl:stylesheet>
 

@@ -48,7 +48,7 @@
   </xsl:template>
 
   <!-- add generic attributes with html- prefix to current element: -->
-  <xsl:template match="@*" mode="add_html_attributes">
+  <xsl:template match="@*" mode="add_html_attribute">
     <xsl:param name="skip" />
     <xsl:if test="starts-with(local-name(), 'html-')">
       <xsl:variable name="tag" select="substring(local-name(),6)" />
@@ -66,6 +66,53 @@
         </xsl:attribute>
       </xsl:if>
     </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="button/@*" mode="add_button_attribute">
+    <xsl:param name="skip-data-prefix" />
+
+    <xsl:variable name="tname" select="concat(' ',local-name(),' ')" />
+    <xsl:variable name="skip-prefix" select="contains($skip-data-prefix,$tname)" />
+
+    <xsl:variable name="name">
+      <xsl:choose>
+        <xsl:when test="$skip-prefix">
+          <xsl:value-of select="local-name()" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="concat('data-', local-name())" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    
+    <xsl:attribute name="{$name}">
+      <xsl:call-template name="resolve_refs">
+        <xsl:with-param name="str" select="." />
+      </xsl:call-template>
+      <!-- <xsl:value-of select="." /> -->
+    </xsl:attribute>
+  </xsl:template>
+
+  <xsl:template match="@*" mode="make_jump_link">
+    <p>Click
+    <xsl:element name="a">
+      <xsl:attribute name="href"><xsl:value-of select="." /></xsl:attribute>
+    </xsl:element>
+    if you are not taken there.
+    </p>
+  </xsl:template>
+
+  <xsl:template match="button" mode="construct_button">
+    <xsl:element name="button">
+      <xsl:attribute name="type">button</xsl:attribute>
+      
+      <xsl:apply-templates select="@*[not(local-name()='label')]"
+                           mode="add_button_attribute">
+        <xsl:with-param name="skip-data-prefix" select="' name value disabled '" />
+      </xsl:apply-templates>
+      
+      <xsl:value-of select="@label" />
+    </xsl:element>
   </xsl:template>
 
   <xsl:template match="schema" mode="show_intro">
