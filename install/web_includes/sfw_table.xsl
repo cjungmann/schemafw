@@ -17,53 +17,79 @@
          omit-xml-declaration="yes"
          encoding="UTF-8"/>
 
+  <xsl:template match="*[@rndx][/*/@mode-type='table'][schema]">
+    <xsl:apply-templates select="schema" mode="construct_table" />
+  </xsl:template>
 
-  <xsl:template match="*[@rndx]" mode="make_table">
-    <xsl:param name="host" select="'page'" />
+  <!--
+  Creates a table element and fills it according to the instructions contained
+  in the schema element.
 
+  The parameter "static," if set, will omit the duplicate thead rows that allow
+  the column headers to remain fixed while the table scrolls underneath.
+  -->
+  <xsl:template match="schema" mode="construct_table">
+    <xsl:param name="static" />
+    
     <xsl:variable name="path">
       <xsl:apply-templates select="." mode="get_path" />
     </xsl:variable>
 
-    <xsl:variable name='schema' select="./schema" />
+    <xsl:variable name="class">
+      <xsl:text>Schema</xsl:text>
+        <xsl:if test="@table_class">
+          <xsl:value-of select="concat(' ',@table_class)" />
+        </xsl:if>
+    </xsl:variable>
 
     <xsl:element name="table">
+      <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
+      <xsl:attribute name="data-result-type">table</xsl:attribute>
+      <xsl:attribute name="data-result-path"><xsl:value-of select="$path" /></xsl:attribute>
+      <xsl:apply-templates select="." mode="add_on_line_click_attribute" />
+
       <xsl:apply-templates select="." mode="extra_anchor_attributes">
         <xsl:with-param name="type" select="'table'" />
       </xsl:apply-templates>
-      <xsl:attribute name="data-result-type">table</xsl:attribute>
-      <xsl:attribute name="data-result-path">
-        <xsl:value-of select="$path" />
-      </xsl:attribute>
-      <xsl:attribute name="class">
-        <xsl:text>Schema</xsl:text>
-        <xsl:if test="$schema/@table_class">
-          <xsl:value-of select="concat(' ',$schema/@table_class)" />
-        </xsl:if>
-      </xsl:attribute>
 
       <thead>
-        <xsl:if test="$host='page'">
-          <xsl:apply-templates select="$schema" mode="make_table_head" >
+        <xsl:if test="not($static)">
+          <xsl:apply-templates select="." mode="construct_thead_rows" >
             <xsl:with-param name="class" select="'floater'" />
           </xsl:apply-templates>
         </xsl:if>
-        <xsl:apply-templates select="$schema" mode="make_table_head" />
+        <xsl:apply-templates select="." mode="construct_thead_rows" />
       </thead>
+      
       <tbody>
-        <xsl:apply-templates select="." mode="fill_table_body" />
+        <xsl:apply-templates select="." mode="fill_tbody" />
       </tbody>
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="schema" mode="make_table_head">
+  <!--
+      Pass-through template to provide a result-based entry to construct_table.
+  -->
+  <xsl:template match="*[@rndx]" mode="construct_table">
+    <xsl:choose>
+      <xsl:when test="schema">
+        <xsl:apply-templates select="schema" mode="construct_table" />
+      </xsl:when>
+      <xsl:otherwise>
+        <div>Can't construct a table without a schema</div>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+
+  <xsl:template match="schema" mode="construct_thead_rows">
     <xsl:param name="class" />
 
     <xsl:apply-templates select="." mode="show_intro">
       <xsl:with-param name="class" select="$class" />
     </xsl:apply-templates>
 
-    <xsl:apply-templates select="." mode="show_buttons">
+    <xsl:apply-templates select="." mode="construct_button_row">
       <xsl:with-param name="class" select="$class" />
     </xsl:apply-templates>
 
@@ -78,10 +104,90 @@
     </xsl:element>
   </xsl:template>
 
+  <!-- Recursive template to create button rows.
+       Print 1. parent, 2. self, 3. self/buttons -->
+  <xsl:template match="*" mode="construct_button_row">
+    <xsl:param name="class" />
+    <xsl:param name="host-type" select="'tr'" />
 
-  <xsl:template match="schema" mode="fill_table_body">
-    <xsl:param name="lines" />
+    <xsl:if test="not(local-name()='buttons')">
+      <xsl:variable name="par" select="parent::*" />
+      <xsl:if test="$par">
+        <xsl:apply-templates select="$par" mode="construct_button_row">
+          <xsl:with-param name="class" select="$class" />
+          <xsl:with-param name="host-type" select="$host-type" />
+        </xsl:apply-templates>
+      </xsl:if>
+    </xsl:if>
+
+    <xsl:variable name="host_class">
+      <xsl:text>button_row</xsl:text>
+      <xsl:if test="$host-type='tr'">
+        <xsl:value-of select="concat(' headfix_', local-name(..),'_',local-name())" />
+      </xsl:if>
+      <xsl:value-of select="concat(' sfwid_', generate-id())" />
+      <xsl:if test="$class">
+        <xsl:value-of select="concat(' ', $class)" />
+      </xsl:if>
+    </xsl:variable>
+    
+    <xsl:variable name="buttons" select="button" />
+
+    <xsl:if test="count($buttons)&gt;0">
+      <xsl:choose>
+        <xsl:when test="$host-type='tr'">
+          <tr class="{$host_class}">
+            <td colspan="99" style="background-color #66FF66">
+              <xsl:apply-templates select="$buttons" mode="construct_button" />
+            </td>
+          </tr>
+        </xsl:when>
+        <xsl:otherwise>
+          <p class="{$host_class}">
+            <xsl:apply-templates select="$buttons" mode="construct_button" />
+          </p>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
+
+    <xsl:if test="not(local-name()='buttons')">
+      <xsl:apply-templates select="buttons" mode="construct_button_row">
+        <xsl:with-param name="class" select="$class" />
+        <xsl:with-param name="host-type" select="$host-type" />
+      </xsl:apply-templates>
+    </xsl:if>
+  </xsl:template>
+
+
+  <!--
+  This template fills an already-established tbody element, It can be
+  used to replot the contents of a table without disturbing the other
+  parts of a table element or the attribute of the tbody element itself,
+  which sometimes holds important context information.
+
+  Note the lines parameter.  It can be used to have this template fill the
+  tbody with something other than the full list of rows.  For example,
+  a developer could fill the table with a subset by filling the "lines"
+  parameter with a filtered nodelist of table lines.  If lines is not set
+  the template will use the entire set of rows contained in the parent
+  result element.
+  -->
+  <xsl:template match="schema" mode="fill_tbody">
+    <xsl:param name="lines" select="/.." />
     <xsl:param name="group" />
+
+    <xsl:variable name="row-name">
+      <xsl:choose>
+        <xsl:when test="@row-name"><xsl:value-of select="@row-name" /></xsl:when>
+        <xsl:otherwise>row</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:variable
+        name="plist"
+        select="parent::*[count($lines)=0]/*[local-name()=$row-name]" />
+
+    <xsl:variable name="lines_to_use" select="$lines|$plist" />
 
     <xsl:variable name="id_field">
       <xsl:apply-templates select="." mode="get_id_field_name" />
@@ -104,7 +210,7 @@
             <xsl:otherwise>text</xsl:otherwise>
           </xsl:choose>
         </xsl:variable>
-        <xsl:apply-templates select="$lines" mode="make_table_line">
+        <xsl:apply-templates select="$lines_to_use" mode="construct_tbody_row">
           <xsl:with-param name="line_id" select="$id_field" />
           <xsl:sort select="count(@*[local-name()=$aname])"
                     data-type="number"
@@ -115,32 +221,13 @@
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:apply-templates select="$lines" mode="make_table_line">
+        <xsl:apply-templates select="$lines_to_use" mode="construct_tbody_row">
           <xsl:with-param name="line_id" select="$id_field" />
         </xsl:apply-templates>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="*[@rndx]" mode="fill_table_body">
-    <xsl:param name="group" />
-
-    <xsl:variable name="row-name">
-      <xsl:choose>
-        <xsl:when test="@row-name"><xsl:value-of select="@row-name" /></xsl:when>
-        <xsl:when test="schema/@name"><xsl:value-of select="schema/@name" /></xsl:when>
-        <xsl:otherwise>row</xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-
-    <xsl:variable name="lines" select="*[local-name()=$row-name]" />
-
-    <xsl:apply-templates select="schema" mode="fill_table_body">
-      <xsl:with-param name="group" select="$group" />
-      <xsl:with-param name="lines" select="$lines" />
-    </xsl:apply-templates>
-  </xsl:template>
-                
   <xsl:template match="schema/field" mode="get_column_head_class">
     <xsl:if test="not(@unsortable)">sortable</xsl:if>
     <xsl:if test="@class">
@@ -188,12 +275,16 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="*" mode="make_table_line">
+  <!--
+  Try to set the line_id parameter so the template need not determine
+  the value for each row of the table.
+  -->
+  <xsl:template match="*" mode="construct_tbody_row">
     <xsl:param name="line_id" />
 
     <xsl:variable name="schema" select="../schema" />
 
-    <!-- for ad-hoc lines, figure id_field on the fly -->    
+    <!-- for ad-hoc lines, figure id_field on the fly -->
     <xsl:variable name="id_field">
       <xsl:choose>
         <xsl:when test="$line_id">
@@ -230,7 +321,7 @@
         </xsl:attribute>
       </xsl:if>
 
-      <xsl:apply-templates select="$schema/*" mode="make_line_cell">
+      <xsl:apply-templates select="$schema/field" mode="construct_line_cell">
         <xsl:with-param name="data" select="." />
       </xsl:apply-templates>
     </xsl:element>
@@ -249,7 +340,7 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="schema/field[not(@hidden or @ignore)]" mode="make_line_cell">
+  <xsl:template match="field[not(@hidden or @ignore)]" mode="construct_line_cell">
     <xsl:param name="data" />
     <xsl:element name="td">
       
@@ -259,17 +350,10 @@
         </xsl:attribute>
       </xsl:if>
 
-      <xsl:apply-templates select="." mode="fill_table_cell">
+      <xsl:apply-templates select="." mode="write_cell_content">
         <xsl:with-param name="data" select="$data" />
       </xsl:apply-templates>
     </xsl:element>
-  </xsl:template>
-
-  <xsl:template match="schema/field" mode="fill_table_cell">
-    <xsl:param name="data" />
-    <xsl:apply-templates select="." mode="write_cell_content">
-      <xsl:with-param name="data" select="$data" />
-    </xsl:apply-templates>
   </xsl:template>
 
   <xsl:template match="schema/field" mode="write_cell_content">
@@ -333,6 +417,9 @@
     </xsl:choose>
 
   </xsl:template>
+
+
+  <!-- Named template for makeing a table (do we ever use this?). -->
 
   <xsl:template name="make_table">
     <!-- sfw_table.xsl -->

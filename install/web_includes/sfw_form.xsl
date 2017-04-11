@@ -8,6 +8,7 @@
 
   <xsl:import href="sfw_generics.xsl" />
   <xsl:import href="sfw_utilities.xsl" />
+  <xsl:import href="sfw_schema.xsl" />
 
   <xsl:output method="xml"
          doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -20,7 +21,7 @@
   <!-- <xsl:variable name="empty-list-value" select="'- - empty list - -'" /> -->
   <xsl:variable name="empty-list-value">-- empty list --</xsl:variable>
 
-  <xsl:template match="schema" mode="make_form">
+  <xsl:template match="schema" mode="construct_form">
     <xsl:param name="result-schema" />
     <xsl:param name="method" select="'post'" />
     <xsl:param name="type" />
@@ -110,9 +111,9 @@
         
         <xsl:variable name="extra_fields"
                       select="@*[substring(local-name(),1,11)='form-field-']" />
-        <xsl:apply-templates select="$extra_fields" mode="add_form_field" />
+        <xsl:apply-templates select="$extra_fields" mode="construct_extra_form_field" />
 
-        <xsl:apply-templates select="." mode="make_form_inputs">
+        <xsl:apply-templates select="." mode="construct_form_inputs">
           <xsl:with-param name="data" select="$data" />
           <xsl:with-param name="result-schema" select="$result-schema" />
           <xsl:with-param name="view-mode" select="not($has_action)" />
@@ -133,94 +134,36 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="schema" mode="get_form_title">
-    <xsl:call-template name="resolve_refs">
-      <xsl:with-param name="str">
-        <xsl:choose>
-          <xsl:when test="@title"><xsl:value-of select="@title" /></xsl:when>
-          <xsl:when test="../@title"><xsl:value-of select="../@title" /></xsl:when>
-          <xsl:otherwise>Dialog</xsl:otherwise>
-        </xsl:choose>
-      </xsl:with-param>
-    </xsl:call-template>
-  </xsl:template>
-
-  <xsl:template match="schema" mode="get_form_action">
-    <xsl:variable name="ta" select="@form-action" />
-    <xsl:variable name="fa" select="parent::*[not($ta)]/@form-action" />
-    <xsl:variable name="action" select="$ta|$fa" />
-    <xsl:if test="$action">
-      <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str" select="$action" />
-      </xsl:call-template>
-    </xsl:if>
-  </xsl:template>
-
-  <xsl:template match="schema/field" mode="get_name">
-    <xsl:choose>
-      <xsl:when test="@html-name">
-        <xsl:value-of select="@html-name" />
-      </xsl:when>
-      <xsl:when test="@orgname">
-        <xsl:value-of select="@orgname" />
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="@name" />
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-
-  <xsl:template match="schema/field" mode="get_label">
-    <xsl:choose>
-      <xsl:when test="@label">
-        <xsl:apply-templates select="@label" mode="resolve_refs" />
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="translate(@name,'_',' ')" />
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-
   <xsl:template match="*[@rndx][@type='variables']" mode="get_value">
     <xsl:param name="name" />
     <xsl:value-of select="*[1]/@*[local-name()=$name]" />
   </xsl:template>
 
-  <xsl:template match="schema/field" mode="get_cell_value">
-    <xsl:param name="data" />
-    <xsl:variable name="val">
-      <xsl:apply-templates select="." mode="get_value">
-        <xsl:with-param name="data" select="$data" />
-      </xsl:apply-templates>
-    </xsl:variable>
-
-    <xsl:choose>
-      <xsl:when test="@type='BOOL'">
-        <xsl:if test="$val=1">x</xsl:if>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="$val" />
-      </xsl:otherwise>
-    </xsl:choose>
+  <xsl:template match="@*" mode="construct_extra_form_field">
+    <xsl:variable name="name" select="substring(local-name(),12)" />
+    <xsl:element name="input">
+      <xsl:attribute name="type">hidden</xsl:attribute>
+      <xsl:attribute name="name"><xsl:value-of select="$name" /></xsl:attribute>
+      <xsl:attribute name="value"><xsl:value-of select="." /></xsl:attribute>
+    </xsl:element>
   </xsl:template>
-    
 
-  <xsl:template match="schema" mode="make_form_inputs">
+  <xsl:template match="schema" mode="construct_form_inputs">
     <xsl:param name="data" />
     <xsl:param name="result-schema" />
     <xsl:param name="view-mode" />
 
-    <xsl:apply-templates select="field[@hidden]" mode="make_hidden_input">
+    <xsl:apply-templates select="field[@hidden]" mode="construct_hidden_input">
       <xsl:with-param name="data" select="$data" />
     </xsl:apply-templates>
-    <xsl:apply-templates select="field[not(@hidden)]" mode="make_form_input">
+    <xsl:apply-templates select="field[not(@hidden)]" mode="construct_form_input">
       <xsl:with-param name="data" select="$data" />
       <xsl:with-param name="result-schema" select="$result-schema" />
       <xsl:with-param name="view-mode" select="$view-mode" />
     </xsl:apply-templates>
   </xsl:template>
 
-  <xsl:template match="schema/field" mode="make_hidden_input">
+  <xsl:template match="schema/field" mode="construct_hidden_input">
     <xsl:param name="data" />
     <xsl:variable name="name">
       <xsl:apply-templates select="." mode="get_name" />
@@ -233,7 +176,7 @@
     <input type="hidden" name="{$name}" value="{$value}" />
   </xsl:template>
 
-  <xsl:template match="field" mode="make_form_input">
+  <xsl:template match="field" mode="construct_form_input">
     <xsl:param name="data" />
     <xsl:param name="result-schema" />
     <xsl:param name="view-mode" />
@@ -244,24 +187,27 @@
         <xsl:variable
             name="result-field" select="$result-schema/field[@name=$name]" />
 
-        <xsl:apply-templates select="." mode="make_input_line">
+        <xsl:apply-templates select="." mode="construct_input_row">
           <xsl:with-param name="data" select="$data" />
           <xsl:with-param name="result-field" select="$result-field" />
           <xsl:with-param name="view-mode" select="$view-mode" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:apply-templates select="." mode="make_input_line">
+        <xsl:apply-templates select="." mode="construct_input_row">
           <xsl:with-param name="data" select="$data" />
           <xsl:with-param name="view-mode" select="$view-mode" />
         </xsl:apply-templates>
       </xsl:otherwise>
     </xsl:choose>
-
-    
   </xsl:template>
-
-  <xsl:template match="schema/field[not(@hidden or @ignore)]" mode="make_input_line">
+  
+  <!--
+      Create a p (paragraph) element to present one row of a form.
+      Each row will have a label element and some sort of input element.
+  -->
+  <xsl:template
+      match="schema/field[not(@hidden or @ignore)]" mode="construct_input_row">
     <xsl:param name="data" />
     <xsl:param name="result-field" />
     <xsl:param name="view-mode" />
@@ -282,12 +228,6 @@
       </xsl:if>
     </xsl:variable>
 
-    <xsl:if test="@type='block'">
-      <tr><td colspan="99">
-      <hr />
-      </td></tr>
-    </xsl:if>
-
     <p class="{$class}">
       
       <label for="{$name}">
@@ -296,21 +236,11 @@
 
       <xsl:choose>
         <xsl:when test="$mtype='form-view'">
-          <xsl:choose>
-            <xsl:when test="@type='block'">
-              <!-- template will enclose in div.field_content: -->
-              <xsl:apply-templates select=".">
-                <xsl:with-param name="data" select="$data" />
-              </xsl:apply-templates>
-            </xsl:when>
-            <xsl:otherwise>
-              <div class="field_content">
-                <xsl:apply-templates select="." mode="get_value">
-                  <xsl:with-param name="data" select="$data" />
-                </xsl:apply-templates>
-              </div>
-            </xsl:otherwise>
-          </xsl:choose>
+          <div class="field_content">
+            <xsl:apply-templates select="." mode="get_value">
+              <xsl:with-param name="data" select="$data" />
+            </xsl:apply-templates>
+          </div>
 
           <xsl:choose>
             <xsl:when test="@call">
@@ -325,7 +255,7 @@
                       data-url="{$manage}">Manage</button>
             </xsl:when>
           </xsl:choose>
-        </xsl:when> <!-- $mtype='form-view' -->
+        </xsl:when>
 
         <xsl:when test="$view-mode">
           <div class="field_content" name="{$name}">
@@ -334,14 +264,15 @@
             </xsl:apply-templates>
           </div>
         </xsl:when>
-        
+
         <xsl:when test="$result-field and $result-field[@enum]">
-          <xsl:apply-templates select="$result-field" mode="make_input">
+          <xsl:apply-templates select="$result-field" mode="construct_input">
             <xsl:with-param name="data" select="$data" />
           </xsl:apply-templates>
         </xsl:when>
+
         <xsl:otherwise>
-          <xsl:apply-templates select="." mode="make_input">
+          <xsl:apply-templates select="." mode="construct_input">
             <xsl:with-param name="data" select="$data" />
           </xsl:apply-templates>
         </xsl:otherwise>
@@ -413,61 +344,6 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="schema/field" mode="get_value">
-    <xsl:param name="data" />
-    <xsl:variable name="name" select="@name" />
-
-    <xsl:choose>
-      <xsl:when test="@html-value">
-        <xsl:value-of select="@html-value" />
-      </xsl:when>
-      <xsl:when test="@value">
-        <xsl:call-template name="resolve_refs">
-          <xsl:with-param name="str" select="@value" />
-        </xsl:call-template>
-        <!-- <xsl:value-of select="@value" /> -->
-      </xsl:when>
-      <xsl:when test="@ref-value">
-        <xsl:apply-templates select="$vars" mode="get_value">
-          <xsl:with-param name="name" select="@ref-value" />
-        </xsl:apply-templates>
-      </xsl:when>
-      <xsl:when test="@map-value">
-        <xsl:value-of select="$data/@*[local-name()=current()/@map-value]" />
-      </xsl:when>
-      <xsl:when test="$data and (not(@nodetype) or @nodetype='attribute')">
-        <xsl:variable name="v" select="$data/@*[name()=$name]" />
-        <xsl:if test="$v">
-          <xsl:value-of select="$v" />
-        </xsl:if>
-      </xsl:when>
-      <xsl:when test="$data and @nodetype='child'">
-        <xsl:variable name="v" select="$data/*[local-name()=$name]" />
-        <xsl:if test="$v">
-          <xsl:value-of select="$v" />
-        </xsl:if>
-      </xsl:when>
-      
-      <xsl:otherwise>
-        <xsl:value-of select="$data" />
-      </xsl:otherwise>
-      
-      <!-- <xsl:otherwise> -->
-      <!--   <xsl:apply-templates select="." mode="get_s_value" /> -->
-      <!-- </xsl:otherwise> -->
-      
-    </xsl:choose>
-
-  </xsl:template>
-
-  <xsl:template match="schema/field" mode="get_size">
-    <xsl:choose>
-      <xsl:when test="@length &lt; 25">
-        <xsl:value-of select="@length" />
-      </xsl:when>
-      <xsl:otherwise>25</xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
 
   <xsl:template match="schema/field/enum" mode="make_option">
     <xsl:param name="value" />
@@ -492,7 +368,7 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template name="make_enum_options">
+  <xsl:template name="construct_enum_options">
     <xsl:param name="value" />
     <xsl:param name="str" />
 
@@ -526,7 +402,7 @@
     <xsl:if test="$before_tween">
       <xsl:variable name="pos_next" select="string-length($cval)+4" />
 
-      <xsl:call-template name="make_enum_options">
+      <xsl:call-template name="construct_enum_options">
         <xsl:with-param name="value" select="$value" />
         <xsl:with-param name="str" select="substring($str,$pos_next)" />
       </xsl:call-template>
@@ -534,40 +410,7 @@
 
   </xsl:template>
 
-  <xsl:template match="schema/field[@type='ENUM' or @enum]" mode="make_input" priority="10">
-    <xsl:param name="data" />
-    
-    <xsl:variable name="name">
-      <xsl:apply-templates select="." mode="get_name" />
-    </xsl:variable>
-
-    <xsl:variable name="value">
-      <xsl:apply-templates select="." mode="get_value">
-        <xsl:with-param name="data" select="$data" />
-      </xsl:apply-templates>
-    </xsl:variable>
-
-    <xsl:variable name="tstr">
-      <xsl:apply-templates select="." mode="get_list_string" />
-    </xsl:variable>
-    <xsl:variable name="str">
-      
-      <xsl:call-template name="translate_apospairs">
-        <xsl:with-param name="str" select="$tstr" />
-      </xsl:call-template>
-    </xsl:variable>
-
-    <xsl:element name="select">
-      <xsl:attribute name="name"><xsl:value-of select="$name" /></xsl:attribute>
-      <xsl:call-template name="make_enum_options">
-        <xsl:with-param name="str" select="$str" />
-        <xsl:with-param name="value" select="translate($value,$apos,$aposaka)" />
-      </xsl:call-template>
-    </xsl:element>
-    
-  </xsl:template>
-
-  <xsl:template match="schema/field" mode="make_input">
+  <xsl:template match="schema/field" mode="construct_input">
     <xsl:param name="data" />
 
     <xsl:variable name="type">
@@ -630,7 +473,7 @@
       
       <xsl:attribute name="fake">Fake</xsl:attribute>
       
-      <xsl:apply-templates select="@*" mode="add_html_attributes">
+      <xsl:apply-templates select="@*" mode="add_html_attribute">
         <xsl:with-param name="skip" select="' type name size readonly value '" />
       </xsl:apply-templates>
 
@@ -654,38 +497,46 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="schema/field[@lookup]" mode="make_input">
+  <xsl:template match="schema/field[@lookup]" mode="construct_input">
     <select name="{@name}" data-url="{@lookup}">
       <option value="1">One</option>
       <option value="2">Two</option>
     </select>
   </xsl:template>
 
-  <xsl:template match="schema/field[@type='block']">
+  <xsl:template match="schema/field[@type='ENUM' or @enum]" mode="construct_input" priority="10">
     <xsl:param name="data" />
     
     <xsl:variable name="name">
       <xsl:apply-templates select="." mode="get_name" />
     </xsl:variable>
 
-    <xsl:element name="div">
-      <xsl:attribute name="class">field_content</xsl:attribute>
-      <xsl:apply-templates
-          select="@update|@result"
-          mode="add_resolved_data_attribute" />
+    <xsl:variable name="value">
+      <xsl:apply-templates select="." mode="get_value">
+        <xsl:with-param name="data" select="$data" />
+      </xsl:apply-templates>
+    </xsl:variable>
 
-      <xsl:choose>
-        <xsl:when test="$data">
-          <xsl:apply-templates select="." mode="make_list">
-            <xsl:with-param name="str" select="$data/@*[local-name()=$name]" />
-          </xsl:apply-templates>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:apply-templates select="." mode="make_list" />
-        </xsl:otherwise>
-      </xsl:choose>
+    <xsl:variable name="tstr">
+      <xsl:apply-templates select="." mode="get_list_string" />
+    </xsl:variable>
+    <xsl:variable name="str">
+      
+      <xsl:call-template name="translate_apospairs">
+        <xsl:with-param name="str" select="$tstr" />
+      </xsl:call-template>
+    </xsl:variable>
+
+    <xsl:element name="select">
+      <xsl:attribute name="name"><xsl:value-of select="$name" /></xsl:attribute>
+      <xsl:call-template name="construct_enum_options">
+        <xsl:with-param name="str" select="$str" />
+        <xsl:with-param name="value" select="translate($value,$apos,$aposaka)" />
+      </xsl:call-template>
     </xsl:element>
+    
   </xsl:template>
+
 
   <xsl:template match="@*" mode="add_resolved_attribute">
     <xsl:variable name="name" select="local-name()" />
@@ -705,108 +556,6 @@
     </xsl:attribute>
   </xsl:template>
 
-  <xsl:template name="make_list">
-    <xsl:param name="str" />
-    <xsl:param name="rdelim" />
-    <xsl:variable name="before" select="substring-before($str, $rdelim)" />
-    
-    <xsl:variable name="val">
-      <xsl:choose>
-        <xsl:when test="$before"><xsl:value-of select="$before" /></xsl:when>
-        <xsl:otherwise><xsl:value-of select="$str" /></xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-
-    <xsl:call-template name="make_line_of_list">
-      <xsl:with-param name="str" select="$val" />
-    </xsl:call-template>
-
-    <xsl:if test="$before">
-      <xsl:call-template name="make_list">
-        <xsl:with-param name="str" select="substring-after($str,$rdelim)" />
-        <xsl:with-param name="rdelim" select="$rdelim" />
-      </xsl:call-template>
-    </xsl:if>
-    
-  </xsl:template>
-
-  <xsl:template match="schema/field[@type='block' and not(@result)]" mode="make_list">
-    <xsl:param name="str" />
-    <xsl:variable name="rdelim">
-      <xsl:choose>
-        <xsl:when test="@rdelim"><xsl:value-of select="@rdelim" /></xsl:when>
-        <xsl:otherwise>;</xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-
-    <div>
-      <xsl:choose>
-        <xsl:when test="string-length($str)&gt;1">
-          <xsl:call-template name="make_list">
-            <xsl:with-param name="str" select="$str" />
-            <xsl:with-param name="rdelim" select="$rdelim" />
-          </xsl:call-template>
-        </xsl:when>
-        <xsl:otherwise>
-          <div><xsl:value-of select="$empty-list-value" /></div>
-        </xsl:otherwise>
-      </xsl:choose>
-    </div>
-  </xsl:template>
-
-  <xsl:template name="make_line_of_list">
-    <xsl:param name="str" />
-    <div>
-      <xsl:value-of select="$str" />
-    </div>
-  </xsl:template>
-
-
-  <xsl:template match="schema/field[@type='block' and @result]" mode="make_list">
-    <xsl:variable
-        name="result"
-        select="/*/*[@rndx][local-name()=current()/@result]" />
-    
-    <xsl:choose>
-      <xsl:when test="count($result/*)">
-        <xsl:call-template name="make_line_of_list">
-          <xsl:with-param name="str" select="$result/@*[1]" />
-        </xsl:call-template>
-      </xsl:when>
-      <xsl:otherwise>
-        <div>
-          <xsl:value-of select="$empty-list-value" />
-        </div>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-
-  <xsl:template match="schema/field[@type='block']">
-    <xsl:param name="data" />
-    
-    <xsl:variable name="name">
-      <xsl:apply-templates select="." mode="get_name" />
-    </xsl:variable>
-
-    <xsl:element name="div">
-      <xsl:attribute name="class">field_content</xsl:attribute>
-      <xsl:apply-templates
-          select="@update|@result"
-          mode="add_resolved_data_attribute" />
-
-      <xsl:choose>
-        <xsl:when test="$data">
-          <xsl:apply-templates select="." mode="make_list">
-            <xsl:with-param name="str" select="$data/@*[local-name()=$name]" />
-          </xsl:apply-templates>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:apply-templates select="." mode="make_list" />
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:element>
-  </xsl:template>
-
 
 
   <!--
@@ -819,7 +568,7 @@
         <title>Testing</title>
       </head>
       <body>
-        <xsl:apply-templates select="*/schema" mode="make_form" />
+        <xsl:apply-templates select="*/schema" mode="construct_form" />
       </body>
     </html>
   </xsl:template>
