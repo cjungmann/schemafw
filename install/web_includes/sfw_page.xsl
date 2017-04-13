@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
+
 <xsl:stylesheet
    version="1.0"
    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -46,12 +47,14 @@
   <xsl:variable name="curView" select="/*/views/view[@name=$view_name]" />
   <xsl:variable name="viewResult" select="/*/*[@rndx][local-name()=$curView/@result]" />
 
+  <xsl:template match="/*[substring-before(@mode-type,'-')='form']">
+    <xsl:apply-templates select="schema" mode="construct_form" />
+  </xsl:template>
 
   <xsl:template match="/*" mode="construct_view">
     <xsl:apply-templates select="." mode="make_schemafw_meta" />
 
     <xsl:variable name="result" select="$viewResult | *[not($viewResult)][@rndx][1]" />
-
     <xsl:choose>
       <xsl:when test="$err_condition&gt;0">
         <xsl:call-template name="display_error" />
@@ -70,6 +73,18 @@
         
     </xsl:choose>
     
+  </xsl:template>
+
+  <xsl:template name="display_error">
+    <xsl:choose>
+      <xsl:when test="$result-row and $result-row/@error&gt;0">
+        <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
+      </xsl:when>
+      <xsl:when test="$msg-el and $msg-el/@type='error'">
+        <xsl:apply-templates select="$msg-el" />
+      </xsl:when>
+      <xsl:otherwise><p>Undefined error</p></xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template name="add_scripts_and_stylesheets">
