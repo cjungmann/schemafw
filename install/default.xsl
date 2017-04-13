@@ -6,7 +6,14 @@
     xmlns:html="http://www.w3.org/1999/xhtml"
     exclude-result-prefixes="html">
 
-  <xsl:import href="includes/sfw_templates.xsl" />
+  <!--
+  Only one of the following should be active.  Use sfw_debug.xsl to
+  see the latest changes during development.  Use sfw_compiled.xsl
+  after running make update-client to compile the import references
+  in sfw_debug.xsl.
+  -->
+  <xsl:import href="includes/sfw_debug.xsl" />
+  <!-- <xsl:import href="includes/sfw_compiled.xsl" /> -->
   
   <xsl:output
       method="xml"
@@ -16,9 +23,6 @@
       indent="yes"
       omit-xml-declaration="yes"
       encoding="utf-8"/>
-
-  <xsl:param name="sortcol" />
-
 
   <xsl:template match="/">
     <html>
@@ -35,7 +39,7 @@
         </div>
         <div id="SFW_Content">
           <div class="SFW_Host">
-            <xsl:apply-templates select="/*" mode="show_document_content" />
+            <xsl:apply-templates select="/*" mode="construct_view" />
           </div>
         </div>
       </body>
