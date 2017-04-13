@@ -1,5 +1,6 @@
 install/web_includes/sfw.js
 install/web_includes/sfw.min.js
+install/web_includes/sfw_compiled.xsl
 zz_*
 *.o
 adbranch
