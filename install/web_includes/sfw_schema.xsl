@@ -97,14 +97,6 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="field" mode="get_result_td_type">
-    <xsl:variable name="type" select="concat('#',@type,'#')" />
-    <xsl:if test="contains($datetimetypes, $type)">
-      <xsl:variable name="lower" select="translate(@type,'ADEIMTW','adeimtw')" />
-      <xsl:value-of select="concat('dtp_', $lower)" />
-    </xsl:if>
-  </xsl:template>
-
   <xsl:template match="schema/field[@dtd]" mode="get_list_string">
     <xsl:variable name="paren" select="substring-after(@dtd,'(')" />
     <xsl:variable name="len" select="string-length($paren)" />
