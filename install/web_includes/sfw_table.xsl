@@ -32,7 +32,7 @@
     <xsl:param name="static" />
     
     <xsl:variable name="path">
-      <xsl:apply-templates select="." mode="get_path" />
+      <xsl:apply-templates select=".." mode="get_path" />
     </xsl:variable>
 
     <xsl:variable name="class">
