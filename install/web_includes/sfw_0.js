@@ -819,9 +819,10 @@ function init_SFW(callback)
       this._host_el = host;
    };
 
-   _base.prototype.host = function() { return this._host_el; };
-   _base.prototype.xmldoc = function() { return this._host_el._xmldoc; };
-   _base.prototype.xmldocel = function() { return this._host_el._xmldoc.documentElement; };
+   _base.prototype.host     = function() { return this._host_el; };
+   _base.prototype.xmldoc   = function() { return this._host_el._xmldoc; };
+   _base.prototype.xmldocel = function() { return this.xmldoc().documentElement; };
+   _base.prototype.data     = function() { return this._host_el.data; };
 
    _base.prototype.class_name = "iclass";
    _base.prototype.top       = function() { return _find_anchor(this.host()); };
@@ -891,10 +892,23 @@ function init_SFW(callback)
          v.parentNode.removeChild(v);
    };
 
+   _base.prototype.sfw_hide = function _sfw_hide()
+   {
+      var v = this.host();
+      if (v)
+         v.style.display = "none";
+   };
+
    function _child_close(child)
    {
       if ("sfw_close" in child)
          window.setTimeout(function(){child.sfw_close();}, 100);
+   }
+
+   function _child_hide(child)
+   {
+      if ("sfw_hide" in child)
+         child.sfw_hide();
    }
 
    function _confirm_delete(rowone)
@@ -914,7 +928,8 @@ function init_SFW(callback)
                    docel  : docel,
                    mtype  : docel.getAttribute("mode-type"),
 
-                   close  : function() { _child_close(this.child); }
+                   close  : function() { _child_close(this.child); },
+                   hide   : function() { _child_hide(this.child); }
                  };
       
       if (this.has_data())
@@ -944,7 +959,8 @@ function init_SFW(callback)
          rval = { cfobj : true,
                   child : this,
                   cmd   : cmd || null,
-                  close : function() { _child_close(this.child); }
+                  close : function() { _child_close(this.child); },
+                  hide  : function() { _child_hide(this.child); }
                 };
          
          if (this.has_data())
@@ -978,8 +994,12 @@ function init_SFW(callback)
             break;
          case "cancel":
          case "close":
-            if (this.caller())
-               this.caller().child_finished(this.cfobj_from_cmd(type));
+         if (this.caller())
+         {
+            var child = this.cfobj_from_cmd(type);
+            child.hide();
+            this.caller().child_finished(child);
+         }
             return false;
          
          default:
