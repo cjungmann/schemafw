@@ -575,6 +575,10 @@ function prepare_getDocument_functions()
 
 function prepare_XSL_init(doc)
 {
+   var tmpl_attribs = [ "name", "match", "mode" ];
+   var ta_len = tmpl_attribs.length;
+
+   // Do this only after the imports have choosen the appropriate output element:
    function fix_output_element(doc)
    {
       var node;
@@ -589,9 +593,19 @@ function prepare_XSL_init(doc)
       }
    }
 
-   // webkit needs this, but other benefit from one-time import:
-   function inject_imports(doc,callback)
+   function get_baseurl(url)
    {
+      var pos = url.lastIndexOf("/");
+      // be sure to include the slash:
+      return pos>=0 ? url.substring(0,pos+1):"";
+   }
+
+   // webkit needs this, but other benefit from one-time import:
+   function inject_imports(doc,callback,baseurl)
+   {
+      if (!baseurl)
+         baseurl = "";
+
       var imports = null;
       var stylesheet = doc.selectSingleNode("/xsl:stylesheet");
       if (stylesheet)
@@ -604,37 +618,50 @@ function prepare_XSL_init(doc)
          return;
       }
 
-      var import_index = 0;
+      // Using "idoc" for callbacks to distiguish between the document
+      // element of the outer and inner closures.
 
-      function get_next()
+      // I prefer a non-nodelist snapshot of the import nodes.  I'm not
+      // confident that removing the elements as we process them will
+      // change the contents of the nodelist or properly decrement the
+      // value of imports.length.
+      var arr_imports = [];
+      for (var i=0; i<imports.length; ++i)
+         arr_imports.push(imports[i]);
+
+      // Force synchronous processing to ensure order of import priority
+      function pop_and_process()
       {
-         if (import_index < imports.length)
+         if (arr_imports.length)
          {
-            var ireq = imports[import_index++];
-            var iurl = ireq.getAttribute("href");
+            var ireq = arr_imports.pop();
+            var iurl = baseurl + ireq.getAttribute("href");
 
-            function cb(idoc) { process_import(idoc, ireq); }
+            function readydoc(idoc)
+            {
+               merge_elements(idoc, ireq);
+               stylesheet.removeChild(ireq);
+               pop_and_process();
+            }
+            
+            function gotdoc(idoc)
+            {
+               if (idoc)
+                  inject_imports(idoc, function(){readydoc(idoc);}, get_baseurl(iurl));
+               else
+                  console.log("inject_imports failed to open '" + iurl + "'");
+            }
 
             // Use getNewDoc to impose namespace:
-            getNewDoc(iurl, cb, nsXSL);
+            getNewDoc(iurl, gotdoc, nsXSL);
          }
          else
-         {
-            // Finished with imports, remove original import nodes:
-            while (import_index>0)
-               stylesheet.removeChild(imports[--import_index]);
-
-            // Recusively call inject_imports() in case
-            // any imports have imports.  Callback will
-            // be called when there are no more imports:
-            inject_imports(doc, callback);
-         }
+            callback();
       }
 
-      var attribs = [ "name", "match", "mode" ];
-      var alen = attribs.length;
-      
-      function process_import(idoc, importnode)
+      pop_and_process();
+
+      function merge_elements(idoc, importnode)
       {
          var nl = idoc.selectNodes("/xsl:stylesheet/*");
 
@@ -646,9 +673,9 @@ function prepare_XSL_init(doc)
             
             // Make xpath to same-named nodes (homonyms) in doc:
             var xpath = "/xsl:stylesheet/" + name;
-            for (var j=0; j<alen; ++j)
+            for (var j=0; j<ta_len; ++j)
             {
-               var testname = attribs[j];
+               var testname = tmpl_attribs[j];
                var aname = node.getAttribute(testname);
 
                if (aname)
@@ -666,18 +693,19 @@ function prepare_XSL_init(doc)
                stylesheet.insertBefore(make_importable_node(doc,node,true),
                                        importnode);
          }
-
-         get_next();
       }
-
-      // processing starts here:
-      get_next();
    }
 
    XSL.prototype.fix_stylesheet = function(callback)
    {
-      fix_output_element(this.doc);
-      inject_imports(doc, callback);
+      var d = this.doc;
+      function finished()
+      {
+         fix_output_element(d);
+         if (callback)
+            callback();
+      }
+      inject_imports(d, finished);
    };
 }
 
@@ -687,7 +715,7 @@ function implement_XSL_methods()
    // Easy ones first:
    XSL.prototype.init = function(doc,callback)
    {
-      if (XSL.prototype.fix_stylesheet==null)
+      if (!("fix_stylesheet" in XSL))
          prepare_XSL_init(doc);
          
       prep_namespaces(doc);
@@ -831,10 +859,15 @@ function implement_XSL_methods()
          try
          {
             var ddf = this.get_processor().transformToFragment(source_doc, host_doc);
-            if (before)
-               host.insertBefore(ddf, before);
+            if (ddf)
+            {
+               if (before)
+                  host.insertBefore(ddf, before);
+               else
+                  host.appendChild(ddf);
+            }
             else
-               host.appendChild(ddf);
+               console.error("Stylesheet failed to transform xml.");
          }
          catch(e) { alert("transformToFragment failed: " + e.message); }
 
@@ -994,7 +1027,7 @@ function make_importable_node(target_doc, source, deep)
       var el = add_namespace_el(name,
                                 source.namespaceURI,
                                 null,null,doc);
-      
+
       copy_attributes(el, source);
       
       if (deep)

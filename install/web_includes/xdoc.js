@@ -1,11 +1,26 @@
 // Must be non-closure function to allow original window.onload() to return:
 function initialize_new_page()
 {
+   console.log("Beginning initialize_new_page");
+   ensure_doc_props();
+   
    var func = initialize_new_page.func;
    if (func && func in window)
       window[func]();
    else if ("onload" in window)
       window.onload();
+
+   console.log("Finished with initialize_new_page");
+}
+
+function serialize_node(node) { return node.xml; }
+
+function ensure_doc_props()
+{
+   if (!("body" in document))
+       document.body = document.getElementsByTagName("body")[0];
+   if (!("head" in document))
+      document.head = document.getElementsByTagName("head")[0];
 }
 
 function dump_text(str)
@@ -15,7 +30,6 @@ function dump_text(str)
    ppre.appendChild(document.createTextNode(str));
 }
 
-function empty_function() { }
 function null_return_function()   { return null; }
 
 function xhr_error(xhr) { dump_text(xhr.responseText); alert("failed to get the XML document"); }
@@ -100,31 +114,52 @@ function get_xhr()
    return get_xhr();
 }
 
+function ecomp(e1,e2) { return (!e1 && !e2) || e1==e2; }
+
 // For use instead of XPath, to avoid brower differences.
-function get_named_elements(el, name, firstOnly)
+function get_matching_children(el, func, firstOnly)
 {
    var arr = [];
    var n = el.firstChild;
    while(n)
    {
-      if (n.nodeType==1)
+      if (func(n))
       {
-         var nname = String(n.baseName
-                            || n.localName
-                            || n.nodeName
-                            || n.tagName).toLowerCase();
-         if (nname==name)
-         {
-            if (firstOnly)
-               return n;
-            else
-               arr.push(n);
-         }
+         if (firstOnly)
+            return n;
+         arr.push(n);
       }
       n = n.nextSibling;
    }
 
    return arr.length ? arr : null;
+}
+
+function get_named_elements(el, name, firstOnly)
+{
+   function f(n) { return n.nodeType==1 && n.tagName==name; }
+   return get_matching_children(el,f,firstOnly);
+}
+
+function get_matching_xsl_element(el,model,firstOnly)
+{
+   var tname = model.tagName;
+   var name = model.getAttribute("name");
+   var match = model.getAttribute("match");
+   var mode = model.getAttribute("mode");
+
+   function comp(n)
+   {
+      if (n.nodeType!=1)
+         return false;
+
+      return n.tagName==tname &&
+         ecomp(n.getAttribute("name"),name) &&
+         ecomp(n.getAttribute("match"),match) &&
+         ecomp(n.getAttribute("mode"),mode);
+   }
+
+   return get_matching_children(el,comp,firstOnly);
 }
 
 function make_importable_node(target_doc, source, deep)
@@ -209,7 +244,8 @@ function make_importable_node(target_doc, source, deep)
 
 function fix_output_element(doc)
 {
-   var node = get_named_elements(doc.documentElement, "output", true);
+   function f(n) { return n.nodeType==1 && n.tagName=="xsl:output"; }
+   var node = get_matching_children(doc.documentElement,f,true);
    if (node)
    {
       if (node.getAttribute("output")=="xml")
@@ -221,107 +257,230 @@ function fix_output_element(doc)
    }
 }
 
-function inject_imports(ibefore, docel, impdoc, callback)
-{
-   var doceldoc = docel.ownerDocument;
+// function inject_imports(ibefore, docel, impdoc, callback)
+// {
+//    var doceldoc = docel.ownerDocument;
    
-   function diff_by_attr(left, right, aname)
-   {
-      var lval = left.getAttribute(aname);
-      var rval = right.getAttribute(aname);
-      return (lval==null && rval==null) ? false : lval!=rval;
-   }
+//    function diff_by_attr(left, right, aname)
+//    {
+//       var lval = left.getAttribute(aname);
+//       var rval = right.getAttribute(aname);
+//       return (lval==null && rval==null) ? false : lval!=rval;
+//    }
 
-   var attarr = [ "match", "name", "mode" ];
-   var astop = attarr.length;
+//    var attarr = [ "match", "name", "mode" ];
+//    var astop = attarr.length;
 
-   function insert_if_not_found(el)
-   {
-      var ns = el.namespaceURI;
-      var lname = el.localName;
+//    function insert_if_not_found(el)
+//    {
+//       var ns = el.namespaceURI;
+//       var lname = el.localName;
 
-      if (lname=="output")
-         return;
+//       if (lname=="output")
+//          return;
       
-      var found = false;
-      var kid = docel.firstChild;
-      while (kid)
-      {
-         if (kid.nodeType==1)
-         {
-            if (kid.namespaceURI==ns && kid.localName==lname)
-            {
-               var matched = true;
-               for (var i=0; matched && i<astop; ++i)
-                  matched = !diff_by_attr(el, kid, attarr[i]);
+//       var found = false;
+//       var kid = docel.firstChild;
+//       while (kid)
+//       {
+//          if (kid.nodeType==1)
+//          {
+//             if (kid.namespaceURI==ns && kid.localName==lname)
+//             {
+//                var matched = true;
+//                for (var i=0; matched && i<astop; ++i)
+//                   matched = !diff_by_attr(el, kid, attarr[i]);
 
-               if (matched)
-               {
-                  found = true;
-                  break;
-               }
+//                if (matched)
+//                {
+//                   found = true;
+//                   break;
+//                }
+//             }
+//          }
+
+//          kid = kid.nextSibling;
+//       }
+
+//       if (!found)
+//          docel.insertBefore(make_importable_node(doceldoc, el, true), ibefore);
+//    }
+   
+//    var elImp = impdoc.documentElement.firstChild;
+//    while (elImp)
+//    {
+//       if (elImp.nodeType==1)
+//          insert_if_not_found(elImp);
+
+//       elImp = elImp.nextSibling;
+//    }
+
+//    ibefore.parentNode.removeChild(ibefore);
+
+//    if (callback)
+//       callback();
+// }
+
+// function resolve_imports(xsl, callback)
+// {
+//    var docel = xsl.documentElement;
+//    var import_list = get_named_elements(docel, "import");
+//    if (import_list)
+//    {
+//       var stop = import_list.length;
+//       var ndx = 0;
+
+//       // Recursion via inject() callback for xhr_get()
+//       function do_next()
+//       {
+//          if (ndx<stop)
+//          {
+//             var import_el = import_list[ndx++];
+//             var href = import_el.getAttribute("href");
+//             function inject(doc) { inject_imports(import_el, docel, doc, do_next); }
+//             xhr_get_xsl(href, inject);
+//          }
+//          else
+//             callback(xsl);
+//       }
+//       do_next();
+//    }
+//    else
+//       callback(xsl);
+// }
+
+
+// webkit needs this, but other benefit from one-time import:
+function inject_imports(doc,baseurl,callback)
+{
+   if (!baseurl)
+      baseurl = "";
+
+   var imports = null;
+   var stylesheet = doc.documentElement;
+   function f(n) { return n.nodeType==1 && n.tagName=="xsl:import"; }
+   if (stylesheet && stylesheet.tagName=="xsl:stylesheet")
+      imports = get_matching_children(stylesheet, f);
+
+   if (!imports || imports.length==0)
+   {
+      if (callback)
+         callback(doc);
+      return;
+   }
+
+   // Using "idoc" for callbacks to distiguish between the document
+   // element of the outer and inner closures.
+
+   // I prefer a non-nodelist snapshot of the import nodes.  I'm not
+   // confident that removing the elements as we process them will
+   // change the contents of the nodelist or properly decrement the
+   // value of imports.length.
+   var arr_imports = [];
+   for (var i=0; i<imports.length; ++i)
+      arr_imports.push(imports[i]);
+
+   function get_baseurl(url)
+   {
+      var pos = url.lastIndexOf("/");
+      return pos>=0 ? url.substring(0,pos+1):"";
+   }
+
+   // Force synchronous processing to ensure order of import priority
+   function pop_and_process()
+   {
+      if (arr_imports.length)
+      {
+         var ireq = arr_imports.pop();
+         var iurl = baseurl + ireq.getAttribute("href");
+
+         function gotdoc(idoc)
+         {
+            if (idoc)
+            {
+               merge_elements(idoc, ireq);
+               stylesheet.removeChild(ireq);
+               pop_and_process();
             }
+            else
+               console.log("inject_imports failed to open '" + iurl + "'");
          }
 
-         kid = kid.nextSibling;
+         xhr_get_xsl(iurl, get_baseurl(iurl), gotdoc);
       }
+      else
+         callback(doc);
+   }
 
-      if (!found)
-         docel.insertBefore(make_importable_node(doceldoc, el, true), ibefore);
+   pop_and_process();
+
+   function match_el(n)
+   {
+      return n.nodeType==1 && n.tagName!="xsl:import";
    }
    
-   var elImp = impdoc.documentElement.firstChild;
-   while (elImp)
+   function merge_elements(idoc, importnode)
    {
-      if (elImp.nodeType==1)
-         insert_if_not_found(elImp);
-
-      elImp = elImp.nextSibling;
-   }
-
-   ibefore.parentNode.removeChild(ibefore);
-
-   if (callback)
-      callback();
-}
-
-function resolve_imports(xsl, callback)
-{
-   var docel = xsl.documentElement;
-   var import_list = get_named_elements(docel, "import");
-   if (import_list)
-   {
-      var stop = import_list.length;
-      var ndx = 0;
-
-      // Recursion via inject() callback for xhr_get()
-      function do_next()
+      var idocel = idoc.documentElement;
+      var arr_idoc = get_matching_children(idoc.documentElement, match_el);
+      
+      for (var i=0, stop=arr_idoc.length; i<stop; ++i)
       {
-         if (ndx<stop)
-         {
-            var import_el = import_list[ndx++];
-            var href = import_el.getAttribute("href");
-            function inject(doc) { inject_imports(import_el, docel, doc, do_next); }
-            xhr_get_xsl(href, inject);
-         }
-         else
-            callback(xsl);
+         var node = arr_idoc[i];
+         var match = get_matching_xsl_element(stylesheet, node, true);
+         if (!match)
+            stylesheet.insertBefore(make_importable_node(doc, node, true),
+                                    importnode);
       }
-      do_next();
    }
-   else
-      callback(xsl);
+
+   // function old_merge_elements(idoc, importnode)
+   // {
+   //    var nl = idoc.selectNodes("/xsl:stylesheet/*");
+
+   //    // Insert every child that doesn't already exist in doc:
+   //    for (var i=0, stop=nl.length; i<stop; ++i)
+   //    {
+   //       var node = nl[i];
+   //       var name = node.tagName;
+         
+   //       // Make xpath to same-named nodes (homonyms) in doc:
+   //       var xpath = "/xsl:stylesheet/" + name;
+   //       for (var j=0; j<ta_len; ++j)
+   //       {
+   //          var testname = tmpl_attribs[j];
+   //          var aname = node.getAttribute(testname);
+
+   //          if (aname)
+   //          {
+   //             aname = aname.replace(/\'/g, '&apos;');
+   //             xpath += "[@" + testname + "='" + aname + "']";
+   //          }
+   //          else
+   //             xpath += "[not(@" + testname + ")]";
+   //       }
+
+   //       // Find any homonyms, only insert node if not already there:
+   //       var homonyms = doc.selectNodes(xpath);
+   //       if (homonyms.length==0)
+   //          stylesheet.insertBefore(make_importable_node(doc,node,true),
+   //                                  importnode);
+   //    }
+   // }
 }
 
 function xhr_get(url, cb_ok, cb_error)
 {
+   var xhr = null;
+   
    if (!cb_error)
       cb_error = xhr_error;
-   function check_xhr_result(xhr)
+   
+   function check_xhr_result()
    {
-      if (xhr.readyState==4)
+      if (xhr && xhr.readyState==4)
       {
-         xhr.onreadystatechange = empty_function;
+         xhr.onreadystatechange = void(0);
          if (xhr.responseXML)
          {
             var doc;
@@ -336,25 +495,22 @@ function xhr_get(url, cb_ok, cb_error)
       }
    }
 
-   var xhr = get_xhr();
-
-   if (xhr)
+   if ((xhr=get_xhr()))
    {
       xhr.open("GET", url, true);
       if (browser_is_ie())
          xhr.responseType = "msxml-document";
-      xhr.onreadystatechange = function() { check_xhr_result(xhr); };
+      xhr.onreadystatechange = check_xhr_result;
       xhr.send(null);
    }
 }
 
-function xhr_get_xsl(url, cb_ok, db_error)
+function xhr_get_xsl(url, baseurl, cb_ok, db_error)
 {
    function cb(xsl)
    {
       // Perform WebKit repairs to XSL document
-      fix_output_element(xsl);
-      resolve_imports(xsl,cb_ok);
+      inject_imports(xsl, baseurl, cb_ok);
    }
 
    xhr_get(url, cb, db_error);
@@ -444,20 +600,14 @@ function force_scripts_to_load(nl, callback)
 
 function get_scripts()
 {
-   var head = get_named_elements(document.documentElement, "head", true);
-   if (head)
-      return get_named_elements(head, "script");
-   else
-      return null;
+   function f(n) { return n.nodeType==1 && n.tagName.toLowerCase()=="script"; }
+   return get_matching_children(document.head, f);
 }
 
 function get_links()
 {
-   var head = get_named_elements(document.documentElement, "head", true);
-   if (head)
-      return get_named_elements(head,"link");
-   else
-      return null;
+   function f(n) { return n.nodeType==1 && n.tagName.toLowerCase()=="link"; }
+   return get_matching_children(document.head, f);
 }
 
 function transform_doc(xsl, xml)
@@ -488,9 +638,32 @@ function transform_doc(xsl, xml)
          load_scripts();
    }
 
+   if ("XMLSerializer" in window)
+   {
+      var dser = null;
+      serialize_node = function(node)
+      {
+         if (!dser)
+            dser = new XMLSerializer();
+         return dser.serializeToString(node);
+      };
+   }
 
    if ("XSLTProcessor" in window)
    {
+      function show(tag, str)
+      {
+         var el = document.createElement(tag);
+         el.appendChild(document.createTextNode(str));
+         document.body.appendChild(el);
+      }
+      
+      function announce(doc,msg)
+      {
+         show("h1", msg);
+         show("pre", serialize_node(doc.documentElement));
+      }
+
       var prc = new XSLTProcessor();
       if (prc)
       {
@@ -504,11 +677,8 @@ function transform_doc(xsl, xml)
          }
          else
          {
-            var dser = new XMLSerializer();
-            var xstr = dser.serializeToString(xsl.documentElement);
-            var ppre = document.createElement("pre");
-            document.body.appendChild(ppre);
-            ppre.appendChild(document.createTextNode(xstr));
+            announce(xsl, "Stylesheet");
+            announce(xml, "Document");
          }
       }
    }
@@ -560,13 +730,14 @@ function load_xml_doc(doc)
    {
       function finish(xsl)
       {
+         fix_output_element(xsl);
          document.XSLDocument = xsl;
          transform_doc(xsl,doc);
       }
       
       var url = extract_stylesheet_url(sspi);
       if (url)
-         xhr_get_xsl(url, finish, xhr_error);
+         xhr_get_xsl(url, "", finish, xhr_error);
    }
 }
 
