@@ -45,16 +45,23 @@
   </xsl:variable>
 
   <xsl:variable name="curView" select="/*/views/view[@name=$view_name]" />
-  <xsl:variable name="viewResult" select="/*/*[@rndx][local-name()=$curView/@result]" />
+  <xsl:variable
+      name="viewResult" select="/*/*[@rndx][local-name()=$curView/@result]" />
 
   <xsl:template match="/*[substring-before(@mode-type,'-')='form']">
     <xsl:apply-templates select="schema" mode="construct_form" />
   </xsl:template>
 
+  <xsl:template match="/*">
+    <xsl:apply-templates select="." mode="construct_view" />
+  </xsl:template>
+
   <xsl:template match="/*" mode="construct_view">
     <xsl:apply-templates select="." mode="make_schemafw_meta" />
 
-    <xsl:variable name="result" select="$viewResult | *[not($viewResult)][@rndx][1]" />
+    <xsl:variable
+        name="result" select="$viewResult | *[not($viewResult)][@rndx][1]" />
+
     <xsl:choose>
       <xsl:when test="$err_condition&gt;0">
         <xsl:call-template name="display_error" />
@@ -70,9 +77,7 @@
           <xsl:with-param name="primary" select="1" />
         </xsl:apply-templates>
       </xsl:when>
-        
     </xsl:choose>
-    
   </xsl:template>
 
   <xsl:template name="display_error">

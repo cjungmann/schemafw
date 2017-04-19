@@ -5,6 +5,9 @@
    xmlns="http://www.w3.org/1999/xhtml"
    xmlns:html="http://www.w3.org/1999/xhtml"
    exclude-result-prefixes="html">
+
+  <xsl:import href="sfw_generics.xsl" />
+  
 <!--
 This stylesheet is intended to be imported into another stylesheet.
 
@@ -331,6 +334,15 @@ will contain the YYYY-MM-DD date.
   <xsl:template match="*[@rndx]" mode="build_calendar">
     <xsl:param name="sfw_class" />
     <xsl:variable name="row" select="*[local-name()=current()/@row-name][1]" />
+
+    <div>row count: <xsl:value-of select="count($row)" /></div>
+    <div>row month: <xsl:value-of select="$row/@month" /></div>
+
+    <pre>
+<xsl:apply-templates select="." mode="dump"/>
+<xsl:apply-templates select="$row" mode="dump"/>
+    </pre>
+    
     <xsl:apply-templates select="$row" mode="build_calendar">
       <xsl:with-param name="sfw_class" select="$sfw_class" />
     </xsl:apply-templates>

@@ -40,7 +40,8 @@
     <xsl:variable name="rd" select="../*[not($fd|$sd|$dd)][@rndx='1']/*[1]"/>
     <xsl:variable name="data" select="$fd|$sd|$dd|$rd"/>
 
-    <xsl:variable name="mt-type" select="/*/@mode-type"/>
+    <xsl:variable name="mtype" select="/*[not($type)]/@mode-type"/>
+    <xsl:variable name="sfw-class" select="concat($type,$mtype)" />
 
     <xsl:variable name="msg">
       <xsl:call-template name="get_var_value">
@@ -80,7 +81,7 @@
       <xsl:attribute name="method"><xsl:value-of select="$method" /></xsl:attribute>
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:attribute
-          name="data-sfw-class"><xsl:value-of select="$type" /></xsl:attribute>
+          name="data-sfw-class"><xsl:value-of select="$sfw-class" /></xsl:attribute>
       <xsl:attribute name="data-result-type">form</xsl:attribute>
       
       <fieldset class="Schema">
