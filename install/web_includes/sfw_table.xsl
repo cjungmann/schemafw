@@ -44,6 +44,7 @@
 
     <xsl:element name="table">
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
+      <xsl:attribute name="data-sfw-class">table</xsl:attribute>
       <xsl:attribute name="data-result-type">table</xsl:attribute>
       <xsl:attribute name="data-result-path"><xsl:value-of select="$path" /></xsl:attribute>
       <xsl:apply-templates select="." mode="add_on_line_click_attribute" />
