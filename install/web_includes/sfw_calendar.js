@@ -40,7 +40,7 @@
          var ths = this;
          
          empty_el(this.host());
-         SFW.open_interaction(SFW.stage, url, this, this.xmldoc());
+         SFW.open_interaction(SFW.stage, url, this, {caldoc:this.xmldoc(),did:did});
       }
    };
 
