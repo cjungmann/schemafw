@@ -576,6 +576,9 @@ function force_scripts_to_load(nl, callback)
    {
       if (i<stop)
       {
+         // For non-href scripts, onload won't fire, so this
+         // flag will cause load_next() to be called, anyway.
+         var force_next = false;
          var src;
          var s = nl[i++];
          var el = doc.createElement("script");
@@ -585,11 +588,13 @@ function force_scripts_to_load(nl, callback)
             el.src = src;
          else if (s.firstChild && (src=s.firstChild.data))
          {
-            try      { el.appendChild(doc.createTextNode(src)); }
+            try      { el.appendChild(doc.createTextNode(src)); force_next=true; }
             catch(e) { el.text = src; }
          }
 
          head.replaceChild(el,s);
+         if (force_next)
+            load_next();
       }
       else
          callback();
