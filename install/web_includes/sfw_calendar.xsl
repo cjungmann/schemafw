@@ -338,11 +338,6 @@ will contain the YYYY-MM-DD date.
     <div>row count: <xsl:value-of select="count($row)" /></div>
     <div>row month: <xsl:value-of select="$row/@month" /></div>
 
-    <pre>
-<xsl:apply-templates select="." mode="dump"/>
-<xsl:apply-templates select="$row" mode="dump"/>
-    </pre>
-    
     <xsl:apply-templates select="$row" mode="build_calendar">
       <xsl:with-param name="sfw_class" select="$sfw_class" />
     </xsl:apply-templates>
