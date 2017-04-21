@@ -8,6 +8,7 @@
    exclude-result-prefixes="html">
 
   <xsl:import href="sfw_utilities.xsl" />
+  <xsl:import href="sfw_scripts.xsl" />
 
   <xsl:output method="xml"
          doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -23,12 +24,6 @@
   <xsl:variable name="docel_msg" select="/message" />
   <xsl:variable name="child_msg" select="/*[not($docel_msg)]/message" />
   <xsl:variable name="msg-el" select="$docel_msg | $child_msg" />
-
-  <xsl:variable name="jslist_sfw_brief">sfw</xsl:variable>
-  <xsl:variable name="jslist_sfw_minified">sfw.min</xsl:variable>
-  <xsl:variable name="jslist_sfw_debug">sfw_0 sfw_dom sfw_table sfw_form sfw_form_view sfw_calendar sfw_debug sfw_onload</xsl:variable>
-  <xsl:variable name="jslist_sfw" select="$jslist_sfw_debug" /> 
-  <xsl:variable name="jslist_utils">classes dpicker Events Dialog Moveable XML</xsl:variable>
 
   <xsl:variable name="err_condition">
     <xsl:choose>
@@ -80,6 +75,52 @@
     </xsl:choose>
   </xsl:template>
 
+  <xsl:template match="/*" mode="fill_head">
+    <xsl:if test="$err_condition=0">
+      <xsl:choose>
+        <xsl:when test="@meta-jump">
+          <xsl:apply-templates select="@meta-jump" mode="fill_head" />
+        </xsl:when>
+        <xsl:when test="meta-jump">
+          <xsl:apply-templates select="meta-jump" mode="fill_head" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:call-template name="css_includes" />
+          <xsl:apply-templates select="." mode="construct_scripts" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template name="meta-jump">
+    <xsl:param name="url" select="'/'" />
+    <xsl:param name="wait" select="0" />
+
+    <xsl:variable name="content" select="concat($wait,'; url=', $url)" />
+    <meta http-equiv="refresh" content="{$content}" />
+    
+    <script type="text/javascript">
+      <xsl:value-of select="concat('location.replace(&quot;',$url,'&quot;);')" />
+    </script>
+    <xsl:value-of select="$nl" />
+  </xsl:template>
+
+  <xsl:template match="@meta-jump" mode="fill_head">
+    <xsl:call-template name="meta-jump">
+      <xsl:with-param name="url" select="." />
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="meta-jump" mode="fill_head">
+    <xsl:call-template name="meta-jump">
+      <xsl:with-param name="url">
+        <xsl:apply-templates select="@url" mode="resolve_refs" />
+      </xsl:with-param>
+      <xsl:with-param name="wait" select="@wait" />
+    </xsl:call-template>
+  </xsl:template>
+
+
   <xsl:template name="display_error">
     <xsl:choose>
       <xsl:when test="$result-row and $result-row/@error&gt;0">
@@ -91,19 +132,22 @@
       <xsl:otherwise><p>Undefined error</p></xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+  
 
   <xsl:template name="add_scripts_and_stylesheets">
-    <xsl:call-template name="js_includes" />
-    <xsl:call-template name="css_includes" />
-  </xsl:template>
-
-  <xsl:template name="js_includes">
-    <xsl:call-template name="add_js">
-      <xsl:with-param name="list" select="$jslist_sfw" />
-    </xsl:call-template>
-    <xsl:call-template name="add_js">
-      <xsl:with-param name="list" select="$jslist_utils" />
-    </xsl:call-template>
+    <xsl:if test="$err_condition=0">
+      <xsl:choose>
+        <xsl:when test="@meta-jump">
+          <script type="text/javascript">
+            <xsl:text>location.replace(&quot;</xsl:text>
+            <xsl:value-of select="@meta-jump" />
+            <xsl:text>&quot;);</xsl:text>
+          </script>
+        </xsl:when>
+        <xsl:otherwise>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
   </xsl:template>
 
   <!-- Scans space-separater list of names to generate script elements. -->
