@@ -118,7 +118,7 @@ function init_SFW(callback)
 
    function _is_anchor(n)
    {
-      return n.nodeType==1 && null!=n.getAttribute("data-sfw-class");
+      return n.nodeType==1 && n.getAttribute("data-sfw-class");
    }
 
    function _find_anchor(el)
