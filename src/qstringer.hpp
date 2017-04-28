@@ -146,6 +146,9 @@ public:
       BaseStringer::t_build(str, user, separator);
    }
 
+   void xmlize(const char *tag, FILE *out, char const* const* skips=nullptr) const;
+
+
    /**@}*/
 };
 
@@ -193,6 +196,7 @@ public:
       BaseStringer::t_build(getenv("HTTP_COOKIE"), user, ';');
    }
 };
+
 
 
 #endif

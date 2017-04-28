@@ -12,6 +12,7 @@
 #include <ctype.h>   // for isdigit
 #include "string.h"
 #include "qstringer.hpp"
+#include "prandstr.hpp"
 
 template <class Func>
 void string_stepper(const char *str, char token, Func &cb)
@@ -433,6 +434,44 @@ void BaseStringer::t_build(const char *str,
 }
 
 /**
+ * Writes out an xml element with attributes derived from the values in a qstring.
+ *
+ * @param tag   Tag name to use for the element.
+ * @param out   Stream to which the element will be written.
+ * @param skips Optional null-terminated list of names for which attributes
+ *              will not be included.
+ */
+void BaseStringer::xmlize(const char *tag,
+                          FILE *out,
+                          char const* const* skips) const
+{
+   int name_buff_len = get_longest_name()+1;
+   char *nbuff = static_cast<char*>(alloca(name_buff_len));
+   int val_buff_len = get_longest_value()+1;
+   char *vbuff = static_cast<char*>(alloca(val_buff_len));
+
+   ifputc('<', out);
+   ifputs(tag, out);
+
+   for (int i=0; i<m_count; ++i)
+   {
+      get_name_at(i,nbuff, name_buff_len);
+      if (!skips || !string_in_list(nbuff, skips))
+      {
+         get_val_at(i, vbuff, val_buff_len);
+         
+         ifputc(' ', out);
+         ifputs(nbuff, out);
+         ifputs("=\"", out);
+         print_str_as_xml(vbuff, out);
+         ifputc('"', out);
+      }
+   }
+
+   ifputs(" />\n", out);
+}
+
+/**
  * @brief Checks the query string to see if the first value is anonymous.
  *
  * The algorithm I'm using is to scan the string to the first ampersand,
@@ -466,6 +505,7 @@ bool QStringer::anonymous_first_value(void) const
 #ifdef INCLUDE_QS_MAIN
 
 #include <stdio.h>
+#include "prandstr.cpp"
 
 void use_qstringer(const BaseStringer *qs)
 {
@@ -584,6 +624,26 @@ void test_string_stepper(const char *str, char token)
    string_stepper(str,token,f);
 }
 
+void use_xmlizer(const char *qstr, char const* const* skips)
+{
+   auto cb = [&skips](const BaseStringer *qs)
+   {
+      if (qs)
+      {
+         qs->xmlize("row", stdout, skips);
+      }
+   };
+   QStringer::build(qstr, cb);
+}
+
+void test_xmlizer(void)
+{
+   const char qstring[] =
+      "fname=Charles&lname=Jungmann&gender=male&age=57&date=2017-04-28";
+   const char* skips[] = { "gender", "age", nullptr };
+   use_xmlizer(qstring, skips);
+}
+
 
 
 int main(int argc, char **argv)
@@ -595,6 +655,8 @@ int main(int argc, char **argv)
    // test_string_stepper("default.spec:main_display",':');
    // test_string_stepper("p_lname=Charles&p_lname=Jungmann&p_address=620+Lanewood+Lane+Plymouth+MN+55447", '&');
    // test_string_stepper(qsample, '&');
+
+   test_xmlizer();
 
    
    
