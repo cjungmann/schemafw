@@ -474,7 +474,7 @@ function init_SFW(callback)
       {
          var arr = [ "/xsl:stylesheet",
                      "xsl:template[@match='*[@rndx]'][@mode='result_fill_sfw_host']",
-                     "xsl:apply-templates[@select='.']" ];
+                     "xsl:apply-templates[@select='.'][not(@mode)]" ];
 
          xsldoc.view_renderer = xsldoc.selectSingleNode(arr.join('/'));
       }
