@@ -135,6 +135,18 @@
     </xsl:element>
   </xsl:template>
 
+  <xsl:template name="display_error">
+    <xsl:choose>
+      <xsl:when test="$result-row and $result-row/@error&gt;0">
+        <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
+      </xsl:when>
+      <xsl:when test="$msg-el and $msg-el/@type='error'">
+        <xsl:apply-templates select="$msg-el" />
+      </xsl:when>
+      <xsl:otherwise><p>Undefined error</p></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
   <xsl:template match="*[@rndx][@type='variables']" mode="get_value">
     <xsl:param name="name" />
     <xsl:value-of select="*[1]/@*[local-name()=$name]" />
@@ -472,14 +484,10 @@
         <xsl:attribute name="readonly">readonly</xsl:attribute>
       </xsl:if>
       
-      <xsl:attribute name="fake">Fake</xsl:attribute>
-      
       <xsl:apply-templates select="@*" mode="add_html_attribute">
         <xsl:with-param name="skip" select="' type name size readonly value '" />
       </xsl:apply-templates>
 
-      <xsl:attribute name="bogus">Bogus</xsl:attribute>
-      
       <xsl:if test="string-length($value)&gt;0">
         <xsl:choose>
           <xsl:when test="$type='checkbox'">
