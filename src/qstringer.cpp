@@ -436,6 +436,8 @@ void BaseStringer::t_build(const char *str,
 /**
  * Writes out an xml element with attributes derived from the values in a qstring.
  *
+ * No attribute will be written if there is no value at the index.
+ *
  * @param tag   Tag name to use for the element.
  * @param out   Stream to which the element will be written.
  * @param skips Optional null-terminated list of names for which attributes
@@ -458,13 +460,17 @@ void BaseStringer::xmlize(const char *tag,
       get_name_at(i,nbuff, name_buff_len);
       if (!skips || !string_in_list(nbuff, skips))
       {
-         get_val_at(i, vbuff, val_buff_len);
+         // Skip empty names, especially including the script name.
+         if (has_val_at(i))
+         {
+            get_val_at(i, vbuff, val_buff_len);
          
-         ifputc(' ', out);
-         ifputs(nbuff, out);
-         ifputs("=\"", out);
-         print_str_as_xml(vbuff, out);
-         ifputc('"', out);
+            ifputc(' ', out);
+            ifputs(nbuff, out);
+            ifputs("=\"", out);
+            print_str_as_xml(vbuff, out);
+            ifputc('"', out);
+         }
       }
    }
 
