@@ -116,6 +116,15 @@
     </xsl:element>
   </xsl:template>
 
+  <xsl:template name="construct_title">
+    <xsl:param name="str" />
+    <h2>
+      <xsl:call-template name="resolve_refs">
+        <xsl:with-param name="str" select="$str" />
+      </xsl:call-template>
+    </h2>
+  </xsl:template>
+
   <xsl:template match="schema" mode="show_intro">
     <xsl:param name="class" />
     <xsl:param name="host-type" select="'tr'" />
