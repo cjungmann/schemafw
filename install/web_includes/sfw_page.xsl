@@ -7,8 +7,10 @@
    xmlns:html="http://www.w3.org/1999/xhtml"
    exclude-result-prefixes="html">
 
+  <xsl:import href="sfw_variables.xsl" />
   <xsl:import href="sfw_utilities.xsl" />
   <xsl:import href="sfw_scripts.xsl" />
+  <xsl:import href="sfw_host.xsl" />
 
   <xsl:output method="xml"
          doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -16,65 +18,26 @@
          version="1.0"
          indent="yes"
          omit-xml-declaration="yes"
-         encoding="UTF-8"/>
+         encoding="utl-8"/>
 
-  <xsl:variable name="result-row"
-                select="/*[@mode-type='form-result']/*[@rndx=1]/*[@error]" />
-
-  <xsl:variable name="docel_msg" select="/message" />
-  <xsl:variable name="child_msg" select="/*[not($docel_msg)]/message" />
-  <xsl:variable name="msg-el" select="$docel_msg | $child_msg" />
-
-  <xsl:variable name="err_condition">
-    <xsl:choose>
-      <xsl:when test="$result-row and $result-row/@error&gt;0">1</xsl:when>
-      <xsl:when test="$msg-el and $msg-el/@type='error'">1</xsl:when>
-      <xsl:otherwise>0</xsl:otherwise>
-    </xsl:choose>
-  </xsl:variable>
-
-  <xsl:variable name="view_name">
-    <xsl:variable name="eview" select="/*/views/view[@selected]/@name" />
-    <xsl:variable name="fview" select="/*/views/view[not($eview)][1]/@name" />
-    <xsl:value-of select="$eview|$fview" />
-  </xsl:variable>
-
-  <xsl:variable name="curView" select="/*/views/view[@name=$view_name]" />
-  <xsl:variable
-      name="viewResult" select="/*/*[@rndx][local-name()=$curView/@result]" />
-
-  <xsl:template match="/*[substring-before(@mode-type,'-')='form']">
-    <xsl:apply-templates select="schema" mode="construct_form" />
-  </xsl:template>
-
+  <!--
+  Template to match transformFill() in _render_interaction().
+  -->
   <xsl:template match="/*">
-    <xsl:apply-templates select="." mode="construct_view" />
+    <xsl:call-template name="fill_host" />
   </xsl:template>
 
-  <xsl:template match="/*" mode="construct_view">
-    <xsl:apply-templates select="." mode="make_schemafw_meta" />
+  <!--
+  Fundamental template for completing an HTML head element.
+  This is meant to be called by a "default.xsl" stylesheet.
 
-    <xsl:variable
-        name="result" select="$viewResult | *[not($viewResult)][@rndx][1]" />
-
-    <xsl:choose>
-      <xsl:when test="$err_condition&gt;0">
-        <xsl:call-template name="display_error" />
-        <xsl:apply-templates select="@meta-jump" mode="make_jump_link" />
-      </xsl:when>
-      <xsl:when test="schema">
-        <xsl:apply-templates select="schema" mode="construct_form">
-          <xsl:with-param name="primary" select="1" />
-        </xsl:apply-templates>
-      </xsl:when>
-      <xsl:when test="$result">
-        <xsl:apply-templates select="$result">
-          <xsl:with-param name="primary" select="1" />
-        </xsl:apply-templates>
-      </xsl:when>
-    </xsl:choose>
-  </xsl:template>
-
+  Primarily, it either
+     creates a meta element to jump to another page if a
+     meta-jump attribute or element is found,
+  or
+     it adds elements (CSS link and Javascript script) that
+     support fundamental Schema Framework operations.
+  -->
   <xsl:template match="/*" mode="fill_head">
     <xsl:if test="$err_condition=0">
       <xsl:choose>
@@ -92,13 +55,15 @@
     </xsl:if>
   </xsl:template>
 
+  <!-- The next set of templates support the mode="fill_head" template. -->
+  
   <xsl:template name="meta-jump">
     <xsl:param name="url" select="'/'" />
     <xsl:param name="wait" select="0" />
 
     <xsl:variable name="content" select="concat($wait,'; url=', $url)" />
     <meta http-equiv="refresh" content="{$content}" />
-    
+
     <script type="text/javascript">
       <xsl:value-of select="concat('location.replace(&quot;',$url,'&quot;);')" />
     </script>
@@ -120,20 +85,6 @@
     </xsl:call-template>
   </xsl:template>
 
-
-  <xsl:template name="display_error">
-    <xsl:choose>
-      <xsl:when test="$result-row and $result-row/@error&gt;0">
-        <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
-      </xsl:when>
-      <xsl:when test="$msg-el and $msg-el/@type='error'">
-        <xsl:apply-templates select="$msg-el" />
-      </xsl:when>
-      <xsl:otherwise><p>Undefined error</p></xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-  
-
   <xsl:template name="add_scripts_and_stylesheets">
     <xsl:if test="$err_condition=0">
       <xsl:choose>
@@ -150,7 +101,12 @@
     </xsl:if>
   </xsl:template>
 
-  <!-- Scans space-separater list of names to generate script elements. -->
+  <!--
+  Scans space-separater list of names to generate script elements.
+
+  Refer to sfw_scripts.xsl for various variables that define the
+  scripts list that add_js will use to construct the script elements.
+  -->
   <xsl:template name="add_js">
     <xsl:param name="list" />
 
@@ -187,6 +143,14 @@
     <link rel="stylesheet" type="text/css" href="includes/dpicker.css" />
   </xsl:template>
 
+
+  <!--
+  -->
+
+  <xsl:template match="/*[substring-before(@mode-type,'-')='form']">
+    <xsl:apply-templates select="schema" mode="construct_form" />
+  </xsl:template>
+
   <xsl:template match="navigation/target" mode="header">
     <a href="{@url}"><xsl:value-of select="@label" /></a>
   </xsl:template>
@@ -200,56 +164,6 @@
   <!-- Empty template for non-matched mode="header" elements to prevent empty lines. -->
   <xsl:template match="*" mode="header"></xsl:template>
   
-  <xsl:template match="views/view" mode="add_choice">
-    <xsl:param name="current" />
-    <xsl:element name="div">
-      <xsl:attribute name="data-name"><xsl:value-of select="@name" /></xsl:attribute>
-      <xsl:attribute name="class">
-        <xsl:text>view_selector</xsl:text>
-        <xsl:if test="generate-id()=generate-id($current)"> selected</xsl:if>
-      </xsl:attribute>
-      <xsl:value-of select="@label" />
-    </xsl:element>
-  </xsl:template>
-
-  <xsl:template match="views" mode="build">
-    <xsl:param name="view" />
-    <nav class="views">
-      <h2><xsl:value-of select="$view/@title" /></h2>
-      <xsl:apply-templates select="view" mode="add_choice">
-        <xsl:with-param name="current" select="$view" />
-      </xsl:apply-templates>
-    </nav>
-  </xsl:template>
-
-  <xsl:template match="view" mode="build">
-    <xsl:apply-templates select=".." mode="build">
-      <xsl:with-param name="view" select="." />
-    </xsl:apply-templates>
-  </xsl:template>
-
-  <xsl:template match="*[@rndx]" mode="show_views">
-    <xsl:variable name="view" select="*/views/view[@name=current()/@view]" />
-    <xsl:if test="$view">
-      <xsl:apply-templates select="/*/view" mode="build">
-        <xsl:with-param name="view" select="$view" />
-      </xsl:apply-templates>
-    </xsl:if>
-  </xsl:template>
-
-  <xsl:template match="/*/views" mode="header">
-    <xsl:param name="view" />
-
-    <xsl:variable name="defview" select="view[not($view)][@default][1]" />
-    <xsl:variable name="use_view"
-                  select="$view|$defview|view[not($view|$defview)][1]" />
-
-    <xsl:if test="$use_view">
-      <xsl:apply-templates select="." mode="build">
-        <xsl:with-param name="view" select="$use_view" />
-      </xsl:apply-templates>
-    </xsl:if>
-  </xsl:template>
 
   <xsl:template match="/*" mode="make_schemafw_meta">
     <xsl:element name="div">
