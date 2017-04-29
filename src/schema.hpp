@@ -484,6 +484,14 @@ public:
    uint32_t           m_session_id;       /**< Indicates active session if
                                              m_session_id!=s_invalid_session.
                                           */
+
+   int                m_number_of_results;/**< Saves the number of results run in the
+                                           *   SimpleProcedure created in
+                                           *   Schema::run_procedure().
+                                           *   The value is used for the rndx attribute
+                                           *   of an variables result from the values of
+                                           *   the Query String, if requested.
+                                           */
     /**@}*/
    
 protected:
