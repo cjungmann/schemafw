@@ -1032,7 +1032,8 @@ Schema::Schema(SpecsReader *sr, FILE *out)
      m_mode_action(MACTION_NULL),
      m_meta_jump(nullptr),
      m_prepage_message(nullptr),
-     m_session_id(s_invalid_session)
+     m_session_id(s_invalid_session),
+     m_number_of_results(0)
 {
    clear_failure_strings();
 }
@@ -1053,7 +1054,8 @@ Schema::Schema(SFW_Resources &sfwr, FILE *out)
      m_mode_action(MACTION_NULL),
      m_meta_jump(nullptr),
      m_prepage_message(nullptr),
-     m_session_id(s_invalid_session)
+     m_session_id(s_invalid_session),
+     m_number_of_results(0)
 {
    clear_failure_strings();
 }
@@ -3248,6 +3250,16 @@ void Schema::process_root_branch(const ab_handle *mode_root,
          print_message_as_xml(m_out, "error", e.what(), "unexpected exception");
       }
 
+      const auto *qstrmode = m_mode->seek("qstring");
+      if (qstrmode && m_qstringer)
+      {
+         ifprintf(m_out,
+                  "<qstring rndx=\"%d\" row-name=\"row\" type=\"variables\">\n",
+                  m_number_of_results+1);
+         m_qstringer->xmlize("row", m_out);
+         ifputs("</qstring>\n", m_out);
+      }
+
       // print close tag of document element:
       ifputs("</", m_out);
       ifputs(tagname, m_out);
@@ -3639,6 +3651,7 @@ void Schema::run_procedure(StoredProc &infoproc)
    SimpleProcedure proc(infoproc.querystr(), infoproc.bindstack());
    Result_As_SchemaDoc user(*m_specsreader, m_mode, m_mode_action, m_out);
    proc.run(&s_mysql, this, &user);
+   m_number_of_results = proc.number_of_results_processed();
 }
 
 /**
