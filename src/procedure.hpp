@@ -563,6 +563,8 @@ public:
    bool fetch(DataStack<BindC> &ds);
    void conclude(void);
 
+   int number_of_results_processed(void) const { return m_result_number; }
+
    /** Like bleeding a brake line, get and ignore the remainder of the procedure. */
    inline void bleed_procedure(void) { conclude(); }
 
