@@ -448,7 +448,7 @@
    {
       var id, url;
       if ((id=tr.getAttribute("data-id"))
-          && (url=this.top().getAttribute("data-on_line_click")))
+          && (url=this.get_data_value("on_line_click")))
       {
          url += "=" + id;
 

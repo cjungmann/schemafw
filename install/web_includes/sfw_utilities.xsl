@@ -34,6 +34,24 @@
 
   </xsl:template>
 
+  <xsl:template match="*[@rndx]" mode="add_data_attribute">
+    <xsl:param name="name" />
+    <xsl:variable name="s_val" select="schema/@*[local-name()=$name]"/>
+    <xsl:variable name="r_val" select="@*[not($s_val)][local-name()=$name]"/>
+    <xsl:variable name="d_val"
+                  select="/*[not($s_val|$r_val)]/@*[local-name()=$name]"/>
+    <xsl:variable name="val" select="$d_val | $r_val | $s_val" />
+
+    <xsl:if test="$val">
+      <xsl:variable name="aname" select="concat('data-',$name)" />
+      <xsl:attribute name="{$aname}">
+        <xsl:call-template name="resolve_refs">
+          <xsl:with-param name="str" select="$val" />
+        </xsl:call-template>
+      </xsl:attribute>
+    </xsl:if>
+  </xsl:template>
+
   <xsl:template match="*" mode="add_on_line_click_attribute">
     <xsl:variable name="olc_s" select="schema/@on_line_click" />
     <xsl:variable name="olc_r" select="/*[not($olc_s)]/@on_line_click" />

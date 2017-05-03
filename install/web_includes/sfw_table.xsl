@@ -46,8 +46,13 @@
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:attribute name="data-sfw-class">table</xsl:attribute>
       <xsl:attribute name="data-result-type">table</xsl:attribute>
-      <xsl:attribute name="data-result-path"><xsl:value-of select="$path" /></xsl:attribute>
-      <xsl:apply-templates select="." mode="add_on_line_click_attribute" />
+      <xsl:attribute name="data-result-path">
+        <xsl:value-of select="$path" />
+      </xsl:attribute>
+
+      <xsl:apply-templates select=".." mode="add_data_attribute">
+        <xsl:with-param name="name">on_line_click</xsl:with-param>
+      </xsl:apply-templates>
 
       <xsl:apply-templates select="." mode="extra_anchor_attributes">
         <xsl:with-param name="type" select="'table'" />

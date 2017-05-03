@@ -9,21 +9,11 @@
    if (!SFW.derive(_calendar, "calendar", "table"))
       return;
 
+
    function _calendar(base, doc, caller, data)
    {
       SFW.types["table"].call(this,base,doc,caller,data);
    }
-
-   // No need for replot function, which is only used to re-sort table rows
-
-   _calendar.prototype.get_on_day_click_url = function()
-   {
-      return this.xmldocel().getAttribute("on_day_click");
-   };
-
-   // _calendar.prototype.child_ready = function(child)
-   // {
-   // };
 
    _calendar.prototype.child_finished = function(child, cmd)
    {
@@ -33,12 +23,10 @@
 
    _calendar.prototype.process_day_click = function(t, did)
    {
-      var odc = this.get_on_day_click_url();
-      if (odc)
+      var url = this.get_data_value("on_day_click");
+      if (url)
       {
-         var url = odc + "=" + did;
-         var ths = this;
-         
+         url += "=" + did;
          empty_el(this.host());
          SFW.open_interaction(SFW.stage, url, this, {caldoc:this.xmldoc(),did:did});
       }
@@ -77,5 +65,5 @@
 
       return this.call_super_event("table", "process", arguments);
    };
-   
+
 })();

@@ -575,6 +575,7 @@ function init_SFW(callback)
       }
 
       url = url.replace(/@[a-z0-1_-]+/, cb);
+
       return url;
    }
 
@@ -647,6 +648,8 @@ function init_SFW(callback)
             }
          }
       }
+
+      console.log(url);
 
       xhr_get(url, got);
    }
@@ -853,6 +856,16 @@ function init_SFW(callback)
       var anchor = _seek_page_anchor(3,this.host());
       if (anchor)
          return anchor.getAttribute("data-sfw-class");
+      else
+         return null;
+   };
+
+   /** Get value of data-{name} attribute from the top element. */
+   _base.prototype.get_data_value = function(name)
+   {
+      var anchor, attr;
+      if ((anchor=this.top()) && (attr=anchor.getAttribute("data-"+name)))
+         return attr;
       else
          return null;
    };
