@@ -10,7 +10,6 @@
   <xsl:import href="sfw_generics.xsl" />
   <xsl:import href="sfw_utilities.xsl" />
   <xsl:import href="sfw_page.xsl" />
-  <xsl:import href="sfw_top.xsl" />
   <xsl:import href="sfw_table.xsl" />
   <xsl:import href="sfw_form.xsl" />
   <xsl:import href="sfw_calendar.xsl" />
