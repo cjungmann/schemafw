@@ -76,6 +76,8 @@ function init_SFW(callback)
    SFW.base                 = _base;  // "base class" for _form, _table, etc.
    SFW.types["iclass"]      = _base;
 
+   SFW.get_object_from_host = _get_object_from_host;
+
    SFW.stage                = document.getElementById("SFW_Content");
    SFW.px                   = _px;
    SFW.addXMLEl             = _addXMLEl;
@@ -538,6 +540,7 @@ function init_SFW(callback)
 
    function _process_event(e,t)
    {
+      // Preempt host search if clicking a view button
       if (class_includes(t,"view_selector"))
       {
          if (!class_includes(t,"selected"))
@@ -546,10 +549,9 @@ function init_SFW(callback)
          return false;
       }
 
-      var host = _seek_event_host(t);
-
-      if (host)
-         return (new SFW.base(host)).type_and_process(e,t);
+      var host, obj;
+      if ((host=_seek_event_host(t)) && (obj=_get_object_from_host(host)))
+         return obj.process(e,t);
       else
          return true;
    }
@@ -600,12 +602,11 @@ function init_SFW(callback)
       var thost = addEl("div",host);
       thost.className = "SFW_Host";
       
-      // Calling function to report errors.
-      if (thost)
-      {
-         var obj = new SFW.base(thost);
-         obj.setup(xmldoc,caller,data);
-      }
+      // if (thost)
+      // {
+      //    var obj = new SFW.base(thost);
+      //    obj.setup(xmldoc,caller,data);
+      // }
       
       return thost;
    }
@@ -619,6 +620,8 @@ function init_SFW(callback)
          {
             if ((newobj=new SFW.types[type](thost,doc,caller,data)))
             {
+               newobj.setup(doc, caller, data);
+               
                newobj.pre_transform();
                SFW.xslobj.transformInsert(thost,doc.documentElement);
                newobj.post_transform();
@@ -640,13 +643,7 @@ function init_SFW(callback)
       function got(xdoc)
       {
          if (_check_for_preempt(xdoc))
-         {
-            var type = xdoc.documentElement.getAttribute("mode-type");
-            if (type)
-            {
-               _render_interaction(type, xdoc, host, caller, data);
-            }
-         }
+            _render_interaction(xdoc, host, caller, data);
       }
 
       console.log(url);
@@ -817,6 +814,17 @@ function init_SFW(callback)
              + (arrX.length ? ("\nOther\n   "   + arrX.join("\n   ")) : ""));
    }
 
+   function _get_object_from_host(host)
+   {
+      var anchor, type;
+      if ((anchor=_seek_child_anchor(host))
+          && (type=anchor.getAttribute("data-sfw-class"))
+          && (type in SFW.types))
+         return new SFW.types[type](host);
+      else
+         return null;
+   }
+
    function _base(host)
    {
       this._host_el = host;
@@ -851,15 +859,6 @@ function init_SFW(callback)
          e.data = data;
    };
 
-   _base.prototype.get_hosted_type = function()
-   {
-      var anchor = _seek_page_anchor(3,this.host());
-      if (anchor)
-         return anchor.getAttribute("data-sfw-class");
-      else
-         return null;
-   };
-
    /** Get value of data-{name} attribute from the top element. */
    _base.prototype.get_data_value = function(name)
    {
@@ -868,34 +867,6 @@ function init_SFW(callback)
          return attr;
       else
          return null;
-   };
-
-   _base.prototype.get_hosted_class = function()
-   {
-      var cls = null;
-      var type = this.get_hosted_type();
-      if (_confirm_not_null(type,"No type in anchor."))
-      {
-         if (type in SFW.types)
-            cls = SFW.types[type];
-         else
-            _log_error("\"" + type + "\" not a registered type.");
-            
-      }
-      return cls;
-   };
-
-   _base.prototype.type_and_process = function(e,t)
-   {
-      var cls = this.get_hosted_class();
-      if (cls)
-      {
-         var host = this.host();
-         var obj = new cls(this.host());
-         return obj.process(e,t);
-      }
-      else
-         return true;
    };
 
    _base.prototype.sfw_close = function _sfw_close()
@@ -1069,12 +1040,25 @@ function init_SFW(callback)
       }
    }
 
+   function _seek_current_view(doc)
+   {
+      var views = doc.documentElement.selectSingleNode("views");
+      if (views)
+      {
+         var xpath = "view[@selected] | view[not(view[@selected])][1]";
+         return views.selectSingleNode(xpath);
+      }
+
+      return null;
+   }
+
    function _get_class_from_doc(doc)
    {
-      var docel = doc.documentElement;
-      var name = docel.getAttribute("mode-type");
-      if (name)
+      var name, view;
+      if ((name= doc.documentElement.getAttribute("mode-type")))
          return _get_class_from_name(name);
+      else if ((view = _seek_current_view(doc)))
+         return view.getAttribute("type");
       else
       {
          console.error("Missing mode-type attribute.");
@@ -1082,7 +1066,7 @@ function init_SFW(callback)
       }
    }
 
-   function _render_interaction(type,doc,host,caller,data)
+   function _render_interaction(doc,host,caller,data)
    {
       var lhost = _make_sfw_host(host,doc,caller,data);
       
@@ -1096,7 +1080,10 @@ function init_SFW(callback)
             obj = new iclass(lhost);
 
          if (obj)
+         {
+            obj.setup(doc, caller, data);
             obj.pre_transform();
+         }
          
          SFW.xslobj.transformFill(lhost, doc.documentElement);
 
