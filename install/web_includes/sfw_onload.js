@@ -16,12 +16,10 @@ window.onload = function()
       var sfwhost = SFW.seek_top_sfw_host();
       if (sfwhost)
       {
-         var obj = new SFW.base(sfwhost);
-         obj.setup(SFW.xmldoc);
-         var type = obj.get_hosted_class();
-         if (type)
+         var obj = SFW.get_object_from_host(sfwhost);
+         if (obj)
          {
-            obj = new type(sfwhost);
+            obj.setup(SFW.xmldoc);
             obj.initialize();
          }
       }
