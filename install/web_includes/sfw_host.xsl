@@ -55,6 +55,13 @@
   <!--
   Fundamental template for filling the initial SFW_Host element
   that should be in a SFW_Content element in the HTML body element.
+
+  This template acts based on global variables found in sfw_variables.xsl.
+
+  Concerning the xsl:choose paths.
+  1. Check for pre-empting error message with the $err_condition flag, or
+  2. check for schema for building some type of form, or finally,
+  3. check for a result to build a table or some custom otuput.
   -->
   <xsl:template name="fill_host">
     <xsl:param name="primary" />
