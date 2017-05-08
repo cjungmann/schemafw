@@ -317,7 +317,7 @@ will contain the YYYY-MM-DD date.
 
     <xsl:element name="table">
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
-      <xsl:attribute name="data-sfw-class"><xsl:value-of select="$sfw_class" /></xsl:attribute>
+      <xsl:apply-templates select=".." mode="add_sfw_class_attribute" />
       <xsl:apply-templates select=".." mode="add_data_attribute">
         <xsl:with-param name="name">on_day_click</xsl:with-param>
       </xsl:apply-templates>
