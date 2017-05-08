@@ -23,17 +23,6 @@
 
   <xsl:variable name="vars" select="/*/*[@rndx][@type='variables']" />
   
-  <xsl:template match="*" mode="extra_anchor_attributes">
-    <xsl:param name="type" />
-
-    <xsl:attribute name="data-sfw-class">
-      <xsl:value-of select="$type" />
-    </xsl:attribute>
-
-    <xsl:apply-templates select="." mode="add_on_line_click_attribute" />
-
-  </xsl:template>
-
   <xsl:template match="*[@rndx]" mode="add_data_attribute">
     <xsl:param name="name" />
     <xsl:variable name="s_val" select="schema/@*[local-name()=$name]"/>
@@ -52,18 +41,34 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="*" mode="add_on_line_click_attribute">
-    <xsl:variable name="olc_s" select="schema/@on_line_click" />
-    <xsl:variable name="olc_r" select="/*[not($olc_s)]/@on_line_click" />
-    <xsl:variable name="olc" select="$olc_s|$olc_r" />
+  <xsl:template name="build_sfw_class_attribute">
+    <xsl:param name="schema" select="/.." />
+    <xsl:attribute name="data-sfw-class">
+      <xsl:choose>
+        <xsl:when test="$schema and $schema/@type">
+          <xsl:value-of select="@type" />
+        </xsl:when>
+        <xsl:when test="$gview and $gview/@type">
+          <xsl:value-of select="$gview/@type" />
+        </xsl:when>
+        <xsl:when test="/*[@mode-type]">
+          <xsl:value-of select="/*/@mode-type" />
+        </xsl:when>
+        <xsl:otherwise>table</xsl:otherwise>
+      </xsl:choose>
+    </xsl:attribute>
+  </xsl:template>
 
-    <xsl:if test="$olc">
-      <xsl:attribute name="on_line_click">
-        <xsl:call-template name="resolve_refs">
-          <xsl:with-param name="str" select="$olc" />
-        </xsl:call-template>
-      </xsl:attribute>
-    </xsl:if>
+  <xsl:template match="schema" mode="add_sfw_class_attribute">
+    <xsl:call-template name="build_sfw_class_attribute">
+      <xsl:with-param name="schema" select="." />
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="*[@rndx]" mode="add_sfw_class_attribute">
+    <xsl:call-template name="build_sfw_class_attribute">
+      <xsl:with-param name="schema" select="@schema" />
+    </xsl:call-template>
   </xsl:template>
 
   <!-- add generic attributes with html- prefix to current element: -->
