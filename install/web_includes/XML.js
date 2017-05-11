@@ -715,9 +715,12 @@ function implement_XSL_methods()
    // Easy ones first:
    XSL.prototype.init = function(doc,callback)
    {
+      if (doc.documentElement.localName!="stylesheet")
+         console.error("The document is not an XSLT stylesheet");
+
       if (!("fix_stylesheet" in XSL))
          prepare_XSL_init(doc);
-         
+
       prep_namespaces(doc);
       this.doc = doc;
       this.fix_stylesheet(callback);
@@ -815,6 +818,8 @@ function implement_XSL_methods()
       }
       XSL.prototype.make_root_one_fix = function(node)
       {
+         this.undo_root_one_fix();
+         
          var doc = node.ownerDocument;
          var xpath_to_node = root_one_xpath;
 
@@ -836,9 +841,12 @@ function implement_XSL_methods()
       };
       XSL.prototype.undo_root_one_fix = function(node)
       {
-         if (node.nodeType==2)
-            node = node.ownerElement;
-         node.removeAttribute("root_one");
+         if (node || (node=this.doc.selectSingleNode(root_one_xpath)))
+         {
+            if (node.nodeType==2)
+               node = node.ownerElement;
+            node.removeAttribute("root_one");
+         }
       };
       XSL.prototype.transformInsert = function(host,node,before)
       {
@@ -853,8 +861,10 @@ function implement_XSL_methods()
          {
             source_doc = node.ownerDocument;
             source_node = node;
-            this.make_root_one_fix(node);
          }
+
+         this.make_root_one_fix(source_node);
+         
          // protect node in case of error:
          try
          {
@@ -871,8 +881,8 @@ function implement_XSL_methods()
          }
          catch(e) { alert("transformToFragment failed: " + e.message); }
 
-         if (node.nodeType!=9)
-            this.undo_root_one_fix(node);
+         // if (node.nodeType!=9)
+         //    this.undo_root_one_fix(node);
       };
       XSL.prototype.transformFill = function(host,node)
       {
