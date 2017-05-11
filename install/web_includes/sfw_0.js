@@ -65,6 +65,7 @@ function init_SFW(callback)
    SFW.process_event        = _process_event;
 
    SFW.get_last_SFW_Host    = _get_last_SFW_Host;
+   SFW.arrange_in_host      = _arrange_in_host;
    SFW.resize_page          = _resize_page;
    SFW.translate_url        = _translate_url;
    SFW.render_interaction   = _render_interaction;
@@ -75,6 +76,8 @@ function init_SFW(callback)
    SFW.update_location_arg  = _update_location_arg;
    SFW.base                 = _base;  // "base class" for _form, _table, etc.
    SFW.types["iclass"]      = _base;
+
+   SFW.show_string_in_pre   = _show_string_in_pre;
 
    SFW.get_object_from_host = _get_object_from_host;
 
@@ -106,6 +109,13 @@ function init_SFW(callback)
       console.error(msg);
       if (SFW.debugging)
          debugger;
+   }
+
+   function _show_string_in_pre(str)
+   {
+      var div = addEl("pre", document.body);
+      // var div = document.body.appendChild(document.createElement("div"));
+      div.appendChild(document.createTextNode(str));
    }
 
    function _confirm_not_null(obj, msg)
@@ -1086,6 +1096,13 @@ function init_SFW(callback)
          }
          
          SFW.xslobj.transformFill(lhost, doc.documentElement);
+
+         // Uncomment for debugging problems with the stylesheet and document:
+         // if (lhost.childNodes.length==0)
+         // {
+         //    _show_string_in_pre(serialize(doc));
+         //    _show_string_in_pre(serialize(SFW.xslobj.doc));
+         // }
 
          if (obj)
          {
