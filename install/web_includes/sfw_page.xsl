@@ -24,7 +24,14 @@
   Template to match transformFill() in _render_interaction().
   -->
   <xsl:template match="/*">
-    <xsl:call-template name="fill_host" />
+    <xsl:choose>
+      <xsl:when test="$is_form">
+        <xsl:apply-templates select="$gschema" mode="construct_form" />
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="fill_host" />
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <!--
@@ -141,14 +148,6 @@
     <link rel="stylesheet" type="text/css" href="includes/schemafw.css" />
     <xsl:value-of select="$nl" />
     <link rel="stylesheet" type="text/css" href="includes/dpicker.css" />
-  </xsl:template>
-
-
-  <!--
-  -->
-
-  <xsl:template match="/*[substring-before(@mode-type,'-')='form']">
-    <xsl:apply-templates select="schema" mode="construct_form" />
   </xsl:template>
 
   <xsl:template match="navigation/target" mode="header">
