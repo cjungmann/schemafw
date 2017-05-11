@@ -45,7 +45,10 @@
     </xsl:choose>
   </xsl:variable>
 
-  <xsl:variable name="gschema" select="/*/schema" />
+  <xsl:variable name="is_form" select="/*[starts-with(@mode-type,'form-')]" />
+  <xsl:variable name="dschema" select="/*[$is_form]/schema" />
+  <xsl:variable name="rschema" select="/*[$is_form][not($dschema)]/*[@rndx=1]/schema" />
+  <xsl:variable name="gschema" select="$dschema|$rschema" />
 
   <!-- $gview, if available, will dictate which result to use. -->
   <xsl:variable name="gsview" select="/*/views/view[@selected]" />
