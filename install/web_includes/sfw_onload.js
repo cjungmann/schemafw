@@ -19,6 +19,8 @@ window.onload = function()
          var obj = SFW.get_object_from_host(sfwhost);
          if (obj)
          {
+            SFW.arrange_in_host(sfwhost, obj.top());
+
             obj.setup(SFW.xmldoc);
             obj.initialize();
          }
