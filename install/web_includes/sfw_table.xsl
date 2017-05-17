@@ -30,10 +30,6 @@
   -->
   <xsl:template match="schema" mode="construct_table">
     <xsl:param name="static" />
-    
-    <xsl:variable name="path">
-      <xsl:apply-templates select=".." mode="get_path" />
-    </xsl:variable>
 
     <xsl:variable name="class">
       <xsl:text>Schema</xsl:text>
@@ -46,7 +42,9 @@
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
 
       <xsl:attribute name="data-result-path">
-        <xsl:value-of select="$path" />
+        <xsl:variable name="path">
+          <xsl:apply-templates select=".." mode="get_path" />
+        </xsl:variable>
       </xsl:attribute>
 
       <xsl:apply-templates select="." mode="add_sfw_class_attribute" />
