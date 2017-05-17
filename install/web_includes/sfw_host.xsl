@@ -10,6 +10,7 @@
   <xsl:import href="sfw_variables.xsl" />
   <xsl:import href="sfw_form.xsl" />
   <xsl:import href="sfw_table.xsl" />
+  <xsl:import href="sfw_mixed_view.xsl" />
 
   <xsl:output method="xml"
          doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -71,6 +72,11 @@
       <xsl:when test="$err_condition&gt;0">
         <xsl:call-template name="display_error" />
         <xsl:apply-templates select="@meta-jump" mode="make_jump_link" />
+      </xsl:when>
+      <xsl:when test="/*[@mode-type='mixed-view']">
+        <xsl:apply-templates select="/*" mode="construct_mixed_view">
+          <xsl:with-param name="primary" select="$primary" />
+        </xsl:apply-templates>
       </xsl:when>
       <xsl:when test="$gschema">
         <xsl:apply-templates select="$gschema" mode="construct_form">
