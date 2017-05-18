@@ -51,6 +51,6 @@ There are several sections.
     - [Adding Buttons](AddingButtons.md)
     - [Context References](ContextReferences.md)
     - [Result Dialogs (type:form-result)](ResultDialogs.md)
-    - [Multipart Form](MultipartForm.md)
+    - [Mixed-view Interaction](MixedView.md)
     - [Multipart Form Section](FormSection.md)
     - [MySQL Hints](MySQLHints.md)
