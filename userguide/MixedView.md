@@ -30,6 +30,9 @@ This interaction is more complicated than other types, with much more
 setup required, more parts, and certain required instructions that can
 be ignored in other interaction types.
 
+The _mixed view_ response mode must identify its type as _mixed-view_
+
+
 #### The Directing Schema
 
 1. The schema in the first result is the director of the mixed-view.
@@ -59,28 +62,19 @@ be ignored in other interaction types.
 
 ~~~srm
 person_view
-   type      : mixed-view
+   type      : mixed-view       # required type value to trigger mixed-view
    procedure : App_Person_View
    result : 1
       schema
-         field : fullname
-            label    : Full Name
-            readOnly : true
+         field : fname
+            label : First Name
+         field : lname
+            label : Last Name
          field : phones
             label    : Phone List
-            # name of result to be integrated into the form.  It is the
-            # presence of this instruction that identifies the field
-            # as the director of a subview.
             result   : phonelist
-
-            # The type instruction becomes the attribute that helps identify
-            # the appropriate *mode="construct_subview"* template.
             type     : table
-            
-            # URL with which the section will be edited:
             manage   : person.srm?manage_person_phones
-            
-            # URL to call to replot the section after changes made:
             update   : person.srm?phones_section_refresh
             
    # Make sure the name of the result matches the value of the result instruction.
