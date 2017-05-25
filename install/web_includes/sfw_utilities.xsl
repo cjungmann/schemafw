@@ -319,6 +319,12 @@
     </xsl:if>
   </xsl:template>
 
+  <xsl:template match="@*" mode="resolve_refs">
+    <xsl:call-template name="resolve_refs">
+      <xsl:with-param name="str" select="." />
+    </xsl:call-template>
+  </xsl:template>
+
   <xsl:template name="get_data_value">
     <xsl:param name="name" />
     <xsl:variable name="results" select="/*/*[@rndx and not(@type='variables')]" />
