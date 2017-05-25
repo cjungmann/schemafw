@@ -51,9 +51,8 @@ function init_SFW(callback)
    SFW.confirm_not_null     = _confirm_not_null;
    SFW.seek_top_sfw_host    = _seek_top_sfw_host;
    SFW.seek_page_anchor     = _seek_page_anchor;
-   SFW.seek_event_anchor    = _seek_event_anchor;
-   SFW.seek_event_host      = _seek_event_host;
    SFW.seek_child_anchor    = _seek_child_anchor;
+   SFW.seek_event_object    = _seek_event_object;
    SFW.derive               = _derive;
    SFW.document_object      = _document_object;
    SFW.add_event            = _add_event;
@@ -68,6 +67,8 @@ function init_SFW(callback)
    SFW.arrange_in_host      = _arrange_in_host;
    SFW.resize_page          = _resize_page;
    SFW.translate_url        = _translate_url;
+   SFW.apply_row_context    = _apply_row_context;
+   
    SFW.render_interaction   = _render_interaction;
    SFW.open_interaction     = _open_interaction;
    SFW.get_director         = _get_director;
@@ -169,32 +170,42 @@ function init_SFW(callback)
       return null;
    }
 
-   function _seek_event_anchor(t)
+   function _seek_event_actors(t)
    {
-      while (t)
-      {
-         if (_is_anchor(t))
-            return t;
-         t = t.parentNode;
-      }
-      return null;
-   }
-
-   function _seek_event_host(t)
-   {
+      var aval, rval = {};
+      var fcount = 0;
       while (t && t.nodeType < 9)
       {
          if (t.nodeType==1)
          {
-            if (t.className=="SFW_Host")
-               return t;
+            if ((aval=t.getAttribute("data-sfw-class")))
+            {
+               rval["iclass"] = aval;
+               rval["anchor"] = t;
+               ++fcount;
+            }
+            else if (t.className=="SFW_Host")
+            {
+               if (t.getAttribute("data-subview"))
+                  rval["subhost"] = t;
+               else
+               {
+                  rval["host"] = t;
+                  ++fcount;
+                  break;
+               }
+            }
          }
-         else if (t.nodeType==9)
-            break;
-
          t = t.parentNode;
       }
+      return fcount==2 ? rval : null;
+   }
 
+   function _seek_event_object(t)
+   {
+      var actors = _seek_event_actors(t);
+      if (actors && actors.iclass in SFW.types)
+         return new SFW.types[actors.iclass](actors.host);
       return null;
    }
 
@@ -550,6 +561,10 @@ function init_SFW(callback)
 
    function _process_event(e,t)
    {
+      if (t.tagName.toLowerCase()=="img"
+          && t.parentNode.tagName.toLowerCase()=="button")
+         t = t.parentNode;
+      
       // Preempt host search if clicking a view button
       if (class_includes(t,"view_selector"))
       {
@@ -559,25 +574,23 @@ function init_SFW(callback)
          return false;
       }
 
-      var host, obj;
-      if ((host=_seek_event_host(t)) && (obj=_get_object_from_host(host)))
+      var obj = _seek_event_object(t);
+      if (obj)
          return obj.process(e,t);
       else
          return true;
    }
 
-   function _translate_url(url, xmldoc)
+   function _translate_url(url, xmldocel)
    {
-      var docel = xmldoc.documentElement;
-
-      var refs = docel.selectNodes("*[@type='ref']");
+      var refs = xmldocel ? xmldocel.selectNodes("*[@type='ref']") : null;
       if (!refs || refs.length==0)
          return url;
 
       function cb(match)
       {
          var rnode, xpath = "*[@type='ref']/*[" + match + "]";
-         if ((rnode=docel.selectSingleNode(xpath)))
+         if ((rnode=xmldocel.selectSingleNode(xpath)))
          {
             var val = rnode.getAttribute(match.substring(1));
             return encodeURIComponent(val);
@@ -589,6 +602,25 @@ function init_SFW(callback)
       url = url.replace(/@[a-z0-1_-]+/, cb);
 
       return url;
+   }
+
+   var reRplRowVals = /\{\!([^\}]+)\}/;
+
+   function _apply_row_context(url, row)
+   {
+      function rep(full, sub)
+      {
+         var aval = row.getAttribute(sub);
+         if (aval)
+            return aval;
+         else
+         {
+            console.error("Unable to find attribute " + matches[1]);
+            return "";
+         }
+      }
+
+      return url.replace(reRplRowVals, rep);
    }
 
    function _arrange_in_host(host, anchor)
@@ -840,10 +872,13 @@ function init_SFW(callback)
       this._host_el = host;
    };
 
-   _base.prototype.host     = function() { return this._host_el; };
-   _base.prototype.xmldoc   = function() { return this._host_el._xmldoc; };
-   _base.prototype.xmldocel = function() { return this.xmldoc().documentElement; };
-   _base.prototype.data     = function() { return this._host_el.data; };
+   _base.prototype.host     = function() { return this._host_el||null; };
+   _base.prototype.xmldoc   = function()
+   { var r; if ((r=this.host())){r=r._xmldoc||null;} return r; };
+   _base.prototype.xmldocel = function()
+   { var r; if ((r=this.xmldoc())){r=r.documentElement||null;} return r; };
+   _base.prototype.data     = function()
+   { var r; if ((r=this.host())) {r=r.data||null;} return r; };
 
    _base.prototype.class_name = "iclass";
    _base.prototype.top       = function() { return _find_anchor(this.host()); };
@@ -1005,7 +1040,7 @@ function init_SFW(callback)
                return this[pbtype](b,cb);
             else if (url)
             {
-               url = _translate_url(url, this.xmldoc());
+               url = _translate_url(url, this.xmldocel());
                _open_interaction(this.top().parentNode, url, this);
             }
             break;
