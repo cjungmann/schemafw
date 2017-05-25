@@ -450,28 +450,33 @@
       if ((id=tr.getAttribute("data-id"))
           && (url=this.get_data_value("on_line_click")))
       {
-         url += "=" + id;
-
          var idname = this.get_line_click_id_name();
          function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
-
 
          // Somehow get row-name, perhaps saved in the attributes of the table,
          // and pass it as an argument to result():
          var xrow = SFW.find_child_matches(this.result(), f, true);
 
-         var os = SFW.get_page_offset();  // Get offset before discarding contents
-         var host = this.host();
+         if (xrow)
+         {
+            if (url.indexOf('&')==-1)
+               url += "=" + id;
+            else
+               url = SFW.apply_row_context(url, xrow);
 
-         empty_el(host);
+            var os = SFW.get_page_offset();  // Get offset before discarding contents
+            var host = this.host();
 
-         SFW.open_interaction(SFW.stage,
-                              url,
-                              this,
-                              { os:os, host:host, xrow:xrow }
-                             );
+            empty_el(host);
 
-         return false;
+            SFW.open_interaction(SFW.stage,
+                                 url,
+                                 this,
+                                 { os:os, host:host, xrow:xrow }
+                                );
+
+            return false;
+         }
       }
 
       return true;
