@@ -30,6 +30,7 @@ There are several sections.
     - [Data Modeling](DataModeling.md)
     - [Interactive Classes](IClasses.md)
     - [Dependent Module Loading](DependentModuleLoad.md)
+    - [Making Sense of *on_line_click*](OnLineClick.md)
   - Extending the Framework
     - [Custom Interactive Classes](CustomIClasses.md)
   - Debugging

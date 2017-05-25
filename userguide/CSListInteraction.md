@@ -50,6 +50,9 @@ This response mode includes two extra instructions,
    the URL in the _task_ instruction.  See
    [Create Interaction](CSCreateInteraction.md).
 
+For doing more things with the *on_line_click* instruction, see
+[Making Sense of *on_line_click*](OnLineClick.md).
+
 ## Client-side Use
 
 When the client receives the response from SchemaFW, it will render a table
