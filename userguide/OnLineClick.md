@@ -11,8 +11,10 @@ In the SchemaFW, when a user clicks on a table row, the framework looks
 for an *on_line_click* instruction to find a template for the URL to be used
 to retrieve the data for the interaction.
 
-(Note: a calendar-based interaction will look for *on_day_click* instead of
-*on_line_click*.)
+This is a useage case for [Context References](ContextReferences.md).
+
+The principles discussed here also apply to the *on_day_click* instruction
+in a calendar interaction.
 
 ## Two *on_line_click* Forms
 

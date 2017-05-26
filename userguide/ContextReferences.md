@@ -41,10 +41,11 @@ The __@__ and __$__ references are available when building the page,
 and can be used to modify titles, captions, or URLs. 
 
 The __!__ prefix refers to the selected line context, so it only applies for an
-_on_line_click_ instruction for a table view.  Because it can't be resolved until
-a selection is made, the curly-brace expression will remain in the URL to be
-resolved once the user has chosen a table row.  When that happens, the {!...} will be
-replaced with the value of the attribute of the XML source of the line in the table.
+*on_line_click* instruction for a table view (see [Making Sense of *on_line_click*](OnLineClick.md)).
+Because it can't be resolved until a selection is made, the curly-brace expression
+will remain in the URL to be resolved once the user has chosen a table row.  When
+that happens, the {!...} will be replaced with the value of the attribute of the
+XML source of the line in the table.
 
 ### QString Context Reference
 
