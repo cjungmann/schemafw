@@ -818,10 +818,10 @@ function implement_XSL_methods()
       }
       XSL.prototype.make_root_one_fix = function(node)
       {
-         this.undo_root_one_fix();
-         
          var doc = node.ownerDocument;
          var xpath_to_node = root_one_xpath;
+
+         this.undo_root_one_fix(doc);
 
          // Adjust if passed an attibute node:
          if (node.nodeType==2)
@@ -839,14 +839,12 @@ function implement_XSL_methods()
          var match = add_namespace_el("apply-templates",nsXSL,doc_node_template);
          match.setAttribute("select", xpath_to_node);
       };
-      XSL.prototype.undo_root_one_fix = function(node)
+      XSL.prototype.undo_root_one_fix = function(doc)
       {
-         if (node || (node=this.doc.selectSingleNode(root_one_xpath)))
-         {
-            if (node.nodeType==2)
-               node = node.ownerElement;
-            node.removeAttribute("root_one");
-         }
+         var nl = doc.selectNodes(root_one_xpath);
+         if (nl)
+            for (var i=0,stop=nl.length; i<stop; ++i)
+               nl[i].removeAttribute("root_one");
       };
       XSL.prototype.transformInsert = function(host,node,before)
       {
@@ -880,9 +878,6 @@ function implement_XSL_methods()
                console.error("Stylesheet failed to transform xml.");
          }
          catch(e) { alert("transformToFragment failed: " + e.message); }
-
-         // if (node.nodeType!=9)
-         //    this.undo_root_one_fix(node);
       };
       XSL.prototype.transformFill = function(host,node)
       {
