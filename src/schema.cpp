@@ -661,6 +661,10 @@ void Schema_Printer::print_schema_fields(const ab_handle *fields)
          print_field_attribute("not-null", "true");
       if (bind.buffer_length()>0)
          print_field_attribute("length", bind.buffer_length());
+      if (bind.sqlflag_group())
+         print_field_attribute("group","true");
+      if (bind.sqlflag_part_key())
+         print_field_attribute("part-key", "true");
 
       if (field && (attribute=field->seek("enum")))
          print_field_attribute(attribute);

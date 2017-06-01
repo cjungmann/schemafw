@@ -129,6 +129,8 @@ o    * considering zerofill.
    inline bool sqlflag_no_default_value(void) const { return (m_flags & NO_DEFAULT_VALUE_FLAG) != 0; }
    inline bool sqlflag_on_update_now(void) const    { return (m_flags & ON_UPDATE_NOW_FLAG) != 0; }
    inline bool sqlflag_num(void) const              { return (m_flags & NUM_FLAG) != 0; }
+   inline bool sqlflag_part_key(void) const         { return (m_flags & PART_KEY_FLAG) != 0; }
+   inline bool sqlflag_group(void) const            { return (m_flags & GROUP_FLAG) != 0; }
    /**@}*/
 
 
