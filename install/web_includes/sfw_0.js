@@ -68,7 +68,6 @@ function init_SFW(callback)
    SFW.resize_page          = _resize_page;
    SFW.translate_url        = _translate_url;
    SFW.apply_row_context    = _apply_row_context;
-   
    SFW.render_interaction   = _render_interaction;
    SFW.open_interaction     = _open_interaction;
    SFW.get_director         = _get_director;
@@ -81,6 +80,7 @@ function init_SFW(callback)
    SFW.show_string_in_pre   = _show_string_in_pre;
 
    SFW.get_object_from_host = _get_object_from_host;
+   SFW.get_cfobj_result     = _get_cfobj_result;
 
    SFW.stage                = document.getElementById("SFW_Content");
    SFW.px                   = _px;
@@ -865,6 +865,25 @@ function init_SFW(callback)
          return new SFW.types[type](host);
       else
          return null;
+   }
+
+   function _get_cfobj_result(cfobj)
+   {
+      var cd, xrow, rowone;
+      if ("cdata" in cfobj && (cd=cfobj.cdata) && "xrow" in cd)
+         xrow = cd.xrow;
+      if ("rowone" in cfobj)
+         rowone = cfobj.rowone;
+
+      function check(row)
+      {
+         var pn = row ? row.parentNode : null;
+         if (pn && !pn.getAttribute("rndx"))
+            pn = null;
+         return pn;
+      }
+
+      return check(rowone) || check(xrow) || null;
    }
 
    function _base(host)
