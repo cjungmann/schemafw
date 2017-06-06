@@ -21,6 +21,26 @@ mode
    child3 :
 ~~~
 
+## Include SRM Files
+
+Use `$include` to centralize the setting of common values.  In the following
+example, the file _common.srm_ contains some instructions that should be used
+in every SRM file in the application.   The second (partial) file listing
+has the `$include` instruction.  When _schema.fcgi_ reads a line starting with
+`$include`, the line is replaced with contents of the referenced file.
+
+common.srm:
+~~~
+$database       : CaseStudy
+$xml-stylesheet : default.xsl
+~~~
+
+contacts.srm
+~~~srm
+$include      : common.srm
+$default-mode : main
+~~~
+
 ## Shared Modes
 
 To allow a branch to be shared between multiple modes, make a named **$shared** node.
