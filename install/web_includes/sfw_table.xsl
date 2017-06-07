@@ -8,6 +8,7 @@
 
   <xsl:import href="sfw_generics.xsl" />
   <xsl:import href="sfw_utilities.xsl" />
+  <xsl:import href="sfw_schema.xsl" />
 
   <xsl:output method="xml"
          doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -49,9 +50,10 @@
 
       <xsl:apply-templates select="." mode="add_sfw_class_attribute" />
 
-      <xsl:apply-templates select=".." mode="add_data_attribute">
-        <xsl:with-param name="name">on_line_click</xsl:with-param>
-      </xsl:apply-templates>
+      <xsl:apply-templates select="." mode="add_on_line_click_attribute" />
+      <!-- <xsl:apply-templates select=".." mode="add_data_attribute"> -->
+      <!--   <xsl:with-param name="name">on_line_click</xsl:with-param> -->
+      <!-- </xsl:apply-templates> -->
 
       <thead>
         <xsl:if test="not($static)">
@@ -193,7 +195,7 @@
     <xsl:variable name="id_field">
       <xsl:apply-templates select="." mode="get_id_field_name" />
     </xsl:variable>
-    
+
     <xsl:variable name="field" select="field[@sorting]" />
 
     <xsl:choose>
@@ -288,7 +290,7 @@
     <!-- for ad-hoc lines, figure id_field on the fly -->
     <xsl:variable name="id_field">
       <xsl:choose>
-        <xsl:when test="$line_id">
+        <xsl:when test="string-length($line_id)">
           <xsl:value-of select="$line_id" />
         </xsl:when>
         <xsl:otherwise>
@@ -317,6 +319,7 @@
       </xsl:if>
 
       <xsl:if test="$id_field">
+        <xsl:attribute name="idfield">id_field is <xsl:value-of select="$id_field" /></xsl:attribute>
         <xsl:attribute name="data-id">
           <xsl:value-of select="@*[name()=$id_field]" />
         </xsl:attribute>
@@ -326,19 +329,6 @@
         <xsl:with-param name="data" select="." />
       </xsl:apply-templates>
     </xsl:element>
-  </xsl:template>
-
-  <xsl:template match="schema" mode="get_id_field_name">
-    <xsl:variable name="lid" select="./field[@line_id]" />
-    <xsl:variable name="pid" select="./field[@primary-key]" />
-    <xsl:choose>
-      <xsl:when test="$lid">
-        <xsl:value-of select="$lid/@name" />
-      </xsl:when>
-      <xsl:when test="$pid">
-        <xsl:value-of select="$pid/@name" />
-      </xsl:when>
-    </xsl:choose>
   </xsl:template>
 
   <xsl:template match="field[not(@hidden or @ignore)]" mode="construct_line_cell">
