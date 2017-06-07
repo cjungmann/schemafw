@@ -39,7 +39,7 @@
         </div>
         <div id="SFW_Content">
           <div class="SFW_Host">
-            <xsl:apply-templates select="/*" mode="construct_view" />
+            <xsl:call-template name="fill_host" />
           </div>
         </div>
       </body>
