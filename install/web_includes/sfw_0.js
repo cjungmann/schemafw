@@ -52,6 +52,7 @@ function init_SFW(callback)
    SFW.seek_top_sfw_host    = _seek_top_sfw_host;
    SFW.seek_page_anchor     = _seek_page_anchor;
    SFW.seek_child_anchor    = _seek_child_anchor;
+   SFW.seek_event_actors    = _seek_event_actors;
    SFW.seek_event_object    = _seek_event_object;
    SFW.derive               = _derive;
    SFW.document_object      = _document_object;
@@ -1078,9 +1079,18 @@ function init_SFW(callback)
    {
       cfobj.close();
    };
-    
+
+   /** Buttons are all processed the same way, so handle consistently in base class. */
    _base.prototype.process = function _base_process(e,t)
    {
+      if (e.type=="click")
+      {
+         function b(n) { return t.tagName.toLowerCase()=="button"?t:null; }
+         var button = b(t) || b(t.parentNode);
+         if (button)
+            return this.process_clicked_button(button);
+      }
+      
       return true;
    };
 
