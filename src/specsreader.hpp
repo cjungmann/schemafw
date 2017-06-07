@@ -237,13 +237,14 @@ public:
       const char *m_value;
    };
 protected:
-   Advisor             &m_advisor; /**< Advisor file reader. */
-   const Advisor_Index &m_index;   /**< Advisor_Index for getting global mode information. */
+   Advisor             &m_advisor;    /**< Advisor file reader. */
+   const Advisor_Index &m_index;      /**< Advisor_Index for getting global mode information. */
+   const char          *m_scriptname;
 
 protected:
    /** @brief Protected constructor to prevent direct instantiation. */
-   SpecsReader(Advisor &advisor, const Advisor_Index &index)
-      : m_advisor(advisor), m_index(index)     {  }
+   SpecsReader(Advisor &advisor, const Advisor_Index &index, const char *name=nullptr)
+      : m_advisor(advisor), m_index(index), m_scriptname(name)     {  }
 
 public:
    /**
@@ -260,6 +261,8 @@ public:
       Generic_User<SpecsReader, Func> user(f);
       t_build(advisor,user);
    }
+
+   const char *scriptname(void) const { return m_scriptname; }
    
    // template <class Func>
    // static void build(const char *name, Func &f)
@@ -287,12 +290,18 @@ public:
    template <class Func>
    static void build(const char *path, Func f)
    {
-      auto fGotFile = [&f](AFile_Handle &afh)
+      const char *scriptname = strrchr(path,'/');
+      if (scriptname)
+         ++scriptname;
+      else
+         scriptname = path;
+      
+      auto fGotFile = [&f, &scriptname](AFile_Handle &afh)
       {
          Advisor advisor(afh);
-         auto fGotIndex = [&f, &advisor](Advisor_Index &ai)
+         auto fGotIndex = [&f, &advisor, &scriptname](Advisor_Index &ai)
          {
-            SpecsReader sr(advisor, ai);
+            SpecsReader sr(advisor, ai, scriptname);
             f(sr);
          };
          Generic_User<Advisor_Index,decltype(fGotIndex)> gu(fGotIndex);

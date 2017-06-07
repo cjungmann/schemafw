@@ -3364,6 +3364,9 @@ void Schema::print_document_element(const char *tagname,
 
    print_method_attribute(m_out);
 
+   if (m_specsreader->scriptname())
+      print_xml_attribute(m_out, "script", m_specsreader->scriptname());
+
    if (m_type_value)
       print_xml_attribute(m_out, "mode-type", m_type_value);
 
