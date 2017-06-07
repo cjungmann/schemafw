@@ -156,77 +156,34 @@
          n.removeAttribute("select");
    };
 
-   // Figure how to flag a forced full replot:
-   _table.prototype.replot = function(full_replot, match)
+   _table.prototype.replot = function(result)
    {
       this.pre_transform();
 
-      if (true)
-      {
-         SFW.xslobj.transformFill(this.host(), SFW.xmldoc.documentElement);
-         
-         var top = this.top();
-         if (top)
-            _fix_table_heads(top);
-      }
-      else
-      {
-         var selected_result = this.result(match);
-         if (selected_result)
-         {
-            var tbody = SFW.find_child_matches(this.top(), "tbody", true);
-            if (tbody && !full_replot)
-            {
-               selected_result.setAttribute("make_table_body", "true");
-               SFW.xslobj.transformFill(tbody, selected_result);
-               selected_result.removeAttribute("make_table_body");
-            }
-            else
-               SFW.xslobj.transformFill(this.host(), selected_result);
-
-            var top = this.top();
-            if (top)
-               _fix_table_heads(top);
-         }
-         else
-            console.log("Failed to find result named \"" + this.mode + "\"");
-      }
-
+      var host = this.host();
+      var node = result || SFW.xmldoc.documentElement;
+      
+      SFW.xslobj.transformFill(this.host(), node);
+      
+      var top = this.top();
+      if (top)
+         _fix_table_heads(top);
 
       this.post_transform();
    };
 
-   _table.prototype.get_line_id = function _get_line_id(row)
+   _table.prototype.diagnose_missing_line_id = function()
    {
-      var line_id = null;
-      if ((line_id=row.getAttribute("data-id")))
-         return line_id;
-      
-      var doc, f;
-      if ((doc=this.doc()) && this.schema())
+      var schema = this.schema();
+      if (schema)
       {
-         if (!(f=this.schema().selectSingleNode("field[@line_id]")))
-            f = this.schema().selectSingleNode("field[@primary-key]");
-         if (f)
-            return row.getAttribute(f.getAttribute("name"));
-         else // return value of first attribute child
-         {
-            var a = row.firstChild;
-            while (a)
-            {
-               if (a.nodeType==2)
-               {
-                  line_id = a.value;
-                  break;
-               }
-               else
-                  a = a.nextSibling;
-            }
-         }
+         var nl = schema.selectNodes("field[@group]");
+         if (nl && nl.length)
+            SFW.alert("GROUP BY fields must explicitly identify to be used as line_id.");
       }
-      return line_id;
    };
 
+   // This gets shadowed by the later prototype. 
    _table.prototype.update_row = function _update_row(row, doc)
    {
       var xpath = "*[@type='update' or @type='open']";
@@ -377,6 +334,7 @@
    _table.prototype.update_row = function(cfobj, preserve_result)
    {
       var xrow = this.find_matching_data_row(cfobj);
+      
       if ("docel" in cfobj)
       {
          if (cfobj.mtype=="delete")
@@ -415,7 +373,7 @@
    _table.prototype.child_finished = function(cfobj)
    {
       this.update_row(cfobj);
-      this.replot();
+      this.replot(SFW.get_cfobj_result(cfobj));
 
       var dobj = cfobj.cdata;
       if (dobj && "os" in dobj)
@@ -447,36 +405,42 @@
    _table.prototype.process_line_click = function(tr)
    {
       var id, url;
-      if ((id=tr.getAttribute("data-id"))
-          && (url=this.get_data_value("on_line_click")))
+      
+      if (!(url=this.get_data_value("on_line_click")))
+         return true;
+      
+      if (!(id=tr.getAttribute("data-id")))
       {
-         var idname = this.get_line_click_id_name();
-         function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
+         this.diagnose_missing_line_id(tr);
+         return true;
+      }
+      
+      var idname = this.get_line_click_id_name();
+      function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
 
-         // Somehow get row-name, perhaps saved in the attributes of the table,
-         // and pass it as an argument to result():
-         var xrow = SFW.find_child_matches(this.result(), f, true);
+      // Somehow get row-name, perhaps saved in the attributes of the table,
+      // and pass it as an argument to result():
+      var xrow = SFW.find_child_matches(this.result(), f, true);
 
-         if (xrow)
-         {
-            if (url.indexOf('&')==-1)
-               url += "=" + id;
-            else
-               url = SFW.apply_row_context(url, xrow);
+      if (xrow)
+      {
+         if (url.indexOf('&')==-1)
+            url += "=" + id;
+         else
+            url = SFW.apply_row_context(url, xrow);
 
-            var os = SFW.get_page_offset();  // Get offset before discarding contents
-            var host = this.host();
+         var os = SFW.get_page_offset();  // Get offset before discarding contents
+         var host = this.host();
 
-            empty_el(host);
+         empty_el(host);
 
-            SFW.open_interaction(SFW.stage,
-                                 url,
-                                 this,
-                                 { os:os, host:host, xrow:xrow }
-                                );
+         SFW.open_interaction(SFW.stage,
+                              url,
+                              this,
+                              { os:os, host:host, xrow:xrow }
+                             );
 
-            return false;
-         }
+         return false;
       }
 
       return true;
@@ -490,13 +454,15 @@
       if (e.type!="click")
          return true;
 
+      // Allow base class to process generic buttons
+      if (!SFW.base.prototype.process.call(this,e,t))
+         return false;
+
       while (t && t!=table_el)
       {
          var tag = t.tagName.toLowerCase();
          switch(tag)
          {
-            case "button":
-               return this.process_clicked_button(t);
             case "tr":
                return this.process_line_click(t);
 
