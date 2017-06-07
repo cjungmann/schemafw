@@ -20,6 +20,12 @@
     </xsl:call-template>
   </xsl:template>
 
+  <xsl:template match="@*" mode="fix_srm_selfref">
+    <xsl:if test="substring(.,1,1)='?' and /*[@script]">
+      <xsl:value-of select="/*/@script" />
+    </xsl:if>
+  </xsl:template>
+
   <xsl:template match="schema" mode="add_on_line_click_attribute">
     <xsl:variable name="lc_s" select="@on_line_click" />
     <xsl:variable name="lc_r" select="parent::*[not($lc_s)][@rndx]/@on_line_click" />
@@ -27,6 +33,7 @@
     <xsl:variable name="all" select="$lc_s|$lc_r|$lc_d" />
     <xsl:if test="$all">
       <xsl:attribute name="data-on_line_click">
+        <xsl:apply-templates select="$all" mode="fix_srm_selfref" />
         <xsl:value-of select="$all" />
       </xsl:attribute>
     </xsl:if>
@@ -36,7 +43,9 @@
     <xsl:variable name="ta" select="@form-action" />
     <xsl:variable name="fa" select="parent::*[not($ta)]/@form-action" />
     <xsl:variable name="action" select="$ta|$fa" />
+    
     <xsl:if test="$action">
+      <xsl:apply-templates select="$action" mode="fix_srm_selfref" />
       <xsl:call-template name="resolve_refs">
         <xsl:with-param name="str" select="$action" />
       </xsl:call-template>
