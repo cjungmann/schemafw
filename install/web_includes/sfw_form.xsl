@@ -91,8 +91,8 @@
           <xsl:value-of select="$legend" />
         </xsl:element>
 
-        <xsl:apply-templates select="." mode="show_buttons">
-          <xsl:with-param name="host-type" select="'div'" />
+        <xsl:apply-templates select="." mode="construct_button_row">
+          <xsl:with-param name="host-type" select="'p'" />
         </xsl:apply-templates>
 
         <xsl:if test="$msg">
@@ -175,7 +175,7 @@
     </xsl:apply-templates>
   </xsl:template>
 
-  <xsl:template match="schema/field" mode="construct_hidden_input">
+  <xsl:template match="field" mode="construct_hidden_input">
     <xsl:param name="data" />
     <xsl:variable name="name">
       <xsl:apply-templates select="." mode="get_name" />
@@ -218,8 +218,7 @@
       Create a p (paragraph) element to present one row of a form.
       Each row will have a label element and some sort of input element.
   -->
-  <xsl:template
-      match="schema/field[not(@hidden or @ignore)]" mode="construct_input_row">
+  <xsl:template match="field[not(@hidden or @ignore)]" mode="construct_input_row">
     <xsl:param name="data" />
     <xsl:param name="result-field" />
     <xsl:param name="view-mode" />
@@ -293,20 +292,20 @@
   </xsl:template>
 
 
-  <xsl:template match="schema/field[@dtd]" mode="get_list_string">
+  <xsl:template match="field[@dtd]" mode="get_list_string">
     <xsl:variable name="paren" select="substring-after(@dtd,'(')" />
     <xsl:variable name="len" select="string-length($paren)" />
     <xsl:value-of select="substring($paren,1,($len)-1)" />
   </xsl:template>
 
-  <xsl:template match="schema/field" mode="fill_table_cell">
+  <xsl:template match="field" mode="fill_table_cell">
     <xsl:param name="data" />
     <xsl:apply-templates select="." mode="get_cell_value">
       <xsl:with-param name="data" select="$data" />
     </xsl:apply-templates>
   </xsl:template>
 
-  <xsl:template match="schema/field" mode="get_s_value">
+  <xsl:template match="field" mode="get_s_value">
     <xsl:variable name="schema" select=".." />
     
     <xsl:variable name="sname" select="$schema/@name" />
@@ -357,7 +356,7 @@
   </xsl:template>
 
 
-  <xsl:template match="schema/field/enum" mode="make_option">
+  <xsl:template match="field/enum" mode="make_option">
     <xsl:param name="value" />
 
     <xsl:variable name="index">
@@ -422,7 +421,16 @@
 
   </xsl:template>
 
-  <xsl:template match="schema/field" mode="construct_input">
+  <xsl:template match="field" mode="check_readonly">
+    <xsl:choose>
+      <xsl:when test="@html-readonly">true</xsl:when>
+      <xsl:when test="@readOnly">true</xsl:when>
+      <xsl:when test="@primary-key">true</xsl:when>
+      <xsl:otherwise>false</xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="field" mode="construct_input">
     <xsl:param name="data" />
 
     <xsl:variable name="type">
@@ -456,10 +464,7 @@
     </xsl:variable>
 
     <xsl:variable name="readonly">
-      <xsl:choose>
-        <xsl:when test="@html-readonly">true</xsl:when>
-        <xsl:when test="@readOnly">true</xsl:when>
-      </xsl:choose>
+      <xsl:apply-templates select="." mode="check_readonly" />
     </xsl:variable>
 
     <xsl:variable name="value">
@@ -505,14 +510,14 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="schema/field[@lookup]" mode="construct_input">
+  <xsl:template match="field[@lookup]" mode="construct_input">
     <select name="{@name}" data-url="{@lookup}">
       <option value="1">One</option>
       <option value="2">Two</option>
     </select>
   </xsl:template>
 
-  <xsl:template match="schema/field[@type='ENUM' or @enum]" mode="construct_input" priority="10">
+  <xsl:template match="field[@type='ENUM' or @enum]" mode="construct_input" priority="10">
     <xsl:param name="data" />
     
     <xsl:variable name="name">
