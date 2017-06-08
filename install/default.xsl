@@ -35,7 +35,7 @@
       <body>
         <div id="SFW_Header">
           <h1>**Default SchemaFW Header**</h1>
-          <xsl:apply-templates select="navigation" mode="header" />
+          <xsl:apply-templates select="*/navigation" mode="header" />
         </div>
         <div id="SFW_Content">
           <div class="SFW_Host">
