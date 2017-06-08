@@ -57,6 +57,9 @@
         <xsl:attribute name="data-sfw-class">
           <xsl:value-of select="@type" />
         </xsl:attribute>
+        <xsl:attribute name="data-result-path">
+          <xsl:apply-templates select="$result" mode="get_path" />
+        </xsl:attribute>
         <h3>
           <xsl:call-template name="resolve_refs">
             <xsl:with-param name="str" select="@label" />

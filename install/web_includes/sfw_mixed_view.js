@@ -9,48 +9,56 @@
    if (!SFW.derive(_mixed_view, "mixed-view", "iclass"))
       return;
 
-   function _vtable(base,doc,caller,data)
-   {
-      SFW.types["mixed-view"].call(this,base,doc,caller,data);
-   }
-
    function _mixed_view(base,doc,caller,data)
    {
       SFW.types["iclass"].call(this,base,doc,caller,data);
    }
 
-   _mixed_view.prototype.process_button_manage_subview = function(t,cb)
+   function _sub_mixed_view(base,doc,caller,data)
+   {
+      SFW.types["iclass"].call(this,base,doc,caller,data);
+   }
+
+   _sub_mixed_view.prototype.child_finished = function(cfobj)
+   {
+      this.process_get_update(cfobj);
+      cfobj.cdata.host.style.display = "";
+   };
+
+   _sub_mixed_view.prototype.child_finished = function(cfobj)
+   {
+      cfobj.cdata.host.style.display = "";
+   };
+   
+   _sub_mixed_view.prototype.process_button_manage_subview = function(t,cb)
    {
       var url = t.getAttribute("data-task") || t.getAttribute("data-url");
       if (!url)
          return true;
+
+      // A vtable object: do we need this?
+      var sobj = SFW.seek_event_object(t);
       
-      var nt, iclass, anchor, host;
-      while ((nt=t.nodeType)<9)
+      var actors = SFW.seek_event_actors(t);
+      if (actors)
       {
-         if (nt==1)
+         function geta(name) { return (name in actors) ? actors[name] : null; }
+         var host, iclass;
+         if ((host=geta("host")) && (iclass=geta("iclass")) && iclass in SFW.types)
          {
-            
-            if (!iclass && (iclass=t.getAttribute("data-sfw-class")))
-               anchor = t;
-            else if (!host
-                     && t.className=="SFW_Host"
-                     && !t.getAttribute("data-mview"))
-            {
-               host = t;
-               break;
-            }
+            var obj = SFW.types[iclass](host);
+            var fobj = {anchor:geta("anchor"),host:host};
+            host.style.display = "none";
+            SFW.open_interaction(SFW.stage, url, this, fobj);
+            return false;
          }
-
-         t = t.parentNode;
-      }
-
-      if (anchor && host)
-      {
-         var obj = {anchor:anchor, host:host };
-         SFW.open_interaction(host, url, this);
       }
       return true;
+   };
+
+   _sub_mixed_view.prototype.process_get_update = function(cfobj)
+   {
+
    };
 
    _mixed_view.prototype.process_button_delete = function(t,cb)
@@ -58,7 +66,7 @@
       return true;
    };
 
-   _mixed_view.prototype.process_button_edit = function(b,cb)
+   _sub_mixed_view.prototype.process_button_edit = function(b,cb)
    {
       var field = null;
       var parts, label, afor, content;
@@ -114,11 +122,26 @@
       return null;
    }
 
+
+   function _vtable(base,doc,caller,data)
+   {
+      SFW.types["iclass"].call(this,base,doc,caller,data);
+   }
+
+
+   _vtable.prototype.child_finished = function(cfobj)
+   {
+      cfobj.cdata.host.style.display = "";
+   };
+
    // Derive after the prototypes are installed!
-   if (!SFW.derive(SFW.types["table"], "mixed-table", "mixed-view"))
+   // if (!SFW.derive(SFW.types["table"], "mixed-table", "mixed-view"))
+   //    return;
+
+   if (!SFW.derive(_sub_mixed_view, "sub-mixed-view", "iclass"))
       return;
 
-   if (!SFW.derive(_vtable, "vtable", "mixed-table"))
+   if (!SFW.derive(_vtable, "vtable", "sub-mixed-view"))
       return;
 
 
