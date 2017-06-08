@@ -873,7 +873,7 @@ function init_SFW(callback)
       var cd, xrow, rowone;
       if ("cdata" in cfobj && (cd=cfobj.cdata) && "xrow" in cd)
          xrow = cd.xrow;
-      if ("rowone" in cfobj)
+      if (cfobj.mtype!="delete" && "rowone" in cfobj)
          rowone = cfobj.rowone;
 
       function check(row)
