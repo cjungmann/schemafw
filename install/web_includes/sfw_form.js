@@ -70,6 +70,20 @@
       // }
    }
 
+   function _get_multiple_value(el)
+   {
+      var str = "";
+      function f(n)
+      {
+         if (n.nodeType==1 && n.selected)
+            str += (str.length?",":"") + n.value;
+      }
+
+      SFW.find_child_matches(el, f);
+
+      return str;
+   }
+
    function _get_form_data(form)
    {
       var el, els = form.elements;
@@ -86,7 +100,12 @@
                   arr.push(el.name + "=1");
             }
             else if ('value' in el && el.value.length>0)
-               arr.push(el.name + "=" + encodeURIComponent(el.value));
+            {
+               if ("multiple" in el && el.multiple)
+                  arr.push(el.name + "=" + _get_multiple_value(el));
+               else
+                  arr.push(el.name + "=" + encodeURIComponent(el.value));
+            }
          }
       }
       return arr;
