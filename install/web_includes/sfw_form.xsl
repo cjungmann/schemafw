@@ -79,7 +79,6 @@
 
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:attribute name="method"><xsl:value-of select="$method" /></xsl:attribute>
-      <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:attribute
           name="data-sfw-class"><xsl:value-of select="$sfw-class" /></xsl:attribute>
       
