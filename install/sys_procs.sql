@@ -21,12 +21,14 @@ SELECT ' ' AS '.\n.\nHere begins the real procedures and functions.\nIgnore \'al
 
 /* Find documentation for these functions in sys_procs.hpp */
 
+-- ----------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_schemafw_version $$
 CREATE PROCEDURE ssys_schemafw_version()
 BEGIN
    SELECT 0.95;
 END $$
 
+-- ----------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_drop_salt_string $$
 CREATE PROCEDURE ssys_drop_salt_string(salt_string VARCHAR(255))
 BEGIN
@@ -37,6 +39,7 @@ BEGIN
    SET @dropped_salt = salt_string;
 END $$
 
+-- ----------------------------------------------------
 DROP FUNCTION IF EXISTS ssys_hash_password_with_salt $$
 CREATE FUNCTION ssys_hash_password_with_salt(password VARCHAR(255),
                                              salt_string VARCHAR(255))
@@ -45,6 +48,7 @@ BEGIN
    RETURN UNHEX(MD5(CONCAT(salt_string,password)));
 END $$
 
+-- ------------------------------------------------
 DROP FUNCTION IF EXISTS ssys_confirm_salted_hash $$
 CREATE FUNCTION ssys_confirm_salted_hash(saved_hash BINARY(16),
                                          saved_salt VARCHAR(255),
@@ -73,6 +77,7 @@ END $$
 
 
 
+-- --------------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_get_procedure_params $$
 CREATE PROCEDURE ssys_get_procedure_params(p_proc_name VARCHAR(64))
 BEGIN
@@ -106,6 +111,7 @@ BEGIN
    
 END $$
 
+-- ---------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_get_column_dtds $$
 CREATE PROCEDURE ssys_get_column_dtds(column_list TEXT)
 BEGIN
@@ -115,6 +121,7 @@ BEGIN
       AND LOCATE(CONCAT(TABLE_NAME,':',COLUMN_NAME), column_list);
 END $$
 
+-- --------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_get_procedures $$
 CREATE PROCEDURE ssys_get_procedures()
 BEGIN
@@ -124,6 +131,7 @@ BEGIN
 END$$
 
 
+-- -------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_confirm_table $$
 CREATE PROCEDURE ssys_confirm_table(p_table_name VARCHAR(64))
 BEGIN
@@ -133,6 +141,7 @@ BEGIN
       AND TABLE_NAME = p_table_name;
 END $$
 
+-- ----------------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_default_import_removal $$
 CREATE PROCEDURE ssys_default_import_removal(p_table_name VARCHAR(64))
 BEGIN
@@ -145,6 +154,7 @@ BEGIN
    SET @dir_qry = NULL;
 END $$
 
+-- ----------------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_default_import_confirm $$
 CREATE PROCEDURE ssys_default_import_confirm(p_table_name VARCHAR(64),
                                              p_limit INT)
@@ -160,6 +170,39 @@ BEGIN
 
    SET @dic_qry = NULL;
 END $$
+
+-- ---------------------------------------------------------
+DROP PROCEDURE IF EXISTS ssys_make_SFW_IntTable_from_list $$
+CREATE PROCEDURE ssys_make_SFW_IntTable_from_list(intlist TEXT)
+BEGIN
+   DECLARE valstr VARCHAR(10);
+   DECLARE vallen INT UNSIGNED;
+   DECLARE tlist TEXT DEFAULT intlist;
+
+   DROP TABLE IF EXISTS SFW_IntTable;
+   CREATE TEMPORARY TABLE SFW_IntTable
+   ( val INT UNSIGNED )
+   TABLESPACE MEMORY;
+
+   int_loop : LOOP
+      SET valstr = SUBSTRING_INDEX(tlist,',',1);
+      SET vallen = LENGTH(valstr);
+
+      IF vallen=0 THEN
+         LEAVE int_loop;
+      ELSE
+         INSERT INTO SFW_IntTable (val) VALUES(valstr);
+
+         IF LENGTH(tlist) > vallen+1 THEN
+            SET tlist = SUBSTRING(tlist,vallen+2);
+         ELSE
+            LEAVE int_loop;
+         END IF;
+      END IF;
+   END LOOP int_loop;
+END $$
+
+
 
 -- --------------------------
 -- Calendar Helper Procedures
@@ -265,6 +308,7 @@ BEGIN
 END $$
 
 
+-- -----------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_clear_for_request $$
 CREATE PROCEDURE ssys_clear_for_request()
 BEGIN
@@ -272,6 +316,7 @@ BEGIN
    CALL App_Session_Cleanup();
 END $$
 
+-- -------------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_seed_session_string $$
 CREATE PROCEDURE ssys_seed_session_string(session_string CHAR(32))
 BEGIN
@@ -282,6 +327,7 @@ BEGIN
    SET @session_string_seed = session_string;
 END $$
 
+-- -------------------------------------------------
 DROP FUNCTION IF EXISTS ssys_calc_session_expires $$
 CREATE FUNCTION ssys_calc_session_expires()
 RETURNS DATETIME
@@ -289,6 +335,7 @@ BEGIN
    RETURN DATE_ADD(NOW(), INTERVAL 20 MINUTE);
 END $$
 
+-- -----------------------------------------------------
 DROP FUNCTION IF EXISTS ssys_current_session_is_valid $$
 CREATE FUNCTION ssys_current_session_is_valid()
 RETURNS BOOLEAN
@@ -302,6 +349,7 @@ BEGIN
    RETURN VCount=1;
 END $$
 
+-- -------------------------------------------
 DROP FUNCTION IF EXISTS ssys_session_create $$
 CREATE FUNCTION ssys_session_create()
    RETURNS INT
@@ -338,6 +386,7 @@ BEGIN
    RETURN session_id;
 End $$
 
+-- -------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_session_start $$
 CREATE PROCEDURE ssys_session_start()
 BEGIN
@@ -353,6 +402,7 @@ BEGIN
    END IF;
 END $$
 
+-- ---------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_session_confirm $$
 CREATE PROCEDURE ssys_session_confirm(session_id INT UNSIGNED,
                                      session_string CHAR(32))
@@ -384,6 +434,7 @@ BEGIN
    SELECT still_good;
 END $$
 
+-- -----------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_assert_session_id $$
 CREATE PROCEDURE ssys_assert_session_id(session_id INT UNSIGNED)
 BEGIN
@@ -392,6 +443,7 @@ BEGIN
   END IF;
 END $$
 
+-- ---------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_session_abandon $$
 CREATE PROCEDURE ssys_session_abandon(session_id INT UNSIGNED,
                                      session_string char(32))
@@ -406,6 +458,7 @@ BEGIN
     SELECT ROW_COUNT() AS session_abandoned;
 END $$
 
+-- ---------------------------------------------
 DROP PROCEDURE IF EXISTS ssys_session_cleanup $$
 CREATE PROCEDURE ssys_session_cleanup()
 BEGIN
