@@ -42,6 +42,8 @@ necessary.
    - The custom template should match the name of an SFW result element that
      has been renamed in the response mode.
    - The custom template must identify the _iclass_ that will animate the HTML.
+   - Consult [Templates for Custom Interactions](CustomTemplates.md) for a discussion
+     of the issues around ensuring your custome templates are recognized.
 2. A custom IClass to _animate_ the HTML.  The custom class should be ultimately
    derived from "SFW.iclass", but that is likely to be through intermediate classes.
 
