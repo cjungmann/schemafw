@@ -33,6 +33,8 @@ There are several sections.
     - [Making Sense of *on_line_click*](OnLineClick.md)
   - Extending the Framework
     - [Custom Interactive Classes](CustomIClasses.md)
+    - [Templates for Custom Interactions](CustomTemplates.md)
+    - [Why Not Use xsl:include?](WhyNoInclude.md)
   - Debugging
     - [Running Websites on LocalHost](RunningOnLocalhost.md)
     - [MySQL Command Line Queries](MySQLCLQueries.md)
