@@ -1,4 +1,4 @@
-html, body { margin:0; padding:0; }
+\html, body { margin:0; padding:0; }
 
 h1 { text-align: center; }
 h2 { text-align: center; margin:0; }
@@ -202,6 +202,20 @@ Form.Moveable legend       { cursor: pointer; }
 form.Moveable legend:hover { background-color:#CCCCCC; }
 
 form.Schema td { vertical-align:top; }
+
+/* ul selection styles */
+ul.sfw_select { list-style:none; padding:0; }
+p.sfw_select span.item
+{
+    border-radius: 4px;
+    background-color:#CCCCCC;
+    padding:0 8px;
+    margin:0 4px;
+}
+p.sfw_select span.x
+{
+    cursor:pointer;
+}
 
 table.calendar { border-collapse:collapse; border-spacing:0; font-family:sans-serif; }
 table.calendar tbody tr { height:2em; }

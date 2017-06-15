@@ -8,6 +8,7 @@
 
   <xsl:import href="sfw_generics.xsl" />
   <xsl:import href="sfw_utilities.xsl" />
+  <xsl:import href="sfw_select.xsl" />
   <xsl:import href="sfw_schema.xsl" />
 
   <xsl:output method="xml"
@@ -507,6 +508,19 @@
       </xsl:if>
 
     </xsl:element>
+  </xsl:template>
+
+  <!--
+      Keyword templates are in sfw_select.xsl.  In order to use the contents
+      of sfw_select.xsl, the following template, whose priority ensures
+      appropriate selection, accesses the imported templates explicitly.
+  -->
+  <xsl:template match="field[@type='keywords']" mode="construct_input">
+    <xsl:param name="data" />
+    <xsl:call-template name="construct_keywords_input">
+      <xsl:with-param name="field" select="." />
+      <xsl:with-param name="data" select="$data" />
+    </xsl:call-template>
   </xsl:template>
 
   <xsl:template match="field[@lookup]" mode="construct_input">
