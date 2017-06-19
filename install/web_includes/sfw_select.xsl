@@ -23,23 +23,28 @@
     <xsl:variable name="deflt_r" select="/*[not($named_r)]/keywords" />
     <xsl:variable name="result" select="$named_r | $deflt_r" />
 
-    <xsl:apply-templates select="$result" mode="construct_selected_list">
-      <xsl:with-param name="data" select="$data" />
-    </xsl:apply-templates>
-
-    <xsl:apply-templates select="$result" mode="build_ul_select">
-      <xsl:with-param name="data" select="$data" />
-    </xsl:apply-templates>
+    <ul name="{$field/@name}" class="sfw_select" data-sfw-class="ulselect" data-sfw-control="true">
+      <xsl:apply-templates select="$result" mode="construct_selected_list">
+        <xsl:with-param name="data" select="$data" />
+      </xsl:apply-templates>
+      <xsl:apply-templates select="$result/*" mode="construct_ul_select_option">
+        <xsl:with-param name="data" select="$data" />
+      </xsl:apply-templates>
+    </ul>
   </xsl:template>
 
   <xsl:template match="*[@rndx]" mode="construct_selected_list">
     <xsl:param name="data" />
-    <p class="sfw_select">
-      <xsl:call-template name="add_selected_items">
-        <xsl:with-param name="str" select="$data/@keywords" />
-        <xsl:with-param name="lookup" select="." />
-      </xsl:call-template>
-    </p>
+    <li>
+      <xsl:apply-templates select="$data/@keywords" mode="fill" />
+    </li>
+  </xsl:template>
+
+  <xsl:template match="@keywords" mode="fill">
+    <xsl:call-template name="add_selected_items">
+      <xsl:with-param name="str" select="." />
+      <xsl:with-param name="lookup" select="/*/keywords" />
+    </xsl:call-template>
   </xsl:template>
 
   <xsl:template name="add_selected_items">
@@ -53,7 +58,7 @@
         <xsl:variable name="val" select="substring-before($str,',')" />
         <xsl:variable name="sel" select="$lookup/*[@id=$val]" />
 
-        <xsl:apply-templates select="$sel" mode="build_selected_item" />
+        <xsl:apply-templates select="$sel" mode="construct_selected_item" />
 
         <xsl:call-template name="add_selected_items">
           <xsl:with-param name="str" select="substring-after($str,',')" />
@@ -66,7 +71,7 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="*[@id]" mode="build_selected_item">
+  <xsl:template match="*[@id]" mode="construct_selected_item">
     <span class="item">
       <xsl:value-of select="concat(@kname,' ')" />
       <xsl:element name="span">
@@ -76,16 +81,10 @@
     </span>
   </xsl:template>
 
-  <xsl:template match="*[@rndx]" mode="construct_ul_select">
+  <xsl:template match="*" mode="construct_ul_select_option">
     <xsl:param name="data" />
-    <ul class="sfw_select">
-      <xsl:apply-templates select="*" mode="construct_ul_select_item" />
-    </ul>
-  </xsl:template>
-  
-  <xsl:template match="*" mode="construct_ul_select_item">
     <xsl:element name="li">
-      <xsl:attribute name="value"><xsl:value-of select="@id" /></xsl:attribute>
+      <xsl:attribute name="data-value"><xsl:value-of select="@id" /></xsl:attribute>
       <xsl:value-of select="@kname" />
     </xsl:element>
   </xsl:template>
