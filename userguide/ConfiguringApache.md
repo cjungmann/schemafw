@@ -9,6 +9,29 @@ This guide assumes that _mod_fastcgi_ is enabled in Apache and that the
 [Schema](https://chuckj@bitbucket.org/chuckj/schema.git) has been downloaded,
 built, and installed.  See [Building the Framework](BuildingTheFramework.md).
 
+## Change XSL Mime Type If Necessary
+
+This is not strictly an Apache issue, but it is a server issue that should be
+considered.  Chrome browsers signal an error when XSL files are identified as
+_application/xslt+xml_ (which is the default in the current version of Apache.
+
+Sudo-open file /etc/mime.types and search for _xsl_.  If it's not already set,
+change the line from
+
+~~~conf
+application/xslt+xml          xsl xslt
+~~~
+
+to:
+
+~~~conf
+text/xsl          xsl xslt
+~~~
+
+I also moved the line down to be with the other _text/_ mime types.  The mime
+types were alphabetized, so I thought it better to conform to that standard
+in case it was not just accidental.
+
 ## Global Apache Configuration
 
 The settings in this section prepare Apache to use the _schema.fcgi_ server
