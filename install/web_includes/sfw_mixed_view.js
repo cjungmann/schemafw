@@ -9,14 +9,16 @@
    if (!SFW.derive(_mixed_view, "mixed-view", "iclass"))
       return;
 
-   function _mixed_view(base,doc,caller,data)
+   function _mixed_view(actors)
    {
-      SFW.types["iclass"].call(this,base,doc,caller,data);
+      SFW.base.call(this,actors);
    }
 
-   function _sub_mixed_view(base,doc,caller,data)
+   function _sub_mixed_view(actors)
    {
-      SFW.types["iclass"].call(this,base,doc,caller,data);
+      // Derive from table, why not initialie with table?
+      // SFW.types["table"].call(this,actors);
+      SFW.base.call(this,actors);
    }
 
    _sub_mixed_view.prototype.child_finished = function(cfobj)
@@ -123,9 +125,9 @@
    }
 
 
-   function _vtable(base,doc,caller,data)
+   function _vtable(actors)
    {
-      SFW.types["iclass"].call(this,base,doc,caller,data);
+      SFW.types["iclass"].call(this,actors);
    }
 
 

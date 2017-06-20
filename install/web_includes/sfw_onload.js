@@ -19,9 +19,10 @@ window.onload = function()
          var obj = SFW.get_object_from_host(sfwhost);
          if (obj)
          {
+            SFW.base.call(obj, {host:sfwhost});
             SFW.arrange_in_host(sfwhost, obj.top());
 
-            obj.setup(SFW.xmldoc);
+            SFW.setup_sfw_host(sfwhost, SFW.xmldoc);
             obj.initialize();
          }
       }

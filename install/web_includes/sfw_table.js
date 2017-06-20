@@ -10,9 +10,9 @@
        !SFW.derive(_table, "import-review", "iclass"))
       return;
    
-   function _table(host)
+   function _table(actors)
    {
-      SFW.base.call(this, host);
+      SFW.base.call(this, actors);
    }
 
    // Adding useful local functions to global object

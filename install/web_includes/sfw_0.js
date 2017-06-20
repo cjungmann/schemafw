@@ -64,6 +64,7 @@ function init_SFW(callback)
    SFW.change_view          = _change_view;
    SFW.process_event        = _process_event;
 
+   SFW.setup_sfw_host        = _setup_sfw_host;
    SFW.get_last_SFW_Host    = _get_last_SFW_Host;
    SFW.arrange_in_host      = _arrange_in_host;
    SFW.resize_page          = _resize_page;
@@ -174,6 +175,7 @@ function init_SFW(callback)
    function _seek_event_actors(t)
    {
       var aval, rval = {};
+      var is_control = false;
       var fcount = 0;
       while (t && t.nodeType < 9)
       {
@@ -181,9 +183,17 @@ function init_SFW(callback)
          {
             if ((aval=t.getAttribute("data-sfw-class")))
             {
-               rval["iclass"] = aval;
-               rval["anchor"] = t;
-               ++fcount;
+               if (!is_control)
+               {
+                  rval["iclass"] = aval;
+                  rval["anchor"] = t;
+
+                  is_control=t.getAttribute("data-sfw-input");
+                  if (is_control)
+                     rval["input"] = t;
+
+                  ++fcount;
+               }
             }
             else if (t.className=="SFW_Host")
             {
@@ -199,14 +209,14 @@ function init_SFW(callback)
          }
          t = t.parentNode;
       }
-      return fcount==2 ? rval : null;
+      return fcount>1 ? rval : null;
    }
 
    function _seek_event_object(t)
    {
       var actors = _seek_event_actors(t);
       if (actors && actors.iclass in SFW.types)
-         return new SFW.types[actors.iclass](actors.host);
+         return new SFW.types[actors.iclass](actors);
       return null;
    }
 
@@ -640,45 +650,21 @@ function init_SFW(callback)
       over.style.minHeight = SFW.px(under.offsetHeight);
    }
 
+   function _setup_sfw_host(shost, xmldoc, caller, data)
+   {
+      shost.xmldoc = xmldoc;
+      shost.caller = caller;
+      shost.data = data;
+   }
+
    function _make_sfw_host(host, xmldoc, caller, data)
    {
       var thost = addEl("div",host);
       thost.className = "SFW_Host";
-      
-      // if (thost)
-      // {
-      //    var obj = new SFW.base(thost);
-      //    obj.setup(xmldoc,caller,data);
-      // }
-      
+
+      _setup_sfw_host(thost, xmldoc, caller, data);
+
       return thost;
-   }
-
-   function _old_render_interaction(type,doc,host,caller,data)
-   {
-      var thost, newobj, anchor;
-      if (type in SFW.types)
-      {
-         if ((thost=_make_sfw_host(host,caller,data)))
-         {
-            if ((newobj=new SFW.types[type](thost,doc,caller,data)))
-            {
-               newobj.setup(doc, caller, data);
-               
-               newobj.pre_transform();
-               SFW.xslobj.transformInsert(thost,doc.documentElement);
-               newobj.post_transform();
-
-               if ((anchor=SFW.seek_child_anchor(thost)))
-               {
-                  caller.child_ready(newobj);
-                  _arrange_in_host(host, anchor);
-               }
-            }
-            else
-               host.removeChild(thost);
-         }
-      }
    }
 
    function _open_interaction(host, url, caller, data)
@@ -863,7 +849,7 @@ function init_SFW(callback)
       if ((anchor=_seek_child_anchor(host))
           && (type=anchor.getAttribute("data-sfw-class"))
           && (type in SFW.types))
-         return new SFW.types[type](host);
+         return new SFW.types[type]({host:host});
       else
          return null;
    }
@@ -887,18 +873,23 @@ function init_SFW(callback)
       return check(rowone) || check(xrow) || null;
    }
 
-   function _base(host)
+   function _base(actors)
    {
-      this._host_el = host;
+      this._host_el = actors.host;
+      if ("input" in actors)
+         this._input = actors.input;
    };
 
    _base.prototype.host     = function() { return this._host_el||null; };
-   _base.prototype.xmldoc   = function()
-   { var r; if ((r=this.host())){r=r._xmldoc||null;} return r; };
-   _base.prototype.xmldocel = function()
-   { var r; if ((r=this.xmldoc())){r=r.documentElement||null;} return r; };
-   _base.prototype.data     = function()
-   { var r; if ((r=this.host())) {r=r.data||null;} return r; };
+   _base.prototype.xmldoc   = function() {
+      var r=this.host(); return (r && (r=r.xmldoc))?r:null;
+   };
+
+   _base.prototype.xmldocel = function() {
+      var r=this.xmldoc(); return r?r.documentElement:null;
+   };
+
+   _base.prototype.data     = function() { var r=this.host(); return r?r.data:null; };
 
    _base.prototype.class_name = "iclass";
    _base.prototype.top       = function() { return _find_anchor(this.host()); };
@@ -906,22 +897,53 @@ function init_SFW(callback)
    _base.prototype.baseproto = function() { return this._baseproto; };
    _base.prototype.button_processors = {};
 
+   _base.prototype.input = function() { return ("_input" in this)?this._input:null;};
    _base.prototype.caller = function()
    {
-      if ("caller" in this._host_el)
-         return this._host_el.caller;
-      else
-         return null;
+      var h=this.host();
+      return (h && "caller" in h) ? h.caller : null;
    };
    
    _base.prototype.setup = function(xmldoc, caller, data)
    {
+      console.error("This function is obsolete.");
       var e = this._host_el;
       e._xmldoc = xmldoc;
       if (caller)
          e.caller = caller;
       if (data)
          e.data = data;
+   };
+
+   _base.prototype.get_input_field = function()
+   {
+      var schema = this.schema();
+      if (schema && "input" in this)
+      {
+         var name = this.input().getAttribute("name");
+         var xpath = "field[@name='" + name + "']";
+         return schema.selectSingleNode(xpath);
+      }
+      else
+         return null;
+   };
+
+   _base.prototype.get_field_name = function()
+   {
+      var field = this.get_input_field();
+      return field ? field.getAttribute("name") : null;
+   };
+
+   _base.prototype.get_host_form_data_row = function()
+   {
+      var schema = this.schema();
+      if (schema)
+      {
+         var xpath = "../*[local-name()=../@row-name]";
+         return schema.selectSingleNode(xpath);
+      }
+      else
+         return null;
    };
 
    /** Get value of data-{name} attribute from the top element. */
@@ -1151,13 +1173,10 @@ function init_SFW(callback)
          var obj = null;
          var iclass = _get_class_from_doc(doc);
          if (iclass)
-            obj = new iclass(lhost);
+            obj = new iclass({host:lhost});
 
          if (obj)
-         {
-            obj.setup(doc, caller, data);
             obj.pre_transform();
-         }
          
          SFW.xslobj.transformFill(lhost, doc.documentElement);
 
