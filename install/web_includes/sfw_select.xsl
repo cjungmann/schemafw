@@ -15,11 +15,13 @@
          omit-xml-declaration="yes"
          encoding="UTF-8"/>
 
+  <!-- pre- and post-fix commas to list so all numbers are bounded by commas. -->
   <xsl:template name="construct_keywords_input">
     <xsl:param name="field" />
     <xsl:param name="data" />
 
     <xsl:variable name="value" select="$data/@*[local-name()=$field/@name]" />
+    <xsl:variable name="sel" select="concat(',',$value,',')" />
 
     <xsl:variable name="named_r" select="/*/*[local-name()=$field/@result]" />
     <xsl:variable name="deflt_r" select="/*[not($named_r)]/keywords" />
@@ -34,7 +36,7 @@
       </xsl:apply-templates>
 
       <xsl:apply-templates select="$result/*" mode="construct_ulselect_option">
-        <xsl:with-param name="list" select="$value" />
+        <xsl:with-param name="list" select="$sel" />
       </xsl:apply-templates>
     </ul>
   </xsl:template>
@@ -92,6 +94,12 @@
     <xsl:param name="list" />
     <xsl:element name="li">
       <xsl:attribute name="data-value"><xsl:value-of select="@id" /></xsl:attribute>
+      <xsl:attribute name="class">
+        <xsl:choose>
+          <xsl:when test="contains($list,concat(',',@id,','))">in</xsl:when>
+          <xsl:otherwise>out</xsl:otherwise>
+        </xsl:choose>
+      </xsl:attribute>
       <xsl:value-of select="@kname" />
     </xsl:element>
   </xsl:template>
