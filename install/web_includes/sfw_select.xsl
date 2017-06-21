@@ -30,6 +30,10 @@
     <ul name="{$field/@name}" class="sfw_select"
         data-sfw-class="ulselect" data-sfw-input="true">
 
+      <li class="shadow">
+        <input type="text" name="{$field/@name}" value="{$value}" />
+      </li>
+
       <xsl:apply-templates select="$result" mode="construct_ulselect_selected">
         <xsl:with-param name="field" select="$field" />
         <xsl:with-param name="list" select="$value" />
@@ -41,10 +45,14 @@
     </ul>
   </xsl:template>
 
- <!-- Create "current selections" element filled items from the lookup result. -->
+  <!--
+      Template for creating the set of selected items.  I'm also adding
+      a single space to ensure that an empty li element doesn't collapse.
+  -->
   <xsl:template match="*[@rndx]" mode="construct_ulselect_selected">
     <xsl:param name="list" />
     <li class="selected">
+      <xsl:text>&#160;</xsl:text>
       <xsl:call-template name="add_ulselect_selected" >
         <xsl:with-param name="lookup" select="." />
         <xsl:with-param name="str" select="$list" />

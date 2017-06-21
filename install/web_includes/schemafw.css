@@ -225,6 +225,7 @@ ul.sfw_select span.item span:hover
     color:#000000;
 }
 
+ul.sfw_select li.shadow { display:none; }
 ul.sfw_select li.in { color:#999999; }
 ul.sfw_select li.out { color:#000000; cursor:pointer; }
 

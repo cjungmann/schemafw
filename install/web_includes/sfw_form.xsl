@@ -35,11 +35,25 @@
         3. ($dd) 1st row of data-result, or
         4. ($rd) first child of first result (which might be a schema)
     -->
-    <xsl:variable name="fd" select="../*[current()=/*/schema[1]][@rndx='1']/*[1]"/>
-    <xsl:variable name="sd" select="../*[not($fd)][local-name()=current()/@name][1]"/>
-    <xsl:variable name="dd" select="../form-data[not($fd|$sd)]/*[1]"/>
-    <xsl:variable name="rd" select="../*[not($fd|$sd|$dd)][@rndx='1']/*[1]"/>
-    <xsl:variable name="data" select="$fd|$sd|$dd|$rd"/>
+    <!-- <xsl:variable name="fd" select="../*[current()=/*/schema[1]][@rndx='1']/*[1]"/> -->
+    <!-- <xsl:variable name="sd" select="../*[not($fd)][local-name()=current()/@name][1]"/> -->
+    <!-- <xsl:variable name="dd" select="../form-data[not($fd|$sd)]/*[1]"/> -->
+    <!-- <xsl:variable name="rd" select="../*[not($fd|$sd|$dd)][@rndx='1']/*[1]"/> -->
+    <!-- <xsl:variable name="data" select="$fd|$sd|$dd|$rd"/> -->
+
+    <xsl:variable name="sn" select="@name" />
+    <xsl:variable name="rn" select="parent::node[not($sn)]/@row-name" />
+    <xsl:variable name="rowname" select="$sn|$rn" />
+
+    <!--
+    sd (sibling data): data row is sibling of schema element
+    fd (form data): data row from explictly-named form-data element
+    ld (last-chance data): first element of first result
+    -->
+    <xsl:variable name="sd" select="../*[local-name()=$rowname][1]" />
+    <xsl:variable name="fd" select="../form-data[not($sd)]/*[1]" />
+    <xsl:variable name="ld" select="../*[not($sd|$fd)][@rndx='1']/*[1]" />
+    <xsl:variable name="data" select="$sd|$fd|$ld" />
 
     <xsl:variable name="mtype" select="/*[not($type)]/@mode-type"/>
     <xsl:variable name="sfw-class" select="concat($type,$mtype)" />
