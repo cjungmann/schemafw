@@ -34,7 +34,8 @@ There are several sections.
   - Extending the Framework
     - [Custom Interactive Classes](CustomIClasses.md)
     - [Templates for Custom Interactions](CustomTemplates.md)
-    - [Why Not Use xsl:include?](WhyNoInclude.md)
+    - [Custom Fields](CustomFields.md)
+    - [Why Not Use xsl:include?](WhyNotInclude.md)
   - Debugging
     - [Running Websites on LocalHost](RunningOnLocalhost.md)
     - [MySQL Command Line Queries](MySQLCLQueries.md)
