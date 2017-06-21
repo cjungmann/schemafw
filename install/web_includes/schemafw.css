@@ -205,17 +205,29 @@ form.Schema td { vertical-align:top; }
 
 /* ul selection styles */
 ul.sfw_select { list-style:none; padding:0; }
-p.sfw_select span.item
+ul.sfw_select span.item
 {
     border-radius: 4px;
     background-color:#CCCCCC;
     padding:0 8px;
     margin:0 4px;
+    white-space:no-wrap;
 }
-p.sfw_select span.x
+ul.sfw_select span.item span
 {
+    font-weight:bold;
     cursor:pointer;
+    color: #666666;
 }
+
+ul.sfw_select span.item span:hover
+{
+    color:#000000;
+}
+
+ul.sfw_select li.in { color:#999999; }
+ul.sfw_select li.out { color:#000000; cursor:pointer; }
+
 
 table.calendar { border-collapse:collapse; border-spacing:0; font-family:sans-serif; }
 table.calendar tbody tr { height:2em; }
