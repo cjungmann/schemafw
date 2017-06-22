@@ -12,6 +12,10 @@ schema.fcgi server program to treat the request differently, others simply
 signal how the client-side data handling should proceed.  Others do nothing,
 but by being included in the resulting document, can facilitate custom handling.
 
+Forms and tables often use a **schema** to shape the XML output of a query.
+[Schema Definitions](SRMSchemaDefinitions.md) explains how to design a
+schema to do your will.
+
 ## Client-side Handling
 
 The server program _schema.fcgi_ copies the contents of the _info_ instruction
