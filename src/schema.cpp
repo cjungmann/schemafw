@@ -749,6 +749,50 @@ void Schema_Printer::print(const ab_handle *schema, const char *default_name)
 }
 
 /**
+ * @brief Assign BindC m_format values based on SRM instructions.
+ *
+ * Scans the BindC DataStack, seeking matching schema field instructions.
+ * If a matching instruction is found, and it specifies a format instruction,
+ * the format value of BindC is set appropriately.
+ *
+ * These format values are used in use_result_row() to print a column's
+ * value as an attribute (default), child element, or as the text value of the
+ * output element.
+ */
+void Result_As_SchemaDoc::set_bind_formats_from_schema(const ab_handle* result,
+                                                       DataStack<BindC> &bs)
+{
+   const ab_handle *schema, *field, *format;
+   if (result)
+      schema = result->seek("schema");
+
+   if (result && schema)
+   {
+      for (auto *col=bs.start(); col; col=col->next())
+      {
+         BindC &obj = col->object();
+         const char *colname = col->str();
+
+         // For debugging, it should have been deleted when done.
+         // That is, delete it if you find it:
+         if (strcmp(colname,"kname")==0)
+            colname = colname;
+
+         if ((field=schema->seek("field",colname))
+             && (format=field->seek("format")))
+         {
+            if (format->is_value("child"))
+               obj.format(1);
+            else if (format->is_value("text"))
+               obj.format(2);
+            else
+               obj.format(0);
+         }
+      }
+   }
+}
+
+/**
  * @brief Uses pre_fetch_ to setup the result group before printing rows.
  *
  * This function collects data about the current result for several purposes:
@@ -808,9 +852,8 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
       }
       else if ((thandle=result_handle->seek("type")))
          result_type = thandle->value();
-      
-      // Update binds for mode (attribute or element)
-      // update_binds()
+
+      set_bind_formats_from_schema(result_handle, dsresult);
 
       // Change default m_row_name value if row-name handle exists
       if ((thandle=result_handle->seek("row-name")))
@@ -895,7 +938,14 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
 /**
  * @brief Print result row of a Schema Document.
  *
- * @todo Code to print attributes first, then child fields.
+ * This function makes up to three passes through the columns, the first pass prints
+ * attributes and counts child and text requests.  Follow-up passes happen if there
+ * are child or text requests.
+ *
+ * Only one text request is allowed per record, and if more than one are included,
+ * the first text request will be printed for each record.  This can be unpredictable
+ * because some records might be missing the first of multiple text columns, in
+ * which case, the second text column will be printed instead of the first.
  */
 void Result_As_SchemaDoc::use_result_row(int result_number,
                                          DataStack<BindC> &dsresult)
@@ -903,35 +953,109 @@ void Result_As_SchemaDoc::use_result_row(int result_number,
    ifputc('<', m_out);
    ifputs(m_row_name, m_out);
 
+   int count_children = 0;
+   int count_text = 0;
+
    int index=0;
-   for (auto *col=dsresult.start();
-        col;
-        ++index, col=col->next())
+   // First pass prints attributes and counts requests for child or text formatting.
+   for (auto *col=dsresult.start(); col; ++index, col=col->next())
    {
       BindC &obj = col->object();
       if (!obj.is_null())
       {
-         ifputc(' ', m_out);
-         ifputs(col->str(), m_out);
-         ifputs("=\"", m_out);
+         if (obj.format()==0)
+         {
+            ifputc(' ', m_out);
+            ifputs(col->str(), m_out);
+            ifputs("=\"", m_out);
 
-         /**
-          * @todo I think string types should be printed in Result_User_Base rather
-          * that in a IClass.  IClass shouldn't have to know about handling a
-          * truncation.  And besides, IClass probably shouldn't have to know about
-          * printing XML, either.
-          */
+            /**
+             * @todo I think string types should be printed in Result_User_Base rather
+             * that in a IClass.  IClass shouldn't have to know about handling a
+             * truncation.  And besides, IClass probably shouldn't have to know about
+             * printing XML, either.
+             */
 
-         if (obj.is_string_type())
-            print_string(obj, index);
-         else
-            obj.print(m_out);
+            if (obj.is_string_type())
+               print_string(obj, index);
+            else
+               obj.print(m_out);
 
-         ifputc('\"', m_out);
+            ifputc('\"', m_out);
+         }
+         else if (obj.format()==1)
+            ++count_children;
+         else if (obj.format()==2)
+            count_text = 1;
       }
    }
 
-   ifputs(" />\n", m_out);
+   // Close the element if no children or text,
+   if (count_children+count_text==0)
+      ifputs(" />\n", m_out);
+   // Otherwise, close the element's open tag and add the children and/or text
+   else
+   {
+      ifputc('>', m_out);
+
+      // Begin processing children, if any.
+      if (count_children)
+      {
+         for (auto *col=dsresult.start();
+              count_children>0 && col;
+              ++index, col=col->next())
+         {
+            BindC &obj = col->object();
+            if (!obj.is_null())
+            {
+               if (obj.format()==1)
+               {
+                  ifputc('<', m_out);
+                  ifputs(col->str(), m_out);
+                  ifputc('>', m_out);
+               
+                  if (obj.is_string_type())
+                     print_string(obj, index);
+                  else
+                     obj.print(m_out);
+
+                  ifputs("</", m_out);
+                  ifputs(col->str(), m_out);
+                  ifputc('>', m_out);
+
+                  --count_children;
+               }
+            }
+         }
+      }
+
+      // Begin processing the text value, if any.
+      if (count_text)
+      {
+         for (auto *col=dsresult.start();
+              count_text>0 && col;
+              ++index, col=col->next())
+         {
+            BindC &obj = col->object();
+            if (!obj.is_null())
+            {
+               if (obj.format()==2)
+               {
+                  if (obj.is_string_type())
+                     print_string(obj, index);
+                  else
+                     obj.print(m_out);
+
+                  --count_text;
+               }
+            }
+         }
+      }
+
+      ifputs("</", m_out);
+      ifputs(m_row_name, m_out);
+      ifputs(">\n", m_out);
+   }
 }
 
 void Result_As_SchemaDoc::result_complete(int result_number, DataStack<BindC> &dsresult)

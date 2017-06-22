@@ -992,6 +992,8 @@ protected:
 
    inline bool schema_prints_early(void) const { return m_schema_prints_early; }
 
+   void set_bind_formats_from_schema(const ab_handle* result, DataStack<BindC> &bs);
+
    
 public:
    Result_As_SchemaDoc(SpecsReader &sr,

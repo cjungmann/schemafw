@@ -68,6 +68,7 @@ void BindCPool::set_data(BindC *obj, void *extra, size_t len_extra)
    bind.error = &obj->m_error;
 
    obj->m_typeinfo = m_bindinfo.get_ctype();
+   obj->m_format = 0;
 }
 
 void BindCPool::build(IBindInfo &bi, IBindUser &bu)

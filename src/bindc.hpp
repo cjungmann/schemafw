@@ -50,6 +50,14 @@ struct BindC
                                *   valid as long as the rest of the object
                                *   is valid.
                                */
+   int           m_format;     /**< Place to save output formatting hints.
+                                    In theory, Result_As_XXX::pre_fetch_use_result()
+                                    sets the value, and Result_As_XXX::use_result_row()
+                                    uses the value.  For example, Result_As_SchemaDoc
+                                    leaves m_format==0 for attribute output, m_format==1
+                                    for output as child element, and m_format==2 for
+                                    output as text (the element value).
+                               */
    //   iclass_caster m_caster;   /**< Create and use an IClass object.   */
 
    void initialize(MYSQL_BIND *bind,
@@ -99,6 +107,8 @@ struct BindC
    inline const char *     sqltype_name(void) const   { return m_typeinfo->m_sql_name; }
    inline const char *     paramtype_name(void) const { return m_typeinfo->m_param_data_type; }
    inline const char *     dtdid(void) const          { return m_dtdid; }
+   inline void             format(int val)            { m_format=val; }
+   inline int              format(void) const         { return m_format; }
    /**@}*/
 
    inline unsigned long    strlength(void) const      { return m_str_length; }
