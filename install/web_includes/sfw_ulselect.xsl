@@ -16,16 +16,14 @@
          encoding="UTF-8"/>
 
   <!-- pre- and post-fix commas to list so all numbers are bounded by commas. -->
-  <xsl:template name="construct_keywords_input">
+  <xsl:template name="construct_ulselect_input">
     <xsl:param name="field" />
     <xsl:param name="data" />
 
     <xsl:variable name="value" select="$data/@*[local-name()=$field/@name]" />
-    <xsl:variable name="sel" select="concat(',',$value,',')" />
+    <xsl:variable name="list" select="concat(',',$value,',')" />
 
-    <xsl:variable name="named_r" select="/*/*[local-name()=$field/@result]" />
-    <xsl:variable name="deflt_r" select="/*[not($named_r)]/keywords" />
-    <xsl:variable name="result" select="$named_r | $deflt_r" />
+    <xsl:variable name="result" select="/*/*[local-name()=$field/@result]" />
 
     <ul name="{$field/@name}" class="sfw_select"
         data-sfw-class="ulselect" data-sfw-input="true">
@@ -40,9 +38,10 @@
       </xsl:apply-templates>
 
       <xsl:apply-templates select="$result/*" mode="construct_ulselect_option">
-        <xsl:with-param name="list" select="$sel" />
+        <xsl:with-param name="list" select="$list" />
       </xsl:apply-templates>
     </ul>
+
   </xsl:template>
 
   <!--
@@ -86,20 +85,28 @@
     </xsl:choose>
   </xsl:template>
 
-  <!-- Used by add_ulselect_selected to fill the "current selections" element. -->
   <xsl:template match="*[@id]" mode="construct_ulselect_item">
+    <span>ulselect result <xsl:value-of select="local-name()" /> is missing a lookup attribute.</span>
+  </xsl:template>
+
+  <!-- Used by add_ulselect_selected to fill the "current selections" element. -->
+  <xsl:template match="*[@id][../@lookup]" mode="construct_ulselect_item">
+    <xsl:variable name="aname" select="../@lookup" />
     <span class="item">
-      <xsl:value-of select="concat(@kname,' ')" />
+      <xsl:value-of select="@*[local-name()=$aname]" />
       <xsl:element name="span">
         <xsl:attribute name="data-id"><xsl:value-of select="@id" /></xsl:attribute>
         <xsl:text>&#215;</xsl:text>
       </xsl:element>
     </span>
   </xsl:template>
-
+  
   <!-- Used to create the fill list of options -->
   <xsl:template match="*" mode="construct_ulselect_option">
     <xsl:param name="list" />
+
+    <xsl:variable name="aname" select="../@lookup" />
+    
     <xsl:element name="li">
       <xsl:attribute name="data-value"><xsl:value-of select="@id" /></xsl:attribute>
       <xsl:attribute name="class">
@@ -108,15 +115,48 @@
           <xsl:otherwise>out</xsl:otherwise>
         </xsl:choose>
       </xsl:attribute>
-      <xsl:value-of select="@kname" />
+      <xsl:value-of select="@*[local-name()=$aname]" />
     </xsl:element>
   </xsl:template>
- 
-
-                
-    
 
 
+  <!-- Table field template -->
+  <xsl:template match="schema/field[@type='ulselect']" mode="write_cell_content">
+    <xsl:param name="data" />
+    <xsl:call-template name="ulselect_write_cell_content">
+      <xsl:with-param name="str" select="$data/@*[local-name()=current()/@name]" />
+      <xsl:with-param name="lookup" select="/*/*[local-name()=current()/@result]" />
+    </xsl:call-template>
+  </xsl:template>
 
+  <xsl:template name="ulselect_write_cell_content">
+    <xsl:param name="lookup" />
+    <xsl:param name="str" />
+
+    <xsl:variable name="hascomma" select="contains($str,',')" />
+    <xsl:variable name="aname" select="$lookup/@lookup" />
+
+    <xsl:variable name="vid">
+    <xsl:choose>
+      <xsl:when test="$hascomma">
+        <xsl:value-of select="substring-before($str,',')" />
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$str" />
+      </xsl:otherwise>
+    </xsl:choose>
+    </xsl:variable>
+
+    <xsl:value-of select="$lookup/*[@id=$vid]/@*[local-name()=$aname]" />
+
+    <xsl:if test="$hascomma">
+      <xsl:text>, </xsl:text>
+      <xsl:call-template name="ulselect_write_cell_content">
+        <xsl:with-param name="lookup" select="$lookup" />
+        <xsl:with-param name="str" select="substring-after($str,',')" />
+      </xsl:call-template>
+    </xsl:if>
+
+  </xsl:template>
 
 </xsl:stylesheet>

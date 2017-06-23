@@ -8,7 +8,7 @@
 
   <xsl:import href="sfw_generics.xsl" />
   <xsl:import href="sfw_utilities.xsl" />
-  <xsl:import href="sfw_select.xsl" />
+  <xsl:import href="sfw_ulselect.xsl" />
   <xsl:import href="sfw_schema.xsl" />
 
   <xsl:output method="xml"
@@ -524,27 +524,26 @@
     </xsl:element>
   </xsl:template>
 
+  <!-- Template to display error if the field does not include a result attribute. -->
+  <xsl:template match="field[@type='ulselect']" mode="construct_input">
+    <span>The ulselect field <xsl:value-of select="@name" /> failed to specify a result.</span>
+  </xsl:template>
+  
   <!--
-      Keyword templates are in sfw_select.xsl.  In order to use the contents
-      of sfw_select.xsl, the following template, whose priority ensures
+      ulselect templates are in sfw_ulselect.xsl.  In order to use the contents
+      of sfw_ulselect.xsl, the following template, whose priority ensures
       appropriate selection, accesses the imported templates explicitly.
   -->
-  <xsl:template match="field[@type='keywords']" mode="construct_input">
+  <xsl:template match="field[@type='ulselect'][@result]" mode="construct_input">
     <xsl:param name="data" />
-    <xsl:call-template name="construct_keywords_input">
+    <xsl:call-template name="construct_ulselect_input">
       <xsl:with-param name="field" select="." />
       <xsl:with-param name="data" select="$data" />
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="field[@lookup]" mode="construct_input">
-    <select name="{@name}" data-url="{@lookup}">
-      <option value="1">One</option>
-      <option value="2">Two</option>
-    </select>
-  </xsl:template>
 
-  <xsl:template match="field[@type='ENUM' or @enum]" mode="construct_input" priority="10">
+  <xsl:template match="field[@type='ENUM' or @enum]" mode="construct_input">
     <xsl:param name="data" />
     
     <xsl:variable name="name">

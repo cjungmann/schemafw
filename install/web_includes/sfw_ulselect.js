@@ -3,7 +3,7 @@
 
 (function _init()
 {
-   if (SFW.delay_init("sfw_select", _init, "iclass"))
+   if (SFW.delay_init("sfw_ulselect", _init, "iclass"))
       return;
 
    if (!SFW.derive(_ulselect, "ulselect", "iclass"))
