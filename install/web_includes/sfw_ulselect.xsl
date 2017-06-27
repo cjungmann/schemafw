@@ -33,9 +33,13 @@
         <xsl:with-param name="list" select="$value" />
       </xsl:apply-templates>
 
-      <xsl:apply-templates select="$result/*" mode="construct_ulselect_option">
-        <xsl:with-param name="list" select="$list" />
-      </xsl:apply-templates>
+      <li class="options_host">
+        <ul class="ulselect_options" >
+          <xsl:apply-templates select="$result/*" mode="construct_ulselect_option">
+            <xsl:with-param name="list" select="$list" />
+          </xsl:apply-templates>
+        </ul>
+      </li>
     </ul>
 
   </xsl:template>
@@ -47,14 +51,21 @@
   <xsl:template match="*[@rndx]" mode="construct_ulselect_selected">
     <xsl:param name="field" />
     <xsl:param name="list" />
+
+    <xsl:variable name="rname" select="$field/../@name" />
+    <xsl:variable name="drow" select="$field/../../*[local-name()=$rname]" />
+    <xsl:variable name="fval" select="$drow/@*[local-name()=$field/@name]" />
+    
     <li class="selected">
-      <xsl:text>&#160;</xsl:text>
-      <xsl:call-template name="add_ulselect_selected" >
-        <xsl:with-param name="lookup" select="." />
-        <xsl:with-param name="str" select="$list" />
-      </xsl:call-template>
+      <span>
+        <xsl:call-template name="add_ulselect_selected" >
+          <xsl:with-param name="lookup" select="." />
+          <xsl:with-param name="str" select="$list" />
+        </xsl:call-template>
+      </span>
       
-      <input type="text" name="{$field/@name}" />
+      <input type="text" />
+      <input type="disabled" class="transfer" name="{$field/@name}" value="{$fval}" />
     </li>
   </xsl:template>
 
@@ -82,6 +93,7 @@
         <xsl:apply-templates select="$sel" mode="construct_ulselect_item" />
       </xsl:otherwise>
     </xsl:choose>
+
   </xsl:template>
 
   <xsl:template match="*[@id]" mode="construct_ulselect_item">
