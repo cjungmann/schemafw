@@ -225,13 +225,28 @@ ul.ulselect span.item span:hover
     color:#000000;
 }
 
+ul.ulselect li.options_host { position:relative; }
+ul.ulselect li.options_host ul
+{
+    list-style:none;
+    display:none;
+    position:relative;
+    padding:0 4px;
+    top:0;
+    left:0;
+    width:100%;
+}
+
+li.options_host ul li   { background-color: #FFFFFFF; }
+li.options_host ul li.selected   { background-color: #6666FF; }
+
 ul.ulselect li.selected { background-color: #FFFFFF; }
 ul.ulselect li.selected input { border:none; }
+ul.ulselect li.selected input.transfer { display:none; }
 
 ul.ulselect li.shadow { display:none; }
 ul.ulselect li.in { color:#999999; }
 ul.ulselect li.out { color:#000000; cursor:pointer; }
-
 
 table.calendar { border-collapse:collapse; border-spacing:0; font-family:sans-serif; }
 table.calendar tbody tr { height:2em; }
