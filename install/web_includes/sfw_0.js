@@ -59,6 +59,8 @@ function init_SFW(callback)
    SFW.add_event            = _add_event;
    SFW.setup_event_handling = _setup_event_handling;
 
+   SFW.keycode_from_event   = _keycode_from_event;
+
    SFW.set_view_renderer    = _set_view_renderer;
    SFW.update_selected_view = _update_selected_view;
    SFW.change_view          = _change_view;
@@ -450,6 +452,18 @@ function init_SFW(callback)
       window.onresize = f;
    }
 
+   function _keycode_from_event(e)
+   {
+      if ("keyCode" in e)
+         SFW.keycode_from_event = function(e) { return e.keyCode; };
+      else if ("which" in e)
+         SFW.keycode_from_event = function(e) { return e.which; };
+      else if ("charCode" in e)
+         SFW.keycode_from_event = function(e) { return e.charCode; };
+
+      return SFW.keycode_from_event(e);
+   }
+
    function _show_view_content(viewlist)
    {
       function istr(level)
@@ -564,7 +578,7 @@ function init_SFW(callback)
             _update_selected_view(view);
 
 //            _show_view_content(view.parentNode);
-            
+
             SFW.xslobj.transformFill(host,view);
          }
       }
@@ -575,13 +589,13 @@ function init_SFW(callback)
       if (t.tagName.toLowerCase()=="img"
           && t.parentNode.tagName.toLowerCase()=="button")
          t = t.parentNode;
-      
+
       // Preempt host search if clicking a view button
       if (class_includes(t,"view_selector"))
       {
          if (!class_includes(t,"selected"))
             _change_view(t.getAttribute("data-name"));
-         
+
          return false;
       }
 
