@@ -20,13 +20,37 @@
          omit-xml-declaration="yes"
          encoding="utl-8"/>
 
+  <xsl:template match="schema" mode="id_schema">
+    <tr>
+      <td>
+        <xsl:value-of select="local-name(..)" />
+      </td>
+      <td>
+        <xsl:if test="local-name(..)='result'">
+          <xsl:value-of select="../@rndx" />
+        </xsl:if>
+      </td>
+    </tr>
+  </xsl:template>
+
   <!--
   Template to match transformFill() in _render_interaction().
   -->
   <xsl:template match="/*">
     <xsl:choose>
       <xsl:when test="$is_form">
-        <xsl:apply-templates select="$gschema" mode="construct_form" />
+
+        <xsl:choose>
+          <xsl:when test="count($gschema) &gt; 1">
+            <table>
+              <xsl:apply-templates select="$gschema" mode="id_schema" />
+            </table>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates select="$gschema" mode="construct_form" />
+          </xsl:otherwise>
+        </xsl:choose>
+        <!-- <xsl:apply-templates select="$gschema" mode="construct_form" /> -->
       </xsl:when>
       <xsl:otherwise>
         <xsl:call-template name="fill_host" />
@@ -174,7 +198,7 @@
       </xsl:if>
 
       <xsl:attribute name="data-modeType">
-        <xsl:value-of select="@mode-type" />
+        <xsl:value-of select="$mode-type" />
       </xsl:attribute>
 
       <xsl:if test="@meta-jump">
