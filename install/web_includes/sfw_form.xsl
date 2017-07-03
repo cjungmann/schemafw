@@ -55,17 +55,17 @@
     <xsl:variable name="ld" select="../*[not($sd|$fd)][@rndx='1']/*[1]" />
     <xsl:variable name="data" select="$sd|$fd|$ld" />
 
-    <xsl:variable name="mtype" select="/*[not($type)]/@mode-type"/>
-    <xsl:variable name="sfw-class" select="concat($type,$mtype)" />
+    <xsl:variable name="sfw-class">
+      <xsl:choose>
+        <xsl:when test="$type"><xsl:value-of select="$type" /></xsl:when>
+        <xsl:otherwise><xsl:value-of select="$mode-type" /></xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
 
     <xsl:variable name="msg">
       <xsl:call-template name="get_var_value">
         <xsl:with-param name="name" select="'msg'" />
       </xsl:call-template>
-    </xsl:variable>
-
-    <xsl:variable name="importing">
-      <xsl:if test="/*[@mode-type='form-import']">1</xsl:if>
     </xsl:variable>
 
     <xsl:variable name="action">
@@ -85,7 +85,7 @@
     </xsl:variable>
 
     <xsl:element name="form">
-      <xsl:if test="$importing='1'">
+      <xsl:if test="$mode-type='form-import'">
         <xsl:attribute name="enctype">multipart/form-data</xsl:attribute>
       </xsl:if>
       <xsl:if test="$has_action">
@@ -116,7 +116,7 @@
           <hr />
         </xsl:if>
 
-        <xsl:if test="$importing=1">
+        <xsl:if test="$mode-type='form-import'">
           <p>
             <label for="upfile">Upload the file</label>
             <input type="file" name="upfile" />
@@ -237,8 +237,6 @@
     <xsl:param name="result-field" />
     <xsl:param name="view-mode" />
 
-    <xsl:variable name="mtype" select="/*/@mode-type" />
-
     <xsl:variable name="name">
       <xsl:apply-templates select="." mode="get_name" />
     </xsl:variable>
@@ -260,7 +258,7 @@
       </label>
 
       <xsl:choose>
-        <xsl:when test="$mtype='form-view'">
+        <xsl:when test="$mode-type='form-view'">
           <div class="field_content">
             <xsl:apply-templates select="." mode="get_value">
               <xsl:with-param name="data" select="$data" />

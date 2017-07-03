@@ -73,7 +73,7 @@
         <xsl:call-template name="display_error" />
         <xsl:apply-templates select="@meta-jump" mode="make_jump_link" />
       </xsl:when>
-      <xsl:when test="/*[@mode-type='mixed-view']">
+      <xsl:when test="/*[$mode-type='mixed-view']">
         <xsl:apply-templates select="/*" mode="construct_mixed_view">
           <xsl:with-param name="primary" select="$primary" />
         </xsl:apply-templates>

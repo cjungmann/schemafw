@@ -7,9 +7,6 @@
    xmlns:html="http://www.w3.org/1999/xhtml"
    exclude-result-prefixes="html">
 
-  <xsl:variable name="result-row"
-                select="/*[@mode-type='form-result']/*[@rndx=1]/*[@error]" />
-
   <!--
   General explanation of how I conditionally create variables that select nodes
   or node-sets.
@@ -23,6 +20,20 @@
   only one node can be selected.  This is ensured by the lower-priority $gfview
   deferring to $gsview by including the predicate expression [not($gsview)].
   -->
+
+  <!--
+  Save a global $mode-type value from merged types or root mode-type value.
+  -->
+  <xsl:variable name="mtm_result"
+                select="/*/*[@rndx]/@merge-type" />
+  <xsl:variable name="mtm_schema"
+                select="/*[not($mtm_result)]/schema/@merge-type" />
+  <xsl:variable name="mt_root"
+                select="/*[not($mtm_result|$mtm_schema)]/@mode-type" />
+  <xsl:variable name="mode-type" select="$mtm_result|$mtm_schema|$mt_root" />
+
+  <xsl:variable name="result-row"
+                select="/*[$mode-type='form-result']/*[@rndx=1]/*[@error]" />
 
   <!--
   Construct global variables $err_condition, $gview, $gschema, and $gresult
@@ -45,10 +56,17 @@
     </xsl:choose>
   </xsl:variable>
 
-  <xsl:variable name="is_form" select="/*[starts-with(@mode-type,'form-')]" />
-  <xsl:variable name="dschema" select="/*[$is_form]/schema" />
-  <xsl:variable name="rschema" select="/*[$is_form][not($dschema)]/*[@rndx=1]/schema" />
-  <xsl:variable name="gschema" select="$dschema|$rschema" />
+  <xsl:variable name="is_form" select="starts-with($mode-type,'form-')" />
+  <xsl:variable
+      name="mrschema" select="/*[$is_form]/*[@rndx][@merge-type]/schema" />
+  <xsl:variable
+      name="msschema" select="/*[$is_form][not($mrschema)]/schema[@merge-type]" />
+  <xsl:variable
+      name="dschema" select="/*[$is_form][not($mrschema|$msschema)]/schema" />
+  <xsl:variable
+      name="rschema"
+      select="/*[$is_form][not($mrschema|$msschema|$dschema)]/*[@rndx=1]/schema" />
+  <xsl:variable name="gschema" select="$mrschema|$msschema|$dschema|$rschema" />
 
   <!-- $gview, if available, will dictate which result to use. -->
   <xsl:variable name="gsview" select="/*/views/view[@selected]" />
@@ -58,10 +76,16 @@
   <!--
   Build $gresult from a view or as a fallback, the first result in the resultset.
   -->
-  <xsl:variable name="view_result"
-                select="/*[$gview]/*[@rndx][local-name()=$gview/@result]"/>
-  <xsl:variable name="first_result" select="/*/*[not($view_result)][@rndx=1]" />
+  <xsl:variable
+      name="merged_result"
+      select="/*/*[@rndx][@merge-type]" />
+  <xsl:variable
+      name="view_result"
+      select="/*[not($merged_result)][$gview]/*[@rndx][local-name()=$gview/@result]"/>
+  <xsl:variable
+      name="first_result"
+      select="/*[not($merged_result|$view_result)]/*[@rndx=1]" />
 
-  <xsl:variable name="gresult" select="$view_result | $first_result" />
+  <xsl:variable name="gresult" select="$merged_result|$view_result|$first_result" />
 
 </xsl:stylesheet>
