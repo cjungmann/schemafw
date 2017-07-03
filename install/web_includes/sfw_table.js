@@ -372,13 +372,16 @@
 
    _table.prototype.child_finished = function(cfobj)
    {
+      // Must call base::child_finished() to clean out
+      // any merged elements before calling replot().
+      SFW.base.prototype.child_finished.call(this,cfobj);
+
       this.update_row(cfobj);
       this.replot(SFW.get_cfobj_result(cfobj));
 
       var dobj = cfobj.cdata;
       if (dobj && "os" in dobj)
          SFW.set_page_offset(dobj.os);
-      SFW.base.prototype.child_finished.call(this,cfobj);
    };
    
    _table.prototype.process_button_add = function(button)
