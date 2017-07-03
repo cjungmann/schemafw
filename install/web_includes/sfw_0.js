@@ -681,12 +681,50 @@ function init_SFW(callback)
       return thost;
    }
 
+   function _merge_into_pagedoc(pagedoc, newdoc)
+   {
+      var newroot = newdoc.documentElement;
+      var payload = newroot.selectSingleNode("schema");
+      if (!payload)
+         payload = newroot.selectSingleNode("*[@rndx][@merge-type]");
+      
+      if (payload)
+      {
+         payload = make_importable_node(pagedoc, payload, true);
+         payload.setAttribute("merged","yes");
+         var first, docel = pagedoc.documentElement;
+         if (payload && docel && (first=docel.selectSingleNode("*[@rndx][1]")))
+         {
+            docel.insertBefore(payload, first);
+            return payload;
+         }
+      }
+      
+      return null;
+   }
+
    function _open_interaction(host, url, caller, data)
    {
       function got(xdoc)
       {
+         var merge, pagedoc, node_to_remove;
          if (_check_for_preempt(xdoc))
+         {
+            if (xdoc.documentElement.getAttribute("mode-type")=="merge")
+            {
+               // Copy new stuff into page document so the new
+               // stuff can access common data residing in the
+               // page document (lookup results, etc):
+               if ((pagedoc=caller.xmldoc()))
+               {
+                  _merge_into_pagedoc(pagedoc, xdoc);
+                  xdoc = pagedoc;
+               }
+               else
+                  console.error("Can't find caller document for xdoc merging.");
+            }
             _render_interaction(xdoc, host, caller, data);
+         }
       }
 
       console.log(url);
@@ -1109,10 +1147,23 @@ function init_SFW(callback)
    _base.prototype.post_transform = function() { };
    _base.prototype.initialize = function() { };
 
+   _base.prototype.clear_merged_elements = function()
+   {
+      var docel = this.xmldocel();
+      function f(n)
+      {
+         if (n.nodeType==1 && n.getAttribute("merged")=="yes")
+            docel.removeChild(n);
+      }
+      SFW.find_child_matches(docel,f,false,false);
+      
+   };
+
    _base.prototype.child_ready = function(child) { };
 
    _base.prototype.child_finished = function(cfobj)
    {
+      this.clear_merged_elements();
       cfobj.close();
    };
 
