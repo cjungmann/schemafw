@@ -3351,6 +3351,7 @@ void Schema::process_root_branch(const ab_handle *mode_root,
       // print the adhoc stuff:
       m_specsreader->print_sub_elements(m_out, m_mode, arr_root_reserved);
 
+      // Comment-out of not debugging environment variables:
       // print_env(false);
 
       const char *schema_proc_name = m_mode->seek_value("schema-proc");
@@ -3367,7 +3368,11 @@ void Schema::process_root_branch(const ab_handle *mode_root,
             sprinter.print(m_mode->seek("schema"), "form");
          }
          else
-            open_info_procedure();
+         {
+            const char *procname = value_from_mode("procedure");
+            if (procname)
+               open_info_procedure(procname);
+         }
       }
       catch(const std::runtime_error &e)  // more e.what() info for runtime_error
       {
@@ -3566,7 +3571,7 @@ v *
  * @todo Should this function handle a situation without a stored procedure?
  * Someone might want to make an adhoc form or something.  Maybe not.
  */
-void Schema::open_info_procedure(proc_runner pr)
+void Schema::open_info_procedure(const char *procname, proc_runner pr)
 {
    // The default proc_runner function pointer
    // is Schema::process_info_procedure
@@ -3576,14 +3581,8 @@ void Schema::open_info_procedure(proc_runner pr)
    };
    Generic_User<StoredProc, decltype(fStoredProc)> spu(fStoredProc);
 
-   const char *procname = value_from_mode("procedure");
-   if (procname)
-      StoredProc::build(&s_mysql, procname, spu);
-   else if (m_mode_action!=MACTION_FORM_NEW)
-      print_message_as_xml(m_out,
-                           "warning",
-                           "Missing procedure instruction",
-                           m_mode->tag());
+   assert(procname);
+   StoredProc::build(&s_mysql, procname, spu);
 }
 
 

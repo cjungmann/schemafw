@@ -755,7 +755,7 @@ protected:
    void process_info_procedure(StoredProc &infoproc);
    void run_procedure(StoredProc &infoproc);
    
-   void open_info_procedure(proc_runner pr = &Schema::process_info_procedure);
+   void open_info_procedure(const char *procname, proc_runner pr = &Schema::process_info_procedure);
    /** @} */
 
    void print_schema_from_procedure_name(const char *name);
