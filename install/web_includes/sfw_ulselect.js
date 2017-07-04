@@ -245,9 +245,11 @@
 
    _ulselect.prototype.seek_value_attribute = function()
    {
-      var schema, row;
-      if ((schema=this.schema()) && (row=this.get_host_form_data_row()))
-         return row.selectSingleNode("@kws");
+      var name, schema, row;
+      if ((name=this.get_field_name())
+          && (schema=this.schema())
+          && (row=this.get_host_form_data_row()))
+         return row.selectSingleNode("@"+name);
       else
          return null;
    };
