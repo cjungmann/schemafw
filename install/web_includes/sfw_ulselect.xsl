@@ -15,7 +15,29 @@
          omit-xml-declaration="yes"
          encoding="UTF-8"/>
 
-  <!-- pre- and post-fix commas to list so all numbers are bounded by commas. -->
+  <!-- Generic attribute match of ulselect attribute for transformFill() function. -->
+  <xsl:template
+      match="@*[../../schema/field[@name=local-name(current())][@type='ulselect']]">
+    <xsl:variable
+        name="field" select="../../schema/field[@name=local-name(current())]" />
+    <xsl:call-template name="add_ulselect_selected">
+      <xsl:with-param name="lookup" select="/*/*[local-name()=$field/@result]" />
+      <xsl:with-param name="str" select="." />
+    </xsl:call-template>
+  </xsl:template>
+
+  <!--
+  This template builds the entire structure when building the form.  That is:
+  - The host ul with identifying attributes,
+  - one li with:
+     - a span to display the translated selections,
+     - an input for saving and posting the ulselect's value
+  - a second li with an ul containing the list of options
+
+  For ease of parsing, a comma is added to the beginning and end
+  of the value, so that all numbers in the value will start and end
+  with a comma.
+  -->
   <xsl:template name="construct_ulselect_input">
     <xsl:param name="field" />
     <xsl:param name="data" />
@@ -45,8 +67,8 @@
   </xsl:template>
 
   <!--
-      Template for creating the set of selected items.  I'm also adding
-      a single space to ensure that an empty li element doesn't collapse.
+  Template for creating the set of selected items.  I'm also adding
+  a single space to ensure that an empty li element doesn't collapse.
   -->
   <xsl:template match="*[@rndx]" mode="construct_ulselect_selected">
     <xsl:param name="field" />
