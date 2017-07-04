@@ -366,7 +366,7 @@
    _table.prototype.initialize = function()
    {
       var anchor = SFW.seek_child_anchor(this.host());
-      if (SFW.confirm_not_null(anchor))
+      if (SFW.confirm_not_null(anchor,"Unable to get child anchor"))
          SFW.fix_table_heads(anchor);
    };
 
