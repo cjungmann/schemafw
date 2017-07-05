@@ -14,6 +14,7 @@ There are several sections.
   - [Understanding SRM Files](SRMFiles.md)
   - [SRM Response Mode Types](SRMResponseModeTypes.md)
   - [SRM Schema Definitions](SRMSchemaDefinitions.md)
+  - [Enum Field Settings](SchemaEnumField.md)
   - [Definitions](Definitions.md)
 - [SchemaFW Case Study](SchemaFWCaseStudy.md)   
   - [A Read Interaction](CSReadInteraction.md)
