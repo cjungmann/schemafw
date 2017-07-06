@@ -773,11 +773,6 @@ void Result_As_SchemaDoc::set_bind_formats_from_schema(const ab_handle* result,
          BindC &obj = col->object();
          const char *colname = col->str();
 
-         // For debugging, it should have been deleted when done.
-         // That is, delete it if you find it:
-         if (strcmp(colname,"kname")==0)
-            colname = colname;
-
          if ((field=schema->seek("field",colname))
              && (format=field->seek("format")))
          {
@@ -3754,10 +3749,7 @@ void Schema::process_info_procedure(StoredProc &infoproc)
    {
       // Print a form-producing schema for an empty form or a result form:
       if (bindstack && force_schema)
-      {
-         Schema_Printer sprinter(*m_specsreader, *m_mode, *bindstack, m_out);
-         sprinter.print(m_mode->seek("schema"), "form");
-      }
+         resolve_enum_set_references(bindstack);
    }
 
    // We use the infoproc to print a schema if we're in a form-new response mode,
