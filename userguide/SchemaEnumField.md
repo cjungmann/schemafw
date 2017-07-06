@@ -24,10 +24,28 @@ table and column names, separated by a single colon.
 
 ## Enum Lookup Not Available For Result Schemas
 
+### Workaround
+
+If an enum field is required for a form, use a *schema_proc* instruction,
+even if the result fields are carefully matched to the procedure parameters.
+An ENUM field in a result cannot be adequately identified.
+
+Read the following section for a more complete explanation
+
+### Explanation of Why Result Enums Cannot Work
+
 It would be convenient if SchemaFW would also lookup the column definition
 for results, but it isn't possible without significant changes.  The problem
-is that it requires running a separate query while the procedure is running.
-This will cause an *out-of-sync* error.
+is that the DTD_ID value of the ENUM field is not included in the field information
+that is used to build the schema from a result.  The DTD_ID can only be accessed
+through a separate query, which cannot be run without a second connection, as the
+current connection is only at the beginning of processing the result.  Attempting
+to use the current connection will result in an out-of-sync error.
+
+You can see that this is the case by debugging schema.fcgi, putting a breakpoint
+in method BindStack::t_build() in bindstack.cpp.  MySQL misidentifies the datatype
+as MYSQL_TYPE_STRING, but even if the flags are consulted to confirm that it's an
+ENUM type, the information is not available.
 
 For now, if a form schema requires an enum lookup, it must be done by including
 a *schema-proc* instruction with an explicit field instruction to map the
