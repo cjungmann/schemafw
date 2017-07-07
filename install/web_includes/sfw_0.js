@@ -681,26 +681,30 @@ function init_SFW(callback)
       return thost;
    }
 
+   function _find_insertbefore_able(doc)
+   {
+      function f(n)
+      {
+         return n.nodeType==1
+            && (n.tagName.toLowerCase()=="schema" || n.getAttribute("rndx"));
+      }
+      return SFW.find_child_matches(doc.documentElement,f,true,false);
+   }
+
    function _merge_into_pagedoc(pagedoc, newdoc)
    {
-      var newroot = newdoc.documentElement;
-      var payload = newroot.selectSingleNode("schema");
-      if (!payload)
-         payload = newroot.selectSingleNode("*[@rndx][@merge-type]");
-      
-      if (payload)
+      var ibefore = _find_insertbefore_able(pagedoc);
+      var docel = pagedoc.documentElement;
+      function f(n)
       {
-         payload = make_importable_node(pagedoc, payload, true);
-         payload.setAttribute("merged","yes");
-         var first, docel = pagedoc.documentElement;
-         if (payload && docel && (first=docel.selectSingleNode("*[@rndx][1]")))
+         if (n.nodeType==1)
          {
-            docel.insertBefore(payload, first);
-            return payload;
+            var pl = make_importable_node(pagedoc, n, true);
+            pl.setAttribute("merged","yes");
+            docel.insertBefore(pl, ibefore);
          }
       }
-      
-      return null;
+      SFW.find_child_matches(newdoc.documentElement,f,false,false);
    }
 
    function _open_interaction(host, url, caller, data)
