@@ -48,6 +48,7 @@ There are several sections.
     - [Debugging Hints for SQL Procedures](DebuggingSQLHints.md)
     - [Showing XML Source with Template Output](XMLOutputTemplates.md)
   - Sessions
+    - [Sessions Overview](SessionOverview.md)
     - [Explanation of Password Handling](PasswordHandling.md)
     - [SchemaFW Session Processing Procedures](SchemaFWSessionProcs.md)
     - [SchemaFW Session Authorization Strategy](SchemaFWAuthorizations.md)
