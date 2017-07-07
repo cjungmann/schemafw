@@ -7,6 +7,10 @@ popular spreadsheet formats.  It is designed to provide data security by providi
 an opportunity for the user and the application to validate uploaded data before
 it is integrated into an application's general data.
 
+As a multi-step, it is necessary to have some sort of session running, so the
+progress can be tracked and displayed.  A simple session is sufficient.  See
+[Session Overview](SessionOverview.md) for an explanation of how to use sessions.
+
 ### Steps to Import
 
 1. **_form-import_ response mode**  The user submits a file to upload in a special
