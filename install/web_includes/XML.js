@@ -246,7 +246,7 @@ function prepare_xhr_functions()
       return null;
    }
 
-   xhr_get = function(url,cb,cb_failed,headers)
+   xhr_get = function(url,cb,cb_failed,headers,mimetype)
    {
       if (!cb_failed)
          cb_failed = function(xhr) { console.error("Failed to get document"); };
@@ -256,6 +256,8 @@ function prepare_xhr_functions()
       if (xhr)
       {
          xhr.open("GET",url,async);
+         if (mimetype)
+            xhr.overrideMimeType(mimetype);
          load_request_headers(xhr,headers);
          if (ie_mode)
             xhr.responseType = "msxml-document";
@@ -534,6 +536,13 @@ function prepare_getDocument_functions()
          document.XSLDocument = doc;
          call_callback();
       }
+
+      function get_error(xhr)
+      {
+         if (!xhr.responseXML)
+            alert(xhr.responseText);
+         call_callback();
+      }
       
       function have_xml(doc)
       {
@@ -544,7 +553,7 @@ function prepare_getDocument_functions()
             var re = /href\s*=\s*[\"\']([^\'\"]+)[\"\']/;
             var match = re.exec(pixsl.data);
             if (match && match.length>1)
-               xhr_get(match[1], have_xsl, call_callback);
+               xhr_get(match[1], have_xsl, get_error,null,"text/xml");
          }
          else
             call_callback();
