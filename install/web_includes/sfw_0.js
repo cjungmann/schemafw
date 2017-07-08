@@ -586,12 +586,16 @@ function init_SFW(callback)
 
    function _process_event(e,t)
    {
-      if (t.tagName.toLowerCase()=="img"
+      // Get parent if text or attribute node:
+      if (t.nodeType==2 || t.nodeType==3)
+         t = t.parentNode;
+
+      if (t.nodeType==1 && t.tagName.toLowerCase()=="img"
           && t.parentNode.tagName.toLowerCase()=="button")
          t = t.parentNode;
 
       // Preempt host search if clicking a view button
-      if (class_includes(t,"view_selector"))
+      if (t.nodeType==1 && class_includes(t,"view_selector"))
       {
          if (!class_includes(t,"selected"))
             _change_view(t.getAttribute("data-name"));
