@@ -237,7 +237,7 @@ ul.ulselect li.options_host ul
     width:100%;
 }
 
-li.options_host ul li   { background-color: #FFFFFFF; }
+li.options_host ul li   { background-color: #FFFFFF; }
 li.options_host ul li.selected   { background-color: #6666FF; }
 
 ul.ulselect li.selected { background-color: #FFFFFF; }
