@@ -143,7 +143,7 @@
          if (n.nodeType==1)
          {
             var cn = n.className;
-            if (cn=="in")
+            if (cn=="in" || n.style.display=="none")
                return false;
             
             if (!top && cn=="out")
