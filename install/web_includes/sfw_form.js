@@ -137,6 +137,7 @@
 
       function cb_bad(xhr)
       {
+         console.error("Form submit failed.");
       }
 
       xhr_post(url,arr.join("&"),
