@@ -339,7 +339,7 @@ function prepare_get_doc_functions()
             internal_prep_xpath(doc);
             cb(doc);
          }
-         var ret = xhr_get(url, (cb?int_cb:null));
+         var ret = xhr_get(url, (cb?int_cb:null),null,null,"text/xml");
          if (ret && !cb)
             internal_prep_xpath(ret);
          return ret;
@@ -553,7 +553,7 @@ function prepare_getDocument_functions()
             var re = /href\s*=\s*[\"\']([^\'\"]+)[\"\']/;
             var match = re.exec(pixsl.data);
             if (match && match.length>1)
-               xhr_get(match[1], have_xsl, get_error,null,"text/xml");
+               xhr_get(match[1],have_xsl,get_error,null,"text/xml");
          }
          else
             call_callback();
@@ -578,7 +578,7 @@ function prepare_getDocument_functions()
          call_callback();
       }
       else
-         xhr_get(window.location.href, have_xml, call_callback);
+         xhr_get(window.location.href,have_xml,get_error,null,"text/xml");
    };
 }
 
