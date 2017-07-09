@@ -95,6 +95,7 @@ function init_SFW_DOM()
       var node = parent ? parent.firstChild : null;
       while (node)
       {
+         var nextnode = node.nextSibling;
          if (compfunc(node))
          {
             if (first_only)
@@ -113,7 +114,7 @@ function init_SFW_DOM()
                   rval = rval.concat(recur);
             }
          }
-         node = node.nextSibling;
+         node = nextnode;
       }
       return rval.length ? rval : null;
    }
