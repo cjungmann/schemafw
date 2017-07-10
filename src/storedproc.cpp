@@ -153,6 +153,19 @@ void Result_User_Build_Schema::build_param_stack(DataStack<BindC> &result2, Simp
       else
          datalen = maxlen;
 
+      if (!datalen)
+      {
+         switch (ctype->m_sqltype)
+         {
+            case MYSQL_TYPE_DECIMAL:
+               // Add one for comma, one for (unused, I know) 0-terminator:
+               datalen = get_decimal_length(dtdid) + 2;
+               break;
+            default:
+               break;
+         }
+      }
+
       size_t linelen = base_handle::get_line_handle_size(name,
                                                          sizeof(BindC),
                                                          datalen);
@@ -216,6 +229,30 @@ void Result_User_Build_Schema::build_param_stack(DataStack<BindC> &result2, Simp
    BindStack nds(array, m_param_count);
    m_cb(&nds);
 }
+
+/**
+ * @brief Parse and return the first number of the MYSQL_TYPE_DECIMAL pair.
+ */
+size_t Result_User_Build_Schema::get_decimal_length(const char *dtdid)
+{
+   size_t rval = 0;
+   if (strncmp(dtdid,"decimal",7)==0)
+   {
+      const char *num = &dtdid[8];
+      const char *comma = strchr(num,',');
+      if (!comma)
+         comma = num+100;
+      
+      while (*num && num<comma)
+      {
+         rval += *num - '0';
+         ++num;
+      }
+   }
+   return rval;
+}
+
+
 
 /**
  * @brief Collects and saves name and data type information from stored procedure
@@ -367,10 +404,6 @@ void StoredProc::build(MYSQL *mysql,
    // Build the DataStack<BindC> for the procedure name,
    BindStack::build("s64", fParamStack);
 }
-
-
-
-
 
 #ifdef INCLUDE_STOREDPROC_MAIN
 

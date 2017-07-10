@@ -36,11 +36,11 @@ public:
       // This is the only way to get the message out.
       throw std::runtime_error(str);
    }
-
-
 protected:
    void get_param_count(DataStack<BindC> &result1, SimpleProcedure &proc);
    void build_param_stack(DataStack<BindC> &result2, SimpleProcedure &proc);
+
+   static size_t get_decimal_length(const char* dtdid);
 
    /** @name Confirm DataStack elements' name, type, and position @{ */
    static int s_checked_result_1;
@@ -48,7 +48,6 @@ protected:
    static void check_result_1(DataStack<BindC> &ds);
    static void check_result_2(DataStack<BindC> &ds);
    /**@}*/
-
 };
 
 /**
@@ -123,7 +122,7 @@ protected:
       return strlen(name) + param_count*2 + 7;
    }
    static void set_query_string(char *buff, const char *name, unsigned param_count);
-   
+
 };
 
 
