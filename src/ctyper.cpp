@@ -235,24 +235,25 @@ const _CType *CTyper::get(const char *data_type, const char *dtd_identifier)
 {
    bool is_unsigned = false;
    const _CType *ptr = s_types;
-   
-   if (dtd_identifier && strncmp(dtd_identifier,"tinyint(1)",10)==0)
+
+   if (dtd_identifier)
    {
-      // This should be the first in the list, scan list just in case:
-      while (ptr < s_end)
+      if (strncmp(dtd_identifier,"tinyint(1)",10)==0)
       {
-         if (0==strcmp("bool", ptr->m_param_data_type))
-            return ptr;
-         ++ptr;
+         // This should be the first in the list, scan list just in case:
+         while (ptr < s_end)
+         {
+            if (0==strcmp("bool", ptr->m_param_data_type))
+               return ptr;
+            ++ptr;
+         }
       }
-      
+      // A null dtd_identifier means we're not checking for signed, so check
+      // it first as a short-circuit for the conditional:
+      else if (strstr(data_type,"int") && strstr(dtd_identifier,"unsigned"))
+         is_unsigned = true;
    }
-
-   // A null dtd_identifier means we're not checking for signed, so check
-   // it first as a short-circuit for the conditional:
-   if (dtd_identifier && strstr(data_type,"int") && strstr(dtd_identifier,"unsigned"))
-      is_unsigned = true;
-
+   
    while (ptr < s_end)
    {
       if (0==strcmp(data_type, ptr->m_param_data_type))
