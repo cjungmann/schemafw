@@ -284,7 +284,7 @@
                if (tag=="span")
                   return true;
             }
-            else if (tag=="li" && n.className=="selected")
+            else if (tag=="li" && n.className=="selections")
                li = n;
          }
          return false;

@@ -20,7 +20,7 @@
       match="@*[../../schema/field[@name=local-name(current())][@type='ulselect']]">
     <xsl:variable
         name="field" select="../../schema/field[@name=local-name(current())]" />
-    <xsl:call-template name="add_ulselect_selected">
+    <xsl:call-template name="add_ulselect_selections">
       <xsl:with-param name="lookup" select="/*/*[local-name()=$field/@result]" />
       <xsl:with-param name="str" select="." />
     </xsl:call-template>
@@ -45,19 +45,19 @@
     <xsl:variable name="value" select="$data/@*[local-name()=$field/@name]" />
     <xsl:variable name="list" select="concat(',',$value,',')" />
 
-    <xsl:variable name="result" select="/*/*[local-name()=$field/@result]" />
+    <xsl:variable name="lu_result" select="/*/*[local-name()=$field/@result]" />
 
     <ul name="{$field/@name}" class="ulselect"
         data-sfw-class="ulselect" data-sfw-input="true">
 
-      <xsl:apply-templates select="$result" mode="construct_ulselect_selected">
+      <xsl:apply-templates select="$lu_result" mode="construct_ulselect_selections">
         <xsl:with-param name="field" select="$field" />
-        <xsl:with-param name="list" select="$value" />
+        <xsl:with-param name="value" select="$value" />
       </xsl:apply-templates>
 
       <li class="options_host">
         <ul class="ulselect_options" >
-          <xsl:apply-templates select="$result/*" mode="construct_ulselect_option">
+          <xsl:apply-templates select="$lu_result/*" mode="construct_ulselect_option">
             <xsl:with-param name="list" select="$list" />
           </xsl:apply-templates>
         </ul>
@@ -67,32 +67,30 @@
   </xsl:template>
 
   <!--
-  Template for creating the set of selected items.  I'm also adding
-  a single space to ensure that an empty li element doesn't collapse.
+  This template should match a lookup result for reconciling the integer
+  values in the $value parameter.
+  
+  Adds a space to ensure that an empty li element doesn't collapse.
   -->
-  <xsl:template match="*[@rndx]" mode="construct_ulselect_selected">
+  <xsl:template match="*[@rndx]" mode="construct_ulselect_selections">
     <xsl:param name="field" />
-    <xsl:param name="list" />
+    <xsl:param name="value" />
 
-    <xsl:variable name="rname" select="$field/../@name" />
-    <xsl:variable name="drow" select="$field/../../*[local-name()=$rname]" />
-    <xsl:variable name="fval" select="$drow/@*[local-name()=$field/@name]" />
-    
-    <li class="selected">
+    <li class="selections">
       <span>
-        <xsl:call-template name="add_ulselect_selected" >
+        <xsl:call-template name="add_ulselect_selections" >
           <xsl:with-param name="lookup" select="." />
-          <xsl:with-param name="str" select="$list" />
+          <xsl:with-param name="str" select="$value" />
         </xsl:call-template>
       </span>
-      
+      <xsl:text> </xsl:text>
       <input type="text" />
-      <input type="disabled" class="transfer" name="{$field/@name}" value="{$fval}" />
+      <input type="text" disabled="disabled" class="transfer" name="{$field/@name}" value="{$value}" />
     </li>
   </xsl:template>
 
   <!-- Recursive template that adds items to the "current selections" element. -->
-  <xsl:template name="add_ulselect_selected">
+  <xsl:template name="add_ulselect_selections">
     <xsl:param name="lookup" />
     <xsl:param name="str" />
 
@@ -105,7 +103,7 @@
 
         <xsl:apply-templates select="$sel" mode="construct_ulselect_item" />
 
-        <xsl:call-template name="add_ulselect_selected">
+        <xsl:call-template name="add_ulselect_selections">
           <xsl:with-param name="lookup" select="$lookup" />
           <xsl:with-param name="str" select="substring-after($str,',')" />
         </xsl:call-template>
@@ -122,7 +120,7 @@
     <span>ulselect result <xsl:value-of select="local-name()" /> is missing a lookup attribute.</span>
   </xsl:template>
 
-  <!-- Used by add_ulselect_selected to fill the "current selections" element. -->
+  <!-- Used by add_ulselect_selections to fill the "current selections" element. -->
   <xsl:template match="*[@id][../@lookup]" mode="construct_ulselect_item">
     <xsl:variable name="aname" select="../@lookup" />
     <span class="item">
@@ -134,7 +132,12 @@
     </span>
   </xsl:template>
   
-  <!-- Used to create the fill list of options -->
+  <!--
+  This template should match a lookup result to reconcile integer values in
+  $list with name strings.
+
+  Fills a UL with available selection options.
+  -->
   <xsl:template match="*" mode="construct_ulselect_option">
     <xsl:param name="list" />
 
