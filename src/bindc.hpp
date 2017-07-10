@@ -66,7 +66,12 @@ struct BindC
                    const _CType *ctype=nullptr);
 
    inline iclass_caster get_caster(void) const    { return m_typeinfo->m_caster; }
-   inline void use_cast(IClass_User &user) const  { (*get_caster())(m_data,m_bind->buffer_length,user); }
+   inline void use_cast(IClass_User &user) const
+   {
+      // Assertion to avoid future DECIMAL-like blind-spots:
+      assert(m_bind->buffer_length>0);
+      (*get_caster())(m_data,m_bind->buffer_length,user);
+   }
    
    void set_from(const IClass &rhs);
    void set_from(IStreamer &s);
