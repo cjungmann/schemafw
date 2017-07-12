@@ -448,6 +448,7 @@ function init_SFW(callback)
       Events.add_event("keyup",f);
       Events.add_event("keypress",f);
       Events.add_event("focus",f);
+      Events.add_event("blur",f);
 
       window.onresize = f;
    }
@@ -711,6 +712,17 @@ function init_SFW(callback)
       SFW.find_child_matches(newdoc.documentElement,f,false,false);
    }
 
+   function _remove_merged_elements(pagedoc)
+   {
+      var docel = pagedoc.documentElement;
+      function f(n)
+      {
+         if (n.nodeType==1 && n.getAttribute("merged")=="yes")
+            docel.removeChild(n);
+      }
+      SFW.find_child_matches(docel,f,false,false);
+   }
+
    function _open_interaction(host, url, caller, data)
    {
       function got(xdoc)
@@ -807,9 +819,11 @@ function init_SFW(callback)
 
    function _find_schema(doc)
    {
-      var schema = doc.selectSingleNode("*/schema");
-      if (!schema)
-         schema = doc.selectSingleNode("*/*[@rndx=1]/schema");
+      var docel = doc.documentElement;
+      var schema = null;
+      var arrx = ["schema[@merged]", "result[@merged]/schema", "schema[1]", "*[@rndx=1]/schema"];
+      for (var i=0,stop=arrx.length; !schema && i<stop; ++i)
+         schema = docel.selectSingleNode(arrx[i]);
 
       return schema;
    }
@@ -953,7 +967,7 @@ function init_SFW(callback)
 
    _base.prototype.class_name = "iclass";
    _base.prototype.top       = function() { return _find_anchor(this.host()); };
-   _base.prototype.schema    = function() { return _find_schema(this.xmldocel()); };
+   _base.prototype.schema    = function() { return _find_schema(this.xmldoc()); };
    _base.prototype.baseproto = function() { return this._baseproto; };
    _base.prototype.button_processors = {};
 
@@ -996,10 +1010,15 @@ function init_SFW(callback)
 
    _base.prototype.get_host_form_data_row = function()
    {
-      var schema = this.schema();
+      var xpath, schema = this.schema();
       if (schema)
       {
-         var xpath = "../*[local-name()=../@row-name]";
+         // If schema is child of documentElement,
+         if (schema.parentNode.parentNode.nodeType==9)
+            xpath = "/*/*[@rndx][1]/*[1]";
+         else
+            xpath = "../*[local-name()=../@row-name]";
+
          return schema.selectSingleNode(xpath);
       }
       else
@@ -1117,6 +1136,7 @@ function init_SFW(callback)
       {
          case "jump":
          case "open":
+         case "import":
             if (url)
             {
                window.location = url;
@@ -1157,14 +1177,7 @@ function init_SFW(callback)
 
    _base.prototype.clear_merged_elements = function()
    {
-      var docel = this.xmldocel();
-      function f(n)
-      {
-         if (n.nodeType==1 && n.getAttribute("merged")=="yes")
-            docel.removeChild(n);
-      }
-      SFW.find_child_matches(docel,f,false,false);
-      
+      _remove_merged_elements(this.xmldoc()); 
    };
 
    _base.prototype.child_ready = function(child) { };
