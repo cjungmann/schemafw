@@ -199,8 +199,8 @@
 
    _table.prototype.get_sfw_attribute = function(aname)
    {
-      var name = null;
-      if (this.schema() && !(name=this.schema().getAttribute(aname)))
+      var schema, name = null;
+      if ((schema=this.schema()) && !(name=schema.getAttribute(aname)))
          name = this.xmldocel().getAttribute(aname);
       return name;
    };
