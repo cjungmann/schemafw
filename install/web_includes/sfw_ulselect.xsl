@@ -15,15 +15,54 @@
          omit-xml-declaration="yes"
          encoding="UTF-8"/>
 
-  <!-- Generic attribute match of ulselect attribute for transformFill() function. -->
-  <xsl:template
-      match="@*[../../schema/field[@name=local-name(current())][@type='ulselect']]">
+  <!-- Generic attribute match for embedded schema -->
+  <xsl:template match="@*[../../schema/field[@name=local-name(current())][@type='ulselect']]">
     <xsl:variable
         name="field" select="../../schema/field[@name=local-name(current())]" />
     <xsl:call-template name="add_ulselect_selections">
       <xsl:with-param name="lookup" select="/*/*[local-name()=$field/@result]" />
       <xsl:with-param name="str" select="." />
     </xsl:call-template>
+  </xsl:template>
+
+  <!-- Generic attribute match for remote schema -->
+  <xsl:template match="@*[not(../../schema)][/*/schema[1]/field[@name=local-name(current())][@type='ulselect']]">
+    <xsl:variable
+        name="field" select="/*/schema[1]/field[@name=local-name(current())]" />
+    <xsl:call-template name="add_ulselect_selections">
+      <xsl:with-param name="lookup" select="/*/*[local-name()=$field/@result]" />
+      <xsl:with-param name="str" select="." />
+    </xsl:call-template>
+  </xsl:template>
+
+  <!-- Generic template for rebuilding the options list -->
+  <xsl:template match="field[@type='ulselect']">
+    <xsl:variable
+        name="result" select="/*/*[@rndx][local-name()=current()/@result]" />
+    <xsl:variable name="value">
+      <xsl:apply-templates select="." mode="get_selections_value" />
+    </xsl:variable>
+
+    <xsl:if test="$value and $result">
+      <xsl:apply-templates select="$result/*" mode="construct_ulselect_option">
+        <xsl:with-param name="list" select="concat(',',$value,',')" />
+      </xsl:apply-templates>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="field" mode="get_selections_value">
+    <xsl:variable name="sresult" select="../following-sibling::*[@rndx][1]" />
+    <xsl:variable name="hresult" select="../parent::*[not($sresult)][@rndx]" />
+    <xsl:variable name="result" select="$sresult|$hresult" />
+
+    <xsl:if test="$result">
+      <xsl:variable name="rname" select="$result/@row-name" />
+      <xsl:variable name="attr"
+          select="$result/*[local-name()=$rname]/@*[local-name()=current()/@name]" />
+      <xsl:if test="$attr">
+        <xsl:value-of select="$attr" />
+      </xsl:if>
+    </xsl:if>
   </xsl:template>
 
   <!--
