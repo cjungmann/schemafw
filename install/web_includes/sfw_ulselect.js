@@ -37,6 +37,8 @@
       var field = this.get_input_field();
       if (e.type=="focus")
          return this.process_focus(e,t);
+      else if (e.type=="blur")
+         return this.process_blur(e,t);
       if (e.type.substring(0,3)=="key")
          return this.process_key(e,t);
       else if (e.type=="click")
@@ -44,7 +46,7 @@
          var val;
          if ((val=t.getAttribute("data-id")))
          {
-            this.set_li_class_by_id(t,"out");
+            this.set_li_class_by_id(val,"out");
             return this.remove_selection(val);
          }
          else if ((val=t.getAttribute("data-value")) && t.className=="out")
@@ -101,36 +103,100 @@
       this.ul_options.style.display = "none";
    };
 
+   _ulselect.prototype.options_are_visible = function()
+   {
+      return this.ul_options.style.display!="none";
+   };
+
+   _ulselect.prototype.refresh_options = function()
+   {
+      var name, schema, field;
+      if ((name=this.get_field_name())
+          && (schema=this.schema())
+          && (field=schema.selectSingleNode("field[@name='" + name + "']")))
+      {
+         SFW.xslobj.transformFill(this.ul_options,field);
+      }
+   };
+
    _ulselect.prototype.process_focus = function(e,t)
    {
       if (t.tagName.toLowerCase()=="input")
          this.reveal_options();
+      return false;
+   };
+
+   _ulselect.prototype.process_blur = function(e,t)
+   {
+      if (t.tagName.toLowerCase()=="input")
+         this.conceal_options();
+      return false;
+   };
+
+   _ulselect.prototype.remove_last_selection = function()
+   {
+      var span = this.get_selections_span();
+      var id, n = span.lastChild;
+      while (n)
+      {
+         if (n.nodeType==1 && n.className=="item" && n.tagName.toLowerCase()=="span")
+            break;
+          n=n.previousSibling;
+      }
+      
+      if (n
+          && (n=n.getElementsByTagName("span"))
+          && (n=n[0])
+          && (id=n.getAttribute("data-id")))
+      {
+         this.set_li_class_by_id(id,"out");
+         this.remove_selection(id);
+      }
+      
+   };
+
+   _ulselect.prototype.seek_current_selection = function()
+   {
+      function f(n)
+      {
+         return n.nodeType==1
+            && n.className=="selected"
+            && n.tagName.toLowerCase()=="li";
+      }
+      return SFW.find_child_matches(this.ul_options,f,true,false);
+   };
+
+   _ulselect.prototype.close_and_clear = function()
+   {
+      this.conceal_options();
+      this.input_el.value = "";
+      this.filter_options("");
+      this.input_el.focus();
+   };
+
+   _ulselect.prototype.input_is_empty = function()
+   {
+      return this.input_el.value=="";
    };
 
    _ulselect.prototype.process_enter_press = function(e,t)
    {
-      var el, val;
-      function f(n) { return n.nodeType==1 && n.className=="selected"; }
-      if ((el=SFW.find_child_matches(this.ul_options, f, true, false))
-         && (val=el.getAttribute("data-value")))
+      var el = this.seek_current_selection();
+      if (el)
       {
          el.className = "in";
-         this.add_selection(val);
-
-         this.input_el.value = "";
-         this.filter_options("");
-         this.input_el.focus();
-
+         this.add_selection(el.getAttribute("data-value"));
+         this.close_and_clear();
          e.preventDefault();
          return true;
       }
-      
       return false;
    };
 
    _ulselect.prototype.process_arrow_press = function(up)
    {
       var top, prev, cur, before;
+      var ths = this; // for lambda function
       
       function swap(nw, old)
       {
@@ -162,6 +228,12 @@
             }
             else // not-up (down)
             {
+               if (!ths.options_are_visible())
+               {
+                  ths.reveal_options();
+                  ths.refresh_options();
+               }
+
                if (prev)
                {
                   swap(n,prev);
@@ -184,6 +256,8 @@
       var keycode = SFW.keycode_from_event(e);
       if (keycode > 48 && e.type=="keyup")
       {
+         if (!this.options_are_visible())
+             this.reveal_options();
          this.update_input_progress(e,t);
          return true;
       }
@@ -194,6 +268,12 @@
          case 13: // enter key
             return this.process_enter_press(e,t);
          case 8:  // backspace
+            if (this.input_is_empty())
+            {
+               this.remove_last_selection();
+               this.conceal_options();
+               break;
+            }
          case 46: // delete key
             this.update_input_progress(e,t);
             break;
@@ -226,10 +306,8 @@
       return null;
    };
 
-   _ulselect.prototype.set_li_class_by_id = function(t,val)
+   _ulselect.prototype.set_li_class_by_id = function(id,val)
    {
-      var li, id = t.getAttribute("data-id");
-
       function f(n) { return n.nodeType==1 && n.getAttribute("data-value")==id; }
       var el = SFW.find_child_matches(this.ul_options,f,true,false);
       if (el)
@@ -261,17 +339,13 @@
    _ulselect.prototype.update_selections = function()
    {
       var attr = this.get_value_attribute();
-      var span = this.get_selected_options_span();
+      var span = this.get_selections_span();
 
       SFW.xslobj.transformFill(span, attr);
       this.input_transfer.value = attr.value;
    };
 
-   function _is_selected_li(n) {
-      return n.nodeType==1 && n.tagName.toLowerCase()=="li" && n.className=="selected";
-   }
-
-   _ulselect.prototype.get_selected_options_span = function()
+   _ulselect.prototype.get_selections_span = function()
    {
       var li, span, tag;
       function f(n)
