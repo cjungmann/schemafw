@@ -67,6 +67,8 @@
    _ulselect.prototype.filter_options = function(str, unselect)
    {
       str = str.toLowerCase();
+      var strempty = str.length==0;
+      var matches = true;
       function f(n)
       {
          if (n.nodeType==1)
@@ -74,8 +76,9 @@
             if (unselect && n.className=="selected")
                n.className = "out";
 
-            var txt = n.firstChild.data.toLowerCase();
-            var matches = txt.search(str)>=0;
+            if (!strempty)
+               matches = n.firstChild.data.toLowerCase().search(str)>=0;
+            
             n.style.display = matches ? "" : "none";
             return matches;
          }
@@ -89,7 +92,7 @@
    _ulselect.prototype.update_input_progress = function(e,t)
    {
       var keycode = SFW.keycode_from_event(e);
-      var val = t.value;
+      var val = this.input_el.value;
       this.filter_options(val,true);
    };
 
@@ -254,31 +257,35 @@
    _ulselect.prototype.process_key = function(e,t)
    {
       var keycode = SFW.keycode_from_event(e);
-      if (keycode > 48 && e.type=="keyup")
+      if (e.type=="keyup")
       {
-         if (!this.options_are_visible())
-             this.reveal_options();
-         this.update_input_progress(e,t);
-         return true;
+         if (keycode==8 || keycode==46|| keycode>48)
+         {
+            if (!this.options_are_visible())
+               this.reveal_options();
+            this.update_input_progress(e,t);
+            return true;
+         }
       }
-      if (keycode < 47 && e.type=="keydown")
+      else if (e.type=="keydown")
       {
          switch(keycode)
          {
-         case 13: // enter key
-            return this.process_enter_press(e,t);
-         case 8:  // backspace
+         case 8:
+         case 46:
+            // We have to check before letter is erased or
+            // erasing the last letter will also erase the
+            // previous selected option.
             if (this.input_is_empty())
             {
                this.remove_last_selection();
                this.conceal_options();
-               break;
+               return false;
             }
-         case 46: // delete key
-            this.update_input_progress(e,t);
             break;
-
-         // Allow normal arrow processing to move text cursor
+            
+         case 13: // enter key
+            return this.process_enter_press(e,t);
          case 37: // left
          case 39: // right
             break;
