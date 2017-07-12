@@ -1236,8 +1236,10 @@ function init_SFW(callback)
 
    function _get_class_from_doc(doc)
    {
-      var name, view;
-      if ((name= doc.documentElement.getAttribute("mode-type")))
+      var xpath = "/*/*[@merge-type][1]/@merge-type";
+      var attr, name, view;
+      if (((attr=doc.selectSingleNode(xpath)) && (name=attr.value))
+          || (name=doc.documentElement.getAttribute("mode-type")))
          return _get_class_from_name(name);
       else if ((view = _seek_current_view(doc)))
          return view.getAttribute("type");
