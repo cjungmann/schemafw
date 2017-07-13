@@ -35,19 +35,24 @@
    _ulselect.prototype.process = function(e,t)
    {
       var field = this.get_input_field();
-      if (e.type=="focus")
-         return this.process_focus(e,t);
-      else if (e.type=="blur")
+
+      // if (e.type=="focus")
+      //    return this.process_focus(e,t);
+
+      if (e.type=="blur")
          return this.process_blur(e,t);
+      
       if (e.type.substring(0,3)=="key")
          return this.process_key(e,t);
-      else if (e.type=="click")
+      else if (e.type=="mousedown")
       {
          var val;
          if ((val=t.getAttribute("data-id")))
          {
             this.set_li_class_by_id(val,"out");
-            return this.remove_selection(val);
+            this.remove_selection(val);
+            this.close_and_clear(true);
+            return false;
          }
          else if ((val=t.getAttribute("data-value")) && t.className=="out")
          {
@@ -98,17 +103,17 @@
 
    _ulselect.prototype.reveal_options = function()
    {
-      this.ul_options.style.display = "block";
+      this.ul_options.parentNode.style.display = "block";
    };
 
    _ulselect.prototype.conceal_options = function()
    {
-      this.ul_options.style.display = "none";
+      this.ul_options.parentNode.style.display = "none";
    };
 
    _ulselect.prototype.options_are_visible = function()
    {
-      return this.ul_options.style.display!="none";
+      return this.ul_options.parentNode.style.display=="block";
    };
 
    _ulselect.prototype.refresh_options = function()
@@ -132,7 +137,7 @@
    _ulselect.prototype.process_blur = function(e,t)
    {
       if (t.tagName.toLowerCase()=="input")
-         this.conceal_options();
+         this.close_and_clear();
       return false;
    };
 
@@ -169,12 +174,22 @@
       return SFW.find_child_matches(this.ul_options,f,true,false);
    };
 
-   _ulselect.prototype.close_and_clear = function()
+   _ulselect.prototype.set_input_focus = function(delay)
+   {
+      var ths = this;
+      function f() { ths.input_el.focus(); }
+      if (delay)
+         window.setTimeout(f,100);
+      else
+         f();
+   };
+
+   _ulselect.prototype.close_and_clear = function(focus)
    {
       this.conceal_options();
       this.input_el.value = "";
       this.filter_options("");
-      this.input_el.focus();
+      this.set_input_focus(true);
    };
 
    _ulselect.prototype.input_is_empty = function()
@@ -200,48 +215,47 @@
    {
       var top, prev, cur, before;
       var ths = this; // for lambda function
+      var list_hidden = !this.options_are_visible();
+      var select_top = !up && list_hidden;
       
       function swap(nw, old)
       {
          nw.className = "selected";
          old.className = "out";
          cur = nw;
+         return true;
       }
       function f(n)
       {
          if (n.nodeType==1)
          {
             var cn = n.className;
-            if (cn=="in" || n.style.display=="none")
+            var option_hidden = n.style.display=="none";
+
+            if (cn=="in" || option_hidden)
                return false;
-            
-            if (!top && cn=="out")
+
+            if (!top && cn!="in" && !option_hidden)
                top = n;
+
+            if (top && list_hidden)
+            {
+               if (cn=="selected")
+                  n.className = "out";
+               return false;
+            }
 
             if (up)
             {
                if (cn=="selected")
-               {
-                  if (prev) swap(prev,n);
-                  else if (top) swap(top,n);
-                  return true;
-               }
+                  return n==top?true:swap(prev?prev:top,n);
                else
                   prev = n;
             }
             else // not-up (down)
             {
-               if (!ths.options_are_visible())
-               {
-                  ths.reveal_options();
-                  ths.refresh_options();
-               }
-
                if (prev)
-               {
-                  swap(n,prev);
-                  return true;
-               }
+                  return swap(n,prev);
                else if (cn=="selected")
                   cur = prev = n;
             }
@@ -249,7 +263,18 @@
          return false;
       }
 
+      // Set first_only flag (3rd param) to stop scan early:
       var el = SFW.find_child_matches(this.ul_options, f, true, false);
+      
+      // if (!up && list_hidden)
+      // {
+      //    ths.reveal_options();
+      //    cur = top;
+      // }
+
+      if (list_hidden)
+         this.reveal_options();
+
       if (!el && !cur && !up && top)
          top.className = "selected";
    };
@@ -259,10 +284,11 @@
       var keycode = SFW.keycode_from_event(e);
       if (e.type=="keyup")
       {
+         if (keycode>48 && !this.options_are_visible())
+            this.reveal_options();
+
          if (keycode==8 || keycode==46|| keycode>48)
          {
-            if (!this.options_are_visible())
-               this.reveal_options();
             this.update_input_progress(e,t);
             return true;
          }
@@ -283,6 +309,10 @@
                return false;
             }
             break;
+
+         case 27: // escape key
+            this.close_and_clear();
+            return true;
             
          case 13: // enter key
             return this.process_enter_press(e,t);
@@ -346,10 +376,14 @@
    _ulselect.prototype.update_selections = function()
    {
       var attr = this.get_value_attribute();
-      var span = this.get_selections_span();
-
-      SFW.xslobj.transformFill(span, attr);
-      this.input_transfer.value = attr.value;
+      if (attr)
+      {
+         var span = this.get_selections_span();
+         SFW.xslobj.transformFill(span, attr);
+         this.input_transfer.value = attr.value;
+      }
+      else
+         span.innerHTML = "";
    };
 
    _ulselect.prototype.get_selections_span = function()
@@ -381,19 +415,28 @@
    {
       if (val==0)
          return false;
+      var drow, fname, list;
 
-      var drow = this.get_data_row();
-      var fname = this.get_field_name();
-
-      var list = drow.getAttribute(fname);
-      if (list && list.length)
-         list += "," + val;
-      else
-         list = val;
-
-      drow.setAttribute(fname, list);
-
-      this.update_selections();
+      if ((drow=this.get_data_row()) && (fname=this.get_field_name()))
+      {
+         if ((list=drow.getAttribute(fname)) && list && list.length)
+         {
+            var vlist = ','+list+',';
+            var cval = ','+val+',';
+            if (vlist.search(cval)<0)
+            // if ( ','+list+','.search(','+val+',')<0)
+            {
+               list += ',' + val;
+               drow.setAttribute(fname, list);
+               this.update_selections();
+            }
+         }
+         else
+         {
+            drow.setAttribute(fname,val);
+            this.update_selections();
+         }
+      }
       return false;
    };
 
@@ -420,8 +463,6 @@
          drow.setAttribute(fname, arr.join(','));
          this.update_selections();
       }
-
-      return false;
    };
 
 })();
