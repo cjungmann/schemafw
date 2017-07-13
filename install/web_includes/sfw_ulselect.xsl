@@ -95,11 +95,13 @@
       </xsl:apply-templates>
 
       <li class="options_host">
-        <ul class="ulselect_options" >
-          <xsl:apply-templates select="$lu_result/*" mode="construct_ulselect_option">
-            <xsl:with-param name="list" select="$list" />
-          </xsl:apply-templates>
-        </ul>
+        <div>
+          <ul class="ulselect_options" >
+            <xsl:apply-templates select="$lu_result/*" mode="construct_ulselect_option">
+              <xsl:with-param name="list" select="$list" />
+            </xsl:apply-templates>
+          </ul>
+        </div>
       </li>
     </ul>
 
@@ -179,18 +181,18 @@
   -->
   <xsl:template match="*" mode="construct_ulselect_option">
     <xsl:param name="list" />
-
     <xsl:variable name="aname" select="../@lookup" />
-    
+    <xsl:variable name="class">
+      <xsl:choose>
+        <xsl:when test="contains($list,concat(',',@id,','))">in</xsl:when>
+        <xsl:otherwise>out</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
     <xsl:element name="li">
       <xsl:attribute name="data-value"><xsl:value-of select="@id" /></xsl:attribute>
-      <xsl:attribute name="class">
-        <xsl:choose>
-          <xsl:when test="contains($list,concat(',',@id,','))">in</xsl:when>
-          <xsl:otherwise>out</xsl:otherwise>
-        </xsl:choose>
-      </xsl:attribute>
+      <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:value-of select="@*[local-name()=$aname]" />
+      <xsl:value-of select="concat(' (',$class,')')" />
     </xsl:element>
   </xsl:template>
 

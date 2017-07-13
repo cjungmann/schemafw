@@ -225,15 +225,23 @@ ul.ulselect span.item span:hover
     color:#000000;
 }
 
-ul.ulselect li.options_host { position:relative; }
-ul.ulselect li.options_host ul
+ul.ulselect li.options_host
+{
+    position:relative;
+}
+
+ul.ulselect li.options_host div
+{
+    position: absolute;
+    top :0;
+    left :0;
+    width:100%;
+    display:none;
+}
+ul.ulselect li.options_host div ul
 {
     list-style:none;
-    display:none;
-    position:absolute;
     padding:0 4px;
-    top:0;
-    left:0;
     width:100%;
     border: solid 1px black;
 }
