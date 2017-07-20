@@ -51,7 +51,7 @@
   <xsl:variable name="err_condition">
     <xsl:choose>
       <xsl:when test="$result-row and $result-row/@error&gt;0">1</xsl:when>
-      <xsl:when test="$msg-el and $msg-el/@type='error'">1</xsl:when>
+      <xsl:when test="$msg-el and $msg-el/@type='error'">2</xsl:when>
       <xsl:otherwise>0</xsl:otherwise>
     </xsl:choose>
   </xsl:variable>

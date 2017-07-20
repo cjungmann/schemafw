@@ -70,7 +70,8 @@
      support fundamental Schema Framework operations.
   -->
   <xsl:template match="/*" mode="fill_head">
-    <xsl:if test="$err_condition=0">
+    <xsl:choose>
+    <xsl:when test="$err_condition=0">
       <xsl:choose>
         <xsl:when test="@meta-jump">
           <xsl:apply-templates select="@meta-jump" mode="fill_head" />
@@ -83,7 +84,14 @@
           <xsl:apply-templates select="." mode="construct_scripts" />
         </xsl:otherwise>
       </xsl:choose>
-    </xsl:if>
+    </xsl:when>
+    <xsl:when test="$err_condition=1">
+      <meta name="xsl_error_result_row" content="{$result-row/@msg}" />
+    </xsl:when>
+    <xsl:when test="$err_condition=2">
+      <meta name="xsl_error_message" content="{$msg-el/@message}" />
+    </xsl:when>
+    </xsl:choose>
   </xsl:template>
 
   <!-- The next set of templates support the mode="fill_head" template. -->
