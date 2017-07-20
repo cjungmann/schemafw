@@ -8,30 +8,53 @@
    exclude-result-prefixes="html">
 
   <xsl:output method="xml"
-         doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
-         doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
-         version="1.0"
-         indent="yes"
-         omit-xml-declaration="yes"
-         encoding="UTF-8"/>
+              doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
+              doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
+              version="1.0"
+              indent="yes"
+              omit-xml-declaration="yes"
+              encoding="UTF-8"/>
 
-  <!-- Generic attribute match for embedded schema -->
-  <xsl:template match="@*[../../schema/field[@name=local-name(current())][@type='ulselect']]">
+  <!--
+  The control consists of a three-part cluster, followed by a
+  temporary drop-down section with a list of options.
+
+  The three-part cluster consists of the following:
+  1. A "defacto" span element that shows the dereferenced selection value(s),
+  2. An unnamed input element used to accept the user's typed input, and
+  3. A named, disabled, and invisible input element whose contents are sent
+     to the server as part of the form POST.
+  -->
+
+  <!--
+      Modeless template for transformfill().
+      Matches an attribute in a data row that can be matched to ulselect schema/field,
+      where the schema is in the same result as the data row.
+  -->
+  <xsl:template match="@*[../../schema/field[@type='ulselect']/@name=local-name()]" >
     <xsl:variable
         name="field" select="../../schema/field[@name=local-name(current())]" />
-    <xsl:call-template name="add_ulselect_selections">
+
+    <xsl:call-template name="fill_ulselect_defacto">
       <xsl:with-param name="lookup" select="/*/*[local-name()=$field/@result]" />
       <xsl:with-param name="str" select="." />
+      <xsl:with-param name="style" select="$field/@style" />
     </xsl:call-template>
   </xsl:template>
 
-  <!-- Generic attribute match for remote schema -->
-  <xsl:template match="@*[not(../../schema)][/*/schema[1]/field[@name=local-name(current())][@type='ulselect']]">
+  <!--
+      Modeless template for transformfill().
+      Matches an attribute in a data row that can be matched to ulselect schema/field,
+      where the schema is a direct child of the document element.
+  -->
+  <xsl:template match="@*[not(../../schema)][/*/schema[1]/field[@type='ulselect']/@name=local-name()]">
     <xsl:variable
         name="field" select="/*/schema[1]/field[@name=local-name(current())]" />
-    <xsl:call-template name="add_ulselect_selections">
+
+    <xsl:call-template name="fill_ulselect_defacto">
       <xsl:with-param name="lookup" select="/*/*[local-name()=$field/@result]" />
       <xsl:with-param name="str" select="." />
+      <xsl:with-param name="style" select="$field/@style" />
     </xsl:call-template>
   </xsl:template>
 
@@ -39,8 +62,9 @@
   <xsl:template match="field[@type='ulselect']">
     <xsl:variable
         name="result" select="/*/*[@rndx][local-name()=current()/@result]" />
+
     <xsl:variable name="value">
-      <xsl:apply-templates select="." mode="get_selections_value" />
+      <xsl:apply-templates select="." mode="get_ulselect_value" />
     </xsl:variable>
 
     <xsl:if test="$value and $result">
@@ -50,7 +74,7 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="field" mode="get_selections_value">
+  <xsl:template match="field" mode="get_ulselect_value">
     <xsl:variable name="sresult" select="../following-sibling::*[@rndx][1]" />
     <xsl:variable name="hresult" select="../parent::*[not($sresult)][@rndx]" />
     <xsl:variable name="result" select="$sresult|$hresult" />
@@ -86,25 +110,58 @@
 
     <xsl:variable name="lu_result" select="/*/*[local-name()=$field/@result]" />
 
-    <ul name="{$field/@name}" class="ulselect"
-        data-sfw-class="ulselect" data-sfw-input="true">
+    <xsl:element name="ul">
+      <xsl:attribute name="name"><xsl:value-of select="$field/@name" /></xsl:attribute>
+      <xsl:attribute name="class">ulselect</xsl:attribute>
+      <xsl:attribute name="data-sfw-class">ulselect</xsl:attribute>
+      <xsl:attribute name="data-sfw-input">input</xsl:attribute>
+      <xsl:if test="$field/@style='multiple'">
+        <xsl:attribute name="data-multiple">yes</xsl:attribute>
+      </xsl:if>
+      <!-- <ul name="{$field/@name}" class="ulselect" -->
+      <!--     data-sfw-class="ulselect" data-sfw-input="true"> -->
 
-      <xsl:apply-templates select="$lu_result" mode="construct_ulselect_selections">
-        <xsl:with-param name="field" select="$field" />
-        <xsl:with-param name="value" select="$value" />
-      </xsl:apply-templates>
+      <li class="cluster" tabindex="0">
+        <xsl:choose>
+          <xsl:when test="$field/@style='multiple'">
+            <xsl:apply-templates select="$lu_result" mode="construct_ulselect_cluster_multiple">
+              <xsl:with-param name="field" select="$field" />
+              <xsl:with-param name="value" select="$value" />
+            </xsl:apply-templates>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates select="$lu_result" mode="construct_ulselect_cluster_single">
+              <xsl:with-param name="field" select="$field" />
+              <xsl:with-param name="value" select="$value" />
+            </xsl:apply-templates>
+          </xsl:otherwise>
+        </xsl:choose>
+      </li>
 
       <li class="options_host">
         <div>
-          <ul class="ulselect_options" >
+          <ul class="ulselect_options">
             <xsl:apply-templates select="$lu_result/*" mode="construct_ulselect_option">
               <xsl:with-param name="list" select="$list" />
+              <xsl:with-param name="style" select="$field/@style" />
             </xsl:apply-templates>
           </ul>
         </div>
       </li>
-    </ul>
+    </xsl:element>
+  </xsl:template>
 
+  <!-- Template matches a lookup result. -->
+  <xsl:template match="*[@rndx]" mode="construct_ulselect_cluster_single">
+    <xsl:param name="field" />
+    <xsl:param name="value" />
+    <span class="defacto">
+      <xsl:text> </xsl:text>
+      <xsl:variable name="sel" select="*[@id=$value]" />
+      <xsl:apply-templates select="$sel" mode="construct_ulselect_defacto_item" />
+    </span>
+    <input type="text" class="typing" style="width:100%"/>
+    <input type="text" disabled="disabled" class="transfer" name="{$field/@name}" value="{$value}" />
   </xsl:template>
 
   <!--
@@ -113,63 +170,74 @@
   
   Adds a space to ensure that an empty li element doesn't collapse.
   -->
-  <xsl:template match="*[@rndx]" mode="construct_ulselect_selections">
+  <xsl:template match="*[@rndx]" mode="construct_ulselect_cluster_multiple">
     <xsl:param name="field" />
     <xsl:param name="value" />
 
-    <li class="selections">
-      <span>
-        <xsl:call-template name="add_ulselect_selections" >
-          <xsl:with-param name="lookup" select="." />
-          <xsl:with-param name="str" select="$value" />
-        </xsl:call-template>
-      </span>
-      <xsl:text> </xsl:text>
-      <input type="text" />
-      <input type="text" disabled="disabled" class="transfer" name="{$field/@name}" value="{$value}" />
-    </li>
+    <span class="defacto">
+      <xsl:call-template name="fill_ulselect_defacto" >
+        <xsl:with-param name="lookup" select="." />
+        <xsl:with-param name="str" select="$value" />
+        <xsl:with-param name="style" select="$field/@style" />
+      </xsl:call-template>
+    </span>
+    <xsl:text> </xsl:text>
+    <input type="text" class="typing" />
+    <input type="text" disabled="disabled" class="transfer" name="{$field/@name}" value="{$value}" />
   </xsl:template>
 
   <!-- Recursive template that adds items to the "current selections" element. -->
-  <xsl:template name="add_ulselect_selections">
+  <xsl:template name="fill_ulselect_defacto">
     <xsl:param name="lookup" />
     <xsl:param name="str" />
+    <xsl:param name="style" />
 
     <xsl:variable name="hascomma" select="contains($str,',')" />
+    <xsl:text> </xsl:text>
     
     <xsl:choose>
       <xsl:when test="$hascomma">
         <xsl:variable name="val" select="substring-before($str,',')" />
         <xsl:variable name="sel" select="$lookup/*[@id=$val]" />
 
-        <xsl:apply-templates select="$sel" mode="construct_ulselect_item" />
+        <xsl:apply-templates select="$sel" mode="construct_ulselect_defacto_item">
+          <xsl:with-param name="style" select="$style" />
+        </xsl:apply-templates>
 
-        <xsl:call-template name="add_ulselect_selections">
+        <xsl:call-template name="fill_ulselect_defacto">
           <xsl:with-param name="lookup" select="$lookup" />
           <xsl:with-param name="str" select="substring-after($str,',')" />
+          <xsl:with-param name="style" select="$style" />
         </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
         <xsl:variable name="sel" select="$lookup/*[@id=$str]" />
-        <xsl:apply-templates select="$sel" mode="construct_ulselect_item" />
+        <xsl:apply-templates select="$sel" mode="construct_ulselect_defacto_item">
+          <xsl:with-param name="style" select="$style" />
+        </xsl:apply-templates>
       </xsl:otherwise>
     </xsl:choose>
 
   </xsl:template>
 
-  <xsl:template match="*[@id]" mode="construct_ulselect_item">
+  <xsl:template match="*[@id]" mode="construct_ulselect_defacto_item">
     <span>ulselect result <xsl:value-of select="local-name()" /> is missing a lookup attribute.</span>
   </xsl:template>
 
-  <!-- Used by add_ulselect_selections to fill the "current selections" element. -->
-  <xsl:template match="*[@id][../@lookup]" mode="construct_ulselect_item">
+  <!-- Used by fill_ulselect_defacto to fill the "current selections" element. -->
+  <xsl:template match="*[@id][../@lookup]" mode="construct_ulselect_defacto_item">
+    <xsl:param name="style" />
+
     <xsl:variable name="aname" select="../@lookup" />
+
     <span class="item">
       <xsl:value-of select="@*[local-name()=$aname]" />
-      <xsl:element name="span">
-        <xsl:attribute name="data-id"><xsl:value-of select="@id" /></xsl:attribute>
-        <xsl:text>&#215;</xsl:text>
-      </xsl:element>
+      <xsl:if test="$style='multiple'">
+        <xsl:element name="span">
+          <xsl:attribute name="data-id"><xsl:value-of select="@id" /></xsl:attribute>
+          <xsl:text>&#215;</xsl:text>
+        </xsl:element>
+      </xsl:if>
     </span>
   </xsl:template>
   
@@ -181,18 +249,19 @@
   -->
   <xsl:template match="*" mode="construct_ulselect_option">
     <xsl:param name="list" />
+    <xsl:param name="style" />
     <xsl:variable name="aname" select="../@lookup" />
-    <xsl:variable name="class">
-      <xsl:choose>
-        <xsl:when test="contains($list,concat(',',@id,','))">in</xsl:when>
-        <xsl:otherwise>out</xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
     <xsl:element name="li">
       <xsl:attribute name="data-value"><xsl:value-of select="@id" /></xsl:attribute>
-      <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
-      <xsl:value-of select="@*[local-name()=$aname]" />
-      <xsl:value-of select="concat(' (',$class,')')" />
+
+      <xsl:attribute name="class">
+        <xsl:choose>
+          <xsl:when test="contains($list,concat(',',@id,','))">in</xsl:when>
+          <xsl:otherwise>out</xsl:otherwise>
+        </xsl:choose> 
+     </xsl:attribute>
+
+     <xsl:value-of select="@*[local-name()=$aname]" />
     </xsl:element>
   </xsl:template>
 
