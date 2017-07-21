@@ -53,12 +53,11 @@
     -->
     <xsl:variable name="sd" select="../*[local-name()=$rowname][1]" />
     <xsl:variable name="fd" select="../form-data[not($sd)]/*[1]" />
-    <xsl:variable
-        name="md"
+    <xsl:variable name="md"
         select="../*[not($sd|$fd)][@merged][@rndx]/*[local-name()=../@row-name][1]" />
-    <xsl:variable
-        name="ld"
-        select="../*[not($sd|$fd|$md)][@rndx='1']/*[local-name()=../@row-name][1]" />
+    <xsl:variable name="ld"
+        select="../*[not(current()/@merged)][not($sd|$fd|$md)][@rndx='1']/*[local-name()=../@row-name][1]" />
+
     <xsl:variable name="data" select="$sd|$fd|$md|$ld" />
 
     <xsl:variable name="sfw-class">
