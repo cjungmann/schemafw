@@ -15,12 +15,16 @@
       var ths = this;
       function fi(n)
       {
-         if (n.nodeType==1 && n.tagName.toLowerCase()=="input")
+         if (n.nodeType==1)
          {
-            if (n.className=="transfer")
-               ths.input_transfer = n;
-            else
-               ths.input_el = n;
+            var tn = n.tagName.toLowerCase();
+            if (tn=="input")
+            {
+               if (n.className=="transfer")
+                  ths.input_transfer = n;
+               else
+                  ths.input_el = n;
+            }
          }
          return false;
       }
@@ -28,7 +32,9 @@
       SFW.find_child_matches(actors.input,fi,true,true);
       
       function fu(n) { return n.nodeType==1 && n.tagName.toLowerCase()=="ul"; }
+
       this.ul_options = SFW.find_child_matches(actors.input,fu,true,true);
+      this.is_multiple = actors.input.getAttribute("data-multiple")=="yes";
    }
 
    // Primary public method for integration with framework:
@@ -36,175 +42,126 @@
    {
       var field = this.get_input_field();
 
-      // if (e.type=="focus")
-      //    return this.process_focus(e,t);
-
       if (e.type=="blur")
          return this.process_blur(e,t);
-      
+      if (e.type=="focus")
+         return this.process_focus(e,t);
       if (e.type.substring(0,3)=="key")
          return this.process_key(e,t);
       else if (e.type=="mousedown")
       {
          var val;
+         // Elements with @data-id are contained in span elements that
+         // are displayed in the selections element to show the selected
+         // options of a multiple-select input field.  A click on this
+         // element means the user wants to remove the option.
          if ((val=t.getAttribute("data-id")))
          {
             this.set_li_class_by_id(val,"out");
             this.remove_selection(val);
-            this.close_and_clear(true);
+            this.close_and_clear();
+            this.stage_input_focus();
             return false;
          }
+         // Elements with @data-value are li elements in the list of
+         // available options.  Clicking on one means the option should
+         // replace a previously selected option (single mode) or be added
+         // added to the selections list (multiple mode).
          else if ((val=t.getAttribute("data-value")) && t.className=="out")
          {
-            t.className="in";
-            return this.add_selection(val);
+            this.select_option(t);
+            return false;
          }
       }
 
       return true;
    };
 
-   _ulselect.prototype.set_option_selected = function(el)
-   {
-      el.className = "selected";
-   };
-
-   _ulselect.prototype.filter_options = function(str, unselect)
-   {
-      str = str.toLowerCase();
-      var strempty = str.length==0;
-      var matches = true;
-      function f(n)
-      {
-         if (n.nodeType==1)
-         {
-            if (unselect && n.className=="selected")
-               n.className = "out";
-
-            if (!strempty)
-               matches = n.firstChild.data.toLowerCase().search(str)>=0;
-            
-            n.style.display = matches ? "" : "none";
-            return matches;
-         }
-         return false;
-      }
-      var nl = SFW.find_child_matches(this.ul_options,f,false,false);
-      if (nl && nl.length==1)
-         this.set_option_selected(nl[0]);
-   };
-
-   _ulselect.prototype.update_input_progress = function(e,t)
-   {
-      var keycode = SFW.keycode_from_event(e);
-      var val = this.input_el.value;
-      this.filter_options(val,true);
-   };
-
-   _ulselect.prototype.reveal_options = function()
-   {
-      this.ul_options.parentNode.style.display = "block";
-   };
-
-   _ulselect.prototype.conceal_options = function()
-   {
-      this.ul_options.parentNode.style.display = "none";
-   };
-
-   _ulselect.prototype.options_are_visible = function()
-   {
-      return this.ul_options.parentNode.style.display=="block";
-   };
-
-   _ulselect.prototype.refresh_options = function()
-   {
-      var name, schema, field;
-      if ((name=this.get_field_name())
-          && (schema=this.schema())
-          && (field=schema.selectSingleNode("field[@name='" + name + "']")))
-      {
-         SFW.xslobj.transformFill(this.ul_options,field);
-      }
-   };
-
    _ulselect.prototype.process_focus = function(e,t)
    {
-      if (t.tagName.toLowerCase()=="input")
-         this.reveal_options();
-      return false;
+      console.log("process_focus: " + t.tagName);
+      if (t.className=="cluster")
+      {
+         this.shift_typeable(true);
+         return false;
+      }
+      return true;
    };
 
    _ulselect.prototype.process_blur = function(e,t)
    {
-      if (t.tagName.toLowerCase()=="input")
+      // if (t.tagName.toLowerCase()=="input")
+      //    this.close_and_clear();
+      if (t==this.input_el)
+      {
          this.close_and_clear();
-      return false;
+         return false;
+      }
+      return true;
    };
 
-   _ulselect.prototype.remove_last_selection = function()
+   _ulselect.prototype.process_key = function(e,t)
    {
-      var span = this.get_selections_span();
-      var id, n = span.lastChild;
-      while (n)
+      var keycode = SFW.keycode_from_event(e);
+      if (e.type=="keyup")
       {
-         if (n.nodeType==1 && n.className=="item" && n.tagName.toLowerCase()=="span")
+         if (keycode>48 && !this.options_are_visible())
+            this.reveal_options();
+
+         // Process keypresses that affect the display after the
+         // browser has updated the input (on keyup).
+         if (keycode==8 || keycode==46 || keycode>48)
+         {
+            this.update_options_filter();
+            return true;
+         }
+      }
+      else if (e.type=="keydown")
+      {
+         switch(keycode)
+         {
+         case 8:
+         case 46:
+            // We have to check before letter is erased (at keydown)
+            // or erasing the last letter will also erase the previous
+            // selected option.
+            if (this.is_multiple && this.input_is_empty())
+            {
+               this.remove_last_selection();
+               this.conceal_options();
+               return false;
+            }
             break;
-          n=n.previousSibling;
+
+         case 27: // escape key
+            this.close_and_clear();
+            return true;
+            
+         case 13: // enter key
+            return this.process_enter_press(e,t);
+         case 37: // left
+         case 39: // right
+            break;
+
+         case 38: // up
+            return this.process_arrow_press(1);
+         case 40: // down
+            return this.process_arrow_press(0);
+         default:
+            break;
+         }
       }
-      
-      if (n
-          && (n=n.getElementsByTagName("span"))
-          && (n=n[0])
-          && (id=n.getAttribute("data-id")))
-      {
-         this.set_li_class_by_id(id,"out");
-         this.remove_selection(id);
-      }
-      
-   };
 
-   _ulselect.prototype.seek_current_selection = function()
-   {
-      function f(n)
-      {
-         return n.nodeType==1
-            && n.className=="selected"
-            && n.tagName.toLowerCase()=="li";
-      }
-      return SFW.find_child_matches(this.ul_options,f,true,false);
-   };
-
-   _ulselect.prototype.set_input_focus = function(delay)
-   {
-      var ths = this;
-      function f() { ths.input_el.focus(); }
-      if (delay)
-         window.setTimeout(f,100);
-      else
-         f();
-   };
-
-   _ulselect.prototype.close_and_clear = function(focus)
-   {
-      this.conceal_options();
-      this.input_el.value = "";
-      this.filter_options("");
-      this.set_input_focus(true);
-   };
-
-   _ulselect.prototype.input_is_empty = function()
-   {
-      return this.input_el.value=="";
+      return false;
    };
 
    _ulselect.prototype.process_enter_press = function(e,t)
    {
-      var el = this.seek_current_selection();
+      var el = this.seek_preselect();
       if (el)
       {
-         el.className = "in";
-         this.add_selection(el.getAttribute("data-value"));
-         this.close_and_clear();
+         this.select_option(el);
+         // Don't let ENTER submit the form when we're updating the options
          e.preventDefault();
          return true;
       }
@@ -213,8 +170,9 @@
 
    _ulselect.prototype.process_arrow_press = function(up)
    {
+      var ths = this; // save for lambda function
+
       var top, prev, cur, before;
-      var ths = this; // for lambda function
       var list_hidden = !this.options_are_visible();
       var select_top = !up && list_hidden;
       
@@ -266,81 +224,177 @@
       // Set first_only flag (3rd param) to stop scan early:
       var el = SFW.find_child_matches(this.ul_options, f, true, false);
       
-      // if (!up && list_hidden)
-      // {
-      //    ths.reveal_options();
-      //    cur = top;
-      // }
-
       if (list_hidden)
          this.reveal_options();
 
       if (!el && !cur && !up && top)
          top.className = "selected";
+
+      this.ensure_option_visible(cur||top);
    };
 
-   _ulselect.prototype.process_key = function(e,t)
+   // This function scans the list of options, doing for each:
+   // 1. Hide options without a substring matching _value_,
+   // 2. Mark options "in" if included in the list of selections,
+   //    "out" otherwise.
+   //
+   // If the filtered list includes only a single option, that option
+   // will be set as the preselect, waiting for a ENTER press.
+   _ulselect.prototype.update_options_filter = function()
    {
-      var keycode = SFW.keycode_from_event(e);
-      if (e.type=="keyup")
+      console.log("update_options_filter");
+      var attr = this.get_value_attribute();
+      var list = (attr && attr.value.length) ? ','+attr.value+',' : null;
+      var value = this.input_el.value.toLowerCase();
+      var matches = true;
+      var id, isin;
+      function f(n)
       {
-         if (keycode>48 && !this.options_are_visible())
-            this.reveal_options();
-
-         if (keycode==8 || keycode==46|| keycode>48)
+         if (n.nodeType==1)
          {
-            this.update_input_progress(e,t);
-            return true;
-         }
-      }
-      else if (e.type=="keydown")
-      {
-         switch(keycode)
-         {
-         case 8:
-         case 46:
-            // We have to check before letter is erased or
-            // erasing the last letter will also erase the
-            // previous selected option.
-            if (this.input_is_empty())
-            {
-               this.remove_last_selection();
-               this.conceal_options();
-               return false;
-            }
-            break;
-
-         case 27: // escape key
-            this.close_and_clear();
-            return true;
+            isin = (list
+               && (id=n.getAttribute("data-value"))
+               && list.search(','+id+',')>=0);
             
-         case 13: // enter key
-            return this.process_enter_press(e,t);
-         case 37: // left
-         case 39: // right
-            break;
+            n.className = isin ? "in" : "out";
 
-         case 38: // up
-            return this.process_arrow_press(1);
-         case 40: // down
-            return this.process_arrow_press(0);
-            break;
-         default:
-            break;
+            if (value.length)
+               matches = n.firstChild && n.firstChild.data.toLowerCase().indexOf(value)>=0;
+
+            n.style.display = matches ? "" : "none";
+            return matches && !isin;
          }
+         return false;
       }
-
-      return false;
+      var nl = SFW.find_child_matches(this.ul_options,f,false,false);
+      if (nl && nl.length==1)
+         this.preselect_option(nl[0]);
    };
 
-   _ulselect.prototype.seek_input_element = function(actors)
-   {
-      function f(n) { return n.nodeType==1 && n.tagName.toLowerCase()=="input"; }
-      if ("input" in actors)
-         return SFW.find_child_matches(actors.input, f, true, true);
+   _ulselect.prototype.preselect_option = function(el) {
+      el.className = "selected"; };
 
-      console.error("Unable to find \"input\" in actors.");
-      return null;
+   _ulselect.prototype.reveal_options = function() {
+      this.ul_options.parentNode.style.display = "block"; };
+
+   _ulselect.prototype.conceal_options = function() {
+      this.ul_options.parentNode.style.display = "none"; };
+
+   _ulselect.prototype.options_are_visible = function() {
+      return this.ul_options.parentNode.style.display=="block"; };
+
+   function _get_id_from_selection(li)
+   {
+      var id = null;
+      if ((li=li.getElementsByTagName("span"))  && (li=li[0]))
+         id = li.getAttribute("data-id");
+      return id;
+   }
+
+   // In multiple-mode, this function finds the last span element
+   // in the selection element.  When found, the ID is used to
+   // call remove_selection(), which performs the actual removal.
+   // options out of the selection element.
+   _ulselect.prototype.remove_last_selection = function()
+   {
+      var span = this.get_defacto_span();
+      var id, n = span.lastChild;
+      while (n)
+      {
+         if (n.nodeType==1 && n.className=="item" && n.tagName.toLowerCase()=="span")
+            break;
+          n=n.previousSibling;
+      }
+
+      // The id value is actually an attribute of a nested span
+      // element. Find that to get the id value:
+      if (n && (id=_get_id_from_selection(n)))
+      {
+         this.set_li_class_by_id(id,"out");
+         this.remove_selection(id);
+      }
+   };
+
+   _ulselect.prototype.seek_preselect = function()
+   {
+      function f(n)
+      {
+         return n.nodeType==1
+            && n.className=="selected"
+            && n.tagName.toLowerCase()=="li";
+      }
+      return SFW.find_child_matches(this.ul_options,f,true,false);
+   };
+
+   _ulselect.prototype.shift_typeable= function(to_use)
+   {
+      var s = this.input_el.style;
+      s.position = to_use?"static":"";
+      s.display = to_use?"block":"";
+      this.input_el.focus();
+      console.log("with to_use=" + to_use + ", " + this.input_el.style.position);
+   };
+
+   _ulselect.prototype.stage_input_focus = function()
+   {
+      var ths = this;
+      function f() { ths.shift_typeable(true); }
+      window.setTimeout(f,100);
+   };
+
+   _ulselect.prototype.close_and_clear = function(focus)
+   {
+      this.conceal_options();
+      this.input_el.value = "";
+      this.update_options_filter();
+      if (focus)
+         this.stage_input_focus();
+      else
+         this.shift_typeable(false);
+   };
+
+   _ulselect.prototype.clear_options = function()
+   {
+      console.log("clear_options");
+      function f(n)
+      {
+         if (n.nodeType==1 && n.className=="out")
+            n.className="in";
+         return false;
+      }
+      SFW.find_child_matches(this.ul_options,f,false,false);
+   };
+
+   _ulselect.prototype.clear_selections = function()
+   {
+      var p = this.input_el.parentNode;
+      this.input_transfer.value = "";
+      function f(n)
+      {
+         if (n.nodeType==1 && n.className=="item")
+            p.removeChild(n);
+         return false;
+      }
+      SFW.find_child_matches(p,f,false,false);
+   };
+
+   _ulselect.prototype.select_option = function(el)
+   {
+      if (this.is_multiple)
+      {
+         console.log("Processing as a multiple");
+         this.clear_options();
+         this.clear_selections();
+      }
+
+      el.className = "in";
+      this.add_selection(el.getAttribute("data-value"));
+      this.close_and_clear();
+   };
+
+   _ulselect.prototype.input_is_empty = function()
+   {
+      return this.input_el.value=="";
    };
 
    _ulselect.prototype.set_li_class_by_id = function(id,val)
@@ -378,7 +432,7 @@
       var attr = this.get_value_attribute();
       if (attr)
       {
-         var span = this.get_selections_span();
+         var span = this.get_defacto_span();
          SFW.xslobj.transformFill(span, attr);
          this.input_transfer.value = attr.value;
       }
@@ -386,29 +440,16 @@
          span.innerHTML = "";
    };
 
-   _ulselect.prototype.get_selections_span = function()
+   _ulselect.prototype.get_defacto_span = function()
    {
-      var li, span, tag;
-      function f(n)
+      var nl = this.input().getElementsByTagName("span");
+      if (nl)
       {
-         if (n.nodeType==1)
-         {
-            tag = n.tagName.toLowerCase();
-            if (li)
-            {
-               if (tag=="span")
-                  return true;
-            }
-            else if (tag=="li" && n.className=="selections")
-               li = n;
-         }
-         return false;
+         for (var i=0,stop=nl.length; i<stop; ++i)
+            if (nl[i].className=="defacto")
+               return nl[i];
       }
-      var input = this.input();
-      if (input)
-         return SFW.find_child_matches(input, f, true, true);
-      else
-         return null;
+      return null;
    };
 
    _ulselect.prototype.add_selection = function(val)
@@ -419,12 +460,11 @@
 
       if ((drow=this.get_data_row()) && (fname=this.get_field_name()))
       {
-         if ((list=drow.getAttribute(fname)) && list && list.length)
+         if (this.is_multiple
+             && (list=drow.getAttribute(fname))
+             && list && list.length)
          {
-            var vlist = ','+list+',';
-            var cval = ','+val+',';
-            if (vlist.search(cval)<0)
-            // if ( ','+list+','.search(','+val+',')<0)
+            if ((','+list+',').search(','+val+',')<0)
             {
                list += ',' + val;
                drow.setAttribute(fname, list);
@@ -464,5 +504,45 @@
          this.update_selections();
       }
    };
+
+   _ulselect.prototype.ensure_option_visible = function(li)
+   {
+      if (!li) return;
+
+      var parent = li.parentNode;
+
+      var top_li = li.offsetTop;
+      var bottom_li = top_li + li.offsetHeight;
+
+      var bottom_parent = parent.offsetHeight;
+      var scroll_parent = parent.scrollTop;
+
+      var offset_move;
+
+      if ((offset_move=bottom_li-bottom_parent-scroll_parent)>0)
+         parent.scrollTop += offset_move;
+      else if ((offset_move=scroll_parent-top_li)>0)
+         parent.scrollTop -= offset_move;
+   };
+
+
+   // This might not be used.  It should refreshe the list of options
+   // from scratch, using XSL to generate the HTML, setting both the
+   // "in" and "out" classes, but also the preselect option. There are
+   // two problems: how to make both the list of selections AND the
+   // preselect available to the XSL processor.  The second problem is
+   // that by replacing everything, it makes orphans of any elements
+   // being held elsewhere.
+   _ulselect.prototype.refresh_options = function()
+   {
+      var name, schema, field;
+      if ((name=this.get_field_name())
+          && (schema=this.schema())
+          && (field=schema.selectSingleNode("field[@name='" + name + "']")))
+      {
+         SFW.xslobj.transformFill(this.ul_options,field);
+      }
+   };
+
 
 })();
