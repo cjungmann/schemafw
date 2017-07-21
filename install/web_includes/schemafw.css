@@ -238,21 +238,27 @@ ul.ulselect li.options_host div
     width:100%;
     display:none;
 }
-ul.ulselect li.options_host div ul
+ul.ulselect li.options_host ul
 {
+    position: relative;
     list-style:none;
     padding:0 4px;
     width:100%;
     border: solid 1px black;
+
+    max-height:240px;
+    overflow-x : hidden;
+    overflow-y : auto;
 }
 
 li.options_host ul li   { background-color: #FFFFFF; }
 li.options_host ul li:hover   { background-color: #CCCCCC; }
 li.options_host ul li.selected   { background-color: #6666FF; }
 
-ul.ulselect li.selections { background-color: #FFFFFF; }
-ul.ulselect li.selections input { border:none; }
-ul.ulselect li.selections input.transfer { display:none; }
+ul.ulselect li.cluster { background-color: #FFFFFF; position:relative; }
+ul.ulselect li.cluster span { width:100%; min-height:1em; }
+ul.ulselect li.cluster input.transfer { display:none; }
+ul.ulselect li.cluster input.typing { outline:none; display:none; }
 
 ul.ulselect li.shadow { display:none; }
 ul.ulselect li.in { color:#999999; }
