@@ -255,6 +255,7 @@ li.options_host ul li   { background-color: #FFFFFF; }
 li.options_host ul li:hover   { background-color: #CCCCCC; }
 li.options_host ul li.selected   { background-color: #6666FF; }
 
+ul.ulselect { background-color: #FFFFFF; }
 ul.ulselect li.cluster { background-color: #FFFFFF; position:relative; }
 ul.ulselect li.cluster span { width:100%; min-height:1em; }
 ul.ulselect li.cluster input.transfer { display:none; }
