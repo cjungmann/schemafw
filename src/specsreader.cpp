@@ -26,6 +26,15 @@ void print_xml_attribute(FILE *out,
    fputc('"', out);
 }
 
+void throw_missing(const char *type_of_missing, const char *name_of_missing)
+{
+   const char *format = "Missing %s: \"%s\"";
+   size_t slen = strlen(format) + strlen(type_of_missing) + strlen(name_of_missing);
+   char *buff = static_cast<char*>(alloca(slen));
+   sprintf(buff, format, type_of_missing, name_of_missing);
+   throw std::runtime_error(buff);
+}
+
 void Path_List::process(Advisor_Index::ninfo* head,
                         int count,
                         IGeneric_Callback<Advisor_Index> &callback)
@@ -822,13 +831,17 @@ void SpecsReader::t_build_branch(long position, abh_callback &callback) const
          {
             --shared_countdown;
 
+            const char *pvalue = ptr->value();
+
             // Only get the first reference to the share:
-            if (!find_shared_link(head, ptr->value()))
+            if (!find_shared_link(head, pvalue))
             {
                shared_count = 0;
 
-               auto *amode = get_shared_advisor_mode(ptr->value());
-               
+               auto *amode = get_shared_advisor_mode(pvalue);
+
+               if (!amode)
+                  throw_missing("shared reference", pvalue);
                if (f_prep_advisor(amode))
                {
                   void *buff = alloca(len_shared_handle(adv));

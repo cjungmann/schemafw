@@ -1676,7 +1676,14 @@ void Schema::get_resources_from_environment(FILE *out)
    if (pt)
    {
       change_to_path_dir(pt);
-      SpecsReader::build(pt,f_sreader);
+      try
+      {
+         SpecsReader::build(pt,f_sreader);
+      }
+      catch(const std::exception &se)
+      {
+         print_error_as_xml(out, se.what(), "SpecsReader error");
+      }
    }
    else
       ifputs("PATH_TRANSLATED not found.\n", stderr);
