@@ -3350,50 +3350,58 @@ void Schema::process_root_branch(const ab_handle *mode_root,
 
       print_document_element(tagname, mode_root, global_root);
 
-      // print the adhoc stuff:
-      m_specsreader->print_sub_elements(m_out, m_mode, arr_root_reserved);
-
-      // Comment-out of not debugging environment variables:
-      // print_env(false);
-
-      const char *schema_proc_name = m_mode->seek_value("schema-proc");
-      if (schema_proc_name)
-         print_schema_from_procedure_name(schema_proc_name);
-
       try
       {
-         if (import_confirm)
-            print_import_confirm();
-         else if (m_mode_action==MACTION_FORM_IMPORT)
+         // print the adhoc stuff:
+         m_specsreader->print_sub_elements(m_out, m_mode, arr_root_reserved);
+
+         // Comment-out of not debugging environment variables:
+         // print_env(false);
+
+         const char *schema_proc_name = m_mode->seek_value("schema-proc");
+         if (schema_proc_name)
+            print_schema_from_procedure_name(schema_proc_name);
+
+         try
          {
-            Schema_Printer sprinter(*m_specsreader, *m_mode, m_out);
-            sprinter.print(m_mode->seek("schema"), "form");
+            if (import_confirm)
+               print_import_confirm();
+            else if (m_mode_action==MACTION_FORM_IMPORT)
+            {
+               Schema_Printer sprinter(*m_specsreader, *m_mode, m_out);
+               sprinter.print(m_mode->seek("schema"), "form");
+            }
+            else
+            {
+               const char *procname = value_from_mode("procedure");
+               if (procname)
+                  open_info_procedure(procname);
+            }
          }
-         else
+         catch(const std::runtime_error &e)  // more e.what() info for runtime_error
          {
-            const char *procname = value_from_mode("procedure");
-            if (procname)
-               open_info_procedure(procname);
+            print_message_as_xml(m_out, "error", e.what(), "unexpected exception");
          }
-      }
-      catch(const std::runtime_error &e)  // more e.what() info for runtime_error
-      {
-         print_message_as_xml(m_out, "error", e.what(), "unexpected exception");
+         catch(const std::exception &e)
+         {
+            print_message_as_xml(m_out, "error", e.what(), "unexpected exception");
+         }
+
+         const auto *qstrmode = m_mode->seek("qstring");
+         if (qstrmode && m_qstringer)
+         {
+            ifprintf(m_out,
+                     "<qstring rndx=\"%d\" row-name=\"row\" type=\"variables\">\n",
+                     m_number_of_results+1);
+            m_qstringer->xmlize("row", m_out);
+            ifputs("</qstring>\n", m_out);
+         }
       }
       catch(const std::exception &e)
       {
          print_message_as_xml(m_out, "error", e.what(), "unexpected exception");
       }
 
-      const auto *qstrmode = m_mode->seek("qstring");
-      if (qstrmode && m_qstringer)
-      {
-         ifprintf(m_out,
-                  "<qstring rndx=\"%d\" row-name=\"row\" type=\"variables\">\n",
-                  m_number_of_results+1);
-         m_qstringer->xmlize("row", m_out);
-         ifputs("</qstring>\n", m_out);
-      }
 
       // print close tag of document element:
       ifputs("</", m_out);
