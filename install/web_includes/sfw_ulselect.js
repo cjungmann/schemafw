@@ -3,10 +3,10 @@
 
 (function _init()
 {
-   if (SFW.delay_init("sfw_ulselect", _init, "iclass"))
+   if (SFW.delay_init("sfw_ulselect", _init, "tbase"))
       return;
 
-   if (!SFW.derive(_ulselect, "ulselect", "iclass"))
+   if (!SFW.derive(_ulselect, "ulselect", "tbase"))
       return;
 
    function _ulselect(actors)
@@ -155,6 +155,18 @@
       return false;
    };
 
+   _ulselect.prototype.get_schema_field = function()
+   {
+      var fld = null;
+      var sch = this.schema();
+      if (sch)
+      {
+         var xpath = "field[@name='" + this.input_transfer.name + "']";
+         fld = sch.selectSingleNode(xpath);
+      }
+      return fld;
+   };
+
    _ulselect.prototype.process_enter_press = function(e,t)
    {
       var el = this.seek_preselect();
@@ -165,7 +177,72 @@
          e.preventDefault();
          return true;
       }
+      else
+      {
+         var val = this.input_el.value;
+         if (SFW.confirm("Do you want to add \"" + val + "\"?"))
+         {
+            var onadd, fld;
+            if ((fld=this.get_schema_field()) && (onadd=fld.getAttribute("on_add")))
+            {
+               SFW.open_interaction(SFW.stage,
+                                    onadd,
+                                    this,
+                                    { os:SFW.get_page_offset(), host:this.host() }
+                                    );
+               e.preventDefault();
+               return true;
+            }
+         }
+      }
       return false;
+   };
+
+   _ulselect.prototype.child_finished = function(cfobj)
+   {
+      // Must call base::child_finished() to clean out
+      // any merged elements before calling replot().
+      SFW.base.prototype.child_finished.call(this,cfobj);
+
+      this.update_row(cfobj);
+      this.replot(SFW.get_cfobj_result(cfobj));
+
+      var dobj = cfobj.cdata;
+      if (dobj && "os" in dobj)
+         SFW.set_page_offset(dobj.os);
+      
+   };
+
+   _ulselect.prototype.update_row = function(cfobj, preserve_result)
+   {
+      var xrow = this.find_matching_data_row(cfobj);
+      
+      if ("docel" in cfobj)
+      {
+         if (cfobj.mtype=="delete")
+         {
+            if (cfobj.confirm_delete() && xrow)
+               this.delete_row(xrow);
+         }
+         else if (cfobj.rtype=="update")
+         {
+            // If xrow is NULL, the new result will be appended:
+            if (preserve_result)
+               this.copy_result_node(cfobj.result, xrow);
+            else
+               this.add_result_node(cfobj.result, xrow);
+         }
+      }
+      else if ("cmd" in cfobj)
+      {
+         switch(cfobj.cmd)
+         {
+            case "delete": this.delete_row(cfobj.cdata.xrow); break;
+            case "fail":
+               SFW.alert(cfobj.rtype + " operation failed.");
+               return;   // skip replot() at end of function
+         }
+      }
    };
 
    _ulselect.prototype.process_arrow_press = function(up)

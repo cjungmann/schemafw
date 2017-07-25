@@ -3,11 +3,11 @@
 
 (function _init()
 {
-   if (SFW.delay_init("sfw_table",_init,"iclass"))
+   if (SFW.delay_init("sfw_table",_init,"tbase"))
       return;
 
-   if (!SFW.derive(_table, "table", "iclass") ||
-       !SFW.derive(_table, "import-review", "iclass"))
+   if (!SFW.derive(_table, "table", "tbase") ||
+       !SFW.derive(_table, "import-review", "tbase"))
       return;
    
    function _table(actors)
@@ -18,19 +18,6 @@
    // Adding useful local functions to global object
    SFW.fix_table_heads = _fix_table_heads;
 
-   function _match_rndx(n) { return n.nodeType==1 && n.getAttribute("rndx"); }
-
-   _table.prototype.result_from_match = function(match)
-   {
-      var mfunc = _match_rndx;
-      var str = ("tagName" in match)?match.tagName:match;
-      mfunc = function(n) {
-         return n.nodeType==1
-            && n.getAttribute("rndx")
-            && n.getAttribute("row-name")==str;
-         };
-      return SFW.find_child_matches(this.xmldoc(), mfunc, true, true);
-   };
 
    // Can be overridden in derived classes:
    _table.prototype.get_result_path = function() { return null; };
@@ -52,7 +39,7 @@
       {
          var xpath = this.get_result_path()
             || this.get_result_xpath_from_top()
-            || "/*/*[@rndx=1]";
+            || "/*/*[@rndx=1][not(@merged)]";
          
          return this.xmldoc().selectSingleNode(xpath);
       }
@@ -156,14 +143,11 @@
          n.removeAttribute("select");
    };
 
-   _table.prototype.replot = function(result)
+   _table.prototype.replot = function()
    {
       this.pre_transform();
-
-      var host = this.host();
-      var node = result || SFW.xmldoc.documentElement;
       
-      SFW.xslobj.transformFill(this.host(), node);
+      SFW.xslobj.transformFill(this.host(), SFW.xmldoc.documentElement);
       
       var top = this.top();
       if (top)
@@ -183,20 +167,6 @@
       }
    };
 
-   // This gets shadowed by the later prototype. 
-   _table.prototype.update_row = function _update_row(row, doc)
-   {
-      var xpath = "*[@type='update' or @type='open']";
-      var node, newnode;
-      if ((node=doc.documentElement.selectSingleNode(xpath))
-          && (newnode=node.selectSingleNode("*[1]")))
-      {
-         var parent = row.parentNode;
-         SFW.xslobj.transformInsert(parent, doc, row);
-         parent.removeChild(row);
-      }
-   };
-
    _table.prototype.get_sfw_attribute = function(aname)
    {
       var schema, name = null;
@@ -208,159 +178,6 @@
    _table.prototype.get_line_click_id_name = function()
    {
       return this.get_sfw_attribute("line_click_id") || "id";
-   };
-
-   function _empty_node(node)
-   {
-      // Remove attribtes separately, since they are not included in the child list:
-      // Iterate in reverse or removing each attribute will change the position of
-      // the remainder of the attributes.
-      for (var s=node.attributes,i=s.length-1; i>=0; --i)
-         node.removeAttribute(s[i].nodeName);
-      
-      var n, a = node.firstChild;
-      while ((n=a))
-      {
-         a = a.nextSibling;
-         node.removeChild(n);
-      }
-   }
-
-   function _copy_node(target, source)
-   {
-      // Copy attribtes separately, since they are not included in the child list:
-      for (var s,i=0,sa=source.attributes,stop=sa.length; i<stop && (s=sa[i]); ++i)
-         target.setAttribute(s.nodeName,s.nodeValue);
-
-      var n, a = source.firstChild;
-      var doc = "documentElement" in target ? target : target.documentObject;
-      while((n=a))
-      {
-         a = a.nextSibling;
-         switch(n.nodeType)
-         {
-            case 1: // element
-               var newel = SFW.addXMLEl(n.tagName,target);
-               _copy_node(newel, n);
-               break;
-
-            // Handled in for-loop at top of function
-            // case 2: // attribute
-            //    target.setAttribute(n.nodeName,n.nodeValue);
-            //    break;
-
-            case 3: // text
-               addText(n.nodeValue, target);
-               break;
-
-            // case 4: // CDataSection
-            //    break;
-
-            case 5: // EntityReference
-               target.appendChild(doc.createEntityReference(n.nodeName));
-               break;
-
-            default:
-               break;
-         }
-      }
-   }
-
-   _table.prototype.add_result_node = function(result,xrow)
-   {
-      var n, p, res;
-      if ((n=SFW.first_child_element(result)))
-      {
-         if (xrow)
-         {
-            if ((p=xrow.parentNode))
-            {
-               p.insertBefore(n,xrow);
-               p.removeChild(xrow);
-            }
-         }
-         else if ((res=this.result(n)))
-            res.appendChild(n);
-      }
-   };
-
-   _table.prototype.copy_result_node = function(result,row_to_replace)
-   {
-      var res, n;
-      if ((n=SFW.first_child_element(result)))
-      {
-         if ((res=this.result(n)))
-         {
-            if (row_to_replace)
-               _empty_node(row_to_replace);
-            else
-               row_to_replace = SFW.addXMLEl(n.tagName,res);
-
-            _copy_node(row_to_replace, n);
-         }
-      }
-   };
-
-   _table.prototype.delete_row = function(xrow)
-   {
-      if (this.result(xrow) && xrow)
-         xrow.parentNode.removeChild(xrow);
-   };
-
-   _table.prototype.find_matching_data_row = function(cfobj)
-   {
-      var el =
-         ("cdata" in cfobj && "xrow" in cfobj.cdata)
-         ? cfobj.cdata.xrow
-         : (("rowone" in cfobj)
-            ? cfobj.rowone
-            : null);
-
-      if (el)
-      {
-         var id, res, xpath = "*/*[@rndx and @row-name='" + el.tagName + "']";
-         res = this.xmldoc().selectSingleNode(xpath);
-         id = el.getAttribute("id");
-         if ((res=this.result(el)) && (id=el.getAttribute("id")))
-         {
-            function f(n) { return n.nodeType==1 && n.getAttribute("id")==id; }
-            return SFW.find_child_matches(res, f, true, false);
-         }
-      }
-
-      return null;
-   };
-
-   _table.prototype.update_row = function(cfobj, preserve_result)
-   {
-      var xrow = this.find_matching_data_row(cfobj);
-      
-      if ("docel" in cfobj)
-      {
-         if (cfobj.mtype=="delete")
-         {
-            if (cfobj.confirm_delete() && xrow)
-               this.delete_row(xrow);
-         }
-         else if (cfobj.rtype=="update")
-         {
-            // If xrow is NULL, the new result will be appended:
-            if (preserve_result)
-               this.copy_result_node(cfobj.result, xrow);
-            else
-               this.add_result_node(cfobj.result, xrow);
-         }
-      }
-      else if ("cmd" in cfobj)
-      {
-         switch(cfobj.cmd)
-         {
-            case "delete": this.delete_row(cfobj.cdata.xrow); break;
-            case "fail":
-               SFW.alert(cfobj.rtype + " operation failed.");
-               return;   // skip replot() at end of function
-         }
-      }
    };
 
    _table.prototype.initialize = function()
@@ -377,7 +194,7 @@
       SFW.base.prototype.child_finished.call(this,cfobj);
 
       this.update_row(cfobj);
-      this.replot(SFW.get_cfobj_result(cfobj));
+      this.replot();
 
       var dobj = cfobj.cdata;
       if (dobj && "os" in dobj)
@@ -392,7 +209,7 @@
 
       if (url)
       {
-         empty_el(host);
+         // this.empty_node(host);
 
          SFW.open_interaction(SFW.stage,
                               url,
@@ -435,7 +252,7 @@
          var os = SFW.get_page_offset();  // Get offset before discarding contents
          var host = this.host();
 
-         empty_el(host);
+         // this.empty_node(host);
 
          SFW.open_interaction(SFW.stage,
                               url,
