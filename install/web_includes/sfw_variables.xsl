@@ -21,11 +21,13 @@
   deferring to $gsview by including the predicate expression [not($gsview)].
   -->
 
+  <xsl:variable name="merge_num" select="/*/*[@merged][1]/@merged" />
+
   <!--
   Save a global $mode-type value from merged types or root mode-type value.
   -->
   <xsl:variable name="mtm_result"
-                select="/*/*[@rndx]/@merge-type" />
+                select="/*/*[@rndx][@merged=$merge_num]/@merge-type" />
   <xsl:variable name="mtm_schema"
                 select="/*[not($mtm_result)]/schema/@merge-type" />
   <xsl:variable name="mt_root"
@@ -56,17 +58,23 @@
     </xsl:choose>
   </xsl:variable>
 
-  <xsl:variable name="is_form" select="starts-with($mode-type,'form-')" />
+  <!-- Merged results trump resultset mode-type settings -->
+  <xsl:variable name="mer_schema" select="/*/schema[@merged=$merge_num]" />
+  <xsl:variable name="mrs_schema" select="/*/*[@rndx][@merged=$merge_num]/schema" />
+  <xsl:variable name="mrschema" select="$mer_schema|$mrs_schema" />
+
+  <xsl:variable name="is_merge_form"
+                select="$mrschema[starts-with(@merge-type,'form-')]" />
+  <xsl:variable name="is_form"
+                select="not($is_merge_form) and starts-with($mode-type,'form-')" />
+  <!-- <xsl:variable name="is_form" select="starts-with($mode-type,'form-')" /> -->
+  
   <xsl:variable
-      name="mrschema" select="/*[$is_form]/*[@rndx][@merge-type]/schema" />
-  <xsl:variable
-      name="msschema" select="/*[$is_form][not($mrschema)]/schema[@merge-type]" />
-  <xsl:variable
-      name="dschema" select="/*[$is_form][not($mrschema|$msschema)]/schema" />
+      name="dschema" select="/*[$is_form][not($mrschema)]/schema" />
   <xsl:variable
       name="rschema"
-      select="/*[$is_form][not($mrschema|$msschema|$dschema)]/*[@rndx=1]/schema" />
-  <xsl:variable name="gschema" select="$mrschema|$msschema|$dschema|$rschema" />
+      select="/*[$is_form][not($mrschema|$dschema)]/*[@rndx=1]/schema" />
+  <xsl:variable name="gschema" select="$mrschema|$dschema|$rschema" />
 
   <!-- $gview, if available, will dictate which result to use. -->
   <xsl:variable name="gsview" select="/*/views/view[@selected]" />
