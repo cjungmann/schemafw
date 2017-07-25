@@ -189,12 +189,14 @@ function init_SFW(callback)
                {
                   rval["iclass"] = aval;
                   rval["anchor"] = t;
+                  fcount+=2;
 
                   is_control=t.getAttribute("data-sfw-input");
                   if (is_control)
+                  {
                      rval["input"] = t;
-
-                  ++fcount;
+                     ++fcount;
+                  }
                }
             }
             else if (t.className=="SFW_Host")
@@ -696,16 +698,26 @@ function init_SFW(callback)
       return SFW.find_child_matches(doc.documentElement,f,true,false);
    }
 
+   function _seek_top_merged_element(doc)
+   {
+      return doc.selectSingleNode("/*/*[@merged]");
+   }
+
    function _merge_into_pagedoc(pagedoc, newdoc)
    {
       var ibefore = _find_insertbefore_able(pagedoc);
       var docel = pagedoc.documentElement;
+      var merge_number = 1;
+      var el = _seek_top_merged_element(pagedoc);
+      if (el)
+         merge_number = 1+Number(el.getAttribute("merged"));
+      
       function f(n)
       {
          if (n.nodeType==1)
          {
             var pl = make_importable_node(pagedoc, n, true);
-            pl.setAttribute("merged","yes");
+            pl.setAttribute("merged",merge_number);
             docel.insertBefore(pl, ibefore);
          }
       }
@@ -715,12 +727,17 @@ function init_SFW(callback)
    function _remove_merged_elements(pagedoc)
    {
       var docel = pagedoc.documentElement;
-      function f(n)
+      var el = _seek_top_merged_element(pagedoc);
+      if (el)
       {
-         if (n.nodeType==1 && n.getAttribute("merged")=="yes")
-            docel.removeChild(n);
+         var num = el.getAttribute("merged");
+         function f(n)
+         {
+            if (n.nodeType==1 && n.getAttribute("merged")==num)
+               docel.removeChild(n);
+         }
+         SFW.find_child_matches(docel,f,false,false);
       }
-      SFW.find_child_matches(docel,f,false,false);
    }
 
    function _open_interaction(host, url, caller, data)
@@ -1265,7 +1282,7 @@ function init_SFW(callback)
 
          if (obj)
             obj.pre_transform();
-         
+
          SFW.xslobj.transformFill(lhost, doc.documentElement);
 
          // Uncomment for debugging problems with the stylesheet and document:
