@@ -228,6 +228,7 @@ ul.ulselect span.item span:hover
 ul.ulselect li.options_host
 {
     position:relative;
+    z-index:100;
 }
 
 ul.ulselect li.options_host div
