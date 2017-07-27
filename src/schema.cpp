@@ -794,7 +794,7 @@ const ab_handle *Result_As_SchemaDoc::seek_result_by_number(int result_number) c
    if (!rval)
    {
       int ndx = 0;
-      SiblingWalker sw(m_mode);
+      SiblingWalker sw(m_mode->first_child());
       while ((bool)sw && ndx < result_number)
       {
          if (sw.is_equal_to("result"))
