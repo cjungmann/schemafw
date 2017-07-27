@@ -994,6 +994,8 @@ protected:
 
    void set_bind_formats_from_schema(const ab_handle* result, DataStack<BindC> &bs);
 
+   const ab_handle *seek_result_by_number(int result_number) const;
+
    
 public:
    Result_As_SchemaDoc(SpecsReader &sr,

@@ -787,6 +787,34 @@ void Result_As_SchemaDoc::set_bind_formats_from_schema(const ab_handle* result,
    }
 }
 
+const ab_handle *Result_As_SchemaDoc::seek_result_by_number(int result_number) const
+{
+   const ab_handle *rval = nullptr;
+   rval = m_mode->seek("result", result_number);
+   if (!rval)
+   {
+      int ndx = 0;
+      SiblingWalker sw(m_mode);
+      while ((bool)sw && ndx < result_number)
+      {
+         if (sw.is_equal_to("result"))
+         {
+            if (sw.has_value())
+               ndx = atoi(sw.value());
+            else
+               ++ndx;
+
+            if (ndx==result_number)
+               rval = sw;
+         }
+
+         ++sw;
+      }
+   }
+
+   return rval;
+}
+
 /**
  * @brief Uses pre_fetch_ to setup the result group before printing rows.
  *
@@ -812,9 +840,7 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
    const ab_handle *schema = nullptr;
    const ab_handle *thandle = nullptr;
 
-   const ab_handle *result_handle = m_mode->seek("result", result_number);
-   if (!result_handle)
-      result_handle = m_mode->child_by_position("result", result_number-1);
+   const ab_handle *result_handle = seek_result_by_number(result_number);
 
    bool force_schema_print = false;
 
