@@ -343,7 +343,6 @@ public:
    inline bool is_false(void) const              { return m_cur->is_false(); }
    inline bool tag_in_list(const char **list) const { return m_cur->tag_in_list(list); }
    inline bool val_in_list(const char **list) const { return m_cur->val_in_list(list); }
-   inline bool is_equal_to(const char *str) const   { return m_cur->is_equal_to(str); }
    inline bool is_equal_to(const char *str, int len=-1) const
    {
       return m_cur->is_equal_to(str,len);
