@@ -47,6 +47,7 @@ There are several sections.
     - [Script to Simulate Cookies for Command-line Debugging of Sessions](CookieSettingScript.md)
     - [Debugging Hints for SQL Procedures](DebuggingSQLHints.md)
     - [Showing XML Source with Template Output](XMLOutputTemplates.md)
+    - [Showing XML Source with Framework Function](XMLOutputFunction.md)
   - Sessions
     - [Sessions Overview](SessionOverview.md)
     - [Explanation of Password Handling](PasswordHandling.md)
@@ -60,4 +61,5 @@ There are several sections.
     - [Result Dialogs (type:form-result)](ResultDialogs.md)
     - [Mixed-view Interaction](MixedView.md)
     - [Multipart Form Section](FormSection.md)
+    - [Merging Documents](MergingDocuments.md)
     - [MySQL Hints](MySQLHints.md)
