@@ -47,11 +47,13 @@ will remain in the URL to be resolved once the user has chosen a table row.  Whe
 that happens, the {!...} will be replaced with the value of the attribute of the
 XML source of the line in the table.
 
-### QString Context Reference
+## Using Values from Calling URL
 
-The instruction `qstring : reflect` directs the _schema.fcgi_ server component
-to add a qstring pseudo-result to the collection of results.  The pseudo-result
-will be a _variables_ type named "qstring" and the _rndx_ value will be set
+The URL field values can be made available as variable.  This is done by
+including the instruction `qstring : reflect` in the response mode.  The
+instruction directs the _schema.fcgi_ server component to add a qstring
+pseudo-result to the collection of results.  The pseudo-result will be a
+_variables_ type named "qstring" and the _rndx_ value will be set
 according to its position as the final result.
 
 The contents of the _qstring_ result are accessible using the variables __$__ prefix.
