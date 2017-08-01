@@ -300,7 +300,7 @@ void drop_salt_string(MYSQL *mysql, uint16_t len)
    buff[len] = '\0';
 
    SimpleProcedure::build(mysql, "CALL ssys_drop_salt_string(?)", "s255",
-                          Adhoc_Setter<1>(ai_text(buff, len )),
+                          Adhoc_Setter<1>(ai_text(buff, len)),
                           user);
 }
 
