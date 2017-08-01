@@ -128,11 +128,16 @@ void String_Base::set_from_eqtype(const IClass &rhs)
 {
    const char *source = static_cast<const char*>(rhs.get_vdata());
    char *target = const_cast<char*>(static_cast<const char*>(get_vdata()));
-   char *end = target + get_buffer_length();
+   char *end = target + rhs.get_string_length();
+   char *limit = target + get_buffer_length();
+   m_len_string = 0;
 
-   while (*source && target<end)
-      *target++ = *source++ ;
-   if (target<end)
+   while (*source && target<end && target<limit)
+   {
+      *target++ = *source++;
+      ++m_len_string;
+   }
+   if (target<limit)
       *target = '\0';
 }
 
@@ -172,8 +177,10 @@ size_t String_Base::set_from_streamer(IStreamer &str)
 #include <limits>  // std::numeric_limits
 #include <sys/resource.h>  // for rlimit stuff
 #include <stdio.h>
+#include "istdio.hpp"
 
 #include "prandstr.cpp"
+#include "istdio.cpp"
 
 void print_five(const IClass &r1, const IClass &r2, const IClass &r3, const IClass &r4, const IClass &r5)
 {
@@ -414,9 +421,9 @@ void test_string_classes(void)
 
    fputs("After assignment of String_Const \"", stdout);
    sc.print(stdout);
-   fputs(",\"\nassigned in turn to String_Virtual \"", stdout);
+   fputs("\",\nassigned in turn to String_Virtual \"", stdout);
    sv.print(stdout);
-   fputs(".\"\nHow did it work?\n", stdout);
+   fputs("\",\nHow did it work?\n", stdout);
 }
 
 void print_class_match(const char *type, const IClass &c)
