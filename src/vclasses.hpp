@@ -95,7 +95,7 @@ public:
  * This function pointer is primarily used by BindC to cast the anonymous
  * BindC::m_data member (used as MYSQL_BIND::buffer) to a usable IClass instance.
  */
-typedef void(*iclass_caster)(void* data, size_t len, IClass_User &);
+typedef void(*iclass_caster)(IClass_User&, void* data, size_t len_buffer, unsigned long len_data);
 /**@}*/
 
 class String_Base;
@@ -135,6 +135,8 @@ public:
    virtual size_t set_from_streamer(IStreamer &str) = 0;
 
    virtual size_t data_length(void) const = 0;
+   virtual size_t get_buffer_length(void) const { return data_length(); }
+   virtual size_t get_string_length(void) const { return data_length(); }
 
    /** @brief install() is to attach others' memory to a virtual class.  Real classes should throw. */
    virtual void install(void *data) = 0;
@@ -180,7 +182,7 @@ public:
    virtual void print(FILE *f) const                { throw std::runtime_error("NULL can't be printed"); }
    virtual void print_xml_escaped(FILE *f) const    { throw std::runtime_error("NULL can't be printed"); }
 
-   static void cast_and_use(void *data, size_t len,  IClass_User &ic_u)
+   static void cast_and_use(IClass_User &ic_u, void *data, size_t len_buffer, unsigned long len_data=0)
    {
       Null_Real nr;
       ic_u.use(nr);
@@ -312,7 +314,7 @@ public:
    Number_Virtual(void* val)
       : Virtual_Store<T>(val) { }
 
-   static void cast_and_use(void *data, size_t len,  IClass_User &ic_u)
+   static void cast_and_use(IClass_User &ic_u, void *data, size_t len_buffer, unsigned long len_data)
    {
       Number_Virtual<T,C,P,S,t> o(data);
       ic_u.use(o);
@@ -341,17 +343,26 @@ typedef Number_Virtual<mydate, mydate, cprint_mydate, mydate_from_stream, CT_TIM
 class String_Base : public virtual IClass, public Class_typer<CT_STRING_TEXT>
 {
 protected:
+   size_t        m_len_buffer;
+   unsigned long m_len_string;
+protected:
    virtual const void* get_vdata(void) const = 0;
    // Add pure virtual function needed for this kind of data:
    virtual void set_buffer_length(size_t len) = 0;
    
 public:
-   virtual ~String_Base()                           { }
-   virtual void set_from_eqclass(const IClass &rhs) { }
+   String_Base(size_t len_buffer, unsigned long len_string)
+      : m_len_buffer(len_buffer),
+        m_len_string(len_string)                      { }
+
+   virtual ~String_Base()                             { }
+   virtual void set_from_eqclass(const IClass &rhs)   { }
    virtual void set_from_eqtype(const IClass &rhs);
    virtual size_t set_from_streamer(IStreamer &str);
+   virtual size_t data_length(void) const       { return get_string_length(); }
 
-   virtual size_t get_buffer_length(void) const = 0;
+   virtual size_t get_buffer_length(void) const { return m_len_buffer; }
+   virtual size_t get_string_length(void) const { return m_len_string; }
 
    virtual void print(FILE *f) const;
    virtual void print_xml_escaped(FILE *f) const;
@@ -364,28 +375,25 @@ public:
 class String_Virtual : public String_Base
 {
 protected:
-   char   *m_pdata;
-   size_t m_length;
+   char*         m_pdata;
 
    virtual const void* get_vdata(void) const        { return static_cast<const void*>(m_pdata); }
-   virtual void set_buffer_length(size_t len)       { m_length = len; }
+   virtual void set_buffer_length(size_t len)       { m_len_buffer = len; }
 
 public:
-   String_Virtual(char *buffer, size_t length)
-      : m_pdata(buffer), m_length(length)           { }
+   String_Virtual(char *buffer, size_t len_buffer, unsigned long len_string=0)
+      : String_Base(len_buffer, len_string),
+        m_pdata(buffer)                         { if (!len_string) m_len_string=strlen(buffer); }
    String_Virtual(void)
-      : m_pdata(nullptr), m_length(0)               { }
+      : String_Base(0,0), m_pdata(nullptr)      { }
 
-   virtual size_t data_length(void) const           { return strlen(m_pdata); }
-   virtual void install(void *data)                 { m_pdata = static_cast<char*>(data); }
+   virtual void install(void *data)             { m_pdata = static_cast<char*>(data); }
 
-   static void cast_and_use(void *data, size_t len, IClass_User &ic_u)
+   static void cast_and_use(IClass_User &ic_u, void *data, size_t len_buffer, unsigned long len_data)
    {
-      String_Virtual o(static_cast<char*>(data), len);
+      String_Virtual o(static_cast<char*>(data), len_buffer, len_data);
       ic_u.use(o);
    }
-
-   virtual size_t get_buffer_length(void) const     { return m_length; }
 
    EFFC_3(String_Virtual)
 };
@@ -393,23 +401,20 @@ public:
 class String_Const : public String_Base
 {
 protected:
-   const char *m_pdata;
-   size_t     m_length;
+   const char*   m_pdata;
 
    virtual const void* get_vdata(void) const        { return static_cast<const void*>(m_pdata); }
-   virtual size_t get_buffer_length(void) const     { return m_length; }
+   virtual void set_buffer_length(size_t len)       { m_len_buffer = len; }
 
 public:
    String_Const(const char *str)
-      : m_pdata(str), m_length(1+strlen(str))       { }
+      : String_Base(0,strlen(str)),
+        m_pdata(str)                   { m_len_buffer=m_len_string+1; }
 
    virtual void set_from_eqtype(const IClass &rhs)  { throw std::runtime_error("The compiler should have warned you not to set this."); }
    virtual size_t set_from_streamer(IStreamer &str) { throw std::runtime_error("Illegal attempt to set a const string."); }
 
-   virtual size_t data_length(void) const           { return strlen(m_pdata); }
    virtual void install(void *data)                 { m_pdata = static_cast<const char*>(data); }
-
-   virtual void set_buffer_length(size_t len)       { m_length = len; }
 
    EFFC_3(String_Const)
 };

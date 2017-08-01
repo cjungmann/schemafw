@@ -82,7 +82,7 @@ size_t buffer_copy(void *destination, size_t len_d, const void *source, size_t l
  */
 void String_Base::print(FILE *f) const
 {
-   size_t len = get_buffer_length();
+   size_t len = get_string_length();
    const char *data = static_cast<const char*>(get_vdata());
 
    // we don't need to print the terminating \0.
@@ -92,7 +92,7 @@ void String_Base::print(FILE *f) const
 
 void String_Base::print_xml_escaped(FILE *f) const
 {
-   size_t len = get_buffer_length();
+   size_t len = get_string_length();
    const char *data = static_cast<const char*>(get_vdata());
 
    // we don't need to print the terminating \0.
@@ -284,9 +284,9 @@ struct cuser
       EFFC_3(cset)
    };
    
-   void print(FILE* f)          { cprint c(f); (*m_caster)(m_data, m_length, c); }
+   void print(FILE* f)         { cprint c(f); (*m_caster)(c,m_data,m_length,m_length); }
 
-   void put(const IClass &rhs)  { cset c(rhs); (*m_caster)(m_data, m_length, c); }
+   void put(const IClass &rhs) { cset c(rhs); (*m_caster)(c,m_data,m_length,m_length); }
 };
 
 void test_set_cast_and_print(void)
@@ -304,14 +304,6 @@ void test_set_cast_and_print(void)
       { &ai_double::cast_and_use, &test.m_double, 0 },
       { &ai_date::cast_and_use, &test.m_date, 0 }
    };
-
-   // cuser icast[5] = {
-   //    { &ai_tiny::cast_and_use, &test.m_tiny },
-   //    { &ai_short::cast_and_use, &test.m_short },
-   //    { &ai_long::cast_and_use, &test.m_long },
-   //    { &ai_ulong::cast_and_use, &test.m_ulong },
-   //    { &ai_double::cast_and_use, &test.m_double }
-   // };
 
    int stop = static_cast<int>(sizeof(icast)/sizeof(cuser));
    for (int i=0; i<stop; i++)
@@ -415,7 +407,7 @@ void test_set_cast_and_print(void)
 void test_string_classes(void)
 {
    char buff[100];
-   String_Virtual sv(buff,100);
+   String_Virtual sv(buff,100,0);
    String_Const sc("Bogus, man!");
 
    sv.get(sc);
@@ -452,7 +444,7 @@ void test_class_matches(void)
 
    char buff[20];
    strcpy(buff, "Hi dad");
-   ai_text     atext(buff,20);
+   ai_text     atext(buff,20,strlen(buff));
    si_text     stext("Hi mom");
 
    print_class_match("ai_text", atext);
