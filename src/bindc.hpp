@@ -70,7 +70,7 @@ struct BindC
    {
       // Assertion to avoid future DECIMAL-like blind-spots:
       assert(m_bind->buffer_length>0);
-      (*get_caster())(m_data,m_bind->buffer_length,user);
+      (*get_caster())(user,m_data,m_bind->buffer_length,m_length);
    }
    
    void set_from(const IClass &rhs);
