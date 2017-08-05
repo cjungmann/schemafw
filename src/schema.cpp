@@ -2592,7 +2592,7 @@ void Schema::process_response_mode(void)
          print_Status_303();
          write_location_header(early_jump);
 
-         if (sstatus==SSTAT_EXPIRED)
+         if (sstatus==SSTAT_EXPIRED || abandoning)
             clear_session_cookies();
       }
       write_headers_end();
@@ -2724,6 +2724,10 @@ void Schema::process_export(void)
  */
 void Schema::process_import(void)
 {
+   const char *prep_proc = value_from_mode("prep-proc");
+   if (prep_proc)
+      process_prep_procedure(prep_proc);
+
    try
    {
       // Prepare m_puller, leaving m_setter at nullptr.
@@ -2746,6 +2750,57 @@ void Schema::process_import(void)
    {
       print_error_as_xml(m_out, se.what(), "importing data");
    }
+}
+
+/**
+ * @brief Executes a preparation procedure with POST and GET data.
+ *
+ * This method for calling a preparation procedure is originally
+ * prepared for running a clean-up procedure prior to importing
+ * data into a quarantine table.
+ *
+ * The procedure should not run a query that returns rows.  The
+ * first returned row will log an error, and then all rows will
+ * be ignored.
+ *
+ * Ideally, the procedure should be a parameter-less procedure
+ * to preserve the streamed POST data.  If this function is
+ * revisited in the future for new uses, this should be explored.
+ * It may be appropriate to not instantiate a Streamer_Setter
+ * so only GET values, which are reusable, are used.
+ */
+void Schema::process_prep_procedure(const char *procname)
+{
+   // Prepare IParam_Setter m_setter, leaving m_puller=nullptr
+   StrmStreamer ss(stdin);
+   Streamer_Setter setter(ss);
+   m_setter = &setter;
+
+   bool ignoring_rows = false;
+
+   auto fresult = [&ignoring_rows, &procname](int result_number, DataStack<BindC> &ds)
+      {
+         if (!ignoring_rows)
+         {
+            ignoring_rows = true;
+            ifprintf(stderr,
+                     "A prep procedure, \"%s\", should not be,"
+                     " but is returning rows.\n",
+                     procname);
+         }
+      };
+
+
+   auto fquery = [this, &fresult](const char *query)
+      {
+         Result_User_Row<decltype(fresult)> user(fresult);
+
+         SimpleProcedure proc(query);
+         proc.run(&s_mysql, user);
+      };
+
+   SimpleProcedure::build_query_string(procname,0, fquery);
+
 }
 
 /**

@@ -636,6 +636,7 @@ protected:
 
    void process_export(void);
    void process_import(void);
+   void process_prep_procedure(const char *procname);
    void process_response(SESSION_TYPE stype, SESSION_STATUS sstatus);
 
    SESSION_STATUS get_session_status(SESSION_TYPE stype, bool abandon_session);
