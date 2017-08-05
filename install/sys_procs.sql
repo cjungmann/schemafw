@@ -145,13 +145,22 @@ END $$
 DROP PROCEDURE IF EXISTS ssys_default_import_removal $$
 CREATE PROCEDURE ssys_default_import_removal(p_table_name VARCHAR(64))
 BEGIN
-   SET @dir_qry = CONCAT('DELETE FROM ', p_table_name, ' WHERE id_session=?');
+   -- Confirm valid table name to avoid SQL Injection attack:
+   DECLARE tcount INT DEFAULT 0;
+   SELECT COUNT(*) INTO tcount
+     FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = database()
+      AND TABLE_NAME = p_table_name;
 
-   PREPARE qstmt FROM @dir_qry;
-   EXECUTE qstmt USING @session_confirmed_id;
-   DEALLOCATE PREPARE qstmt;
+   IF tcount = 1 THEN
+      SET @dir_qry = CONCAT('DELETE FROM ', p_table_name, ' WHERE id_session=?');
 
-   SET @dir_qry = NULL;
+      PREPARE qstmt FROM @dir_qry;
+      EXECUTE qstmt USING @session_confirmed_id;
+      DEALLOCATE PREPARE qstmt;
+
+      SET @dir_qry = NULL;
+   END IF;
 END $$
 
 -- ----------------------------------------------------
