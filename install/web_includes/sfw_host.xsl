@@ -33,7 +33,7 @@
   Make sure that any replacement includes an apply-templates element
   with select="." so the framework can find it.
   -->
-  <xsl:template match="*[@rndx]" mode="result_fill_sfw_host">
+  <xsl:template match="*[@rndx]" mode="result_fill_host">
     <xsl:param name="primary" />
     <xsl:apply-templates select="." mode="construct_host_top" />
     <xsl:apply-templates select=".">
@@ -84,7 +84,7 @@
         </xsl:apply-templates>
       </xsl:when>
       <xsl:when test="$gresult">
-        <xsl:apply-templates select="$gresult" mode="result_fill_sfw_host">
+        <xsl:apply-templates select="$gresult" mode="result_fill_host">
           <xsl:with-param name="primary" select="$primary" />
         </xsl:apply-templates>
       </xsl:when>

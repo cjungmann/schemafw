@@ -138,14 +138,14 @@
     </xsl:choose>
   </xsl:variable>
 
-  <xsl:template match="*[@rndx]" mode="result_fill_sfw_host">
+  <xsl:template match="*[@rndx]" mode="result_fill_host">
     <xsl:param name="primary" />
     <xsl:apply-templates select=".">
       <xsl:with-param name="primary" select="$primary" />
     </xsl:apply-templates>
   </xsl:template>
 
-  <xsl:template match="schema" mode="form_fill_sfw_host">
+  <xsl:template match="schema" mode="form_fill_host">
     <xsl:param name="primary" />
     <div>Incomplete Form-building template called.</div>
   </xsl:template>

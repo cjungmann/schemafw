@@ -524,7 +524,7 @@ function init_SFW(callback)
       if (!("view_renderer" in xsldoc))
       {
          var arr = [ "/xsl:stylesheet",
-                     "xsl:template[@match='*[@rndx]'][@mode='result_fill_sfw_host']",
+                     "xsl:template[@match='*[@rndx]'][@mode='result_fill_host']",
                      "xsl:apply-templates[@select='.'][not(@mode)]" ];
 
          xsldoc.view_renderer = xsldoc.selectSingleNode(arr.join('/'));
