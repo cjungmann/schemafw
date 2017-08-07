@@ -126,17 +126,25 @@
     </p>
   </xsl:template>
 
+  <xsl:template match="button" mode="skip_check">0</xsl:template>
+
   <xsl:template match="button" mode="construct_button">
-    <xsl:element name="button">
-      <xsl:attribute name="type">button</xsl:attribute>
-      
-      <xsl:apply-templates select="@*[not(local-name()='label')]"
-                           mode="add_button_attribute">
-        <xsl:with-param name="skip-data-prefix" select="' name value disabled '" />
-      </xsl:apply-templates>
-      
-      <xsl:value-of select="@label" />
-    </xsl:element>
+    <xsl:variable name="skip">
+      <xsl:apply-templates select="." mode="skip_check" />
+    </xsl:variable>
+
+    <xsl:if test="not(number($skip))">
+      <xsl:element name="button">
+        <xsl:attribute name="type">button</xsl:attribute>
+        
+        <xsl:apply-templates select="@*[not(local-name()='label')]"
+                             mode="add_button_attribute">
+          <xsl:with-param name="skip-data-prefix" select="' name value disabled '" />
+        </xsl:apply-templates>
+        
+        <xsl:value-of select="@label" />
+      </xsl:element>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template name="construct_title">
