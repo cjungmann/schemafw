@@ -11,6 +11,17 @@ As a multi-step, it is necessary to have some sort of session running, so the
 progress can be tracked and displayed.  A simple session is sufficient.  See
 [Session Overview](SessionOverview.md) for an explanation of how to use sessions.
 
+When upload data is not immediately incorporated into the application, it must
+be saved to a quarantine table to be shown to the user for validation (see step 2
+below).  This table must be managed to prevent access by other users.  The current
+suggested practice is to create a clean-up procedure that will delete records by
+session_id  Refer to the procedure below *App_Contacts_Upload_Abandon*.  This
+procedure should be called at three events:
+
+- Before importing, in case a previous import left the records,
+- After the user decides to accept or abandon the import, and
+- When the session ends.
+
 ### Steps to Import
 
 1. **_form-import_ response mode**  The user submits a file to upload in a special
@@ -131,10 +142,10 @@ in particular, if this explanation doesn't reassure you.
 
   Do **not** use TRUNCATE TABLE to remove the records.  The quarantine table
   includes staged records from all users who are uploading data, as distinguished
-  by the _id_session_ field.  
+  by the *id_session* field.  
 
   ~~~sql
-  CREATE PROCEDURE App_Contacts_Upload_Remove()
+  CREATE PROCEDURE App_Contacts_Upload_Abandon()
   BEGIN
      DELETE
        FROM QT_Contacts
@@ -162,7 +173,7 @@ in particular, if this explanation doesn't reassure you.
        FROM QT_Contacts
       WHERE id_session=@session_confirmed_id;
 
-    CALL App_Contacts_Upload_Remove();
+    CALL App_Contacts_Upload_Abandon();
   END $$
   ~~~
 
@@ -244,7 +255,7 @@ accept
 
 abandon
    type      : import-verdict
-   procedure : App_Contacts_Upload_Remove
+   procedure : App_Contacts_Upload_Abandon
    jump      : default.srm?home
 
 ~~~
