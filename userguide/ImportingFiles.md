@@ -87,8 +87,8 @@ Refer to [LOAD DATA LOCAL INFILE](LoadDataLocalInfile.md) to a discussion
 of security issues surrounding LOAD DATA INFILE, and how SchemaFW
 protects against the issues.
 
-Also refer to [Create webuser](CreateWebUser.md) to see how to configure
-the SchemaFW MySQL client for FILE privileges.
+Also refer to [Configuring MySQL](ConfiguringMySQL.md) to see how to
+configure the SchemaFW MySQL client for FILE privileges.
 
 The import feature of SchemaFW uses the _LOAD DATA INFILE_ MySQL
 command to import tables.  _LOAD DATA_ and _OUTFILE_ commands are
