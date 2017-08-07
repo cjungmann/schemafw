@@ -5,7 +5,7 @@ server to run SchemaFW web applications.
 
 - [Building the Framework](BuildingTheFramework.md)
 - [Configuring Apache](ConfiguringApache.md)
-- [Create MySQL User Account](CreateWebUser.md)
+- [Configuring MySQL](ConfiguringMySQL.md)
 
 --------------------------------------------------------------------------------
 

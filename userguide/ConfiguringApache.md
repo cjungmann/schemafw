@@ -84,7 +84,7 @@ I haven't been able to get this to work like I want.
 
 --------------------------------------------------------------------------------
 
-Next: [Create MySQL User Account](CreateWebUser.md)
+Next: [Configuring MySQL](ConfiguringMySQL.md)
 &nbsp;
 &nbsp;
 Back: [Building the Framework](BuildingTheFramework.md)

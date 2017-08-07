@@ -1,16 +1,38 @@
-# Create MySQL User Account _WebUser_ for Database Access
+# Configuring MySQL
+
+This guide will walk you through three MySQL configuration tasks:
+- setting a root password,
+- enabling event scheduling, and
+- creating a MySQL user account for the web user.
+
+## Set the Root Password
+
+Replace _YourPassword_ in the `-p` parameter with your own root password:
+
+    mysql -u root -p*YourPassword*
+
+## Prepare The Server for Event Scheduling    
+
+The Schema framework uses the MySQL Event Scheduler to periodically check a list
+of sessions to clean up after sessions that have expired.   An event object that
+cleans up old sessions in *sys_procs.sql*.
+
+### /etc/mysql/my.cnf
+
+To ensure that the event scheduler is running when MySQL restarts, it is necessary
+to set the option in a MySQL options file.  I put the following option line under
+the `[mysqld]` section:
+
+~~~
+event_scheduler=ON
+~~~
+
+## Create MySQL User Account _WebUser_ for Database Access
 
 This guide will walk you through creating a new MySQL User, granting
 limited privileges to the new user, and setting up the server environment
 so the credentials for this user are automatically loaded when invoking
 procedures in a SchemaFW script.
-
-
-## Login to MySQL
-
-Replace _YourPassword_ in the `-p` parameter with your own root password:
-
-    mysql -u root -p_YourPassword_
 
 ## Create the MySQL User Account _webuser_
 
@@ -75,7 +97,7 @@ any file on your website.
 
 --------------------------------------------------------------------------------
 
-Back: [Create MySQL User Account](CreateWebUser.md)
+Back: [Configuring Apache](ConfiguringApache.md)
 &nbsp;
 &nbsp;
 Up: [Preparing to Use SchemaFW](PreparingToUseSchemaFW.md)

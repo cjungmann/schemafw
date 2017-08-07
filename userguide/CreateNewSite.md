@@ -17,7 +17,7 @@ to create a new SchemaFW site.
 
 3. SchemaFW must have a limited-access MySQL user account, set up to be
    called with implicit credentials.  If not, see
-   [Create Web User](CreateWebUser.md).
+   [Configuring MySQL](ConfiguringMySQL.md).
 
 ## Set up the Site
 

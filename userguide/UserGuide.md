@@ -7,7 +7,7 @@ There are several sections.
 - [Preparing to Use SchemaFW](PreparingToUseSchemaFW.md)
   - [Building the Framework](BuildingTheFramework.md)
   - [Configuring Apache](ConfiguringApache.md)
-  - [Create MySQL User](CreateWebUser.md)
+  - [Configuring MySQL](ConfiguringMySQL.md)
 - [SchemaFW Basics](SchemaFWBasics.md)
   - [Establish a New SchemaFW Site](CreateNewSite.md)
   - [Using MySQL Procedures](UsingMySQLProcedures.md)
