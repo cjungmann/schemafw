@@ -160,7 +160,8 @@ button
 Buttons can be conditionally skipped by including a template that matches a button
 with the mode="skip_check".  The template that constructs buttons attempts to match
 the *skip_check* template, and will ignore the button if the template returns a
-value that evaluates as _true_.
+value that evaluates as a non-zero number.  See the *Why Not Return True or False?*
+section near the bottom of this topic.
 
 ### An Example: Import Review
 
@@ -185,8 +186,11 @@ result that hosts the button.
 
 ~~~xsl
 <xsl:template match="button[../import_item_review]" mode="skip_check">
-   <xsl:variable name="skip" select="../keywords/row[not(@id_keyword)]" />
-   <xsl:value-of select="$skip and not(@label='Accept') and not(@label='Abandon')" />
+   <xsl:variable name="count" select="count(../keywords/row[not(@id_keyword)])" />
+   <xsl:choose>
+      <xsl:when test="$count=0 and not(@label='Accept') and not(@label='Abandon')">1</xsl:iwhen>
+      <otherwise>0</otherwise>
+   </xsl:choose>
 </xsl:template>
 ~~~
 
@@ -194,7 +198,8 @@ result that hosts the button.
 
 Another means of deciding to button is to add an attribute to the button in the
 SRM file, which would then be checked in the template.  Note how the second button
-includes the instruction **no_add : true**
+includes the instruction **no_add : true**.  It doesn't matter what value is
+assigned to *no_add*, the framework only checks if it is defined.
 
 ~~~srm
 import-review
@@ -221,8 +226,11 @@ import-review
 
 ~~~xsl
 <xsl:template match="button[../import_item_review]" mode="skip_check">
-   <xsl:variable name="skip" select="../keywords/row[not(@id_keyword)]" />
-   <xsl:value-of select="$skip and @no_add" />
+   <xsl:variable name="count" select="count(../keywords/row[not(@id_keyword)])" />
+   <xsl:choose>
+      <xsl:when test="$count=0 and @no_add">1</xsl:when>
+      <otherwise>0</otherwise>
+   </xsl:choose>
 </xsl:template>
 ~~~
 
@@ -230,3 +238,22 @@ Notice how the *no_add* instruction simplifies how the template decides whether
 or not to skip the button.  It provides a direct identification of the skippable
 button that will not fail if the button labels are changed in the future.
 
+#### Why Not Return True or False?
+
+The only way to use the result of the *skip_check* template is to use its results
+in a variable.  The code at the top of the *construct_button* template is:
+
+~~~xsl
+   <xsl:variable name="skip">
+      <xsl:apply-templates select="." mode="skip_check" />
+   </xsl:variable>
+
+   <xsl:if test="not(number($skip))">
+   .
+   .
+   .
+~~~
+
+The result of the *skip_check* template will always be a string, and will thus
+always evaluate to *true*.  Since variable will always be a string, the only
+option to evaluate as false or true is to return 0 or non-zero, respectively.
