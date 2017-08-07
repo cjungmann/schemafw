@@ -5,6 +5,12 @@ provides the easy addition of some default buttons in special contexts.  This gu
 will list these default button types below, but also remember that you can create
 custom pages to enhance your web page with other interaction models.
 
+There are several sections in this topic:
+- **Button Locations**: location on page
+- **Adding Buttons**: how to include buttons
+- **Button Types**:  add, delete, call, jump, and open
+- **Skipping Buttons**: how to conditionally omit buttons
+
 ## Button Locations
 
 The default location for additional buttons is at the top of a page or dialog/form.
@@ -149,4 +155,78 @@ button
    url     : mysrm.srm?change_password
 ~~~   
      
- 
+## Skipping Buttons
+
+Buttons can be conditionally skipped by including a template that matches a button
+with the mode="skip_check".  The template that constructs buttons attempts to match
+the *skip_check* template, and will ignore the button if the template returns a
+value that evaluates as _true_.
+
+### An Example: Import Review
+
+An example is an import of items with keywords.  The application can be programmed
+so the import review page indicates any previously unregistered keywords.  It would
+also be a nice feature to allow the user to decide if the new keywords should be
+registered while adding the new items.
+
+Import pages generally have two buttons to _Accept_ and _Abandon_ the import.
+If the default action for _Aceept_ is to register the new keywords, another button
+might be added to incorporate the new items, but skip the new keywords.  However,
+this additional button wouldn't make sense if there are no unregistered keywords,
+so it should be omitted in that case.
+
+A good skip_check template will selectively match the context of the skippable
+button to avoid unexpected skips in other contexts.  In the example skip_check
+template, this is done by checking for the existence of another element.  Other
+applications might do it with an extra attribute in the button, schema, or
+result that hosts the button.
+
+#### Simple Example
+
+~~~xsl
+<xsl:template match="button[../import_item_review]" mode="skip_check">
+   <xsl:variable name="skip" select="../keywords/row[not(@id_keyword)]" />
+   <xsl:value-of select="$skip and not(@label='Accept') and not(@label='Abandon')" />
+</xsl:template>
+~~~
+
+#### Alternative Example (recommended)
+
+Another means of deciding to button is to add an attribute to the button in the
+SRM file, which would then be checked in the template.  Note how the second button
+includes the instruction **no_add : true**
+
+~~~srm
+import-review
+   type : import-review
+   procedure : App_Item_Import_Review
+   button
+      type : jump
+      label : Accept
+      url   : ?accept
+   button
+      type   : jump
+      label  : Accept but Skip New Keywords
+      url    : ?accept_no_new
+      no_add : true
+   button
+      type   : jump
+      label  : Abandon
+      url    : abandon
+   result
+      name : import_item_review
+   result
+      name : keywords
+~~~
+
+~~~xsl
+<xsl:template match="button[../import_item_review]" mode="skip_check">
+   <xsl:variable name="skip" select="../keywords/row[not(@id_keyword)]" />
+   <xsl:value-of select="$skip and @no_add" />
+</xsl:template>
+~~~
+
+Notice how the *no_add* instruction simplifies how the template decides whether
+or not to skip the button.  It provides a direct identification of the skippable
+button that will not fail if the button labels are changed in the future.
+
