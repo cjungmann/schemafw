@@ -1156,14 +1156,21 @@ function init_SFW(callback)
                return false;
             }
             break;
+         case "call":
+            if (url in window)
+            {
+               window[url]();
+               return false;
+            }
+            break;
          case "cancel":
          case "close":
-         if (this.caller())
-         {
-            var child = this.cfobj_from_cmd(type);
-            child.hide();
-            this.caller().child_finished(child);
-         }
+            if (this.caller())
+            {
+               var child = this.cfobj_from_cmd(type);
+               child.hide();
+               this.caller().child_finished(child);
+            }
             return false;
          
          default:
