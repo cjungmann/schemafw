@@ -79,7 +79,6 @@
 
    _ulselect.prototype.process_focus = function(e,t)
    {
-      console.log("process_focus: " + t.tagName);
       if (t.className=="cluster")
       {
          this.shift_typeable(true);
@@ -319,7 +318,6 @@
    // will be set as the preselect, waiting for a ENTER press.
    _ulselect.prototype.update_options_filter = function()
    {
-      console.log("update_options_filter");
       var attr = this.get_value_attribute();
       var list = (attr && attr.value.length) ? ','+attr.value+',' : null;
       var value = this.input_el.value.toLowerCase();
@@ -409,7 +407,6 @@
       s.position = to_use?"static":"";
       s.display = to_use?"block":"";
       this.input_el.focus();
-      console.log("with to_use=" + to_use + ", " + this.input_el.style.position);
    };
 
    _ulselect.prototype.stage_input_focus = function()
@@ -432,7 +429,6 @@
 
    _ulselect.prototype.clear_options = function()
    {
-      console.log("clear_options");
       function f(n)
       {
          if (n.nodeType==1 && n.className=="out")
@@ -459,7 +455,6 @@
    {
       if (this.is_multiple)
       {
-         console.log("Processing as a multiple");
          this.clear_options();
          this.clear_selections();
       }

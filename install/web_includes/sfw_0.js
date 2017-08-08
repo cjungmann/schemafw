@@ -25,7 +25,6 @@ var SFW = { types     : {},
             {
                if ("base" in SFW && (!prereq || prereq in SFW.types))
                {
-                  // console.log("Loading " + name);
                   this.check_and_callback(name);
                   return false;
                }
@@ -34,7 +33,6 @@ var SFW = { types     : {},
                   if (!(name in this.autoloads))
                      this.autoloads[name] = false;
                   
-                  // console.log("Waiting to load " + name);
                   setTimeout(callback, 125);
                   return true;
                }
@@ -763,8 +761,6 @@ function init_SFW(callback)
             _render_interaction(xdoc, host, caller, data);
          }
       }
-
-      console.log(url);
 
       xhr_get(url, got);
    }
