@@ -113,6 +113,7 @@
     <xsl:element name="ul">
       <xsl:attribute name="name"><xsl:value-of select="$field/@name" /></xsl:attribute>
       <xsl:attribute name="class">ulselect</xsl:attribute>
+      <xsl:attribute name="tabindex">0</xsl:attribute>
       <xsl:attribute name="data-sfw-class">ulselect</xsl:attribute>
       <xsl:attribute name="data-sfw-input">input</xsl:attribute>
       <xsl:if test="$field/@style='multiple'">

@@ -79,7 +79,9 @@
 
    _ulselect.prototype.process_focus = function(e,t)
    {
-      if (t.className=="cluster")
+      var tn = t.tagName.toLowerCase();
+      if ((tn=="ul" && t.className=="ulselect")
+          || (tn=="li" && t.className=="cluster"))
       {
          this.shift_typeable(true);
          return false;
@@ -147,11 +149,19 @@
          case 40: // down
             return this.process_arrow_press(0);
          default:
+            this.size_input();
             break;
          }
       }
 
       return false;
+   };
+
+   _ulselect.prototype.size_input = function()
+   {
+      var cnt = this.input_el.value.length;
+      var width = String((cnt<6?6:cnt) / 2) + "em";
+      this.input_el.style.width = width;
    };
 
    _ulselect.prototype.get_schema_field = function()
@@ -174,6 +184,7 @@
          this.select_option(el);
          // Don't let ENTER submit the form when we're updating the options
          e.preventDefault();
+         this.stage_input_focus();
          return true;
       }
       else
@@ -187,7 +198,7 @@
                SFW.open_interaction(SFW.stage,
                                     onadd,
                                     this,
-                                    { os:SFW.get_page_offset(), host:this.host() }
+                                    { os:SFW.get_page_offset(), host:this.host(), prefill:val }
                                     );
                e.preventDefault();
                return true;
@@ -197,8 +208,27 @@
       return false;
    };
 
+   function _get_top_from_cfobj(cfobj, tag)
+   {
+      var c, t = null;
+      if ((c=("child" in cfobj)?cfobj.child:null))
+         t = ("top" in c)?c.top():null;
+
+      if (t && tag && t.tagName.toLowerCase()!=tag)
+         t = null;
+
+      return t;
+   }
+
    _ulselect.prototype.child_finished = function(cfobj)
    {
+      var tag, form = _get_top_from_cfobj(cfobj,"form");
+      if ((tag=form.getAttribute("data-tag")))
+      {
+         var field = _get_first_field(cfobj.child);
+         alert(field.value);
+      }
+      
       // Must call base::child_finished() to clean out
       // any merged elements before calling replot().
       SFW.base.prototype.child_finished.call(this,cfobj);
@@ -210,6 +240,35 @@
       if (dobj && "os" in dobj)
          SFW.set_page_offset(dobj.os);
       
+   };
+
+   function _get_prefill(obj)
+   {
+      var h, d, p=null;
+      if ((h=obj.host()) && (d=("data" in h)?h.data:null))
+         p = "prefill" in d ? d.prefill : null;
+      return p;
+   }
+
+   function _get_first_field(obj)
+   {
+      if ("get_first_editable_form_field" in obj)
+         return obj.get_first_editable_form_field();
+      else
+         return null;
+   }
+
+   _ulselect.prototype.replot = function(result)
+   {
+      debugger;
+   };
+
+   _ulselect.prototype.child_ready = function(obj)
+   {
+      var val, field;
+      if ((val=_get_prefill(obj))
+          && (field=_get_first_field(obj)))
+         field.value = val;
    };
 
    _ulselect.prototype.update_row = function(cfobj, preserve_result)
