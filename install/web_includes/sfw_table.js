@@ -143,7 +143,7 @@
          n.removeAttribute("select");
    };
 
-   _table.prototype.replot = function()
+   _table.prototype.replot = function(result)
    {
       this.pre_transform();
       
