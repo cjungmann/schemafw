@@ -982,12 +982,24 @@ void Result_As_SchemaDoc::use_result_row(int result_number,
    for (auto *col=dsresult.start(); col; ++index, col=col->next())
    {
       BindC &obj = col->object();
+      const char *colname;
       if (!obj.is_null())
       {
          if (obj.format()==0)
          {
             ifputc(' ', m_out);
-            ifputs(col->str(), m_out);
+
+            // Special accommodation for a query that selects session variables:
+            // replace the @ symbol with 'at_' to prevent an XML parsing error.
+            colname = col->str();
+            if (*colname=='@')
+            {
+               ifputs("at_", m_out);
+               ifputs(&colname[1], m_out);
+            }
+            else
+               ifputs(col->str(), m_out);
+            
             ifputs("=\"", m_out);
 
             /**
