@@ -1288,13 +1288,6 @@ function init_SFW(callback)
 
          SFW.xslobj.transformFill(lhost, doc.documentElement);
 
-         // Uncomment for debugging problems with the stylesheet and document:
-         // if (lhost.childNodes.length==0)
-         // {
-         //    _show_string_in_pre(serialize(doc));
-         //    _show_string_in_pre(serialize(SFW.xslobj.doc));
-         // }
-
          if (obj)
          {
             obj.post_transform();
