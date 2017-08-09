@@ -117,6 +117,12 @@
       _focus_on_first_field(this.top());
    };
 
+   _form.prototype.get_first_editable_form_field = function()
+   {
+      var top = this.top();
+      return top?_find_first_editable_field(top):null;
+   };
+
    _form.prototype.process_submit = function _process_submit()
    {
       var form = this.top();
@@ -137,7 +143,7 @@
 
       function cb_bad(xhr)
       {
-         console.error("Form submit failed.");
+         console.error(xhr.ResponseText);
       }
 
       xhr_post(url,arr.join("&"),
