@@ -1084,7 +1084,7 @@ function init_SFW(callback)
    _base.prototype.cfobj_from_doc = function(doc)
    {
       var docel = doc.documentElement;
-      var result = docel.selectSingleNode("*[@rndx=1]");
+      var result = docel.selectSingleNode("*[@rndx=1][1]");
       
       var rval = { cfobj      : true,
                    child      : this,
@@ -1092,6 +1092,7 @@ function init_SFW(callback)
                    mtype      : docel.getAttribute("mode-type"),
                    rtype      : null,
                    result     : null,
+                   target_name: null,
                    update_row : null,
 
                    close  : function()         { _child_close(this.child); },
@@ -1105,9 +1106,11 @@ function init_SFW(callback)
       {
          var rname = result.getAttribute("row-name") || "row";
          var xpathrow = "*[local-name()='" + rname + "']";
+         var target_name = result.getAttribute("target");
          rval.result = result;
          rval.update_row = result.selectSingleNode(xpathrow);
          rval.rtype = result.getAttribute("type") || null;
+         rval.target_name = result.getAttribute("target");
          rval["rname"] = rname;
          rval["confirm_delete"] = function() { return _confirm_delete(this.u_row); };
       }
