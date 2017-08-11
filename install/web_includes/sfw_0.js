@@ -943,11 +943,11 @@ function init_SFW(callback)
 
    function _get_cfobj_result(cfobj)
    {
-      var cd, xrow, rowone;
+      var cd, xrow, update_row;
       if ("cdata" in cfobj && (cd=cfobj.cdata) && "xrow" in cd)
          xrow = cd.xrow;
-      if (cfobj.mtype!="delete" && "rowone" in cfobj)
-         rowone = cfobj.rowone;
+      if (cfobj.mtype!="delete")
+         update_row = cfobj.update_row;
 
       function check(row)
       {
@@ -957,7 +957,7 @@ function init_SFW(callback)
          return pn;
       }
 
-      return check(rowone) || check(xrow) || null;
+      return check(update_row) || check(xrow) || null;
    }
 
    function _base(actors)
@@ -1074,9 +1074,9 @@ function init_SFW(callback)
          child.sfw_hide();
    }
 
-   function _confirm_delete(rowone)
+   function _confirm_delete(update_row)
    {
-      return rowone && ("0"!=rowone.getAttribute("deleted"));
+      return update_row && ("0"!=update_row.getAttribute("deleted"));
    }
 
    _base.prototype.has_data = function() { return "data" in this.host(); };
@@ -1086,13 +1086,16 @@ function init_SFW(callback)
       var docel = doc.documentElement;
       var result = docel.selectSingleNode("*[@rndx=1]");
       
-      var rval = { cfobj  : true,
-                   child  : this,
-                   docel  : docel,
-                   mtype  : docel.getAttribute("mode-type"),
+      var rval = { cfobj      : true,
+                   child      : this,
+                   docel      : docel,
+                   mtype      : docel.getAttribute("mode-type"),
+                   rtype      : null,
+                   result     : null,
+                   update_row : null,
 
-                   close  : function() { _child_close(this.child); },
-                   hide   : function() { _child_hide(this.child); }
+                   close  : function()         { _child_close(this.child); },
+                   hide   : function()         { _child_hide(this.child); }
                  };
       
       if (this.has_data())
@@ -1102,11 +1105,11 @@ function init_SFW(callback)
       {
          var rname = result.getAttribute("row-name") || "row";
          var xpathrow = "*[local-name()='" + rname + "']";
-         rval["result"] = result;
-         rval["rtype"] = result.getAttribute("type") || null;
+         rval.result = result;
+         rval.update_row = result.selectSingleNode(xpathrow);
+         rval.rtype = result.getAttribute("type") || null;
          rval["rname"] = rname;
-         rval["rowone"] = result.selectSingleNode(xpathrow);
-         rval["confirm_delete"] = function() { return _confirm_delete(this.rowone); };
+         rval["confirm_delete"] = function() { return _confirm_delete(this.u_row); };
       }
 
       return rval;
