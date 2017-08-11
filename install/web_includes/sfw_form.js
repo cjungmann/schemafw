@@ -3,7 +3,7 @@
 
 (function _init()
 {
-   if (not ("SFW" in window))
+   if (!("SFW" in window))
       setTimeout(_init, 100);
 
    if (SFW.delay_init("sfw_form",_init,"iclass"))
