@@ -189,8 +189,8 @@
       }
       else
       {
-         var val = this.input_el.value;
-         if (SFW.confirm("Do you want to add \"" + val + "\"?"))
+         var val = this.input_el.value.trim();
+         if (val.length>0)
          {
             var onadd, fld;
             if ((fld=this.get_schema_field()) && (onadd=fld.getAttribute("on_add")))
@@ -198,48 +198,16 @@
                SFW.open_interaction(SFW.stage,
                                     onadd,
                                     this,
-                                    { os:SFW.get_page_offset(), host:this.host(), prefill:val }
-                                    );
+                                    { os:SFW.get_page_offset(),
+                                      host:this.host(),
+                                      prefill:val }
+                                   );
                e.preventDefault();
                return true;
             }
          }
       }
       return false;
-   };
-
-   function _get_top_from_cfobj(cfobj, tag)
-   {
-      var c, t = null;
-      if ((c=("child" in cfobj)?cfobj.child:null))
-         t = ("top" in c)?c.top():null;
-
-      if (t && tag && t.tagName.toLowerCase()!=tag)
-         t = null;
-
-      return t;
-   }
-
-   _ulselect.prototype.child_finished = function(cfobj)
-   {
-      var tag, form = _get_top_from_cfobj(cfobj,"form");
-      if ((tag=form.getAttribute("data-tag")))
-      {
-         var field = _get_first_field(cfobj.child);
-         alert(field.value);
-      }
-      
-      // Must call base::child_finished() to clean out
-      // any merged elements before calling replot().
-      SFW.base.prototype.child_finished.call(this,cfobj);
-
-      this.update_row(cfobj);
-      this.replot(SFW.get_cfobj_result(cfobj));
-
-      var dobj = cfobj.cdata;
-      if (dobj && "os" in dobj)
-         SFW.set_page_offset(dobj.os);
-      
    };
 
    function _get_prefill(obj)
@@ -258,10 +226,8 @@
          return null;
    }
 
-   _ulselect.prototype.replot = function(result)
-   {
-      debugger;
-   };
+   // Prevent replot since it doesn't make sense for this control.
+   _ulselect.prototype.replot = function(result) {};
 
    _ulselect.prototype.child_ready = function(obj)
    {
@@ -271,36 +237,37 @@
          field.value = val;
    };
 
-   _ulselect.prototype.update_row = function(cfobj, preserve_result)
+   /** At present, the only reason I can think that a child
+    *   would have been opened is for adding a missing option,
+    *   in which case the lookup table would need to be updated
+    *   AND the new option should be used as the current seletion.
+    */
+   _ulselect.prototype.child_finished = function(cfobj)
    {
-      var xrow = this.find_matching_data_row(cfobj);
-      
-      if ("docel" in cfobj)
+      // Must call base::child_finished() to clean out
+      // any merged elements before calling replot().
+      SFW.base.prototype.child_finished.call(this,cfobj);
+
+      if (cfobj.rtype=="update" && cfobj.update_row)
       {
-         if (cfobj.mtype=="delete")
+         var newid = cfobj.update_row.getAttribute("id");
+         this.update_row(cfobj);
+         this.refresh_options();
+
+         if (newid)
          {
-            if (cfobj.confirm_delete() && xrow)
-               this.delete_row(xrow);
-         }
-         else if (cfobj.rtype=="update")
-         {
-            // If xrow is NULL, the new result will be appended:
-            if (preserve_result)
-               this.copy_result_node(cfobj.result, xrow);
-            else
-               this.add_result_node(cfobj.result, xrow);
+            var el, uresult = this.get_result_to_update(cfobj);
+            if (uresult && (el=this.get_li_by_id(newid)))
+            {
+               this.select_option(el);
+               this.stage_input_focus();
+            }
          }
       }
-      else if ("cmd" in cfobj)
-      {
-         switch(cfobj.cmd)
-         {
-            case "delete": this.delete_row(cfobj.cdata.xrow); break;
-            case "fail":
-               SFW.alert(cfobj.rtype + " operation failed.");
-               return;   // skip replot() at end of function
-         }
-      }
+
+      var dobj = cfobj.cdata;
+      if (dobj && "os" in dobj)
+         SFW.set_page_offset(dobj.os);
    };
 
    _ulselect.prototype.process_arrow_press = function(up)
@@ -425,6 +392,12 @@
       return id;
    }
 
+   _ulselect.prototype.get_li_by_id = function(id)
+   {
+      function f(n) { return n.nodeType==1 && n.getAttribute("data-value")==id; }
+      return SFW.find_child_matches(this.ul_options,f,true,false);
+   };
+
    // In multiple-mode, this function finds the last span element
    // in the selection element.  When found, the ID is used to
    // call remove_selection(), which performs the actual removal.
@@ -530,8 +503,7 @@
 
    _ulselect.prototype.set_li_class_by_id = function(id,val)
    {
-      function f(n) { return n.nodeType==1 && n.getAttribute("data-value")==id; }
-      var el = SFW.find_child_matches(this.ul_options,f,true,false);
+      var el = this.get_li_by_id(id);
       if (el)
          el.className = val;
       else
@@ -585,7 +557,7 @@
 
    _ulselect.prototype.add_selection = function(val)
    {
-      if (val==0)
+      if (val==null || val==0)
          return false;
       var drow, fname, list;
 
@@ -656,14 +628,8 @@
          parent.scrollTop -= offset_move;
    };
 
-
-   // This might not be used.  It should refreshe the list of options
-   // from scratch, using XSL to generate the HTML, setting both the
-   // "in" and "out" classes, but also the preselect option. There are
-   // two problems: how to make both the list of selections AND the
-   // preselect available to the XSL processor.  The second problem is
-   // that by replacing everything, it makes orphans of any elements
-   // being held elsewhere.
+   // Possible problem with this function is that that by replacing
+   // everything, it makes orphans of any elements being held elsewhere.
    _ulselect.prototype.refresh_options = function()
    {
       var name, schema, field;
