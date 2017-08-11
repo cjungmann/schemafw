@@ -77,81 +77,47 @@
       }
    };
 
-   function _copy_node(target, source)
+   function _get_copied_node(target, source)
    {
-      // Copy attribtes separately, since they are not included in the child list:
-      for (var s,i=0,sa=source.attributes,stop=sa.length; i<stop && (s=sa[i]); ++i)
-         target.setAttribute(s.nodeName,s.nodeValue);
-
-      var n, a = source.firstChild;
-      var doc = "documentElement" in target ? target : target.documentObject;
-      while((n=a))
+      var doc = target.ownerDocument;
+      function ca(target,source)
       {
-         a = a.nextSibling;
-         switch(n.nodeType)
-         {
-            case 1: // element
-               var newel = SFW.addXMLEl(n.tagName,target);
-               _copy_node(newel, n);
-               break;
-
-            // Handled in for-loop at top of function
-            // case 2: // attribute
-            //    target.setAttribute(n.nodeName,n.nodeValue);
-            //    break;
-
-            case 3: // text
-               addText(n.nodeValue, target);
-               break;
-
-            // case 4: // CDataSection
-            //    break;
-
-            case 5: // EntityReference
-               target.appendChild(doc.createEntityReference(n.nodeName));
-               break;
-
-            default:
-               break;
-         }
+         // Copy attribtes separately, since they are not included in the child list:
+         for (var s,i=0,sa=source.attributes,stop=sa.length; i<stop && (s=sa[i]); ++i)
+            target.setAttribute(s.nodeName,s.nodeValue); 
       }
-   }
 
-   _tbase.prototype.add_result_node = function(result,xrow)
-   {
-      var n, p, res;
-      if ((n=SFW.first_child_element(result)))
+      function cp(target,source)
       {
-         if (xrow)
+         ca(target,source);
+
+         var node, next = source.firstChild;
+         while((node=next))
          {
-            if ((p=xrow.parentNode))
+            next = node.nextSibling;
+            switch(node.nodeType)
             {
-               p.insertBefore(n,xrow);
-               p.removeChild(xrow);
+               case 1:  // element
+                  cp(doc.createElement(node.tagName),node);
+                  break;
+               // no case 2: ca() copies attributes
+               case 3:  // text
+                  target.appendChild(doc.createTextNode(node.nodeValue));
+                  break;
+               case 5: // EntityReference
+                  target.appendChild(doc.createEntityReference(n.nodeName));
+                  break;
+               default: break;
             }
          }
-         else if ((res=this.result(n)))
-            res.appendChild(n);
       }
-   };
 
-   _tbase.prototype.copy_result_node = function(result,row_to_replace)
-   {
-      var res, n;
-      if ((n=SFW.first_child_element(result)))
-      {
-         if ((res=this.result(n)))
-         {
-            if (row_to_replace)
-               this.empty_node(row_to_replace);
-            else
-               row_to_replace = SFW.addXMLEl(n.tagName,res);
+      var newnode = doc.createElement(source.tagName);
 
-            _copy_node(row_to_replace, n);
-         }
-      }
-   };
-
+      cp(newnode, source);
+      return newnode;
+   }
+   
    _tbase.prototype.delete_row = function(xrow)
    {
       if (this.result(xrow) && xrow)
@@ -161,7 +127,7 @@
    _tbase.prototype.update_row = function(cfobj, preserve_result)
    {
       var xrow = this.find_matching_data_row(cfobj);
-      
+
       if ("docel" in cfobj)
       {
          if (cfobj.mtype=="delete")
@@ -171,11 +137,30 @@
          }
          else if (cfobj.rtype=="update")
          {
-            // If xrow is NULL, the new result will be appended:
-            if (preserve_result)
-               this.copy_result_node(cfobj.result, xrow);
-            else
-               this.add_result_node(cfobj.result, xrow);
+            var r_result = cfobj.result;
+            var r_row = SFW.first_child_element(r_result);
+
+            if (r_row)
+            {
+               // If target name, get the named result
+               var target = r_result.getAttribute("target");
+               if (target)
+                  target = this.xmldocel().selectSingleNode(target+"[@rndx]");
+               // If target name or named target not available, get alternative:
+               if (!target && xrow)
+                  target = xrow.parentNode;
+
+               if (target)
+               {
+                  if (preserve_result)
+                     r_row = _get_copied_node(target,r_row);
+
+                  target.insertBefore(r_row, xrow);
+
+                  if (xrow)
+                     target.removeChild(xrow);
+               }
+            }
          }
       }
       else if ("cmd" in cfobj)
