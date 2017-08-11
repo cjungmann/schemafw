@@ -37,9 +37,7 @@
       var el =
          ("cdata" in cfobj && "xrow" in cfobj.cdata)
          ? cfobj.cdata.xrow
-         : (("rowone" in cfobj)
-            ? cfobj.rowone
-            : null);
+         : cfobj.update_row;
 
       if (el)
       {
@@ -126,7 +124,7 @@
 
    _tbase.prototype.update_row = function(cfobj, preserve_result)
    {
-      var xrow = this.find_matching_data_row(cfobj);
+      var urow, xrow = this.find_matching_data_row(cfobj);
 
       if ("docel" in cfobj)
       {
@@ -135,12 +133,11 @@
             if (cfobj.confirm_delete() && xrow)
                this.delete_row(xrow);
          }
-         else if (cfobj.rtype=="update")
+         else if (cfobj.rtype=="update" && (urow=cfobj.update_row))
          {
             var r_result = cfobj.result;
-            var r_row = SFW.first_child_element(r_result);
 
-            if (r_row)
+            if (urow)
             {
                // If target name, get the named result
                var target = r_result.getAttribute("target");
@@ -153,9 +150,9 @@
                if (target)
                {
                   if (preserve_result)
-                     r_row = _get_copied_node(target,r_row);
+                     urow = _get_copied_node(target,urow);
 
-                  target.insertBefore(r_row, xrow);
+                  target.insertBefore(urow, xrow);
 
                   if (xrow)
                      target.removeChild(xrow);
