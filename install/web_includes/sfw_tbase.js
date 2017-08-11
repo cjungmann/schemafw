@@ -122,6 +122,15 @@
          xrow.parentNode.removeChild(xrow);
    };
 
+   _tbase.prototype.get_result_to_update = function(cfobj)
+   {
+      var result = null;
+      var tname = cfobj.target_name;
+      if (tname)
+         result = this.xmldocel().selectSingleNode(tname+"[@rndx]");
+      return result;
+   };
+
    _tbase.prototype.update_row = function(cfobj, preserve_result)
    {
       var urow, xrow = this.find_matching_data_row(cfobj);
@@ -139,11 +148,7 @@
 
             if (urow)
             {
-               // If target name, get the named result
-               var target = r_result.getAttribute("target");
-               if (target)
-                  target = this.xmldocel().selectSingleNode(target+"[@rndx]");
-               // If target name or named target not available, get alternative:
+               var target = this.get_result_to_update(cfobj);
                if (!target && xrow)
                   target = xrow.parentNode;
 
