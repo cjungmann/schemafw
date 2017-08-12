@@ -348,7 +348,7 @@ protected:
 protected:
    virtual const void* get_vdata(void) const = 0;
    // Add pure virtual function needed for this kind of data:
-   virtual void set_buffer_length(size_t len) = 0;
+   void set_buffer_length(size_t len)     { m_len_buffer = len; }
    
 public:
    String_Base(size_t len_buffer, unsigned long len_string)
@@ -378,7 +378,6 @@ protected:
    char*         m_pdata;
 
    virtual const void* get_vdata(void) const        { return static_cast<const void*>(m_pdata); }
-   virtual void set_buffer_length(size_t len)       { m_len_buffer = len; }
 
 public:
    String_Virtual(char *buffer, size_t len_buffer, unsigned long len_string=0)
@@ -404,7 +403,6 @@ protected:
    const char*   m_pdata;
 
    virtual const void* get_vdata(void) const        { return static_cast<const void*>(m_pdata); }
-   virtual void set_buffer_length(size_t len)       { m_len_buffer = len; }
 
 public:
    String_Const(const char *str)
