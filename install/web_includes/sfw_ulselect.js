@@ -3,10 +3,8 @@
 
 (function _init()
 {
-   if (!("SFW" in window))
-      setTimeout(_init, 100);
-      
-   if (SFW.delay_init("sfw_ulselect", _init, "tbase"))
+   if ((!("SFW" in window) && setTimeout(_init,100))
+       || SFW.delay_init("sfw_ulselect", _init, "tbase"))
       return;
 
    if (!SFW.derive(_ulselect, "ulselect", "tbase"))

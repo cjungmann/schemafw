@@ -3,10 +3,8 @@
 
 (function _init()
 {
-   if (!("SFW" in window))
-      setTimeout(_init, 100);
-
-   if (SFW.delay_init("sfw_tbase",_init,"iclass"))
+   if ((!("SFW" in window) && setTimeout(_init,100))
+       || SFW.delay_init("sfw_tbase",_init,"iclass"))
       return;
 
    if (!SFW.derive(_tbase, "tbase", "iclass"))
@@ -152,8 +150,13 @@
             if (urow)
             {
                var target = this.get_result_to_update(cfobj);
-               if (!target && xrow)
-                  target = xrow.parentNode;
+               if (!target)
+               {
+                  if (xrow)
+                     target = xrow.parentNode;
+                  else
+                     target = this.xmldocel().selectSingleNode("*[@rndx=1][1]");
+               }
 
                if (target)
                {

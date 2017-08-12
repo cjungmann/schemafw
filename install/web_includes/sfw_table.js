@@ -3,10 +3,8 @@
 
 (function _init()
 {
-   if (!("SFW" in window))
-      setTimeout(_init, 100);
-
-   if (SFW.delay_init("sfw_table",_init,"tbase"))
+   if ((!("SFW" in window) && setTimeout(_init,100))
+       || SFW.delay_init("sfw_table",_init,"tbase"))
       return;
 
    if (!SFW.derive(_table, "table", "tbase") ||

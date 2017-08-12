@@ -3,10 +3,8 @@
 
 (function _init()
 {
-   if (!("SFW" in window))
-      setTimeout(_init, 100);
-
-   if (SFW.delay_init("sfw_form",_init,"iclass"))
+   if ((!("SFW" in window) && setTimeout(_init,100))
+       || SFW.delay_init("sfw_form",_init,"iclass"))
       return;
 
    if (!SFW.derive(_form, "form", "iclass"))
