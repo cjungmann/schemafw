@@ -249,7 +249,9 @@ function prepare_xhr_functions()
    xhr_get = function(url,cb,cb_failed,headers,mimetype)
    {
       if (!cb_failed)
-         cb_failed = function(xhr) { console.error("Failed to get document"); };
+         cb_failed = function(xhr) {
+            console.error("Failed to get document");
+         };
       
       var async = cb?true:false;
       var xhr = getXHRObject();
