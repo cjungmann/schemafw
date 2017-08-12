@@ -20,15 +20,15 @@ public:
    BindEl(DataStack<BindC> &ds, int index)
       : m_bind(ds.object(index)), m_field()
    {
-      // for debugging:
-      // printf("%s\n", ds[index].str());
-      
       m_bind.install_to_alias(m_field);
    }
 
-   bool is_null(void) const          { return m_bind.is_null(); }
-   operator R(void) const            { return static_cast<R>(m_field); }
-   operator const BindC&(void) const { return m_bind; }
+   bool is_null(void) const              { return m_bind.is_null(); }
+   operator R(void) const                { return static_cast<R>(m_field); }
+   operator const BindC&(void) const     { return m_bind; }
+
+   /** Helps interpreting string value, mainly for dtdid in build_param_stack() */
+   unsigned long data_length(void) const { return m_bind.m_length; }
 };
 
 /** @brief Confirms the name, position, and type of a DataStack element. */
@@ -204,9 +204,10 @@ void Result_User_Build_Schema::build_param_stack(DataStack<BindC> &result2, Simp
             bind.buffer_type = MYSQL_TYPE_VARCHAR;
 
             // Save the DTD_IDENTIFIER to later parse for options:
-            size_t dtdlen = strlen(dtdid);
+            size_t dtdlen = dtdid.data_length();
             char *buff = static_cast<char*>(alloca(dtdlen+1));
-            memcpy(buff, dtdid, dtdlen+1);
+            memcpy(buff, dtdid, dtdlen);
+            buff[dtdlen] = '\0';
             bindc.m_dtdid = buff;
             break;
          }
