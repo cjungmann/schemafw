@@ -516,6 +516,19 @@
       return this.drow || (this.drow=this.get_host_form_data_row());
    };
 
+   // The base _tbase::find_matching_data_row() is responsible for
+   // returning the element in a dataset that is being edited so that
+   // the old row can be replaced by the updated row returned from
+   // the server.
+   //
+   // In a ulselect control, one only adds rows to a ulselect, rows are
+   // never edited.  Thus, it is never appropriate to return anything
+   // other than null;
+   _ulselect.prototype.find_matching_data_row = function(cfobj)
+   {
+      return null;
+   };
+
    _ulselect.prototype.seek_value_attribute = function()
    {
       var name, schema, row;
