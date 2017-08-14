@@ -21,14 +21,11 @@
       SFW.base.call(this,actors);
    }
 
-   _sub_mixed_view.prototype.child_finished = function(cfobj)
+   _sub_mixed_view.prototype.child_finished = function(cfobj, cancelled)
    {
+      SFW.base.prototype.child_finished.call(this, cfobj, cancelled);
+      
       this.process_get_update(cfobj);
-      cfobj.cdata.host.style.display = "";
-   };
-
-   _sub_mixed_view.prototype.child_finished = function(cfobj)
-   {
       cfobj.cdata.host.style.display = "";
    };
    
