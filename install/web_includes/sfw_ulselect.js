@@ -243,13 +243,13 @@
     *   in which case the lookup table would need to be updated
     *   AND the new option should be used as the current seletion.
     */
-   _ulselect.prototype.child_finished = function(cfobj)
+   _ulselect.prototype.child_finished = function(cfobj, cancelled)
    {
       // Must call base::child_finished() to clean out
       // any merged elements before calling replot().
-      SFW.base.prototype.child_finished.call(this,cfobj);
+      SFW.base.prototype.child_finished.call(this, cfobj, cancelled);
 
-      if (cfobj.rtype=="update" && cfobj.update_row)
+      if (!cancelled && cfobj.rtype=="update" && cfobj.update_row)
       {
          var newid = cfobj.update_row.getAttribute("id");
          this.update_row(cfobj);

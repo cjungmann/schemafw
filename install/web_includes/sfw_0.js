@@ -1175,7 +1175,7 @@ function init_SFW(callback)
             {
                var child = this.cfobj_from_cmd(type);
                child.hide();
-               this.caller().child_finished(child);
+               this.caller().child_finished(child, true);
             }
             return false;
          
@@ -1208,9 +1208,11 @@ function init_SFW(callback)
 
    _base.prototype.child_ready = function(child) { };
 
-   _base.prototype.child_finished = function(cfobj)
+   _base.prototype.child_finished = function(cfobj, cancelled)
    {
+      // This must be done, cancelled or not:
       this.clear_merged_elements();
+      
       cfobj.close();
    };
 

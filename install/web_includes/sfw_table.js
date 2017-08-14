@@ -188,14 +188,17 @@
          SFW.fix_table_heads(anchor);
    };
 
-   _table.prototype.child_finished = function(cfobj)
+   _table.prototype.child_finished = function(cfobj, cancelled)
    {
       // Must call base::child_finished() to clean out
       // any merged elements before calling replot().
-      SFW.base.prototype.child_finished.call(this,cfobj);
+      SFW.base.prototype.child_finished.call(this, cfobj, cancelled);
 
-      this.update_row(cfobj);
-      this.replot();
+      if (!cancelled)
+      {
+         this.update_row(cfobj);
+         this.replot();
+      }
 
       var dobj = cfobj.cdata;
       if (dobj && "os" in dobj)
