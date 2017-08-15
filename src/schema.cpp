@@ -884,14 +884,10 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
       schema = result_handle->seek("schema");
       if (schema)
       {
-         if (schema->has_value())
-            m_row_name = schema->value();
-         else
-         {
-            const ab_handle *name = schema->seek("name");
-            if (name)
-               m_row_name = name->value();
-         }
+         if ((thandle=schema->seek("row-name")))
+            m_row_name = thandle->value();
+         else if ((thandle=schema->seek("name")))
+            m_row_name = thandle->value();
       }
 
       // Get m_group_name or set to "result" as a default:
