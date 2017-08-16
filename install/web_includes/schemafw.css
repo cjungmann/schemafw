@@ -204,7 +204,7 @@ form.Moveable legend:hover { background-color:#CCCCCC; }
 form.Schema td { vertical-align:top; }
 
 /* ul selection styles */
-ul.ulselect { list-style:none; padding:0; }
+ul.ulselect { list-style:none; padding:0; min-width:8em; }
 ul.ulselect span.item
 {
     border-radius: 4px;
@@ -234,8 +234,8 @@ ul.ulselect li.options_host
 ul.ulselect li.options_host div
 {
     position: absolute;
-    top :0;
-    left :0;
+    top:0;
+    left:0;
     width:100%;
     display:none;
 }
