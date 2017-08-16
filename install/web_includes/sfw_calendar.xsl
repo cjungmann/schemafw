@@ -346,6 +346,31 @@ will contain the YYYY-MM-DD date.
     </xsl:apply-templates>
   </xsl:template>
 
+  <xsl:template match="*[@month][@initialDay]" mode="make_dmdy">
+    <xsl:param name="date" />
+
+    <xsl:variable name="initialDay" select="@initialDay" />
+
+    <xsl:variable name="ref" select="@month" />
+    <xsl:variable name="yref" select="substring($ref,1,4)" />
+    <xsl:variable name="mref" select="substring($ref,6,2)" />
+
+    <xsl:variable name="ynum" select="substring($date,1,4)" />
+    <xsl:variable name="mnum" select="substring($date,6,2)" />
+    <xsl:variable name="dnum" select="substring($date,9,2)" />
+
+    <xsl:variable name="dow" select="(-1 + $dnum + $initialDay) mod 7" />
+
+    <xsl:call-template name="get_day_name">
+      <xsl:with-param name="ndx" select="$dow" />
+    </xsl:call-template>
+    <xsl:text>, </xsl:text>
+    <xsl:call-template name="get_month_name">
+      <xsl:with-param name="ndx" select="$mnum" />
+    </xsl:call-template>
+    <xsl:value-of select="concat(' ',$dnum,' ',$ynum)" />
+  </xsl:template>
+
   <!--
       This template will be discarded when sfw_calendar.xsl is imported
       to a stylesheet that already includes <xsl:template match="/">.
