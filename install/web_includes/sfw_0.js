@@ -846,9 +846,12 @@ function init_SFW(callback)
       var newarg = name + (value ? ("="+encodeURIComponent(value)):"");
       
       var loc = window.location;
-      
-      // strip leading '?' to avoid empty initial element
-      var qsearch = ((loc.search.length) ? loc.search.substring(1) : "").split('?');
+
+      // Make array (that might be empty) of the arguments of the current location:
+      var qsearch = loc.search.length==0
+         ? ""
+         : loc.search[0]=='?' ? loc.search.substring(1) : loc.search;
+      qsearch = qsearch.length==0 ? [] : qsearch.split('?');
 
       var page = loc.pathname;
       var args_ndx = -1;
