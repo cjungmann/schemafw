@@ -134,7 +134,9 @@
 
    _tbase.prototype.update_row = function(cfobj, preserve_result)
    {
-      var urow, xrow = this.find_matching_data_row(cfobj);
+      var cdata = "cdata" in cfobj ? cfobj.cdata : null;
+      var xrow = (cdata && "xrow" in cdata) ? cdata.xrow : null;
+      var urow = ("update_row" in cfobj) ? cfobj.update_row : null;
 
       if ("docel" in cfobj)
       {
@@ -143,31 +145,26 @@
             if (cfobj.confirm_delete() && xrow)
                this.delete_row(xrow);
          }
-         else if (cfobj.rtype=="update" && (urow=cfobj.update_row))
+         else if (cfobj.rtype=="update" && urow)
          {
-            var r_result = cfobj.result;
-
-            if (urow)
+            var target = this.get_result_to_update(cfobj);
+            if (!target)
             {
-               var target = this.get_result_to_update(cfobj);
-               if (!target)
-               {
-                  if (xrow)
-                     target = xrow.parentNode;
-                  else
-                     target = this.xmldocel().selectSingleNode("*[@rndx=1][1]");
-               }
+               if (xrow)
+                  target = xrow.parentNode;
+               else
+                  target = this.xmldocel().selectSingleNode("*[@rndx=1][1]");
+            }
 
-               if (target)
-               {
-                  if (preserve_result)
-                     urow = _get_copied_node(target,urow);
+            if (target)
+            {
+               if (preserve_result || target.ownerDocument!=urow.ownerDocument)
+                  urow = _get_copied_node(target,urow);
 
-                  target.insertBefore(urow, xrow);
+               target.insertBefore(urow, xrow);
 
-                  if (xrow)
-                     target.removeChild(xrow);
-               }
+               if (xrow)
+                  target.removeChild(xrow);
             }
          }
       }
