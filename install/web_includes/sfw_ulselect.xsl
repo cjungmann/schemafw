@@ -74,6 +74,24 @@
     </xsl:if>
   </xsl:template>
 
+  <!-- Template to display error if the field does not include a result attribute. -->
+  <xsl:template match="field[@type='ulselect']" mode="construct_input">
+    <span>The ulselect field <xsl:value-of select="@name" /> failed to specify a result.</span>
+  </xsl:template>
+  
+  <!--
+      ulselect templates are in sfw_ulselect.xsl.  In order to use the contents
+      of sfw_ulselect.xsl, the following template, whose priority ensures
+      appropriate selection, accesses the imported templates explicitly.
+  -->
+  <xsl:template match="field[@type='ulselect'][@result]" mode="construct_input">
+    <xsl:param name="data" />
+    <xsl:call-template name="construct_ulselect_input">
+      <xsl:with-param name="field" select="." />
+      <xsl:with-param name="data" select="$data" />
+    </xsl:call-template>
+  </xsl:template>
+
   <xsl:template match="field" mode="get_ulselect_value">
     <xsl:variable name="sresult" select="../following-sibling::*[@rndx][1]" />
     <xsl:variable name="hresult" select="../parent::*[not($sresult)][@rndx]" />
