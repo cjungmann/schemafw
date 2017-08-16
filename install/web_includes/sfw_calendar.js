@@ -18,7 +18,7 @@
 
    _calendar.prototype.child_finished = function(child, cancelled)
    {
-      SFW.base.prototype.child_finished.call(this, child, cancelled);
+      SFW.types["table"].prototype.child_finished.call(this,child,cancelled);
       this.replot();
    };
 
