@@ -11,6 +11,16 @@
 #include <math.h>          // for log10() in ltoccp
 #include "genericuser.hpp" // used by ltoccp and _ltoccp for callback
 
+// effc++ delete assign and copy operators
+#ifndef EFFC_2
+#define EFFC_2(X) X(const X&)=delete; X& operator=(const X&)=delete
+#endif
+
+// effc++ add virtual destructor and delete assign and copy operators
+#ifndef EFFC_3
+#define EFFC_3(X) X(const X&)=delete; X& operator=(const X&)=delete; virtual ~X() {}
+#endif
+
 /** @brief Class for printing and manipulating dates */
 class mydate
 {
@@ -122,6 +132,7 @@ inline void cprint_mytimestamp(mydate d, FILE *f) { d.print(f, mydate::PT_DATETI
 class IStreamer
 {
 public:
+   virtual ~IStreamer()    { }
    virtual int getc(void) = 0;
    virtual bool eof(void) const = 0;    /**< eof (end-of-file) standard C value. */
    virtual int recent(void) const = 0; /**< Forces derived class to track recent char. */
@@ -142,6 +153,9 @@ protected:
    int  m_recent;
 public:
    StrmStreamer(FILE *f) : m_file(f), m_recent(0) { }
+   virtual ~StrmStreamer()                        { }
+   EFFC_2(StrmStreamer);
+
    
    virtual int getc(void)            { return (m_recent=ifgetc(m_file)); }
    virtual bool eof(void) const      { return ifeof(m_file); }
@@ -158,6 +172,8 @@ protected:
 public:
    StringStreamer(const char *str)
       : m_string(str), m_ptr(str), m_recent(-2)  { }
+   virtual ~StringStreamer()                     { }
+   EFFC_2(StringStreamer);
 
    /**
     * @brief Simulate fgetc(stdio) with a const char* string.
@@ -200,6 +216,8 @@ public:
 
    SegmentStreamer(IStreamer &str, char eoi=s_unit_separator)
       : m_str(str), m_eoi(eoi)   { }
+   virtual ~SegmentStreamer()    { }
+   EFFC_2(SegmentStreamer);
 
    virtual int getc(void);
    virtual bool eof(void) const;

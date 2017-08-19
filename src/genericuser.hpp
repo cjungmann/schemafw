@@ -12,6 +12,7 @@
 class IGeneric_Void_Callback
 {
 public:
+   virtual ~IGeneric_Void_Callback() { }
    virtual void operator()(void) const = 0;
 };
 
@@ -22,6 +23,7 @@ protected:
    const Func &m_f;
 public:
    Generic_Void_User(const Func &f) : m_f(f) { }
+   virtual ~Generic_Void_User()              { }
    virtual void operator()(void) const       { m_f(); }
 };
 
@@ -36,6 +38,7 @@ template <class T>
 class IGeneric_Callback
 {
 public:
+   virtual ~IGeneric_Callback() { }
    virtual void operator()(T &t) const = 0;
 };
 
@@ -55,6 +58,7 @@ protected:
    const Func &m_f;
 public:
    Generic_User(const Func &f) : m_f(f) { }
+   virtual ~Generic_User()              { }
    virtual void operator()(T &t) const  { m_f(t); }
 };
 
@@ -67,6 +71,7 @@ template <class T>
 class IGeneric_Callback_Pointer
 {
 public:
+   virtual ~IGeneric_Callback_Pointer() { }
    virtual void operator()(T *t) const = 0;
 };
 
@@ -77,6 +82,7 @@ protected:
    const Func &m_f;
 public:
    Generic_User_Pointer(const Func &f) : m_f(f) { }
+   virtual ~Generic_User_Pointer()              { }
    virtual void operator()(T *t) const          { m_f(t); }
 };
 
@@ -86,6 +92,7 @@ template <class T>
 class IGeneric_Callback_Const_Pointer
 {
 public:
+   virtual ~IGeneric_Callback_Const_Pointer() { }
    virtual void operator()(const T *t) const = 0;
 };
 
@@ -96,6 +103,7 @@ protected:
    const Func &m_f;
 public:
    Generic_User_Const_Pointer(const Func &f) : m_f(f) { }
+   virtual ~Generic_User_Const_Pointer()              { }
    virtual void operator()(const T *t) const          { m_f(t); }
 };
 
@@ -111,7 +119,7 @@ template <class F> using Generic_String_User = Generic_User_Const_Pointer<char,F
 
 #ifdef INCLUDE_GENERICUSER_MAIN
 
-#include <istdio.h>
+#include <stdio.h>
 
 struct bogus
 {

@@ -275,9 +275,8 @@ struct cuser
       FILE *m_out;
    public:
       cprint(FILE *out) : m_out(out)    { }
+      EFFC_3(cprint);
       virtual void use(IClass &v)       { v.print(m_out); }
-      
-      EFFC_3(cprint)
    };
 
    // Internal setting IClass_User class
@@ -286,9 +285,8 @@ struct cuser
       const IClass &m_rhs;
    public:
       cset(const IClass &rhs) : m_rhs(rhs) { }
+      EFFC_3(cset);
       virtual void use(IClass &lhs)        { m_rhs.put(lhs); }
-
-      EFFC_3(cset)
    };
    
    void print(FILE* f)         { cprint c(f); (*m_caster)(c,m_data,m_length,m_length); }

@@ -28,16 +28,6 @@ inline constexpr uint16_t dash_val(char c)
 static_assert(dash_val('b') == 25133,
               "Check endian-ness situation for dash_val function." );
 
-// effc++ delete assign and copy operators
-#ifndef EFFC_2
-#define EFFC_2(X) X(const X&)=delete; X& operator=(const X&)=delete;
-#endif
-
-// effc++ add virtual destructor and delete assign and copy operators
-#ifndef EFFC_3
-#define EFFC_3(X) X(const X&)=delete; X& operator=(const X&)=delete; virtual ~X() {}
-#endif
-
 class Pure_Virtual_Exception : public std::exception
 {
 public:
@@ -86,6 +76,7 @@ class IClass;   // forward declaration
 class IClass_User
 {
 public:
+   virtual ~IClass_User() { }
    virtual void use(IClass &v) = 0;
 };
 
@@ -194,6 +185,7 @@ template <class C>
 class INumber_Common
 {
 public:
+   virtual ~INumber_Common() { }
    virtual C get_common_value(void) const = 0;
 };
 
