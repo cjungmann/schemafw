@@ -96,6 +96,7 @@ void clear_stack(DataStack<BindC> &ds)
 
 #ifdef INCLUDE_BC_MAIN
 
+#include "istdio.cpp"
 #include "prandstr.cpp"
 #include "vclasses.cpp"
 #include "ctyper.cpp"
@@ -109,6 +110,8 @@ void clear_stack(DataStack<BindC> &ds)
 class DemoBindUser : public IBindUser
 {
 public:
+   virtual ~DemoBindUser() { }
+
    virtual void use(DataStack<BindC> *ds, MYSQL_BIND *binds, unsigned count)
    {
       printf("We got here!\n");

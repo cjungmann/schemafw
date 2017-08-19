@@ -11,7 +11,8 @@
 #include <unistd.h>
 
 #include "genericuser.hpp"
-#include "vclasses.hpp"    // for EFFC_2 and EFFC_3
+#include "prandstr.hpp"       // for EFFC_2 and EFFC_3
+// #include "vclasses.hpp"    // for EFFC_2 and EFFC_3
 
 
 /**
@@ -23,7 +24,7 @@ protected:
    long int m_cur_line_pos;
 public:
    I_AFile(void) : m_cur_line_pos(-1) { }
-   EFFC_2(I_AFile)
+   EFFC_2(I_AFile);
 
    virtual ~I_AFile()  { }
    virtual bool is_open(void) = 0;
@@ -78,7 +79,7 @@ public:
    AFile_Stream(FILE *file)
       : I_AFile(), m_pfile(file)             { }
    virtual ~AFile_Stream();
-   EFFC_2(AFile_Stream)
+   EFFC_2(AFile_Stream);
 
    virtual bool is_open(void);
    virtual void rewind(void);
@@ -216,7 +217,7 @@ private:
 public:
    // Must provide a real destructor function for the virtual one:
    virtual ~AFile_Handle();
-   EFFC_2(AFile_Handle)
+   EFFC_2(AFile_Handle);
 
    static void build_new_buffer(int handle, IGeneric_Callback<AFile_Handle> &callback);
 

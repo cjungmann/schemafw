@@ -218,6 +218,7 @@ public:
       FILE* m_out;
    public:
       _print(FILE* out) : m_out(out)     { }
+      EFFC_3(_print);
       virtual void use (IClass &v)       { v.print(m_out); }
    };
 
@@ -226,6 +227,7 @@ public:
       FILE *m_out;
    public:
       _print_xml_escaped(FILE *out) : m_out(out) { }
+      EFFC_3(_print_xml_escaped);
       virtual void use (IClass &v)               { v.print_xml_escaped(m_out); }
    };
 
@@ -291,6 +293,7 @@ public:
 class IBindUser
 {
 public:
+   virtual ~IBindUser() { }
    virtual void use(DataStack<BindC> *ds, MYSQL_BIND *binds, unsigned count) = 0;
 };
 
