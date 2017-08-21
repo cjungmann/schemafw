@@ -9,7 +9,7 @@ This guide will walk you through three MySQL configuration tasks:
 
 Replace _YourPassword_ in the `-p` parameter with your own root password:
 
-    mysql -u root -p*YourPassword*
+    mysql -u root -pYourPassword
 
 ## Prepare The Server for Event Scheduling    
 
