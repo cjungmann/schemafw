@@ -66,7 +66,9 @@ to create a new SchemaFW site.
    
    To facilitate copy-and-paste of the commands, define the _MyUser_, _MyPassword_,
    and _MyDatabase_ in your shell environment like this, replacing the sample
-   values with your own values.
+   values with your own values.  Note that these values are not saved anywhere,
+   they are simply used to replace placeholders in the copy-and-paste commands
+   in the next section.
 
    ~~~
    MyUser=root
@@ -112,6 +114,8 @@ to create a new SchemaFW site.
    on your workstation.
 
    ~~~apache
+   # -*- mode:conf -*-
+
    <VirtualHost *:80> 
      ServerName www.your_domain.com
      DocumentRoot /home/your_user_name/www/CaseStudy/site
