@@ -29,8 +29,41 @@ own machines best and can leave out any or all of the following steps as you see
    ~~~
 
    These packages are necessary to compile the source code.
+
+3. Download and build *xsl-import*.  This python program consolidates the many
+   SchemaFW xsl stylesheets into a single stylesheet.
+
+   ~~~
+   cd /usr/local/lib
+   sudo git clone https://github.com/cjungmann/xsl-import.git
+   cd ../bin
+   sudo cp -s ../lib/xsl-import/xsl-import .
+   ~~~
+   
+4. Install *curl*, *nodejs*, *npm*
+
+   ~~~
+   sudo apt-get install libxml2-utils curl nodejs npm
+   sudo ln -s /usr/bin/nodejs /usr/bin/node
+   ~~~
+
+   Test for successful installation: `nodejs --version`
+
+   - *libxml2-utils* to install *xmllint* to clean up combined xsl scripts.
+   - *curl* is/was used to call an online code minifier.
+   - *nodejs* is used by an offline code minifier
+   - *npm* is the *n*odejs *p*ackage *m*anager used to install uglify-js mode minifier.
+
+5. Install [uglify-js](https://www.npmjs.com/package/uglify-js) Javascript
+   minimizer as a command-line application
+
+   ~~~
+   sudo npm install uglify-js -g
+   ~~~
+
+   Test for successful installation: `uglifyjs --version`
     
-3. Install mod_fastcgi and libfcgi
+6. Install mod_fastcgi and libfcgi
    
    ~~~
    sudo apt-get install libfcgi-dev libapache2-mod-fastcgi
@@ -43,7 +76,7 @@ own machines best and can leave out any or all of the following steps as you see
 
    You can also build libfcgi from [source](https://github.com/FastCGI-Archives/FastCGI.com/blob/master/original_snapshot/fcgi-2.4.1-SNAP-0910052249.tar.gz?raw=true).
    In that case, you will definitely need `ldconfig`.
-    
+
 ## Download, Build, and Install SchemaFW
 
 This is a work in progress.  At the time of this writing (2016-07-13), the C++ code
