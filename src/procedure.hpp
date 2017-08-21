@@ -34,6 +34,7 @@ void default_procedure_message_reporter(const char *type, const char *msg, const
 class IParam_Setter
 {
 public:
+   virtual ~IParam_Setter()  { }
    /**
     * @brief Callback class for setting parameter values.
     *
@@ -112,7 +113,7 @@ template <int array_size>
 class Adhoc_Setter : public IParam_Setter
 {
 protected:
-   const IClass *m_array[array_size];
+   const IClass* const m_array[array_size];
 public:
    template<class... T>
    Adhoc_Setter(const T&... args)
@@ -120,6 +121,8 @@ public:
    {
       IClass::clear_destruct_flag();
    }
+
+   EFFC_3(Adhoc_Setter);
 
    int count(void) const { return array_size; }
 
@@ -153,7 +156,7 @@ public:
 
    /** @brief Call t_make_typestr from ctyper.hpp,.cpp to make a typestring. */
    template <class F>
-   void make_typestr(const F &f)
+   void make_typestr(const F &f) const
    {
       t_make_typestr(m_array, array_size, Generic_String_User<F>(f));
    }
@@ -242,6 +245,7 @@ public:
 class IResult_User
 {
 public:
+   virtual ~IResult_User() { }
    /**
     * @brief Means by which the related MYSQL_STMT can be accessed.
     *
@@ -343,7 +347,7 @@ public:
    virtual ~Result_User_Row()      { assert(m_stmt==nullptr); }
 
    virtual void register_stmt(MYSQL_STMT *stmt) { m_stmt = stmt; }
-   EFFC_2(Result_User_Row<Func>)
+   EFFC_2(Result_User_Row<Func>);
 
 
    /** @brief No-op pure virtual function. */
@@ -442,7 +446,7 @@ public:
    virtual ~Result_User_Pre_Fetch() { assert(m_stmt==nullptr); }
 
    virtual void register_stmt(MYSQL_STMT *stmt) { m_stmt = stmt; }
-   EFFC_2(Result_User_Pre_Fetch<Func>)
+   EFFC_2(Result_User_Pre_Fetch<Func>);
 
 
    virtual void pre_fetch_use_result(int result_number,
@@ -483,7 +487,7 @@ public:
    void print_string(BindC &bc, unsigned column);
    void set_output_stream(FILE* strm) { assert(m_out==nullptr); m_out=strm; }
 
-   EFFC_2(Result_User_Base)
+   EFFC_2(Result_User_Base);
 };
 
 /** @brief Convenient class for outputing simple XML. */
@@ -545,7 +549,7 @@ public:
         m_result_number(0), m_truncated_row(false)
    { }
 
-   EFFC_2(SimpleProcedure)
+   EFFC_2(SimpleProcedure);
    ~SimpleProcedure()      { conclude(); }
    
    void run(MYSQL *conn, const IParam_Setter *ps, IResult_User *ru);

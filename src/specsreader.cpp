@@ -1,4 +1,5 @@
-// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -fno-inline -pedantic -ggdb -DINCLUDE_SPECSREADER_MAIN -o specsreader specsreader.cpp" -*-
+// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -fno-inline -pedantic -ggdb -DINCLUDE_SPECSREADER_MAIN `mysql_config --cflags` -o specsreader specsreader.cpp `mysql_config --libs`" -*-
+
 
 #include "specsreader.hpp"
 #include <alloca.h>
@@ -8,22 +9,22 @@ void print_xml_attribute(FILE *out,
                          const char *tag,
                          const char *value)
 {
-   fputc(' ', out);
-   fputs(tag, out);
-   fputs("=\"", out);
+   ifputc(' ', out);
+   ifputs(tag, out);
+   ifputs("=\"", out);
    print_str_as_xml(value, out);
-   fputc('"', out);
+   ifputc('"', out);
 }
 
 void print_xml_attribute(FILE *out,
                          const char *name,
                          unsigned long value)
 {
-   fputc(' ', out);
-   fputs(name, out);
-   fputs("=\"", out);
+   ifputc(' ', out);
+   ifputs(name, out);
+   ifputs("=\"", out);
    print_uint(value, out);
-   fputc('"', out);
+   ifputc('"', out);
 }
 
 void throw_missing(const char *type_of_missing, const char *name_of_missing)
@@ -35,25 +36,26 @@ void throw_missing(const char *type_of_missing, const char *name_of_missing)
    throw std::runtime_error(buff);
 }
 
-void Path_List::process(Advisor_Index::ninfo* head,
-                        int count,
-                        IGeneric_Callback<Advisor_Index> &callback)
-{
-   auto* ptr = head;
-   while (count>0 && ptr)
-   {
-      if (ptr->is_equal_to("$include"))
-      {
-         const char *val = static_cast<const char*>(ptr->extra());
-         Path_List *pl = scan(val);
-         if (pl && pl->is_not_equal(val))
-         {
-            printf("Adding %s.\n", val);
-         }
-      }
-      ptr = ptr->next();
-   }
-}
+// // Commenting in case this is used.  Not likely.
+// void Path_List::process(Advisor_Index::ninfo* head,
+//                         int count,
+//                         IGeneric_Callback<Advisor_Index> &callback)
+// {
+//    auto* ptr = head;
+//    while (count>0 && ptr)
+//    {
+//       if (ptr->is_equal_to("$include"))
+//       {
+//          const char *val = static_cast<const char*>(ptr->extra());
+//          Path_List *pl = scan(val);
+//          if (pl && pl->is_not_equal(val))
+//          {
+//             ifprintf(out, "Adding %s.\n", val);
+//          }
+//       }
+//       ptr = ptr->next();
+//    }
+// }
 
 
 void Path_List::send_index(Advisor_Index::ninfo* root,
@@ -377,9 +379,9 @@ void Advisor_Index::print_modes(FILE *f, bool include_shared) const
          if (first)
             first = false;
          else
-            fputs(", ", f);
+            ifputs(", ", f);
             
-         fputs(name, f);
+         ifputs(name, f);
          if (strcmp("$shared",name)==0)
          {
             auto &obj = ptr->object();
@@ -391,7 +393,7 @@ void Advisor_Index::print_modes(FILE *f, bool include_shared) const
 
    // Only print the newline if we wrote out some modes:
    if (!first)
-      fputc('\n', f);
+      ifputc('\n', f);
 }
 
 /** @brief Use this static member function to create an instance of SpecsReader. */
@@ -408,8 +410,8 @@ void SpecsReader::t_build(Advisor &advisor, IGeneric_Callback<SpecsReader> &user
 
 void SpecsReader::print_as_xml(FILE *out, const ab_handle *handle)
 {
-   fputc('<', out);
-   fputs(handle->tag(), out);
+   ifputc('<', out);
+   ifputs(handle->tag(), out);
 
    // print attributes, counting sub-handlees as encountered
    int child_count = 0;
@@ -420,7 +422,7 @@ void SpecsReader::print_as_xml(FILE *out, const ab_handle *handle)
       {
          const char *val = sw.value();
          if (*val=='$')
-            fputs("<shared />\n", out);
+            ifputs("<shared />\n", out);
          else
             print_xml_attribute(out, sw.tag(), val);
       }
@@ -433,7 +435,7 @@ void SpecsReader::print_as_xml(FILE *out, const ab_handle *handle)
    if (child_count)
    {
       // close as non-empty element
-      fputs(">\n", out);
+      ifputs(">\n", out);
 
       // scan and print children
       SiblingWalker swc(handle->first_child());
@@ -446,13 +448,13 @@ void SpecsReader::print_as_xml(FILE *out, const ab_handle *handle)
       }
       
       // print close tag
-      fputs("</", out);
-      fputs(handle->tag(), out);
-      fputs(">\n", out);
+      ifputs("</", out);
+      ifputs(handle->tag(), out);
+      ifputs(">\n", out);
    }
    // If empty element, close as such:
    else
-      fputs(" />\n", out);
+      ifputs(" />\n", out);
 }
 
 /**
@@ -792,10 +794,10 @@ void SpecsReader::t_build_branch(long position, abh_callback &callback) const
          int handle = open(obj.filepath(), O_RDONLY);
          if (handle<0)
          {
-            fprintf(stderr,
-                    "Unable to open \"%s\": %s\n",
-                    obj.filepath(),
-                    strerror(errno));
+            ifprintf(stderr,
+                     "Unable to open \"%s\": %s\n",
+                     obj.filepath(),
+                     strerror(errno));
             throw std::runtime_error("failed to open file");
          }
          else
@@ -899,11 +901,15 @@ bool SpecsReader::is_valid_position(long int pos) const
 
 #ifdef INCLUDE_SPECSREADER_MAIN
 
-#include <stdio.h>
+#include "istdio.cpp"
+#include "prandstr.cpp"
+#include "vclasses.cpp"
+#include "ctyper.cpp"
+#include "bindc.cpp"
 #include "datastack.cpp"
 #include "advisor.cpp"
+#include "bindstack.cpp"
 #include "adbranch.cpp"
-#include "prandstr.cpp"
 
 
 void list_modes(SpecsReader &sr)

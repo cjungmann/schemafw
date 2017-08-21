@@ -1,7 +1,7 @@
 #ifndef ADVISOR_HPP
 #define ADVISOR_HPP
 
-#include <stdio.h>
+#include "istdio.hpp"
 #include <stdlib.h>
 #include <string.h>
 
@@ -12,8 +12,7 @@
 
 #include "genericuser.hpp"
 #include "prandstr.hpp"       // for EFFC_2 and EFFC_3
-// #include "vclasses.hpp"    // for EFFC_2 and EFFC_3
-
+#include "vclasses.hpp"
 
 /**
  * @brief Pure virtual class for alternate methods of file access
@@ -68,27 +67,27 @@ public:
  * uses malloc() when opening a disk file, which violates my goal of keeping
  * everything on the stack.
  */
-class AFile_Stream : public I_AFile
-{
-protected:
-   FILE *m_pfile;
+// class AFile_Stream : public I_AFile
+// {
+// protected:
+//    FILE *m_pfile;
    
-public:
-   // AFile_Stream(const char *filename=nullptr)
-   //    : I_AFile(), m_pfile(nullptr)           { if (filename) open(filename); }
-   AFile_Stream(FILE *file)
-      : I_AFile(), m_pfile(file)             { }
-   virtual ~AFile_Stream();
-   EFFC_2(AFile_Stream);
+// public:
+//    // AFile_Stream(const char *filename=nullptr)
+//    //    : I_AFile(), m_pfile(nullptr)           { if (filename) open(filename); }
+//    AFile_Stream(FILE *file)
+//       : I_AFile(), m_pfile(file)             { }
+//    virtual ~AFile_Stream();
+//    EFFC_2(AFile_Stream);
 
-   virtual bool is_open(void);
-   virtual void rewind(void);
-   virtual void close(void)    { } // do nothing for deprecated class
+//    virtual bool is_open(void);
+//    virtual void rewind(void);
+//    virtual void close(void)    { } // do nothing for deprecated class
    
-   virtual long int _get_position(void);
-   virtual void _set_position(long int pos);
-   virtual char * _read_line(char *buff, int buffsize);
-};
+//    virtual long int _get_position(void);
+//    virtual void _set_position(long int pos);
+//    virtual char * _read_line(char *buff, int buffsize);
+// };
 
 
 /**

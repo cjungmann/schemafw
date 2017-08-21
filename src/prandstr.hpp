@@ -217,7 +217,6 @@ public:
    SegmentStreamer(IStreamer &str, char eoi=s_unit_separator)
       : m_str(str), m_eoi(eoi)   { }
    virtual ~SegmentStreamer()    { }
-   EFFC_2(SegmentStreamer);
 
    virtual int getc(void);
    virtual bool eof(void) const;

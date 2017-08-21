@@ -54,7 +54,7 @@ public:
    Multipart_Pull(IStreamer &s);
    ~Multipart_Pull();
 
-   EFFC_2(Multipart_Pull)
+   EFFC_2(Multipart_Pull);
    
    /** @brief Returns the boundary string. */
    inline const char *boundary(void) const                  { return m_boundary; }

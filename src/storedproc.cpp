@@ -35,7 +35,7 @@ public:
 template <class T>
 bool check_bind_element(DataStack<BindC> &ds, const char *name, int index)
 {
-   if (index>=ds.count())
+   if (index>=static_cast<int>(ds.count()))
       throw std::runtime_error("check_bind_element index out of range.");
    
    if (ds[index]==name)
@@ -408,6 +408,7 @@ void StoredProc::build(MYSQL *mysql,
 
 #ifdef INCLUDE_STOREDPROC_MAIN
 
+#include "istdio.cpp"
 #include "prandstr.cpp"
 #include "vclasses.cpp"
 #include "ctyper.cpp"
@@ -415,8 +416,6 @@ void StoredProc::build(MYSQL *mysql,
 #include "datastack.cpp"
 #include "bindstack.cpp"
 #include "procedure.cpp"
-
-#include <stdio.h>
 
 
 void test_storedproc(MYSQL *mysql, const char *procname)

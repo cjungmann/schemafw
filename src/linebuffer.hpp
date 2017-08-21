@@ -3,6 +3,8 @@
 #ifndef LINEBUFFER_HPP
 #define LINEBUFFER_HPP
 
+#include "prandstr.hpp" // for EFFC_3
+
 namespace linebuffer
 {
 
@@ -10,6 +12,7 @@ namespace linebuffer
 class I_LBCallback
 {
 public:
+   virtual ~I_LBCallback() { }
    virtual void operator()(const char* line) const = 0;
 };
 
@@ -21,6 +24,8 @@ protected:
    const Func &m_f;
 public:
    LBCallback(const Func &f) : I_LBCallback(), m_f(f)       { }
+   EFFC_3(LBCallback);
+
    virtual void operator()(const char* line) const { m_f(line); }
 };
 

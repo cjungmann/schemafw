@@ -413,7 +413,7 @@ void ab_handle::print_value(FILE* out, bool xml) const
       else
       {
          while (ptr <= end)
-            fputc(*ptr++, out);
+            ifputc(*ptr++, out);
       }
 
       if (*lchar=='\\')
@@ -424,7 +424,7 @@ void ab_handle::print_value(FILE* out, bool xml) const
             const char *tag = child->tag();
             if (0==strcmp(tag, Advisor::continuation_tag()))
             {
-               fputc(' ', out);
+               ifputc(' ', out);
                child->print_value(out, xml);
             }
          }
@@ -452,12 +452,12 @@ void ab_handle::print_as_xml_attribute(FILE* out, const char *name) const
       if (!name)
          name = tag();
 
-      fputc(' ', out);
-      fputs(name, out);
-      fputc('=', out);
-      fputc('"', out);
+      ifputc(' ', out);
+      ifputs(name, out);
+      ifputc('=', out);
+      ifputc('"', out);
       print_value(out, true);
-      fputc('"', out);
+      ifputc('"', out);
    }
 }
 
@@ -477,17 +477,17 @@ void ab_handle::dump(FILE *out, bool include_refs, int indent, bool is_parent) c
 {
    // print indent:
    for (int i=0; i<indent; ++i)
-      fputs("  ", out);
+      ifputs("  ", out);
       
    // print line:
-   fputs(tag(), out);
+   ifputs(tag(), out);
    if (is_setting())
    {
-      fputs(" : \"", out);
+      ifputs(" : \"", out);
       print_value(out, false);
-      fputc('"', out);
+      ifputc('"', out);
    }
-   fputc('\n', out);
+   ifputc('\n', out);
 
    // Print children, as found;
    const ab_handle *cptr = first_child();
@@ -503,12 +503,12 @@ void ab_handle::dump(FILE *out, bool include_refs, int indent, bool is_parent) c
 
    if (is_parent && include_refs)
    {
-      fputs("\n...shared modes that were included:\n", out);
+      ifputs("\n...shared modes that were included:\n", out);
       
       cptr = next_sibling();
       while (cptr)
       {
-         fputs("\nshared mode: $", out); 
+         ifputs("\nshared mode: $", out); 
          cptr->dump(out, false, 0, false);
          cptr = cptr->next_sibling();
       }

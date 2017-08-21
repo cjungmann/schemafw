@@ -3532,7 +3532,8 @@ void Schema::print_import_confirm(void)
    Result_As_SchemaDoc user(*m_specsreader, m_mode, m_mode_action, m_out);
    
    // Construct and call procedure:
-   Adhoc_Setter<2>(si_text(tablename), ri_long(limit_rows)).build(&s_mysql, procname, user);
+   Adhoc_Setter<2>(si_text(tablename),
+                   ri_long(limit_rows)).build(&s_mysql, procname, user);
 }
 
 /**

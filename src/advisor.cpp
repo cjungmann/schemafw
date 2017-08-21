@@ -48,26 +48,26 @@ char *I_AFile::read_line(char *buff, int buffsize)
 }
 
 
-AFile_Stream::~AFile_Stream()
-{
-   if (m_pfile)
-   {
-      fclose(m_pfile);
-      m_pfile = nullptr;
-   }
-}
+// AFile_Stream::~AFile_Stream()
+// {
+//    if (m_pfile)
+//    {
+//       fclose(m_pfile);
+//       m_pfile = nullptr;
+//    }
+// }
 
 
-bool AFile_Stream::is_open(void)               { return m_pfile!=NULL; }
-void AFile_Stream::rewind(void)                { ::rewind(m_pfile); }
+// bool AFile_Stream::is_open(void)               { return m_pfile!=NULL; }
+// void AFile_Stream::rewind(void)                { ::rewind(m_pfile); }
 
 
-long int AFile_Stream::_get_position(void)     { return ftell(m_pfile); }
-void AFile_Stream::_set_position(long int pos) { fseek(m_pfile, pos, SEEK_SET); }
-char *AFile_Stream::_read_line(char *buff, int buffsize)
-{
-   return fgets(buff, buffsize, m_pfile);
-}
+// long int AFile_Stream::_get_position(void)     { return ftell(m_pfile); }
+// void AFile_Stream::_set_position(long int pos) { fseek(m_pfile, pos, SEEK_SET); }
+// char *AFile_Stream::_read_line(char *buff, int buffsize)
+// {
+//    return fgets(buff, buffsize, m_pfile);
+// }
 
 
 /**
@@ -81,7 +81,7 @@ int BaseBuffer::open_file(const char* path)
    int handle = open(path, O_RDONLY);
    if (handle<0)
    {
-      fprintf(stderr, "Unable to open \"%s\": %s\n", path, strerror(errno));
+      ifprintf(stderr, "Unable to open \"%s\": %s\n", path, strerror(errno));
       throw std::runtime_error("failed to open file");
    }
    return handle;
@@ -102,9 +102,9 @@ off_t BaseBuffer::file_size(int handle)
    struct stat st;
    if (fstat(handle, &st))
    {
-      fputs("Buffer::file_size fstat fails: ", stderr);
-      fputs(strerror(errno), stderr);
-      fputc('\n', stderr);
+      ifputs("Buffer::file_size fstat fails: ", stderr);
+      ifputs(strerror(errno), stderr);
+      ifputc('\n', stderr);
       throw std::runtime_error("file-sizing error");
    }
    return st.st_size;
@@ -215,9 +215,9 @@ void BaseBuffer::set_position(int handle, off_t pos)
       off_t newpos = lseek(handle, pos, SEEK_SET);
       if (newpos<0)
       {
-         fputs("Buffer::set_position lseek error: ", stderr);
-         fputs(strerror(errno), stderr);
-         fputc('\n', stderr);
+         ifputs("Buffer::set_position lseek error: ", stderr);
+         ifputs(strerror(errno), stderr);
+         ifputc('\n', stderr);
          throw std::runtime_error("seek error");
       }
       else
@@ -261,17 +261,17 @@ bool BaseBuffer::read_from_file(int handle)
    {
       if (errno==EINTR)
       {
-         fputs("***Buffer::read interrupted error: how to test and recover?\n",
+         ifputs("***Buffer::read interrupted error: how to test and recover?\n",
                stderr);
       }
       else if (errno)
       {
-         fputs("Buffer::read::read error: ", stderr);
-         fputs(strerror(errno), stderr);
-         fputc('\n', stderr);
+         ifputs("Buffer::read::read error: ", stderr);
+         ifputs(strerror(errno), stderr);
+         ifputc('\n', stderr);
       }
       else
-         fputs("Buffer::read, unidentified read error.\n", stderr);
+         ifputs("Buffer::read, unidentified read error.\n", stderr);
       
       throw std::runtime_error("read error");
    }

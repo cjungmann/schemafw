@@ -6,6 +6,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdexcept>
+#include "prandstr.hpp" // for EFFC_3
 
 template <class T> class StackBuilder;
 
@@ -364,6 +365,7 @@ template <class T>
 class IDataStack_User
 {
 public:
+   virtual ~IDataStack_User() { }
    virtual void use(DataStack<T> &ds) = 0;
 };
 
@@ -390,6 +392,7 @@ protected:
 public:
    TDataStack_User(F &fo)
       : m_function_object(fo)         { }
+   EFFC_3(TDataStack_User);
    virtual void use(DataStack<T> &ds) { m_function_object(ds); }
 };
 /**@}*/

@@ -1,8 +1,9 @@
-// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -fno-inline -pedantic -ggdb -DINCLUDE_SPECSREADER_MAIN -o specsreader specsreader.cpp" -*-
+// -*- compile-command: "g++ -std=c++11 -Wall -Werror -Weffc++ -fno-inline -pedantic -ggdb -DINCLUDE_SPECSREADER_MAIN `mysql_config --cflags` -o specsreader specsreader.cpp `mysql_config --libs`" -*-
 
 #ifndef SPECSREADER_HPP_SOURCE
 #define SPECSREADER_HPP_SOURCE
 
+#include "istdio.hpp"
 #include "adbranch.hpp"
 #include "genericuser.hpp"
 
@@ -195,9 +196,9 @@ public:
       }
    }
 
-   void process(Advisor_Index::ninfo* head,
-                int count,
-                IGeneric_Callback<Advisor_Index> &callback);
+   // void process(Advisor_Index::ninfo* head,
+   //              int count,
+   //              IGeneric_Callback<Advisor_Index> &callback);
 
    void send_index(Advisor_Index::ninfo* root,
                    IGeneric_Callback<Advisor_Index> &callback);

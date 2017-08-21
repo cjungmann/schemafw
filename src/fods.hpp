@@ -21,7 +21,7 @@ public:
    Result_As_FODS(FILE* out);
    ~Result_As_FODS();
    // Delete constructor methods (effc++ warning):
-   EFFC_2(Result_As_FODS)
+   EFFC_2(Result_As_FODS);
 
    inline const char* tmppath(void) const  { return m_pathbuff; }
    inline char* tmpfilename(void)          { return m_endpath; }

@@ -1,4 +1,5 @@
 // -*- compile-command: "g++ -std=c++11 -Wno-pmf-conversions -Wall -Werror -Weffc++ -pedantic -DINCLUDE_PROC_MAIN `mysql_config --cflags` -o procedure procedure.cpp `mysql_config --libs`" -*-
+
 #include "procedure.hpp"
 #include "bindstack.hpp"
 
@@ -533,6 +534,7 @@ public:
               const IParam_Setter *ps,
               IResult_User *ru)
       : m_conn(conn), m_query(query), m_setter(ps), m_user(ru) { }
+   EFFC_3(SP_Builder);
    
    virtual void use(DataStack<BindC> *ds, MYSQL_BIND *binds, unsigned count)
    {
@@ -656,6 +658,7 @@ void SimpleProcedure::t_build_query_string(const char *procname,
 
 #ifdef INCLUDE_PROC_MAIN
 
+#include "istdio.cpp"
 #include "prandstr.cpp"
 #include "vclasses.cpp"
 #include "ctyper.cpp"
@@ -758,7 +761,7 @@ void test_make_typestr(void)
 {
    auto f = [](const char *typestr)
    {
-      iprintf("Returned with typestr=\"%s\".\n", typestr);
+      printf("Returned with typestr=\"%s\".\n", typestr);
    };
    
    const char *tname = "Session_Import_People";

@@ -258,6 +258,8 @@ public:
 
    Schema(SFW_Resources &sfwr, FILE *out);
 
+   EFFC_3(Schema);
+
    static void set_header_out(FILE *out) { s_header_out = out; }
 
    static void get_resources_from_environment(FILE *out);
