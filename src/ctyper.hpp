@@ -145,12 +145,12 @@ public:
    /**@}*/
 };
 
-void t_make_typestr(const IClass **array,
+void t_make_typestr(const IClass* const*array,
                     int len_array,
                     const IGeneric_String_Callback &gsc);
 
 template <class F>
-void make_typestr(const IClass **array,
+void make_typestr(const IClass* const*array,
                   int len_array,
                   const F &f)
 {

@@ -272,15 +272,15 @@ const _CType *CTyper::get(const char *data_type, const char *dtd_identifier)
 /**
  * @brief Make a type string from an array.
  */
-void t_make_typestr(const IClass **array,
+void t_make_typestr(const IClass* const* array,
                     int len_array,
                     const IGeneric_String_Callback &gsc)
 {
    const _CType *ct;
-   const IClass **alimit = array + len_array;
+   const IClass* const* alimit = array + len_array;
    int len_typestr = 0;
 
-   for (const IClass **aptr=array; aptr<alimit; aptr++)
+   for (const IClass* const*aptr=array; aptr<alimit; aptr++)
    {
       ++len_typestr;
 
@@ -304,7 +304,7 @@ void t_make_typestr(const IClass **array,
       char *typestr = static_cast<char*>(alloca(len_typestr+1));
       char *tptr = typestr;
       
-      for (const IClass **aptr=array; aptr<alimit; aptr++)
+      for (const IClass* const* aptr=array; aptr<alimit; aptr++)
       {
          if ((ct=CTyper::get(*aptr)))
          {
@@ -336,6 +336,7 @@ void t_make_typestr(const IClass **array,
 
 #ifdef INCLUDE_CTYPER_MAIN
 #include <stdio.h>
+#include "istdio.cpp"
 #include "vclasses.cpp"
 #include "prandstr.cpp"
 
