@@ -109,9 +109,10 @@ install:
 	install --mode=644 ../install/sys_procs.sql  /usr/local/lib/schemafw/sys_procs.sql
 	cp -r ../install/ods                         /usr/local/lib/schemafw/
 
-	cat ../install/web_includes/sfw_*.js > ../install/web_includes/sfw.js
-	curl -X POST -s --data-urlencode 'input@../install/web_includes/sfw.js' \
-        https://javascript-minifier.com/raw > ../install/web_includes/sfw.min.js
+	uglifyjs ../install/web_includes/sfw_*.js --mangle --compress --output ../install/web_includes/sfw.min.js
+#	cat ../install/web_includes/sfw_*.js > ../install/web_includes/sfw.js
+#	curl -X POST -s --data-urlencode 'input@../install/web_includes/sfw.js' \
+#       https://javascript-minifier.com/raw > ../install/web_includes/sfw.min.js
 
 	cp -r ../install/web_includes                /usr/local/lib/schemafw/
 
@@ -140,9 +141,10 @@ stop-update:
 	sudo /etc/init.d/apache2 start
 
 update-client:
-	cat ../install/web_includes/sfw_*.js > ../install/web_includes/sfw.js
-	curl -X POST -s --data-urlencode 'input@../install/web_includes/sfw.js' \
-        https://javascript-minifier.com/raw > ../install/web_includes/sfw.min.js
+	uglifyjs ../install/web_includes/sfw_*.js --mangle --compress --output ../install/web_includes/sfw.min.js
+	# cat ../install/web_includes/sfw_*.js > ../install/web_includes/sfw.js
+	# curl -X POST -s --data-urlencode 'input@../install/web_includes/sfw.js' \
+   #      https://javascript-minifier.com/raw > ../install/web_includes/sfw.min.js
 	cp ../LICENSE                               /usr/share/doc/schemafw
 	cp ../install/default.xsl                   /usr/local/lib/schemafw/default.xsl
 	cp ../install/sys_procs.sql                 /usr/local/lib/schemafw/sys_procs.sql
