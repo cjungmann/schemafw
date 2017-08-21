@@ -76,6 +76,9 @@ host other sites that use PHP.
     sudo a2dismod php5
     sudo service apache2 restart
 
+On Ubuntu 16.04, use *php7.0* instead of *php5* (`sudo a2dismod php7.0`).
+Update line in later versions, as needed.
+
 ### Per-Host Disable PHP
 
 Some documentation for this can be found at the
