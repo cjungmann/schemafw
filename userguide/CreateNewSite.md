@@ -134,7 +134,44 @@ to create a new SchemaFW site.
    sudo service apache2 restart
    ~~~
 
-7. Test your setup by calling your browser.
+7. NameServer (DNS or /etc/hosts)
+
+   A connection must be made between the name entered as *ServerName* in the *.conf*
+   file and IP address of the computer hosting the site.  How this is done differs
+   based on how the site is to be accessed.
+
+   **Public or World-Wide Access** The standard way to do this is to add a record to
+   a domain name server (*DNS*).
+
+   - Open your the name server account for the domain name, which is
+     *your_domain.com* in the example above.
+   - Open the *host records* page for *your_domain.com*
+   - Add an *A Record* for each prefix or _host_.  This associates the prefix
+     or _host_ name to an IP address.  The hosts of a domain name may be on
+     one or serveral servers.  A typical host is *www*, ie *www.your_domain.com*,
+     which implies an *A Record* for *www* in the *your_domain.com* account.
+
+   **Local Setup** for access through _localhost_ on a development computer,
+   or for an anonymous computer on a local area network (*LAN*), simply add
+   a record to the **hosts** file.  In the *hosts* file, the entire name must
+   be entered across from the IP address.  That is, *www.your_domain.com*, 
+   rather than simply *www*.
+
+   - open */etc/hosts* in linux, *C:\Windows\System32\Drivers\etc\hosts* in Windows.
+   - add a line with the IP address:
+
+     - for localhost, `127.0.0.1  www.your_domain.com`.  This is for browser 
+       navigating to the site from the computer that is hosting the site.
+     - for another computer, replace *127.0.0.1* with the IP address of the computer
+       hosting the site.
+
+   For localhost or LAN access using the *host* file, the name can be simple,
+   leaving off both the *www* host name and the top-level domain (*TLD*) *.com*.
+   This simple name can replace the *ServerName* entry of the virtual host
+   record in the Apache site configuration file.  The *hosts* entry name must
+   match the *ServerName* entry for access.
+   
+8. Test your setup by calling your browser.
 
    ~~~
    google-chrome http://localhost/cs
