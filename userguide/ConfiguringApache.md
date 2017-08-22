@@ -9,6 +9,24 @@ This guide assumes that _mod_fastcgi_ is enabled in Apache and that the
 [Schema](https://chuckj@bitbucket.org/chuckj/schema.git) has been downloaded,
 built, and installed.  See [Building the Framework](BuildingTheFramework.md).
 
+## Enable Non-Standard Apache Folders
+
+Although Apache is set up to serve web sites from /var/www, a developer might
+want to work on new web sites from the home directory for convenience in
+avoiding access control issues.
+
+To configure Apache to process requests from a new directory, it is necessary
+to add a _Directory_ directive to the */etc/apache2/apache2.conf* file like
+this:
+
+~~~conf
+<Directory /home/chuck/work/www>
+   Options Indexes FollowSymLinks
+   AllowOverride None
+   Require all granted
+</Directory>
+~~~
+
 ## Change XSL Mime Type If Necessary
 
 This is not strictly an Apache issue, but it is a server issue that should be
