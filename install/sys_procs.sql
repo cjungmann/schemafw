@@ -101,7 +101,7 @@ BEGIN
              PARAMETER_NAME as name,
              DATA_TYPE as dtype,
              CHARACTER_MAXIMUM_LENGTH as len,
-             NUMERIC_PRECISION as num_prec,
+             CAST(NUMERIC_PRECISION AS SIGNED) as num_prec,
              NUMERIC_SCALE as num_scale,
              DTD_IDENTIFIER as dtdid
         FROM information_schema.PARAMETERS
@@ -191,7 +191,7 @@ BEGIN
    DROP TABLE IF EXISTS SFW_IntTable;
    CREATE TEMPORARY TABLE SFW_IntTable
    ( val INT UNSIGNED )
-   TABLESPACE MEMORY;
+   ENGINE=MEMORY;
 
    int_loop : LOOP
       SET valstr = SUBSTRING_INDEX(tlist,',',1);
