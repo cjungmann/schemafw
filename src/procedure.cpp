@@ -645,7 +645,7 @@ void SimpleProcedure::t_build_query_string(const char *procname,
    ++ptr;
 
    // Assert that we haven't overrun the buffer:
-   assert(ptr == query + len_query);
+   assert(ptr <= query + len_query);
 
    // Terminate the string:
    *ptr = '\0';
