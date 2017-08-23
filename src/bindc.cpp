@@ -19,11 +19,7 @@ void BindC::initialize(MYSQL_BIND *bind,
       m_typeinfo = ctype;
    }
    else
-   {
-      // If no ctype, *bind better be initialized
-      assert(bind->buffer_type!=MYSQL_TYPE_DECIMAL);  // MYSQL_TYPE_DECIMAL==0
       m_typeinfo = CTyper::get(bind);
-   }
       
    bind->buffer = extra;
    bind->buffer_length = len_extra;
