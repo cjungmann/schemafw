@@ -371,6 +371,10 @@ will contain the YYYY-MM-DD date.
     <xsl:value-of select="concat(' ',$dnum,' ',$ynum)" />
   </xsl:template>
 
+  <xsl:template match="calendar[@rndx]">
+    <xsl:apply-templates select="*[1]" mode="build_calendar" />
+  </xsl:template>
+
   <!--
       This template will be discarded when sfw_calendar.xsl is imported
       to a stylesheet that already includes <xsl:template match="/">.
