@@ -164,7 +164,7 @@
       {
          var nl = schema.selectNodes("field[@group]");
          if (nl && nl.length)
-            SFW.alert("GROUP BY fields must explicitly identify to be used as line_id.");
+            SFW.alert("Table with GROUP BY field is missing line_id.");
       }
    };
 
