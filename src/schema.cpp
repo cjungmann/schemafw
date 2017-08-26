@@ -2575,7 +2575,24 @@ void Schema::process_response_mode(void)
 
    if (m_mode_action==MACTION_SAVE_POST || m_mode->seek("save-post","true"))
    {
-      action_save_post();
+      const char *type = getenv("REQUEST_METHOD");
+      if (type && strcmp(type,"GET")==0)
+      {
+         ifprintf(stderr,
+                  "Refused to save_post for GET request in %s : %s.\n",
+                  m_specsreader->scriptname(),
+                  m_mode->tag());
+
+         print_Status_200();
+         write_headers_end();
+         ifputs("Dead-end response from save-post.\n", m_out);
+      }
+      else
+      {
+         ifputs("Matched a save-post.\n", stderr);
+         action_save_post();
+      }
+
       return;
    }
 
