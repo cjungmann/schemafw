@@ -1974,7 +1974,8 @@ size_t Schema::write_multipart_preamble(FILE *f)
    size_t len = 0;
    const char* bstring = "boundary=";
    const char* ct = getenv("CONTENT_TYPE");
-   if (ct && 0==strcmp(ct, "multipart/form-data"))
+
+   if (ct && 0==strncmp(ct, "multipart/form-data;",20))
    {
       gfputs("Content-Type: ", f);  // 14 characters
       
@@ -2589,7 +2590,6 @@ void Schema::process_response_mode(void)
       }
       else
       {
-         ifputs("Matched a save-post.\n", stderr);
          action_save_post();
       }
 
@@ -4341,21 +4341,37 @@ void initialize_fake_stdin(int fh)
    }
 
    if (lines==lines_to_read)
-   {
-      assert(0==strncasecmp(g_ct_dispo, ptr, g_len_ct_dispo));
       offset += ptr - buff;
-   }
    else
       offset = 0;
 
    lseek(fh, offset, SEEK_SET);
 
    // // test that file pointer is correct:
-   // f_fillbuff();
-   // char cdbuff[] = "content-disposition";
-   // if (strncasecmp(buff,cdbuff, strlen(cdbuff)))
-   //    ifputs("File not pointing properly!\n", stderr);
-   // lseek(fh, offset, SEEK_SET);
+   // {
+   //    f_fillbuff();
+   //    // Skip to the end of the first line (which should be the boundary value):
+   //    while (ptr<end)
+   //    {
+   //       if (*ptr=='\r')
+   //       {
+   //          if (*++ptr=='\n')
+   //          {
+   //             // Set position past the \n:
+   //             ++ptr;
+   //             break;
+   //          }
+   //       }
+   //       else
+   //          ++ptr;
+   //    }
+
+   //    char cdbuff[] = "content-disposition";
+   //    if (strncasecmp(ptr,cdbuff, strlen(cdbuff))!=0)
+   //       ifputs("File not pointing properly!\n", stderr);
+   //    // reset file pointer
+   //    lseek(fh, offset, SEEK_SET);
+   // }
 }
 #pragma pop_macro("FILE")
 
