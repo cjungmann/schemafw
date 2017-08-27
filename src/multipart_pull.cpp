@@ -135,8 +135,8 @@ void Multipart_Pull::read_initial_boundary_and_prepare_buffers(void)
    // one character afterwards:
    char *limit = m_end_workarea - 2;
 
-   // After the initial boundary string, all boundary strings are
-   // preceeded by a /r/n:
+   // Start the comparison buffer with /r/n because after the initial boundary
+   // string, all boundary strings start with /r/n:
    *pstr++ = '\r';
    *pstr++ = '\n';
 
