@@ -215,7 +215,9 @@ example to guide the essential parts of an import form.
 ## The Response Mode
 
 The response mode of an import operation is unique in that it does not
-include a _procedure_ or _schema-proc_ operation.  Here is an example:
+include a *procedure* or *schema-proc* operation.  However, it can include
+an optional *prep-proc* procedure that executes before the import begins.
+Here is an example:
 
 ~~~srm
 # SRM file import.srm
@@ -228,9 +230,10 @@ import_contacts
    form-action : ?import
 
 import
-   type   : import
-   target : QT_People  # Name the quarantine table in a target instruction
-   jump   : ?review
+   type      : import
+   prep-proc : App_Import_Prepare # optional/rare?
+   target    : QT_People  # Name the quarantine table in a target instruction
+   jump      : ?review
 
 review
    type      : table
