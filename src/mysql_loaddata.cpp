@@ -84,9 +84,7 @@ bool MySQL_LoadData::import(void)
    // Display errors, if any, before disabling infile handler:
    if (result)
       fprintf(stderr,
-              "The result of the failed query is %d (%s)\n",
-              result, mysql_error(m_mysql));
-
+              "The import query failed (%s)\n", mysql_error(m_mysql));
    // Make sure no one else can use LOAD DATA:
    disable_local_infile(m_mysql);
    
