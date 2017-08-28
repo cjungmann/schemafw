@@ -105,6 +105,7 @@ public:
 protected:
    static uint16_t s_END_FIELD;   // "/r/n"
    static uint16_t s_END_FORM;    // "--"
+   static char s_errorbuff[128];
    static const char s_multipart_str[];
    static const int  s_len_multipart_str;
    static const char s_boundary_str[];
