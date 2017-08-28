@@ -77,6 +77,11 @@ own machines best and can leave out any or all of the following steps as you see
    You can also build libfcgi from [source](https://github.com/FastCGI-Archives/FastCGI.com/blob/master/original_snapshot/fcgi-2.4.1-SNAP-0910052249.tar.gz?raw=true).
    In that case, you will definitely need `ldconfig`.
 
+7. Install (Gnumeric)[www.gnumeric.org] for importing data from spreadsheets.
+   Technically, one could skip this step, but only if there is no chance of
+   needing to import data.  See (Importing Data)[ImportingData.md] for more
+   information.
+
 ## Download, Build, and Install SchemaFW
 
 This is a work in progress.  At the time of this writing (2016-07-13), the C++ code
