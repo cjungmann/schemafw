@@ -4,6 +4,7 @@
 #include <unistd.h>       // fork()
 #include <sys/wait.h>     // wait();
 #include <fcntl.h>        // open() constant values
+#include <string.h>       // for strerror_r()
 
 #include "multipart_pull.hpp"
 #include "linebuffer.hpp"
@@ -11,6 +12,7 @@
 
 uint16_t Multipart_Pull::s_END_FIELD = 2573; // "\r\n"
 uint16_t Multipart_Pull::s_END_FORM = 11565; // "--"
+char Multipart_Pull::s_errorbuff[128];
 const char Multipart_Pull::s_multipart_str[] = "multipart/form-data; ";
 const int Multipart_Pull::s_len_multipart_str = strlen(s_multipart_str);
 const char Multipart_Pull::s_boundary_str[] = "boundary=";
@@ -548,9 +550,10 @@ void* Multipart_Pull::start_stdin_thread(void *data)
    {
       if ((cr=write(fh, static_cast<void*>(&i), 1))!=1)
       {
+         strerror_r(errno, s_errorbuff, sizeof(s_errorbuff));
          fprintf(stderr,
                  "start_stdin_thread write error (%s) wrote %ld chars\n",
-                 strerror(errno),
+                 s_errorbuff,
                  cr);
       }
    }
@@ -585,7 +588,7 @@ void* Multipart_Pull::start_stderr_thread(void *data)
          if (*line=='E' && *(line+1)==' ')
          {
             line+=2;
-            strncpy(mpp.m_errormsg, line, sizeof(m_errormsg));
+            strncpy(mpp.s_errorbuff, line, sizeof(s_errorbuff));
          }
       }
    };
@@ -659,10 +662,11 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
    {
       if ((result=(pipe(*p))))
       {
-          fprintf(stderr, "multipart_pull pipe creation failed: %s\n",
-                  strerror(errno));
-          close_pipes();
-          break;
+         strerror_r(errno, s_errorbuff, sizeof(s_errorbuff));
+         fprintf(stderr, "multipart_pull pipe creation failed: %s\n",
+                 s_errorbuff);
+         close_pipes();
+         break;
       }
    }
 
@@ -670,7 +674,8 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
    if (pid==-1)
    {
       close_pipes();
-      fprintf(stderr, "multipart_pull fork failed: %s.\n", strerror(errno));
+      strerror_r(errno, s_errorbuff, sizeof(s_errorbuff));
+      fprintf(stderr, "multipart_pull fork failed: %s.\n", s_errorbuff);
    }
    else if (pid==0)
    /*** CHILD PROCESS ***/
@@ -685,8 +690,9 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
       {
          if (-1==dup2(*i, *(i+1)))
          {
+            strerror_r(errno, s_errorbuff, sizeof(s_errorbuff));
             fprintf(stderr, "%d: dup2(%d,%d) failed: (%s).\n",
-                    count, *i, *(i+1), strerror(errno));
+                    count, *i, *(i+1), s_errorbuff);
             close_pipes();
             exit(1);
          }
@@ -696,13 +702,22 @@ void Multipart_Pull::t_send_for_csv_filehandle(const IGeneric_Callback<int>& cal
       close_clear(pipe_out[0]);
       close_clear(pipe_err[0]);
 
+      ifputs("starting ssconvert.\n", stderr);
+
       // Start converter:
-      execl("/usr/bin/ssconvert", "ssconvert",
-            "-T", "Gnumeric_stf:stf_assistant",
-            "-O", "quote=\"'\" quoting-mode=always",
-            "fd://0",
-            "fd://1",
-            nullptr);
+      int result = execl("/usr/bin/ssconvert", "ssconvert",
+                         "-T", "Gnumeric_stf:stf_assistant",
+                         "-O", "quote=\"'\" quoting-mode=always",
+                         "fd://0",
+                         "fd://1",
+                         nullptr);
+
+      if (result)
+      {
+         int erno = errno;
+         strerror_r(erno, s_errorbuff, sizeof(s_errorbuff));
+         ifprintf(stderr, "Failed to start ssconvert (%d) \"%s\".\n", erno, s_errorbuff);
+      }
    }
    else
    /*** PARENT PROCESS ***/
