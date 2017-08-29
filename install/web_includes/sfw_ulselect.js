@@ -29,20 +29,36 @@
          }
          return false;
       }
-      
       SFW.find_child_matches(actors.input,fi,true,true);
       
       function fu(n) { return n.nodeType==1 && n.tagName.toLowerCase()=="ul"; }
-
       this.ul_options = SFW.find_child_matches(actors.input,fu,true,true);
+
       this.is_multiple = actors.input.getAttribute("data-multiple")=="yes";
    }
+
+   _ulselect.prototype.get_phantom_row = function(value)
+   {
+      var row = null;
+      var factors = this.get_field_actors();
+      if ("result" in factors)
+      {
+         var phantom_name = "phantom_" + factors.schema.getAttribute("row_name");
+         var result = factors.result;
+         row = result.selectSingleNode(phantom_name);
+         if (!row)
+            row = addEl(phantom_name, result);
+      }
+
+      if (row)
+         row.setAttribute(factors.name, value);
+
+      return row;
+   };
 
    // Primary public method for integration with framework:
    _ulselect.prototype.process = function(e,t)
    {
-      var field = this.get_input_field();
-
       if (e.type=="blur")
          return this.process_blur(e,t);
       if (e.type=="focus")
@@ -163,18 +179,6 @@
       var cnt = this.input_el.value.length;
       var width = String((cnt<6?6:cnt) / 2) + "em";
       this.input_el.style.width = width;
-   };
-
-   _ulselect.prototype.get_schema_field = function()
-   {
-      var fld = null;
-      var sch = this.schema();
-      if (sch)
-      {
-         var xpath = "field[@name='" + this.input_transfer.name + "']";
-         fld = sch.selectSingleNode(xpath);
-      }
-      return fld;
    };
 
    _ulselect.prototype.process_enter_press = function(e,t)
@@ -345,8 +349,12 @@
    // will be set as the preselect, waiting for a ENTER press.
    _ulselect.prototype.update_options_filter = function()
    {
-      var attr = this.get_value_attribute();
-      var list = (attr && attr.value.length) ? ','+attr.value+',' : null;
+      var val = this.get_value();
+      var list = val.length ? ','+val+',' : null;
+
+      // var attr = this.get_value_attribute();
+      // var list = (attr && attr.value.length) ? ','+attr.value+',' : null;
+
       var value = this.input_el.value.toLowerCase();
       var matches = true;
       var id, isin;
@@ -511,11 +519,6 @@
          console.log("Unable to find select line.");
    };
 
-   _ulselect.prototype.get_data_row = function()
-   {
-      return this.drow || (this.drow=this.get_host_form_data_row());
-   };
-
    // The base _tbase::find_matching_data_row() is responsible for
    // returning the element in a dataset that is being edited so that
    // the old row can be replaced by the updated row returned from
@@ -544,19 +547,6 @@
       return this.dattr || (this.dattr=this.seek_value_attribute());
    };
 
-   _ulselect.prototype.update_selections = function()
-   {
-      var attr = this.get_value_attribute();
-      if (attr)
-      {
-         var span = this.get_defacto_span();
-         SFW.xslobj.transformFill(span, attr);
-         this.input_transfer.value = attr.value;
-      }
-      else
-         span.innerHTML = "";
-   };
-
    _ulselect.prototype.get_defacto_span = function()
    {
       var nl = this.input().getElementsByTagName("span");
@@ -569,56 +559,77 @@
       return null;
    };
 
+   _ulselect.prototype.update_defacto_display = function(phantom)
+   {
+      var span = this.get_defacto_span();
+      if (span)
+      {
+         var attr = phantom.attributes[0];
+         if (attr)
+            SFW.xslobj.transformFill(span, attr);
+         else
+            span.innerHTML = "";
+      }
+   };
+
+   _ulselect.prototype.get_value = function()
+   {
+      var val = this.input_transfer.getAttribute("value");
+      return val ? val.trim() : "";
+   };
+
+   /**
+    * Abstract setting value because, at least for Chrome, both the attribute
+    * "value" AND the property "value" must be set because the browser is not
+    * updating the value property as defined in the HTML spec, and since the
+    * value property is not set from the attribute, get_value() must get the
+    * attribute value.
+    */
+   _ulselect.prototype.set_value = function(val)
+   {
+      this.input_transfer.setAttribute("value", val);
+      this.input_transfer.value = val;
+   }
+
    _ulselect.prototype.add_selection = function(val)
    {
       if (val==null || val==0)
          return false;
-      var drow, fname, list;
 
-      if ((drow=this.get_data_row()) && (fname=this.get_field_name()))
+      var list = this.get_value();
+      if (list.length==0)
+         list = val;
+      else if ((','+list+',').search(','+val+',')<0)
+         list += ',' + val;
+
+      var phantom = this.get_phantom_row(list);
+      if (phantom)
       {
-         if (this.is_multiple
-             && (list=drow.getAttribute(fname))
-             && list && list.length)
-         {
-            if ((','+list+',').search(','+val+',')<0)
-            {
-               list += ',' + val;
-               drow.setAttribute(fname, list);
-               this.update_selections();
-            }
-         }
-         else
-         {
-            drow.setAttribute(fname,val);
-            this.update_selections();
-         }
+         this.set_value(list);
+         this.update_defacto_display(phantom);
       }
       return false;
    };
 
    _ulselect.prototype.remove_selection = function(val)
    {
-      var drow = this.get_data_row();
-      var fname = this.get_field_name();
-
-      var list = drow.getAttribute(fname);
-      var arr = list.split(',');
-      var found = false;
-      for (var i=0,stop=arr.length; !found && i<stop; ++i)
+      var list = this.get_value();
+      if (list.length>0)
       {
-         if (arr[i] == val)
+         var arr = list.split(',');
+         var pos = arr.indexOf(val);
+         if (pos>=0)
          {
-            found = true;
-            arr.splice(i,1);
-            break;
+            arr.splice(pos,1);
+            list = arr.join(',');
          }
-      }
 
-      if (found)
-      {
-         drow.setAttribute(fname, arr.join(','));
-         this.update_selections();
+         var phantom = this.get_phantom_row(list);
+         if (phantom)
+         {
+            this.set_value(list);
+            this.update_defacto_display(phantom);
+         }
       }
    };
 
