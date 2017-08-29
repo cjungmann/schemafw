@@ -93,7 +93,7 @@
       for (var i=0, stop=els.length; i<stop; i++)
       {
          el = els[i];
-         if (noninputs.search(el.type)==-1)
+         if (noninputs.search(el.type)==-1 && el.name.length)
          {
             if (el.type=="checkbox")
             {
