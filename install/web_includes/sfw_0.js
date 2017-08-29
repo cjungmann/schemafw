@@ -1005,25 +1005,72 @@ function init_SFW(callback)
          e.data = data;
    };
 
-   _base.prototype.get_input_field = function()
+   /**
+    * Returns a populated object, or if actor_name set, the named sub-object.
+    *
+    * This function makes an object with as many of the following as it can find:
+    * - input  (the HTML input element)
+    * - name   (the name of the pertinent field)
+    * - schema (the schema element that governs the input)
+    * - field  (the field element in the schema)
+    * - result (if the field has a result attribute, this points to the named result)
+    *
+    * The existence of a later object (in the above list)  proves the existence of
+    * the earlier objects, so it is only necessary to check for the latest object
+    * required.
+    *
+    * It only returns meaningful information if the derived object is an input field.
+    * It will work with a form derived from _base, but the return value will be an
+    * an empty object or, if actor_name, null.
+    *
+    * By returning several objects, this function streamlines execution by
+    * retaining the useful objects that give access to subsequent objects.
+    * For example, you need the schema and the input element to get the field
+    * element.  If you call an explicit function to get each of these objects,
+    * you will discard the schema twice and the input element once to get the
+    * field element.
+    *
+    * Additionally, the function caches the field_actors, so repeated calls
+    * only acquires them once per object instantiation.
+    */
+   _base.prototype.get_field_actors = function(actor_name)
    {
-      var schema = this.schema();
-      if (schema && "input" in this)
+      var rval = ("_f_actors" in this) ? this._f_actors : null;
+      if (!rval)
       {
-         var name = this.input().getAttribute("name");
-         var xpath = "field[@name='" + name + "']";
-         return schema.selectSingleNode(xpath);
+         this._f_actors = rval = {};
+
+         var input = ("input" in this) ? this.input() : null;
+         if (input)
+         {
+            rval.input = input;
+            rval.name = input.getAttribute("name");
+            var schema = this.schema();
+            if (schema)
+            {
+               rval.schema = schema;
+               var field = schema.selectSingleNode("field[@name='"+rval.name+"']");
+               if (field)
+               {
+                  rval.field = field;
+                  var result_name = field.getAttribute("result");
+                  if (result_name)
+                     rval.result = this.xmldocel().selectSingleNode(result_name);
+               }
+            }
+         }
       }
+
+      if (actor_name)
+         return (actor_name in rval) ? rval[actor_name] : null;
       else
-         return null;
+         return rval;
    };
 
-   _base.prototype.get_field_name = function()
-   {
-      var field = this.get_input_field();
-      return field ? field.getAttribute("name") : null;
-   };
-
+   _base.prototype.get_field_name =  function(){return this.get_field_actors("name");};
+   _base.prototype.get_schema_field =function(){return this.get_field_actors("field");};
+   _base.prototype.get_ref_result =  function(){return this.get_field_actors("result");};
+   
    _base.prototype.get_host_form_data_row = function()
    {
       var xpath, schema = this.schema();
