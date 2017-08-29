@@ -1,5 +1,41 @@
 DELIMITER $$
 
+-- Procedures in this file
+-- MyBogusForceTestingProcedure
+-- ssys_schemafw_version
+-- ssys_drop_salt_string
+-- ssys_hash_password_with_salt
+-- ssys_confirm_salted_hash
+-- ssys_get_procedure_params
+-- ssys_get_column_dtds
+-- ssys_get_procedures
+-- ssys_confirm_table
+-- ssys_default_import_removal
+-- ssys_default_import_confirm
+-- ssys_make_SFW_IntTable_from_list
+-- ssys_month_info_result
+-- ssys_month_get_first_and_last
+
+-- App_Session_Cleanp
+-- App_Session_Start
+-- App_Session_Restore
+-- App_Session_Abandon
+
+-- ssys_clear_for_request
+-- ssys_seed_session_string
+-- ssys_calc_session_expires
+-- ssys_current_session_is_valid
+-- ssys_session_create
+-- ssys_session_start
+-- ssys_session_confirm
+-- ssys_assert_session_id
+-- ssys_session_abandon
+-- ssys_session_cleanup
+
+-- Also, an event_scheduler for checking session statuses
+-- and a trigger (ssys_sync_session_update) to call a
+-- session cleanup procedure.
+
 SELECT ' ' AS ' \n' $$
 
 DROP PROCEDURE IF EXISTS MyBogusForceTestingProcedure $$
