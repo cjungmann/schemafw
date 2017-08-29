@@ -35,6 +35,7 @@ There are several sections.
     - [Making Sense of *on_line_click*](OnLineClick.md)
   - Extending the Framework
     - [Custom Interactive Classes](CustomIClasses.md)
+    - [Customizing Titles](CustomizingTitles.md)
     - [Templates for Custom Interactions](CustomTemplates.md)
     - [Custom Fields](CustomFields.md)
     - [Why Not Use xsl:include?](WhyNotInclude.md)
