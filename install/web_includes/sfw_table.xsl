@@ -52,6 +52,7 @@
       <xsl:apply-templates select="." mode="add_sfw_class_attribute" />
 
       <xsl:apply-templates select="." mode="add_on_line_click_attribute" />
+      <xsl:apply-templates select="." mode="add_url_attributes" />
       <!-- <xsl:apply-templates select=".." mode="add_data_attribute"> -->
       <!--   <xsl:with-param name="name">on_line_click</xsl:with-param> -->
       <!-- </xsl:apply-templates> -->
