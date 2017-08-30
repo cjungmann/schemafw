@@ -7,6 +7,7 @@
    exclude-result-prefixes="html">
 
   <xsl:import href="sfw_generics.xsl" />
+  <xsl:import href="sfw_schema.xsl" />
   
 <!--
 This stylesheet is intended to be imported into another stylesheet.
@@ -302,7 +303,7 @@ will contain the YYYY-MM-DD date.
     </tr>
   </xsl:template>
 
-  <xsl:template match="*[@rndx]/*" mode="build_calendar">
+  <xsl:template match="*[@month][@initialDay][@countOfDays]" mode="build_calendar">
     <xsl:param name="table_class" />
     <xsl:param name="sfw_class" select="'calendar'"  />
 
@@ -321,6 +322,7 @@ will contain the YYYY-MM-DD date.
       <xsl:apply-templates select=".." mode="add_data_attribute">
         <xsl:with-param name="name">on_day_click</xsl:with-param>
       </xsl:apply-templates>
+      <xsl:apply-templates select="." mode="add_url_attributes" />
       <thead>
         <xsl:apply-templates select="$buttons" mode="show_buttons" />
         <xsl:apply-templates select="." mode="build_calendar_head" />
@@ -332,18 +334,6 @@ will contain the YYYY-MM-DD date.
         <xsl:with-param name="date" select="1-(@initialDay)" />
       </xsl:call-template>
     </xsl:element>
-  </xsl:template>
-
-  <xsl:template match="*[@rndx]" mode="build_calendar">
-    <xsl:param name="sfw_class" />
-    <xsl:variable name="row" select="*[local-name()=current()/@row-name][1]" />
-
-    <div>row count: <xsl:value-of select="count($row)" /></div>
-    <div>row month: <xsl:value-of select="$row/@month" /></div>
-
-    <xsl:apply-templates select="$row" mode="build_calendar">
-      <xsl:with-param name="sfw_class" select="$sfw_class" />
-    </xsl:apply-templates>
   </xsl:template>
 
   <xsl:template match="*[@month][@initialDay]" mode="make_dmdy">
@@ -372,12 +362,12 @@ will contain the YYYY-MM-DD date.
   </xsl:template>
 
   <xsl:template match="calendar[@rndx]">
-    <xsl:apply-templates select="*[1]" mode="build_calendar" />
+    <xsl:apply-templates select="*[local-name()=current()/@row-name]" mode="build_calendar" />
   </xsl:template>
 
   <!--
-      This template will be discarded when sfw_calendar.xsl is imported
-      to a stylesheet that already includes <xsl:template match="/">.
+      This template (and comment) will be discarded when sfw_calendar.xsl is
+      imported to a stylesheet that already includes <xsl:template match="/">.
   -->
   <xsl:template match="/">
     <html>
