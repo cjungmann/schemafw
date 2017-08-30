@@ -50,6 +50,8 @@ bool Streamer_Setter::set_binds(DataStack<BindC> &ds) const
    char name[80];
    ai_text aname(name,80);
 
+   int count_bound = 0;
+
    while (!m_str.eof())
    {
       aname.set_from_streamer(s_name);
@@ -60,10 +62,18 @@ bool Streamer_Setter::set_binds(DataStack<BindC> &ds) const
       
       // find index of name in ds
       int index = ds.index_by_name(name);
+
+      // Allow the first data object on the stream to anonymously
+      // set the first bound parameter:
+      if (index==-1 && count_bound==0)
+         index = 0;
+      
       if (index>=0)
       {
          t_handle<BindC> &handle = ds[index];
          handle.object().set_from(s_value);
+
+         ++count_bound;
 
          // Eat characters up to and including the field separator:
          if (m_str.recent()!='&')
