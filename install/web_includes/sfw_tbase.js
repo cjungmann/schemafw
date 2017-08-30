@@ -21,16 +21,24 @@
       if (match)
       {
          var tag = ("tagName" in match) ? match.tagName : match;
-         var xpath = "/*/*[@rndx][@row-name='" + tag + "']";
-         result = this.xmldoc().selectSingleNode(xpath);
+         var xpath = "*[@rndx][@row-name='" + tag + "']";
+         result = this.xmldocel().selectSingleNode(xpath);
       }
       return result;
    };
 
-   // This method should be overridden, but here's an implementation just in case.
    _tbase.prototype.result = function(match)
    {
-      return this.result_from_match(match);
+      if (match)
+         return this.result_from_match(match);
+      else
+      {
+         var xpath = this.get_result_path()
+            || this.get_result_xpath_from_top()
+            || "/*/*[@rndx=1][not(@merged)]";
+         
+         return this.xmldoc().selectSingleNode(xpath);
+      }
    };
 
    _tbase.prototype.find_matching_data_row = function(cfobj)
@@ -42,8 +50,8 @@
 
       if (el)
       {
-         var id, res, xpath = "*/*[@rndx and @row-name='" + el.tagName + "']";
-         res = this.xmldoc().selectSingleNode(xpath);
+         var id, res, xpath = "*[@rndx and @row-name='" + el.tagName + "']";
+         res = this.xmldocel().selectSingleNode(xpath);
          id = el.getAttribute("id");
          if ((res=this.result(el)) && (id=el.getAttribute("id")))
          {
