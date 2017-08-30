@@ -32,20 +32,6 @@
          return null;
    };
 
-   _table.prototype.result = function(match)
-   {
-      if (match)
-         return this.result_from_match(match);
-      else
-      {
-         var xpath = this.get_result_path()
-            || this.get_result_xpath_from_top()
-            || "/*/*[@rndx=1][not(@merged)]";
-         
-         return this.xmldoc().selectSingleNode(xpath);
-      }
-   };
-   
    _table.prototype.get_sort_field = function()
    {
       function f(n) { return n.nodeType==1
