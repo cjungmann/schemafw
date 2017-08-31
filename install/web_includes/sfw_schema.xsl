@@ -60,9 +60,9 @@
   </xsl:template>
 
   <xsl:template match="schema" mode="get_id_field_name">
-    <xsl:variable name="lid" select="field[@line_id]" />
-    <xsl:variable name="pid" select="field[not($lid)][@primary-key]" />
-    <xsl:value-of select="($lid|$pid)/@name" />
+    <xsl:variable name="xid" select="field[@xrow_id]" />
+    <xsl:variable name="pid" select="field[not($xid)][@primary-key]" />
+    <xsl:value-of select="($xid|$pid)/@name" />
   </xsl:template>
 
   <xsl:template match="schema/field" mode="get_name">
