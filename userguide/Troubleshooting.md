@@ -3,32 +3,32 @@
 This guide helps explain how to fix various problems whose solution might
 be not be readily apparent.
 
-## Table with GROUP BY field is missing line_id
+## Table with GROUP BY field is missing xrow_id
 
 ### Problem
 
 This message is shown when a response mode uses a procedure that includes
- a **GROUP BY** instruction but does not identify a **line_id** instruction.
+ a **GROUP BY** instruction but does not identify a **xrow_id** instruction.
 
 ### Solution
 
-Include a **line_id** instruction in the response mode:
+Include a **xrow_id** instruction in the response mode:
 
 ~~~srm
 main
    type          : table
    procedure     : App_Items_With_Keywords
    on_line_click : ?edit
-   # Include a line_id instruction like this:
+   # Include a xrow_id instruction like this:
    schema
       field : id
-         line_id : true
+         xrow_id : true
 ~~~
 
-Note that the framework only checks if the *line_id* attribute exists, it does
+Note that the framework only checks if the *xrow_id* attribute exists, it does
 not check the value.  That way the value can be *1*, or *true*, or *yes*, but
 it also means that a value of *0*, or *false*, or *no* will also be interpreted
-as a *line_id* field.
+as a *xrow_id* field.
 
 ## Explanation
 
@@ -45,7 +45,7 @@ attribute without any explicit instructions.
 However, tables that use **GROUP_CONCAT** fields necessarily also use the
 **GROUP BY** query instruction, and the *GROUP_BY* instruction hides the
 *AUTO_INCREMENT* and *PRIMARY KEY* field attributes.  Even if the field has
-been declared appropriately in the *CREATE TABLE* command, the *line_id*
+been declared appropriately in the *CREATE TABLE* command, the *xrow_id*
 instruction must be explicitly declared as shown in the *Solution* above.
 
 # The import query failed (Lost connection to MySQL server during query)
