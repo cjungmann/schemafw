@@ -22,6 +22,34 @@
   <xsl:import href="sfw_generics.xsl" />
 
   <xsl:variable name="vars" select="/*/*[@rndx][@type='variables']" />
+
+  <xsl:template match="*" mode="add_result_attribute">
+    <xsl:variable name="result_inst" select="ancestor-or-self::*[@result]/@result" />
+    <xsl:variable name="result" select="ancestor-or-self::*[@rndx]" />
+
+    <xsl:variable name="val">
+      <xsl:choose>
+        <xsl:when test="$result_inst">
+          <xsl:value-of select="$result_inst[1]" />
+        </xsl:when>
+        <xsl:when test="$result">
+          <xsl:variable name="name" select="local-name($result)" />
+          <xsl:choose>
+            <xsl:when test="$name='result'">
+              <xsl:value-of
+                  select="concat('result[@rndx=', $apos, $result/@rndx, $apos, ']')" />
+            </xsl:when>
+            <xsl:otherwise><xsl:value-of select="$name" /></xsl:otherwise>
+          </xsl:choose>
+        </xsl:when>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:if test="$val">
+      <xsl:attribute name="data-result"><xsl:value-of select="$val" /></xsl:attribute>
+    </xsl:if>
+
+  </xsl:template>
   
   <xsl:template match="*[@rndx]" mode="add_data_attribute">
     <xsl:param name="name" />
