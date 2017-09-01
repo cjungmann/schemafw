@@ -26,18 +26,46 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="schema" mode="add_on_line_click_attribute">
-    <xsl:variable name="lc_s" select="@on_line_click" />
-    <xsl:variable name="lc_r" select="parent::*[not($lc_s)][@rndx]/@on_line_click" />
-    <xsl:variable name="lc_d" select="/*[not($lc_s|$lc_r)]/@on_line_click" />
-    <xsl:variable name="all" select="$lc_s|$lc_r|$lc_d" />
+  <xsl:template match="*" mode="add_on_x_click_attribute">
+    <xsl:param name="type" />
+    <xsl:variable name="c_s" select="ancestor-or-self::schema/@*[local-name()=$type]" />
+    <xsl:variable name="c_r" select="ancestor-or-self::*[not($c_s)][@rndx]/@*[local-name()=$type]" />
+    <xsl:variable name="c_d" select="/*[not($c_s|$c_r)]/@*[local-name()=$type]" />
+    <xsl:variable name="all" select="$c_s|$c_r|$c_d" />
+    <xsl:variable name="aname" select="concat('data-', $type)" />
+
     <xsl:if test="$all">
-      <xsl:attribute name="data-on_line_click">
+      <xsl:attribute name="{$aname}">
         <xsl:apply-templates select="$all" mode="fix_srm_selfref" />
         <xsl:value-of select="$all" />
       </xsl:attribute>
     </xsl:if>
   </xsl:template>
+
+  <xsl:template match="*" mode="add_on_line_click_attribute">
+    <xsl:apply-templates select="." mode="add_on_x_click_attribute">
+      <xsl:with-param name="type" select="'on_line_click'" />
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <xsl:template match="*" mode="add_on_cell_click_attribute">
+    <xsl:apply-templates select="." mode="add_on_x_click_attribute">
+      <xsl:with-param name="type" select="'on_cell_click'" />
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <!-- <xsl:template match="schema" mode="add_on_line_click_attribute"> -->
+  <!--   <xsl:variable name="lc_s" select="@on_line_click" /> -->
+  <!--   <xsl:variable name="lc_r" select="parent::*[not($lc_s)][@rndx]/@on_line_click" /> -->
+  <!--   <xsl:variable name="lc_d" select="/*[not($lc_s|$lc_r)]/@on_line_click" /> -->
+  <!--   <xsl:variable name="all" select="$lc_s|$lc_r|$lc_d" /> -->
+  <!--   <xsl:if test="$all"> -->
+  <!--     <xsl:attribute name="data-on_line_click"> -->
+  <!--       <xsl:apply-templates select="$all" mode="fix_srm_selfref" /> -->
+  <!--       <xsl:value-of select="$all" /> -->
+  <!--     </xsl:attribute> -->
+  <!--   </xsl:if> -->
+  <!-- </xsl:template> -->
 
   <xsl:template match="schema" mode="get_form_action">
     <xsl:variable name="ta" select="@form-action" />
