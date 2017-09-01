@@ -158,7 +158,7 @@ will contain the YYYY-MM-DD date.
           </xsl:attribute>
         </xsl:if>
         <xsl:if test="$date&gt;0 and $date&lt;=$lastday">
-          <xsl:attribute name="data-date">
+          <xsl:attribute name="data-name">
             <xsl:value-of select="$fulldate" />
           </xsl:attribute>
           <div class="day_head">
@@ -318,10 +318,9 @@ will contain the YYYY-MM-DD date.
 
     <xsl:element name="table">
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
+      <xsl:apply-templates select="." mode="add_result_attribute" />
       <xsl:apply-templates select=".." mode="add_sfw_class_attribute" />
-      <xsl:apply-templates select=".." mode="add_data_attribute">
-        <xsl:with-param name="name">on_day_click</xsl:with-param>
-      </xsl:apply-templates>
+      <xsl:apply-templates select="." mode="add_on_cell_click_attribute" />
       <xsl:apply-templates select="." mode="add_url_attributes" />
       <thead>
         <xsl:apply-templates select="$buttons" mode="show_buttons" />
