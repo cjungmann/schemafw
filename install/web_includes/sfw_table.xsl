@@ -42,15 +42,8 @@
 
     <xsl:element name="table">
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
-
-      <xsl:attribute name="data-result-path">
-        <xsl:variable name="path">
-          <xsl:apply-templates select=".." mode="get_path" />
-        </xsl:variable>
-      </xsl:attribute>
-
+      <xsl:apply-templates select="." mode="add_result_attribute" />
       <xsl:apply-templates select="." mode="add_sfw_class_attribute" />
-
       <xsl:apply-templates select="." mode="add_on_line_click_attribute" />
       <xsl:apply-templates select="." mode="add_url_attributes" />
       <!-- <xsl:apply-templates select=".." mode="add_data_attribute"> -->
