@@ -69,9 +69,18 @@
     </xsl:if>
   </xsl:template>
 
+  <xsl:template match="@*" mode="fix_srm_selfref">
+    <xsl:if test="substring(.,1,1)='?' and /*[@script]">
+      <xsl:value-of select="/*/@script" />
+    </xsl:if>
+  </xsl:template>
+  
   <xsl:template match="@*" mode="add_url_attribute">
     <xsl:variable name="aname" select="concat('data-url-',local-name())" />
-    <xsl:attribute name="{$aname}"><xsl:value-of select="." /></xsl:attribute>
+    <xsl:attribute name="{$aname}">
+      <xsl:apply-templates select="." mode="fix_srm_selfref"/>
+      <xsl:value-of select="." />
+    </xsl:attribute>
   </xsl:template>
 
   <xsl:template match="*" mode="add_url_attributes">

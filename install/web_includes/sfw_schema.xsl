@@ -20,12 +20,6 @@
     </xsl:call-template>
   </xsl:template>
 
-  <xsl:template match="@*" mode="fix_srm_selfref">
-    <xsl:if test="substring(.,1,1)='?' and /*[@script]">
-      <xsl:value-of select="/*/@script" />
-    </xsl:if>
-  </xsl:template>
-
   <xsl:template match="*" mode="add_on_x_click_attribute">
     <xsl:param name="type" />
     <xsl:variable name="c_s" select="ancestor-or-self::schema/@*[local-name()=$type]" />
