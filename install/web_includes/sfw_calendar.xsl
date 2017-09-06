@@ -326,12 +326,14 @@ will contain the YYYY-MM-DD date.
         <xsl:apply-templates select="$buttons" mode="show_buttons" />
         <xsl:apply-templates select="." mode="build_calendar_head" />
       </thead>
-      <xsl:call-template name="build_weeks">
-        <xsl:with-param name="today" select="@today" />
-        <xsl:with-param name="month" select="@month" />
-        <xsl:with-param name="lastday" select="@countOfDays" />
-        <xsl:with-param name="date" select="1-(@initialDay)" />
-      </xsl:call-template>
+      <tbody>
+        <xsl:call-template name="build_weeks">
+          <xsl:with-param name="today" select="@today" />
+          <xsl:with-param name="month" select="@month" />
+          <xsl:with-param name="lastday" select="@countOfDays" />
+          <xsl:with-param name="date" select="1-(@initialDay)" />
+        </xsl:call-template>
+      </tbody>
     </xsl:element>
   </xsl:template>
 
