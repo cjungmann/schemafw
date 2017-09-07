@@ -36,6 +36,18 @@ var SFW = { types     : {},
                   setTimeout(callback, 125);
                   return true;
                }
+            },
+            add_handler : function(h, first)
+            {
+               function ready_to_use() { return "remove_handler" in SFW; }
+               function try_adding()
+               {
+                  if (ready_to_use())
+                     SFW.add_handler(h,first);
+                  else
+                     setTimeout(try_adding, 125);
+               }
+               try_adding();
             }
           };
 
@@ -58,6 +70,7 @@ function init_SFW(callback)
    SFW.setup_event_handling = _setup_event_handling;
 
    SFW.keycode_from_event   = _keycode_from_event;
+   SFW.keychar_from_event   = _keychar_from_event;
 
    SFW.set_view_renderer    = _set_view_renderer;
    SFW.update_selected_view = _update_selected_view;
@@ -399,6 +412,34 @@ function init_SFW(callback)
 
    function _setup_event_handling()
    {
+      // Standard process handlers, in order of precedence:
+      var handlerarr = [process_dpicker, Moveable.process_event, SFW.process_event];
+      var handler_count = handlerarr.length;
+
+      function update_handler_count() { handler_count = handlerarr.length; }
+
+      SFW.add_handler = function(handler, first)
+      {
+         if (first)
+            handlerarr.splice(0,0,handler);
+         else
+            handlerarr.push(handler);
+         update_handler_count();
+      }
+
+      SFW.remove_handler = function(handler)
+      {
+         for (var i=0; i<handler_count; ++i)
+         {
+            if (handler===handlerarr[i])
+            {
+               splice(i, 1);
+               update_handler_count();
+               break;
+            }
+         }
+      }
+
       function f(ev)
       {
          var e=ev||window.event;
@@ -410,33 +451,12 @@ function init_SFW(callback)
             return true;
          }
 
-         if (!process_dpicker(e,t))
-            return false;
-         if (!Moveable.process_event(e,t))
-            return false;
-         if (!SFW.process_event(e,t))
-            return false;
-         // if (!SchemaFW.process_button(e,t))
-         //    return false;
-
-         // I don't like this solution (simply moving to the end),
-         // especially since the only thing custom_handler is doing
-         // is handling the ESC key.  It should have a better name,
-         // and there should be a preempt custom handler as well as
-         // a handler for after SchemaFW.process_event().
-         //
-         // The problem is that this is a bigger design decision:
-         // should _new_context() be changed into an object?  How does
-         // the context object integrate with the rest of event handling?
-         // How do contexts stack?  Too many questions need answers for
-         // me to spend the time now when moving this code fixes the
-         // problem of closing the context when the situation only calls
-         // for closing a dialog.
-         if ("custom_handler" in window && window.custom_handler)
+         for (var i=0; i<handler_count; ++i)
          {
-            if (!window.custom_handler(e,t))
+            if (!handlerarr[i](e,t))
                return false;
          }
+
          return true;
       }
 
@@ -463,6 +483,14 @@ function init_SFW(callback)
          SFW.keycode_from_event = function(e) { return e.charCode; };
 
       return SFW.keycode_from_event(e);
+   }
+
+   function _keychar_from_event(e)
+   {
+      if ("key" in e)
+         SFW.keychar_from_event = function(e) { return e.key; };
+
+      return SFW.keychar_from_event(e);
    }
 
    function _show_view_content(viewlist)
@@ -762,7 +790,9 @@ function init_SFW(callback)
          }
       }
 
-      xhr_get(url, got);
+      function fail(xhr) { console.error("_open_interaction() Failed to get " + url); }
+
+      xhr_get(url, got, fail);
    }
 
    function _get_director(xmldoc, htmlanchor)
@@ -1071,6 +1101,15 @@ function init_SFW(callback)
    _base.prototype.get_schema_field =function(){return this.get_field_actors("field");};
    _base.prototype.get_ref_result =  function(){return this.get_field_actors("result");};
    
+   _base.prototype.get_result_name_from_top = function()
+   {
+      var top = this.top();
+      if (top)
+         return top.getAttribute("data-result");
+      else
+         return null;
+   };
+
    _base.prototype.get_host_form_data_row = function()
    {
       var xpath, schema = this.schema();
@@ -1086,6 +1125,14 @@ function init_SFW(callback)
       }
       else
          return null;
+   };
+
+   /** "seek" means it may return null if not found. */
+   _base.prototype.seek_data_url = function(name)
+   {
+      var aname = "data-url-" + name;
+      var top = this.top();
+      return top.getAttribute(aname);
    };
 
    /** Get value of data-{name} attribute from the top element. */
