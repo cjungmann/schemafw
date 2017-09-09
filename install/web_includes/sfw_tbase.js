@@ -15,30 +15,16 @@
       SFW.base.call(this,actors);
    }
 
-   _tbase.prototype.result_from_match = function(match)
-   {
-      var result = null;
-      if (match)
-      {
-         var tag = ("tagName" in match) ? match.tagName : match;
-         var xpath = "*[@rndx][@row-name='" + tag + "']";
-         result = this.xmldocel().selectSingleNode(xpath);
-      }
-      return result;
-   };
+   // Can be overridden in derived classes:
+   _tbase.prototype.get_result_name = function() { return null; };
 
-   _tbase.prototype.result = function(match)
+   _tbase.prototype.result = function()
    {
-      if (match)
-         return this.result_from_match(match);
-      else
-      {
-         var xpath = this.get_result_path()
-            || this.get_result_xpath_from_top()
-            || "/*/*[@rndx=1][not(@merged)]";
+      var xpath = this.get_result_name() || this.get_result_name_from_top();
+      if (!xpath)
+         xpath = "*[@rndx=1][not(@merged)]";
          
-         return this.xmldoc().selectSingleNode(xpath);
-      }
+      return this.xmldocel().selectSingleNode(xpath);
    };
 
    _tbase.prototype.find_matching_data_row = function(cfobj)
@@ -50,7 +36,7 @@
 
       if (el)
       {
-         var id, res, xpath = "*[@rndx and @row-name='" + el.tagName + "']";
+         var id, res, xpath = "*[@rndx][@row-name='" + el.tagName + "']";
          res = this.xmldocel().selectSingleNode(xpath);
          id = el.getAttribute("id");
          if ((res=this.result(el)) && (id=el.getAttribute("id")))
@@ -186,6 +172,140 @@
                return;   // skip replot() at end of function
          }
       }
+   };
+
+
+   _tbase.prototype.get_cell_click_id_name = function()
+   {
+      return this.get_sfw_attribute("cell_click_id") || "id";
+   };
+
+   _tbase.prototype.get_line_click_id_name = function()
+   {
+      return this.get_sfw_attribute("line_click_id") || "id";
+   };
+
+   /**
+    * The assumption is that an application that allows table cell-based
+    * editing must allow for empty cells.  Thus the standard implementation
+    * of get_cell_click_info sets the click_info object property data_id=0
+    * if the cell is empty.
+    *
+    * This differs from get_line_click_info, where it is assumed that any
+    * line that is displayed actually exists in the data.
+    *
+    * Variations from these assumptions should be handled with custom
+    * implementations or get_cell_click_info, get_line_click_info, or
+    * a custom object or window method that can be called with the
+    * click_info object.
+    */
+   _tbase.prototype.get_cell_click_info = function(td)
+   {
+      var task, did, dname;
+      if ((task=this.get_data_value("on_cell_click")))
+      {
+         rval = { target:td, task:task, id_name:this.get_cell_click_id_name() };
+
+         // As a cell-click procedure, set data_id=0 if there is no
+         // data-id attribute.  That indicates an empty record.  I assume
+         // (and may be wrong about this) that any cell-editing table
+         // will likely be potentially sparsely-populated. That is, there
+         // may be some empty cells without it being an error.
+         if ((did=td.getAttribute("data-id")))
+            rval.data_id = did;
+         else
+            rval.data_id = 0;
+
+         // There should be a data-name attribute that allows a sparse
+         // table to know what kind of object should be created.  An
+         // example is a calendar date with no contents, and the data-name
+         // would be the date.
+         if ((dname=td.getAttribute("data-name")))
+            rval.data_name = dname;
+
+         return rval;
+      }
+
+      return null;
+   };
+
+   _tbase.prototype.get_line_click_info = function(tr)
+   {
+      var task, did;
+      if ((task=this.get_data_value("on_line_click"))
+          && tr.parentNode.tagName.toLowerCase()=="tbody")
+      {
+         rval = { target:tr, task:task, id_name:this.get_line_click_id_name() };
+
+         if ((did=tr.getAttribute("data-id")))
+            rval.data_id = did;
+
+         return rval;
+      }
+
+      return null;
+   };
+
+   _tbase.prototype.process_click_info = function(info)
+   {
+      var id, xrow = null;
+
+      if ("target" in info)
+      {
+         // This sequence makes a few assumptions about the data:
+         // 1. A missing data_id is a failure and should be diagnosed
+         // 2. Table cells may be sparsely populated, ie, some cells may
+         //    be empty.  In that case, data_id will be set to 0.
+         //    This is something to keep in mind for custom implementations
+         //    of the get_cell_click_info().
+         // 3. Another situation that might have a 0 data_id is if the
+         //    intent is to create a new record.
+         if (!("data_id" in info))
+         {
+            this.diagnose_missing_data_id(info.target);
+            return true;
+         }
+         else if ((id=info.data_id))
+         {
+            function f(n) { return n.nodeType==1 && n.getAttribute(info.id_name)==id; }
+            xrow = SFW.find_child_matches(this.result(), f, true);
+         }
+      }
+
+      // Look for custom handlers, first at the object level as a object procedure,
+      // then at the global level, as window[(function_name=info.task)]().
+      if (info.task in this)
+         return this[info.task](info.target, xrow, info);
+      if (info.task in window)
+         return window[info.task](info.target, xrow, info);
+
+      // The default behavior is that an item click, either line or cell,
+      // should open an edit dialog.  A sparse table should create a custom
+      // handler to respond to *new* or *edit* requests.
+      // Because of the preceding, this function only continues if an xrow is
+      // found.
+      if (xrow)
+      {
+         var url = info.task;
+
+         if (url.indexOf('&')==-1)
+            url += "=" + id;
+         else
+            url = SFW.apply_row_context(url, xrow);
+
+         var os = SFW.get_page_offset();  // Get offset before discarding contents
+         var host = this.host();
+
+         SFW.open_interaction(SFW.stage,
+                              url,
+                              this,
+                              { os:os, host:host, xrow:xrow }
+                             );
+
+         return false;
+      }
+
+      return true;
    };
 
    

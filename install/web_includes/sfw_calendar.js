@@ -22,6 +22,27 @@
       this.replot();
    };
 
+   _calendar.prototype.process_cell_click = function(td)
+   {
+      var rval = null;
+      var task = this.get_data_value("on_cell_click");
+      if (task)
+      {
+         rval = {
+            task:task,
+            id_name:this.get_cell_click_id_name(),
+            did:td.getAttribute("data-date")
+         };
+
+         function f(n) { return n.nodeType==1 && class_includes(n,"day_content"); }
+         var container = SFW.find_child_matches(td,f,true);
+         if (container && container.getAttribute("data-id"))
+            rval.target = container;
+      }
+
+      return rval;
+   };
+
    _calendar.prototype.process_day_click = function(t, did)
    {
       var url = this.get_data_value("on_day_click");
@@ -48,6 +69,9 @@
       
       if (e.type!="click")
          return true;
+
+      if (!SFW.types["table"].prototype.process.call(this,e,t))
+         return false;
 
       // Don't disturb the arguments array:
       var tel = t;

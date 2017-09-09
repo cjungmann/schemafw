@@ -20,18 +20,6 @@
    SFW.fix_table_heads = _fix_table_heads;
 
 
-   // Can be overridden in derived classes:
-   _table.prototype.get_result_path = function() { return null; };
-
-   _table.prototype.get_result_xpath_from_top = function()
-   {
-      var top = this.top();
-      if (top)
-         return top.getAttribute("data-result-path");
-      else
-         return null;
-   };
-
    _table.prototype.get_sort_field = function()
    {
       function f(n) { return n.nodeType==1
@@ -143,14 +131,17 @@
       this.post_transform();
    };
 
-   _table.prototype.diagnose_missing_line_id = function()
+   _table.prototype.diagnose_missing_data_id = function()
    {
       var schema = this.schema();
       if (schema)
       {
          var nl = schema.selectNodes("field[@group]");
          if (nl && nl.length)
-            SFW.alert("Table with GROUP BY field is missing line_id.");
+         {
+            debugger;
+            SFW.alert("Table with GROUP BY field is missing xrow_id.");
+         }
       }
    };
 
@@ -160,11 +151,6 @@
       if ((schema=this.schema()) && !(name=schema.getAttribute(aname)))
          name = this.xmldocel().getAttribute(aname);
       return name;
-   };
-
-   _table.prototype.get_line_click_id_name = function()
-   {
-      return this.get_sfw_attribute("line_click_id") || "id";
    };
 
    _table.prototype.initialize = function()
@@ -212,16 +198,21 @@
       return true;
    };
 
-   _table.prototype.process_line_click = function(tr)
+   _table.prototype._old_process_line_click = function(tr)
    {
-      var id, url;
-      
       if (!(url=this.get_data_value("on_line_click")))
          return true;
       
+      // By default, process the line if and only if it's under a tbody.
+      // That is, skip rows in thead and tfoot elements.
+      if (tr.parentNode.tagName.toLowerCase()!="tbody")
+         return null;
+
+      var id, url;
+      
       if (!(id=tr.getAttribute("data-id")))
       {
-         this.diagnose_missing_line_id(tr);
+         this.diagnose_missing_data_id(tr);
          return true;
       }
       
@@ -268,13 +259,20 @@
       if (!SFW.base.prototype.process.call(this,e,t))
          return false;
 
+      var click_info;
       while (t && t!=table_el)
       {
          var tag = t.tagName.toLowerCase();
          switch(tag)
          {
+            case "td":
+               if ((click_info=this.get_cell_click_info(t)))
+                  return this.process_click_info(click_info);
+               break;
+               
             case "tr":
-               return this.process_line_click(t);
+               if ((click_info=this.get_line_click_info(t)))
+                  return this.process_click_info(click_info);
 
             case "th":
             {
