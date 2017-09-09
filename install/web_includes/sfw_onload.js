@@ -7,12 +7,6 @@ window.onload = function()
 
    function begin_app()
    {
-      if (SFW.continuing_autoloads())
-      {
-         setTimeout(begin_app, 125);
-         return;
-      }
-
       var sfwhost = SFW.seek_top_sfw_host();
       if (sfwhost)
       {
@@ -27,6 +21,14 @@ window.onload = function()
          }
       }
       SFW.setup_event_handling();
+   }
+
+   function wait_to_start()
+   {
+      if (SFW.continuing_autoloads())
+         setTimeout(wait_to_start, 125);
+      else
+         begin_app();
    }
 
    init_SFW(begin_app);
