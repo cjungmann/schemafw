@@ -2,48 +2,104 @@
 // sfw_0.js
 
 var SFW = { types     : {},
-            autoloads : {},
-            callback  : null,
-            continuing_autoloads : function()
+            preloads  : {},      /**< Object to associate preload names with callback functions. */
+            start_app : null,    /**< callback for after all preloads are completed. */
+            xmldoc    : null,
+            xsldoc    : null,
+            confirm_class : function(name) { return name in this.types; },
+            seek_preload : function(name)
             {
-               for (a in this.autoloads)
-                  if (this.autoloads[a]==false)
-                     return true;
-               return false;
+               return (name in this.preloads) ? this.preloads[name] : null;
             },
-            check_and_callback : function(name)
+            preloads_complete : function()
             {
-               this.autoloads[name] = true;
-
-               if (SFW.continuing_autoloads())
-                  return;
-               
-               // Callback after return to allow completion of last _init():
-               setTimeout(this.callback, 125);
-            },
-            delay_init : function(name, callback, prereq)
-            {
-               if ("base" in SFW && (!prereq || prereq in SFW.types))
-               {
-                  this.check_and_callback(name);
+               for (var a in this.preloads)
                   return false;
+               return true;
+            },
+            add_preload : function(name, f)
+            {
+               if (name in this.preloads)
+                  console.err("\"" + name + "\" is already in use.  Request ignored.");
+               else
+                  this.preloads[name] = f;
+            },
+            delete_preload : function(name, follow_on_function)
+            {
+               if (name in this.preloads)
+               {
+                  delete this.preloads[name];
+
+                  if (follow_on_function)
+                     follow_on_function();
+
+                  if (this.preloads_complete())
+                     this.start_app();
                }
                else
+                  console.err("\""+name+"\" not found for deletion.");
+            },
+            
+            /** Checks prerequisites for loading the class, setting a delay if necessary.
+             *
+             * @param name   Class name of object being initialized
+             * @param init   Initialization function to call when prerequisites fulfilled.
+             * @param prereq Class from which the named class is derived.
+             *
+             * @return TRUE if a delay is necessary, FALSE if prerequisite unfulfilled
+             *         or if SFW not ready to derive stuff.
+             */
+            delay_init : function(name, init, prereq)
+            {
+               if (!prereq)
+                  return false;
+
+               if (!("derive" in SFW))
                {
-                  if (!(name in this.autoloads))
-                     this.autoloads[name] = false;
-                  
-                  setTimeout(callback, 125);
+                  setTimeout(init, 100);
                   return true;
+               }
+               else if (!prereq || this.confirm_class(prereq))
+                  return false;
+               else
+               {
+                  var f = (name in this.preloads) ? this.preloads.name : null;
+                  if (!f)
+                  {
+                     var ths = this;
+                     f = function()
+                     {
+                        if (ths.confirm_class(prereq))
+                        {
+                           ths.delete_preload(name, init);
+                           return false;
+                        }
+                        else
+                        {
+                           setTimeout(f,125);
+                           return true;
+                        }
+                     };
+
+                     this.add_preload(name, f);
+                  }
+
+                  if (f)
+                     return f();
                }
             },
             add_handler : function(h, first)
             {
+               var attempt_count = 0;
                function ready_to_use() { return "remove_handler" in SFW; }
                function try_adding()
                {
+                  ++attempt_count;
                   if (ready_to_use())
+                  {
                      SFW.add_handler(h,first);
+                     console.log("Adding " + h.name + " after " + attempt_count + " tries.");
+                  }
                   else
                      setTimeout(try_adding, 125);
                }
@@ -53,7 +109,7 @@ var SFW = { types     : {},
 
 function init_SFW(callback)
 {
-   SFW.callback             = callback;
+   SFW.start_app            = callback;
 
    SFW.alert                = _alert;
    SFW.confirm              = _confirm;
@@ -440,6 +496,8 @@ function init_SFW(callback)
          }
       }
 
+      var msgcount=0;
+
       function f(ev)
       {
          var e=ev||window.event;
@@ -456,6 +514,11 @@ function init_SFW(callback)
             if (!handlerarr[i](e,t))
                return false;
          }
+
+         if (e.type=="keydown")
+            if (SFW.keychar_from_event(e)=='q')
+               if (e.ctrlKey)
+                  debugger;
 
          return true;
       }
@@ -1427,6 +1490,8 @@ function init_SFW(callback)
    call_SFW_init_functions();
    _resize_page_head();
 
+   var xdocs_preload = "xmldocs_loaded";
+
    function xmldocs_ready()
    {
       // These may change if I redo XML.js.  They should all
@@ -1440,8 +1505,10 @@ function init_SFW(callback)
             SFW.xslobj = new XSL(SFW.xsldoc);
       }
 
-      callback();
+      SFW.delete_preload(xdocs_preload);
    }
+
+   SFW.add_preload(xdocs_preload);
 
    getXMLDocs(xmldocs_ready);
 
