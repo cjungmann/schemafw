@@ -7,10 +7,41 @@ and more complete explanations for each error will appear in this guide.
 
 Currently, the following error messages are explained below:
 
+- Unable to find a result element
 - The update row name (xxx) does not match the result's row-name (XXX)
 - Don't know what to do with the update row
 - TABLE with GROUP BY field is missing xrow_id
 - The import query failed (Lost connection to MySQL server during query)
+
+## Unable to find a result element
+
+### Problem
+
+The framework is unable to find the appropriate result element into which
+an updated row should be inserted.
+
+### Solution
+
+Explicitly name the target result in the result instruction:
+
+~~~srm
+add_submit
+   procedure : App_Item_Add
+   result
+      type   : update
+      target : items
+~~~
+
+### Explanation
+
+This problem generally occurs when adding a new element to a group because there
+is no reference element whose parent node is the target result.  For simple table
+or calendar pages, there is only one result, and it's easy to find it.  However,
+for merged pages with multiple group results, the target result may not be obvious.
+In these cases, the developer can help the framework identify the appropriate
+result by explicitely naming the result, as show in the example in the Solution
+above.
+
 
 ## The update row name (xxx) does not match the result's row-name (XXX)
 
