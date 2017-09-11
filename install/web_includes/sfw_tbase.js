@@ -119,6 +119,12 @@
 
    _tbase.prototype.get_result_to_update = function(cfobj, urow, xrow)
    {
+      if (arguments.length<3)
+      {
+         urow = SFW.get_urow_from_cfobj(cfobj);
+         xrow = SFW.get_xrow_from_cfobj(cfobj);
+      }
+      
       var result = null;
       if ("target_name" in cfobj)
          result = this.xmldocel().selectSingleNode(cfobj.target_name+"[@rndx]");
@@ -127,16 +133,21 @@
       else
          result = this.xmldocel().selectSingleNode("*[@rndx=1][not(@merged)]");
 
-      var rname = result.getAttribute("row-name");
-      var uname = urow.tagName;
-
-      if (rname==uname)
-         return result;
-      else
+      if (result)
       {
-         SFW.alert("The update row name (" + uname + ") does not match the result's row-name (" + rname +").");
-         return null;
+         var rname = result.getAttribute("row-name");
+         var uname = urow ? urow.tagName : null;
+
+         if (rname==uname)
+            return result;
+         else
+            SFW.alert("The update row name (" + uname||"NULL"+
+                      ") does not match the result's row-name (" + rname +").");
       }
+      else
+         SFW.alert("Unable to find a result element.");
+
+      return null;
    };
 
    _tbase.prototype.update_row = function(cfobj, preserve_result)
@@ -150,10 +161,9 @@
          }
          return;
       }
-      
-      var cdata = "cdata" in cfobj ? cfobj.cdata : null;
-      var urow = ("update_row" in cfobj) ? cfobj.update_row : null;
-      var xrow = (cdata && "xrow" in cdata) ? cdata.xrow : null;
+
+      var urow = SFW.get_urow_from_cfobj(cfobj);
+      var xrow = SFW.get_xrow_from_cfobj(cfobj);
 
       var target = this.get_result_to_update(cfobj, urow, xrow);
       if (target)
