@@ -110,67 +110,68 @@
       cp(newnode, source);
       return newnode;
    }
-   
+
    _tbase.prototype.delete_row = function(xrow)
    {
       if (this.result(xrow) && xrow)
          xrow.parentNode.removeChild(xrow);
    };
 
-   _tbase.prototype.get_result_to_update = function(cfobj)
+   _tbase.prototype.get_result_to_update = function(cfobj, urow, xrow)
    {
       var result = null;
-      var tname = cfobj.target_name;
-      if (tname)
-         result = this.xmldocel().selectSingleNode(tname+"[@rndx]");
-      return result;
+      if ("target_name" in cfobj)
+         result = this.xmldocel().selectSingleNode(cfobj.target_name+"[@rndx]");
+      else if (xrow)
+         result = xrow.parentNode;
+      else
+         result = this.xmldocel().selectSingleNode("*[@rndx=1][not(@merged)]");
+
+      var rname = result.getAttribute("row-name");
+      var uname = urow.tagName;
+
+      if (rname==uname)
+         return result;
+      else
+      {
+         SFW.alert("The update row name (" + uname + ") does not match the result's row-name (" + rname +").");
+         return null;
+      }
    };
 
    _tbase.prototype.update_row = function(cfobj, preserve_result)
    {
+      if ("cmd" in cfobj)
+      {
+         switch(cfobj.cmd)
+         {
+            case "delete": this.delete_row(cfobj.cdata.xrow); break;
+            case "fail": SFW.alert(cfobj.rtype + " operation failed."); break;
+         }
+         return;
+      }
+      
       var cdata = "cdata" in cfobj ? cfobj.cdata : null;
-      var xrow = (cdata && "xrow" in cdata) ? cdata.xrow : null;
       var urow = ("update_row" in cfobj) ? cfobj.update_row : null;
+      var xrow = (cdata && "xrow" in cdata) ? cdata.xrow : null;
 
-      if ("docel" in cfobj)
+      var target = this.get_result_to_update(cfobj, urow, xrow);
+      if (target)
       {
          if (cfobj.mtype=="delete")
          {
             if (cfobj.confirm_delete() && xrow)
                this.delete_row(xrow);
          }
-         else if (cfobj.rtype=="update" && urow)
+         else if (cfobj.rtype=="update")
          {
-            var target = this.get_result_to_update(cfobj);
-            if (!target)
-            {
-               if (xrow)
-                  target = xrow.parentNode;
-               else
-                  target = this.xmldocel().selectSingleNode("*[@rndx=1][1]");
-            }
-
-            if (target)
-            {
-               if (preserve_result || target.ownerDocument!=urow.ownerDocument)
-                  urow = _get_copied_node(target,urow);
-
-               target.insertBefore(urow, xrow);
-
-               if (xrow)
-                  target.removeChild(xrow);
-            }
+            urow = preserve_result ? _get_copied_node(target,urow) : urow;
+            target.insertBefore(urow, xrow);
+            if (xrow)
+               target.removeChild(xrow);
          }
-      }
-      else if ("cmd" in cfobj)
-      {
-         switch(cfobj.cmd)
-         {
-            case "delete": this.delete_row(cfobj.cdata.xrow); break;
-            case "fail":
-               SFW.alert(cfobj.rtype + " operation failed.");
-               return;   // skip replot() at end of function
-         }
+         else
+            SFW.alert("Don't know what to do with the update row.");
       }
    };
 
