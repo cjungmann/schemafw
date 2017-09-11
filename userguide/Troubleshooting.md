@@ -1,9 +1,85 @@
 # Troubleshooting SchemaFW
 
 This guide helps explain how to fix various problems whose solution might
-be not be readily apparent.
+be not be readily apparent.  In order to facilitate debugging framework
+applications, simple new messages will be added for easy-to-make mistakes,
+and more complete explanations for each error will appear in this guide.
 
-## Table with GROUP BY field is missing xrow_id
+Currently, the following error messages are explained below:
+
+- The update row name (xxx) does not match the result's row-name (XXX)
+- Don't know what to do with the update row
+- TABLE with GROUP BY field is missing xrow_id
+- The import query failed (Lost connection to MySQL server during query)
+
+## The update row name (xxx) does not match the result's row-name (XXX)
+
+### Problem
+
+The new or updated row that is to be inserted into a result does not match
+the rows that should be in the target result.
+
+### Solution
+
+Change the response modes in your page to agree on what a row is named.
+
+### Explanation
+
+The Schema Framework allows the developer to change the names of most elements
+to application-specific names.  If a custom name is not specified, all data
+elements in a result will be named *row*.
+
+When a submitted [update](CSUpdateInteraction.md) or [add](CSCreateInteraction.md)
+returns the new or updated row, it must match the name of the other elements in
+the hosting result element.  That means if the developer has renamed the data
+element in the multi-record result, the update row for the new or update interaction
+must give the same name to the row inthe update element.
+
+## Don't know what to do with the update row
+
+### Problem
+
+The function tbase::update_row() doesn't know how to handle the update request.
+It _tbase::update_row() is only prepared to handle:
+- a _cfobj_ with a **cmd** property
+- a _cfobj_ with **mtype** set to **delete**, or
+- a _cfobj_ with **rtype** set to **update**.
+
+The error message is presented when none of the default actions are requested.
+
+### Solution
+
+There are two options:
+- Change the result type of the response mode to _update_ for adding or updating
+   ~~~srm
+   add_submit
+      procedure : App_Item_Add
+      result
+         type   : update
+         target : items
+   ~~~
+- Change the response mode type to _delete_
+   ~~~srm
+   delete
+      type      : delete
+      procedure : App_Item_Delete
+   ~~~
+- Prepare a custom update_row() handler for your particular result type.
+
+### Explanation
+
+The function _tbase::update_row() is the *update_row* function that is automatically
+used for table and calendar updates.  This default function should be enough for most
+applications, and the problem will usually best fixed by preparing the response modes.
+
+Consult the following guides for more reminders about setting up these interactions:
+
+- [Adding Records](CSCreateInteraction.md)
+- [Updating Records](CSUpdateInteraction.md)
+- [Deleting Records](CSDeleteInteraction.md)
+
+
+## TABLE with GROUP BY field is missing xrow_id
 
 ### Problem
 
