@@ -149,6 +149,7 @@ function init_SFW(callback)
    SFW.types["iclass"]      = _base;
 
    SFW.show_string_in_pre   = _show_string_in_pre;
+   SFW.remove_string_pres   = _remove_string_pres;
 
    SFW.get_object_from_host = _get_object_from_host;
    SFW.get_cfobj_result     = _get_cfobj_result;
@@ -185,10 +186,19 @@ function init_SFW(callback)
 
    function _show_string_in_pre(str)
    {
-      var div = addEl("pre", document.body);
-      // var div = document.body.appendChild(document.createElement("div"));
-      div.appendChild(document.createTextNode(str));
+      var pre = addEl("pre", document.body);
+      pre.className = "root_pre";
+      pre.appendChild(document.createTextNode(str));
+      return pre;
    }
+
+   function _remove_string_pres()
+   {
+      var b = document.body;
+      function f(n) { if (n.nodeType==1 && n.className=="root_pre") b.removeChild(n); }
+      SFW.find_child_matches(b,f);
+   }
+
 
    function _confirm_not_null(obj, msg)
    {
