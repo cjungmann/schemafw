@@ -255,14 +255,15 @@
 
       if (!cancelled && cfobj.rtype=="update" && cfobj.update_row)
       {
+         var result = this.get_result_to_update(cfobj);
          var newid = cfobj.update_row.getAttribute("id");
          this.update_row(cfobj);
          this.refresh_options();
 
-         if (newid)
+         if (newid && result)
          {
-            var el, uresult = this.get_result_to_update(cfobj);
-            if (uresult && (el=this.get_li_by_id(newid)))
+            var el;
+            if ((el=this.get_li_by_id(newid)))
             {
                this.select_option(el);
                this.stage_input_focus();
