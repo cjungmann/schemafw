@@ -153,6 +153,15 @@ function init_SFW(callback)
 
    SFW.get_object_from_host = _get_object_from_host;
    SFW.get_cfobj_result     = _get_cfobj_result;
+   SFW.get_urow_from_cfobj  = function(o) {
+      return ("update_row" in o)?o.update_row:null; };
+
+   SFW.get_xrow_from_cfobj  = function(o) {
+      if ("cdata" in o && "xrow" in o.cdata)
+         return this.cdata.xrow;
+      else
+         return null;
+   },
 
    SFW.stage                = document.getElementById("SFW_Content");
    SFW.px                   = _px;
@@ -1265,9 +1274,10 @@ function init_SFW(callback)
                    target_name: null,
                    update_row : null,
 
-                   close  : function()         { _child_close(this.child); },
-                   hide   : function()         { _child_hide(this.child); }
+                   close : function() { _child_close(this.child); },
+                   hide  : function() { _child_hide(this.child); }
                  };
+
       
       if (this.has_data())
          rval.cdata = this.host().data;
