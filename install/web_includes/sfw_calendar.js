@@ -16,12 +16,6 @@
       SFW.types["table"].call(this,base,doc,caller,data);
    }
 
-   _calendar.prototype.child_finished = function(child, cancelled)
-   {
-      SFW.types["table"].prototype.child_finished.call(this,child,cancelled);
-      this.replot();
-   };
-
    _calendar.prototype.process_cell_click = function(td)
    {
       var rval = null;

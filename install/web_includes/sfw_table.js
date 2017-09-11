@@ -160,23 +160,6 @@
          SFW.fix_table_heads(anchor);
    };
 
-   _table.prototype.child_finished = function(cfobj, cancelled)
-   {
-      // Must call base::child_finished() to clean out
-      // any merged elements before calling replot().
-      SFW.base.prototype.child_finished.call(this, cfobj, cancelled);
-
-      if (!cancelled)
-      {
-         this.update_row(cfobj);
-         this.replot();
-      }
-
-      var dobj = cfobj.cdata;
-      if (dobj && "os" in dobj)
-         SFW.set_page_offset(dobj.os);
-   };
-   
    _table.prototype.process_button_add = function(button)
    {
       var os = SFW.get_page_offset();  // Get offset before discarding contents
