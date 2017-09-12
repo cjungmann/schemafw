@@ -96,8 +96,12 @@
   <xsl:template match="@*" mode="add_url_attribute">
     <xsl:variable name="aname" select="concat('data-url-',local-name())" />
     <xsl:attribute name="{$aname}">
-      <xsl:apply-templates select="." mode="fix_srm_selfref"/>
-      <xsl:value-of select="." />
+      <xsl:call-template name="resolve_refs">
+        <xsl:with-param name="str">
+          <xsl:apply-templates select="." mode="fix_srm_selfref"/>
+          <xsl:value-of select="." />
+        </xsl:with-param>
+      </xsl:call-template>
     </xsl:attribute>
   </xsl:template>
 
