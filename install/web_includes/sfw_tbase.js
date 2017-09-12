@@ -213,6 +213,15 @@
       return this.get_sfw_attribute("line_click_id") || "id";
    };
 
+   _tbase.prototype.get_row_id = 
+      _tbase.prototype.get_cell_id =
+      function(el) { return el.getAttribute("data-id");};
+
+   _tbase.prototype.get_row_name = 
+      _tbase.prototype.get_cell_name =
+      function(el) { return el.getAttribute("data-name");};
+
+
    /**
     * The assumption is that an application that allows table cell-based
     * editing must allow for empty cells.  Thus the standard implementation
@@ -232,14 +241,14 @@
       var task, did, dname;
       if ((task=this.get_data_value("on_cell_click")))
       {
-         rval = { target:td, task:task, id_name:this.get_cell_click_id_name() };
+         var rval = { target:td, task:task, id_name:this.get_cell_click_id_name() };
 
          // As a cell-click procedure, set data_id=0 if there is no
          // data-id attribute.  That indicates an empty record.  I assume
          // (and may be wrong about this) that any cell-editing table
          // will likely be potentially sparsely-populated. That is, there
          // may be some empty cells without it being an error.
-         if ((did=td.getAttribute("data-id")))
+         if ((did=this.get_cell_id(td)))
             rval.data_id = did;
          else
             rval.data_id = 0;
@@ -248,7 +257,7 @@
          // table to know what kind of object should be created.  An
          // example is a calendar date with no contents, and the data-name
          // would be the date.
-         if ((dname=td.getAttribute("data-name")))
+         if ((dname=this.get_cell_name(td)))
             rval.data_name = dname;
 
          return rval;
@@ -265,7 +274,7 @@
       {
          rval = { target:tr, task:task, id_name:this.get_line_click_id_name() };
 
-         if ((did=tr.getAttribute("data-id")))
+         if ((did=this.get_row_id(tr)))
             rval.data_id = did;
 
          return rval;
