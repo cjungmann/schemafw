@@ -253,6 +253,7 @@ will contain the YYYY-MM-DD date.
     <tr>
       <td colspan="2" class="calnav cn_left">
         <xsl:element name="button">
+          <xsl:attribute name="data-type">calmove</xsl:attribute>
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$year_last" />
           </xsl:attribute>
@@ -262,6 +263,7 @@ will contain the YYYY-MM-DD date.
           <xsl:text> &lt;&lt;&lt; </xsl:text>
         </xsl:element>
         <xsl:element name="button">
+          <xsl:attribute name="data-type">calmove</xsl:attribute>
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$month_last" />
           </xsl:attribute>
@@ -279,6 +281,7 @@ will contain the YYYY-MM-DD date.
       </td>
       <td colspan="2" class="calnav cn_right">
         <xsl:element name="button">
+          <xsl:attribute name="data-type">calmove</xsl:attribute>
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$month_next" />
           </xsl:attribute>
@@ -288,6 +291,7 @@ will contain the YYYY-MM-DD date.
           <xsl:text> &gt; </xsl:text>
         </xsl:element>
         <xsl:element name="button">
+          <xsl:attribute name="data-type">calmove</xsl:attribute>
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$year_next" />
           </xsl:attribute>
@@ -321,6 +325,7 @@ will contain the YYYY-MM-DD date.
       <xsl:apply-templates select="." mode="add_result_attribute" />
       <xsl:apply-templates select=".." mode="add_sfw_class_attribute" />
       <xsl:apply-templates select="." mode="add_on_cell_click_attribute" />
+      <xsl:apply-templates select="../@calmove_base" mode="add_url_attribute" />
       <xsl:apply-templates select="." mode="add_url_attributes" />
       <thead>
         <xsl:apply-templates select="$buttons" mode="show_buttons" />
