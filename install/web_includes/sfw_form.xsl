@@ -562,24 +562,6 @@
   </xsl:template>
 
 
-  <xsl:template match="@*" mode="add_resolved_attribute">
-    <xsl:variable name="name" select="local-name()" />
-    <xsl:attribute name="{$name}">
-      <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str" select="." />
-      </xsl:call-template>
-    </xsl:attribute>
-  </xsl:template>
-
-  <xsl:template match="@*" mode="add_resolved_data_attribute">
-    <xsl:variable name="name" select="concat('data-', local-name())" />
-    <xsl:attribute name="{$name}">
-      <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str" select="." />
-      </xsl:call-template>
-    </xsl:attribute>
-  </xsl:template>
-
 
 
   <!--
