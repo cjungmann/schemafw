@@ -154,6 +154,8 @@ function init_SFW(callback)
    SFW.show_string_in_pre   = _show_string_in_pre;
    SFW.remove_string_pres   = _remove_string_pres;
 
+   SFW.replace_results      = _replace_results;
+
    SFW.get_object_from_host = _get_object_from_host;
    SFW.get_cfobj_result     = _get_cfobj_result;
    SFW.get_urow_from_cfobj  = function(o) {
@@ -164,6 +166,7 @@ function init_SFW(callback)
          return this.cdata.xrow;
       else
          return null;
+
    },
 
    SFW.stage                = document.getElementById("SFW_Content");
@@ -1059,6 +1062,62 @@ function init_SFW(callback)
          return null;
    }
 
+   /**
+    * Copies attributes from source to target elements.
+    *
+    * Since the framework stashes persistent status values in the result element,
+    * those values must be copied to any new result that will replace the original
+    * result element.
+    *
+    * For now, all attributes in the original result (which should be the source
+    * argument) are copied to the replacement result (target).  In the future, it
+    * may be necessary to indicate new attributes that should override the old by
+    * listing their names in the SRM.  I won't over-engineer this right now as I
+    * don't recognize any cases where this would be useful.
+    */
+   function _copy_result_attributes(target, source)
+   {
+      var s_attr, t_val, s_val;
+      for (var i=0, stop=source.attributes.length; i<stop; ++i)
+      {
+         s_attr = source.attributes[i];
+         target.setAttribute(s_attr.localName, s_attr.value);
+      }
+   }
+
+   /**
+    * Scans newdoc for results, replacing like-named results in olddoc
+    * with modified (attriubtes updated) newdoc results.
+    *
+    * @param olddoc May be null/undefined and then will be replace with
+    *               SFW.xmldoc;
+    */
+   function _replace_results(newdoc, olddoc)
+   {
+      if (!olddoc)
+         olddoc = SFW.xmldoc;
+
+      var rndx, xpath, oldnode;
+      var newdocel = newdoc.documentElement;
+      var olddocel = olddoc.documentElement;
+      function f(n)
+      {
+         if (n.nodeType==1 && (rndx=n.getAttribute("rndx")))
+         {
+            var xpath = n.tagName + "[@rndx]";
+            if ((oldnode=olddocel.selectSingleNode(xpath)))
+            {
+               _copy_result_attributes(n, oldnode);
+               olddocel.insertBefore(n, oldnode);
+               olddocel.removeChild(oldnode);
+            }
+            return true;
+         }
+         return false;
+      }
+      SFW.find_child_matches(newdocel, f);
+   }
+
    function _get_cfobj_result(cfobj)
    {
       var cd, xrow, update_row;
@@ -1210,14 +1269,6 @@ function init_SFW(callback)
       }
       else
          return null;
-   };
-
-   /** "seek" means it may return null if not found. */
-   _base.prototype.seek_data_url = function(name)
-   {
-      var aname = "data-url-" + name;
-      var top = this.top();
-      return top.getAttribute(aname);
    };
 
    /** Get value of data-{name} attribute from the top element. */
