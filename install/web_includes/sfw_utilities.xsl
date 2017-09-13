@@ -105,13 +105,6 @@
     </xsl:attribute>
   </xsl:template>
 
-  <xsl:template match="*" mode="add_url_attributes">
-    <xsl:variable name="r_urls" select="ancestor::*[@rndx]/urls/@*" />
-    <xsl:variable name="s_urls" select="ancestor::schema/urls/@*" />
-
-    <xsl:apply-templates select="$r_urls|$s_urls" mode="add_url_attribute" />
-  </xsl:template>
-
   <xsl:template name="build_sfw_class_attribute">
     <xsl:param name="schema" select="/.." />
     <xsl:attribute name="data-sfw-class">

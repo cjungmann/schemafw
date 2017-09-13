@@ -326,7 +326,6 @@ will contain the YYYY-MM-DD date.
       <xsl:apply-templates select=".." mode="add_sfw_class_attribute" />
       <xsl:apply-templates select="." mode="add_on_cell_click_attribute" />
       <xsl:apply-templates select="../@calmove_base" mode="add_url_attribute" />
-      <xsl:apply-templates select="." mode="add_url_attributes" />
       <thead>
         <xsl:apply-templates select="$buttons" mode="show_buttons" />
         <xsl:apply-templates select="." mode="build_calendar_head" />
