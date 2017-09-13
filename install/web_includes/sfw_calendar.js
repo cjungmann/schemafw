@@ -57,6 +57,27 @@
       return false;
    };
 
+   _calendar.prototype.get_calmove_url = function(button)
+   {
+      var base = this.top().getAttribute("data-url-calmove_base");
+      var jump = button.getAttribute("data-jump");
+      if (!base)
+         SFW.alert("Missing calmove_base");
+      else if (!jump)
+         SFW.alert("Missing data-jump value");
+      else
+         return base + "=" + jump;
+
+      return null;
+   };
+
+   _calendar.prototype.process_button_calmove = function(button, callback)
+   {
+      var url = get_calmove_url(button);
+      if (url)
+         window.location = url;
+   };
+
    _calendar.prototype.process = function (e,t)
    {
       var did, tag, mon, top = this.top();
