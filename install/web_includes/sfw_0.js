@@ -133,6 +133,9 @@ function init_SFW(callback)
    SFW.change_view          = _change_view;
    SFW.process_event        = _process_event;
 
+   // The following commonly-used search function is found in sfw_dom.js:
+   // SFW.find_child_matches(parent, function, first_only, recurse)
+
    SFW.setup_sfw_host        = _setup_sfw_host;
    SFW.get_last_SFW_Host    = _get_last_SFW_Host;
    SFW.arrange_in_host      = _arrange_in_host;
