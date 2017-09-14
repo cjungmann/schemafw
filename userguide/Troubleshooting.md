@@ -39,8 +39,11 @@ is no reference element whose parent node is the target result.  For simple tabl
 or calendar pages, there is only one result, and it's easy to find it.  However,
 for merged pages with multiple group results, the target result may not be obvious.
 In these cases, the developer can help the framework identify the appropriate
-result by explicitely naming the result, as show in the example in the Solution
+result by explicitly naming the result, as show in the example in the Solution
 above.
+
+This error message will also be displayed if no result is found whose name matches
+the  *target_name* value.
 
 
 ## The update row name (xxx) does not match the result's row-name (XXX)
