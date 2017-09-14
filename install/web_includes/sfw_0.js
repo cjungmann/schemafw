@@ -114,6 +114,7 @@ function init_SFW(callback)
    SFW.alert                = _alert;
    SFW.confirm              = _confirm;
    SFW.log_error            = _log_error;
+   SFW.has_value            = _has_value;
    SFW.confirm_not_null     = _confirm_not_null;
    SFW.seek_top_sfw_host    = _seek_top_sfw_host;
    SFW.seek_page_anchor     = _seek_page_anchor;
@@ -166,7 +167,6 @@ function init_SFW(callback)
          return this.cdata.xrow;
       else
          return null;
-
    },
 
    SFW.stage                = document.getElementById("SFW_Content");
@@ -215,6 +215,31 @@ function init_SFW(callback)
    }
 
 
+   /**
+    * Confirms existence and value of an object's properties.
+    *
+    * The arguments that follow *obj* are property names, and if there
+    * are more than one property name, each following name is tested against
+    * the previous discovered objects.
+    *
+    * For example, `_has_value(obj, "cdata", "os");`  will check for obj.cdata,
+    * and if that's found, will go on to check for obj.cdata.os.
+    *
+    * @return true if found and not null, false otherwise.
+    */
+   function _has_value(obj)
+   {
+      for (var i=1, stop=arguments.length; i<stop; ++i)
+      {
+         var name = arguments[i];
+         if (!(name in obj) || obj[name]===null)
+            return false;
+         obj = obj[name];
+      }
+      return true;
+   }
+
+   /** Sends an error message if the specific object value if null. */
    function _confirm_not_null(obj, msg)
    {
       if (obj==null)
