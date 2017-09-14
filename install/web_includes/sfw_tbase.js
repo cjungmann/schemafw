@@ -29,10 +29,7 @@
 
    _tbase.prototype.find_matching_data_row = function(cfobj)
    {
-      var el =
-         ("cdata" in cfobj && "xrow" in cfobj.cdata)
-         ? cfobj.cdata.xrow
-         : cfobj.update_row;
+      var el = SFW.has_value(cfobj,"cdata","xrow") ? cfobj.cdata.xrow : cfobj.update_row;
 
       if (el)
       {
@@ -126,7 +123,7 @@
       }
       
       var result = null;
-      if ("target_name" in cfobj)
+      if (SFW.has_value(cfobj,"target_name"))
          result = this.xmldocel().selectSingleNode(cfobj.target_name+"[@rndx]");
       else if (xrow)
          result = xrow.parentNode;
@@ -152,7 +149,7 @@
 
    _tbase.prototype.update_row = function(cfobj, preserve_result)
    {
-      if ("cmd" in cfobj)
+      if (SFW.has_value(cfobj,"cmd"))
       {
          switch(cfobj.cmd)
          {
@@ -197,9 +194,8 @@
          this.replot();
       }
 
-      var dobj = cfobj.cdata;
-      if (dobj && "os" in dobj)
-         SFW.set_page_offset(dobj.os);
+      if (SFW.has_value(cfobj,"cdata","os"))
+         SFW.set_page_offset(cfobj.cdata.os);
    };
 
 
@@ -287,7 +283,7 @@
    {
       var id, xrow = null;
 
-      if ("target" in info)
+      if (SFW.has_value(info,"target"))
       {
          // This sequence makes a few assumptions about the data:
          // 1. A missing data_id is a failure and should be diagnosed
@@ -297,7 +293,7 @@
          //    of the get_cell_click_info().
          // 3. Another situation that might have a 0 data_id is if the
          //    intent is to create a new record.
-         if (!("data_id" in info))
+         if (!(SFW.has_value(info,"data_id")))
          {
             this.diagnose_missing_data_id(info.target);
             return true;
@@ -311,9 +307,9 @@
 
       // Look for custom handlers, first at the object level as a object procedure,
       // then at the global level, as window[(function_name=info.task)]().
-      if (info.task in this)
+      if (SFW.has_value(this,info.task))
          return this[info.task](info.target, xrow, info);
-      if (info.task in window)
+      if (SFW.has_value(window,info.task))
          return window[info.task](info.target, xrow, info);
 
       // The default behavior is that an item click, either line or cell,
