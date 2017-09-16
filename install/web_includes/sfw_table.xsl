@@ -180,11 +180,12 @@
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:variable
-        name="plist"
-        select="parent::*[count($lines)=0]/*[local-name()=$row-name]" />
+    <xsl:variable name="result" select="parent::*[@rndx]" />
 
-    <xsl:variable name="lines_to_use" select="$lines|$plist" />
+    <xsl:variable name="r_rows" select="$result/*[not($lines)][local-name()=$result/@row-name]" />
+    <xsl:variable name="s_rows" select="$result/*[not($lines|$r_rows)][local-name()=current()/@name]" />
+
+    <xsl:variable name="lines_to_use" select="$lines|$r_rows|$s_rows" />
 
     <xsl:variable name="id_field">
       <xsl:apply-templates select="." mode="get_id_field_name" />
