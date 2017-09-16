@@ -314,7 +314,6 @@
       </xsl:if>
 
       <xsl:if test="$id_field">
-        <xsl:attribute name="idfield">id_field is <xsl:value-of select="$id_field" /></xsl:attribute>
         <xsl:attribute name="data-id">
           <xsl:value-of select="@*[name()=$id_field]" />
         </xsl:attribute>
