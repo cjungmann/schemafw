@@ -137,6 +137,9 @@
       <xsl:if test="$field/@style='multiple'">
         <xsl:attribute name="data-multiple">yes</xsl:attribute>
       </xsl:if>
+      <xsl:if test="$field/@on_add">
+        <xsl:apply-templates select="$field/@on_add" mode="add_resolved_data_attribute" />
+      </xsl:if>
       <!-- <ul name="{$field/@name}" class="ulselect" -->
       <!--     data-sfw-class="ulselect" data-sfw-input="true"> -->
 

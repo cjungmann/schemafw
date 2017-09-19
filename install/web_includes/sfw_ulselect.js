@@ -197,11 +197,11 @@
          var val = this.input_el.value.trim();
          if (val.length>0)
          {
-            var onadd, fld;
-            if ((fld=this.get_schema_field()) && (onadd=fld.getAttribute("on_add")))
+            var url = this._input.getAttribute("data-on_add");
+            if (url)
             {
                SFW.open_interaction(SFW.stage,
-                                    onadd,
+                                    url,
                                     this,
                                     { os:SFW.get_page_offset(),
                                       host:this.host(),
