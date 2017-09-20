@@ -138,7 +138,7 @@
          if (rname==uname)
             return result;
          else
-            SFW.alert("The update row name (" + uname||"NULL"+
+            SFW.alert("The update row name (" + (uname||"NULL") +
                       ") does not match the result's row-name (" + rname +").");
       }
       else
