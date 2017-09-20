@@ -197,7 +197,7 @@
          var val = this.input_el.value.trim();
          if (val.length>0)
          {
-            var url = this._input.getAttribute("data-on_add");
+            var url = this.input().getAttribute("data-on_add");
             if (url)
             {
                SFW.open_interaction(SFW.stage,
