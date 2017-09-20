@@ -163,8 +163,8 @@ function init_SFW(callback)
       return ("update_row" in o)?o.update_row:null; };
 
    SFW.get_xrow_from_cfobj  = function(o) {
-      if ("cdata" in o && "xrow" in o.cdata)
-         return this.cdata.xrow;
+      if (_has_value(o,"cdata", "xrow"))
+         return o.cdata.xrow;
       else
          return null;
    },
