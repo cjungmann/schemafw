@@ -115,6 +115,7 @@ function init_SFW(callback)
    SFW.confirm              = _confirm;
    SFW.log_error            = _log_error;
    SFW.has_value            = _has_value;
+   SFW.get_property         = _get_property;
    SFW.confirm_not_null     = _confirm_not_null;
    SFW.seek_top_sfw_host    = _seek_top_sfw_host;
    SFW.seek_page_anchor     = _seek_page_anchor;
@@ -237,6 +238,26 @@ function init_SFW(callback)
          obj = obj[name];
       }
       return true;
+   }
+
+   /**
+    * Returns property if it exists, otherwise returns null.
+    * 
+    * Like _has_value(), gets successive properties according to the argument list,
+    * returning the property that matches the final argument if found.  If any
+    * of the named properties are missing, the function immediately returns null.
+    */
+   function _get_property(obj)
+   {
+      var rval = obj;
+      for (var i=1, stop=arguments.length; rval!==null && i<stop; ++i)
+      {
+         var name = arguments[i];
+         if (!(name in rval))
+            return null;
+         rval = rval[name];
+      }
+      return rval;
    }
 
    /** Sends an error message if the specific object value if null. */
@@ -1267,8 +1288,22 @@ function init_SFW(callback)
    };
 
    _base.prototype.get_field_name =  function(){return this.get_field_actors("name");};
-   _base.prototype.get_schema_field =function(){return this.get_field_actors("field");};
    _base.prototype.get_ref_result =  function(){return this.get_field_actors("result");};
+
+   _base.prototype.get_schema_field =function(xpath)
+   {
+      var field = null;
+      var schema = this.schema();
+      if (schema)
+      {
+         if (xpath.includes('['))
+            field = schema.selectSingleNode(xpath);
+         else
+            field = schema.selectSingleNode("field[@name='" + xpath + "']");
+      }
+
+      return field;
+   };
    
    _base.prototype.get_result_name_from_top = function()
    {
