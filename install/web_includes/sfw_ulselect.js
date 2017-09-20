@@ -215,20 +215,22 @@
       return false;
    };
 
-   function _get_prefill(obj)
+   function _get_prefill_value(obj)
    {
-      var h, d, p=null;
-      if ((h=obj.host()) && (d=("data" in h)?h.data:null))
-         p = "prefill" in d ? d.prefill : null;
-      return p;
+      return SFW.get_property(obj.host(), "data", "prefill");
+      // var h, d, p=null;
+      // if ((h=obj.host()) && (d=("data" in h)?h.data:null))
+      //    p = "prefill" in d ? d.prefill : null;
+      // return p;
    }
 
-   function _get_first_field(obj)
+   function _set_prefill_field(obj, val)
    {
-      if ("get_first_editable_form_field" in obj)
-         return obj.get_first_editable_form_field();
-      else
-         return null;
+      var sfield = obj.get_schema_field("field[@prefill]");
+      if (sfield && "set_field" in obj)
+         obj.set_field(sfield.getAttribute("name"), val);
+      else if ("get_first_editable_form_field" in obj && (sfield=obj.get_first_editable_form_field()))
+         sfield.value = val;
    }
 
    // Prevent replot since it doesn't make sense for this control.
@@ -236,10 +238,9 @@
 
    _ulselect.prototype.child_ready = function(obj)
    {
-      var val, field;
-      if ((val=_get_prefill(obj))
-          && (field=_get_first_field(obj)))
-         field.value = val;
+      var val;
+      if ((val=_get_prefill_value(obj)))
+         _set_prefill_field(obj,val);
    };
 
    /** At present, the only reason I can think that a child
