@@ -104,9 +104,7 @@
       
       <fieldset class="Schema">
         <xsl:element name="legend">
-          <xsl:if test="$primary">
-            <xsl:attribute name="class">Embedded</xsl:attribute>
-          </xsl:if>
+          <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
           <xsl:value-of select="$legend" />
         </xsl:element>
 
