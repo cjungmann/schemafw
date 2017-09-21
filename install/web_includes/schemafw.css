@@ -198,7 +198,7 @@ fieldset.Schema label::after {content : ":"}
 fieldset.Schema p.buttons { display:block; text-align:center; margin-bottom:.25em; }
 fieldset.Schema input.Embedded { display:none; }
 
-Form.Moveable legend       { cursor: pointer; }
+form.Moveable legend       { cursor: pointer; }
 form.Moveable legend:hover { background-color:#CCCCCC; }
 
 form.Schema td { vertical-align:top; }
