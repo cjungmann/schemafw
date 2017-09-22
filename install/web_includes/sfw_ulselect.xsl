@@ -26,37 +26,46 @@
      to the server as part of the form POST.
   -->
 
-  <!--
-      Modeless template for transformfill().
-      Matches an attribute in a data row that can be matched to ulselect schema/field,
-      where the schema is in the same result as the data row.
-  -->
-  <xsl:template match="@*[../../schema/field[@type='ulselect']/@name=local-name()]" >
-    <xsl:variable
-        name="field" select="../../schema/field[@name=local-name(current())]" />
-
+  <!-- Defacto-filling template, using nodes identified by the following templates. -->
+  <xsl:template match="field[@type='ulselect']" mode="fill_defacto">
+    <xsl:param name="attr" />
     <xsl:call-template name="fill_ulselect_defacto">
-      <xsl:with-param name="lookup" select="/*/*[local-name()=$field/@result]" />
-      <xsl:with-param name="str" select="." />
-      <xsl:with-param name="style" select="$field/@style" />
+      <xsl:with-param name="lookup" select="/*/*[local-name()=current()/@result]" />
+      <xsl:with-param name="str" select="string($attr)" />
+      <xsl:with-param name="style" select="@style" />
     </xsl:call-template>
   </xsl:template>
 
+  <!-- Mode-less template that matches the first ulselect field that matches the attribute name. -->
+  <xsl:template match="@*[/*/*[@rndx]/schema/field[@type='ulselect']/@name=local-name()]">
+    <xsl:variable
+        name="field" select="/*/*[@rndx]/schema/field[@name=local-name(current())][1]" />
+    <xsl:apply-templates select="$field" mode="fill_defacto">
+      <xsl:with-param name="attr" select="." />
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <!-- Mode-less ulselect attribute-matching template that should be more discriminating. -->
+  <xsl:template match="@*[../../schema/field[@type='ulselect']/@name=local-name()]" >
+    <xsl:variable
+        name="field" select="../../schema/field[@name=local-name(current())]" />
+    <xsl:apply-templates select="$field" mode="fill_defacto">
+      <xsl:with-param name="attr" select="." />
+    </xsl:apply-templates>
+  </xsl:template>
+
   <!--
-      Modeless template for transformfill().
-      Matches an attribute in a data row that can be matched to ulselect schema/field,
-      where the schema is a direct child of the document element.
+      Mode-less ulselect attribute-matching template that matches a form-new schema (not in a result).
   -->
   <xsl:template match="@*[not(../../schema)][/*/schema[1]/field[@type='ulselect']/@name=local-name()]">
     <xsl:variable
         name="field" select="/*/schema[1]/field[@name=local-name(current())]" />
-
-    <xsl:call-template name="fill_ulselect_defacto">
-      <xsl:with-param name="lookup" select="/*/*[local-name()=$field/@result]" />
-      <xsl:with-param name="str" select="." />
-      <xsl:with-param name="style" select="$field/@style" />
-    </xsl:call-template>
+    <xsl:apply-templates select="$field" mode="fill_defacto">
+      <xsl:with-param name="attr" select="." />
+    </xsl:apply-templates>
   </xsl:template>
+
+  
 
   <!-- Generic template for rebuilding the options list -->
   <xsl:template match="field[@type='ulselect']">
