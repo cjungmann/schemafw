@@ -158,6 +158,8 @@ function init_SFW(callback)
 
    SFW.replace_results      = _replace_results;
 
+   SFW.row_name_from_schema = _row_name_from_schema
+
    SFW.get_object_from_host = _get_object_from_host;
    SFW.get_cfobj_result     = _get_cfobj_result;
    SFW.get_urow_from_cfobj  = function(o) {
@@ -1097,6 +1099,19 @@ function init_SFW(callback)
              + (arrX.length ? ("\nOther\n   "   + arrX.join("\n   ")) : ""));
    }
 
+   function _row_name_from_schema(schema)
+   {
+      var parent, name = null;
+      if (schema)
+      {
+         name = schema.getAttribute("row-name") || schema.getAttribute("name");
+         if (!name && (parent=schema.parentNode).getAttribute("rndx"))
+            name = parent.getAttribute("row-name");
+      }
+
+      return name;
+   }
+
    function _get_object_from_host(host)
    {
       var anchor, type;
@@ -1323,7 +1338,10 @@ function init_SFW(callback)
          if (schema.parentNode.parentNode.nodeType==9)
             xpath = "/*/*[@rndx][1]/*[1]";
          else
-            xpath = "../*[local-name()=../@row-name]";
+         {
+            var rname = _row_name_from_schema(schema);
+            xpath = "../" + rname;
+         }
 
          return schema.selectSingleNode(xpath);
       }
