@@ -133,6 +133,13 @@
       if (result)
       {
          var rname = result.getAttribute("row-name");
+         if (!rname)
+         {
+            var attr = result.selectSingleNode("schema/@name")
+                || result.selectSingleNode("schema/@row-name");
+            if (attr)
+               rname = attr.value;
+         }
          var uname = urow ? urow.tagName : null;
 
          if (rname==uname)
