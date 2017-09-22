@@ -39,15 +39,18 @@
 
    _ulselect.prototype.get_phantom_row = function(value)
    {
-      var row = null;
+      var pname, result, row = null;
       var factors = this.get_field_actors();
       if ("result" in factors)
       {
-         var phantom_name = "phantom_" + factors.schema.getAttribute("row_name");
-         var result = factors.result;
-         row = result.selectSingleNode(phantom_name);
-         if (!row)
-            row = addEl(phantom_name, result);
+         if ((pname=SFW.row_name_from_schema(factors.schema)))
+         {
+            pname = "phantom_" + pname;
+            result = factors.result;
+            row = result.selectSingleNode(pname);
+            if (!row)
+               row = addEl(pname, result);
+         }
       }
 
       if (row)
