@@ -888,6 +888,8 @@ void Result_As_SchemaDoc::pre_fetch_use_result(int result_number,
             m_row_name = thandle->value();
          else if ((thandle=schema->seek("name")))
             m_row_name = thandle->value();
+         else if (schema->has_value())
+            m_row_name = schema->value();
       }
 
       // Get m_group_name or set to "result" as a default:
