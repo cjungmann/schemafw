@@ -26,32 +26,24 @@
      to the server as part of the form POST.
   -->
 
-  <!-- Defacto-filling template, using nodes identified by the following templates. -->
-  <xsl:template match="field[@type='ulselect']" mode="fill_defacto">
-    <xsl:param name="attr" />
-    <xsl:call-template name="fill_ulselect_defacto">
-      <xsl:with-param name="lookup" select="/*/*[local-name()=current()/@result]" />
-      <xsl:with-param name="str" select="string($attr)" />
-      <xsl:with-param name="style" select="@style" />
-    </xsl:call-template>
-  </xsl:template>
-
   <!-- Mode-less template that matches the first ulselect field that matches the attribute name. -->
   <xsl:template match="@*[/*/*[@rndx]/schema/field[@type='ulselect']/@name=local-name()]">
     <xsl:variable
         name="field" select="/*/*[@rndx]/schema/field[@name=local-name(current())][1]" />
-    <xsl:apply-templates select="$field" mode="fill_defacto">
-      <xsl:with-param name="attr" select="." />
-    </xsl:apply-templates>
+    <xsl:call-template name="fill_ulselect_defacto">
+      <xsl:with-param name="field" select="$field" />
+      <xsl:with-param name="str" select="." />
+    </xsl:call-template>
   </xsl:template>
 
   <!-- Mode-less ulselect attribute-matching template that should be more discriminating. -->
   <xsl:template match="@*[../../schema/field[@type='ulselect']/@name=local-name()]" >
     <xsl:variable
         name="field" select="../../schema/field[@name=local-name(current())]" />
-    <xsl:apply-templates select="$field" mode="fill_defacto">
-      <xsl:with-param name="attr" select="." />
-    </xsl:apply-templates>
+    <xsl:call-template name="fill_ulselect_defacto">
+      <xsl:with-param name="field" select="$field" />
+      <xsl:with-param name="str" select="." />
+    </xsl:call-template>
   </xsl:template>
 
   <!--
@@ -60,11 +52,12 @@
   <xsl:template match="@*[not(../../schema)][/*/schema[1]/field[@type='ulselect']/@name=local-name()]">
     <xsl:variable
         name="field" select="/*/schema[1]/field[@name=local-name(current())]" />
-    <xsl:apply-templates select="$field" mode="fill_defacto">
-      <xsl:with-param name="attr" select="." />
-    </xsl:apply-templates>
+    <span>not(schema)/root/schema</span>
+    <xsl:call-template name="fill_ulselect_defacto">
+      <xsl:with-param name="field" select="$field" />
+      <xsl:with-param name="str" select="." />
+    </xsl:call-template>
   </xsl:template>
-
   
 
   <!-- Generic template for rebuilding the options list -->
@@ -172,10 +165,23 @@
       <li class="options_host">
         <div>
           <ul class="ulselect_options">
-            <xsl:apply-templates select="$lu_result/*" mode="construct_ulselect_option">
-              <xsl:with-param name="list" select="$list" />
-              <xsl:with-param name="style" select="$field/@style" />
-            </xsl:apply-templates>
+            <xsl:choose>
+              <xsl:when test="$field/@flag='no-list'">
+                <li>No list, sucka!</li>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:apply-templates select="$lu_result/*" mode="construct_ulselect_option">
+                  <xsl:with-param name="list" select="$list" />
+                  <xsl:with-param name="style" select="$field/@style" />
+                </xsl:apply-templates>
+              </xsl:otherwise>
+            </xsl:choose>
+            <!-- <xsl:if test="not($field/@flag='no-list')"> -->
+            <!--   <xsl:apply-templates select="$lu_result/*" mode="construct_ulselect_option"> -->
+            <!--     <xsl:with-param name="list" select="$list" /> -->
+            <!--     <xsl:with-param name="style" select="$field/@style" /> -->
+            <!--   </xsl:apply-templates> -->
+            <!-- </xsl:if> -->
           </ul>
         </div>
       </li>
@@ -207,9 +213,9 @@
 
     <span class="defacto">
       <xsl:call-template name="fill_ulselect_defacto" >
+        <xsl:with-param name="field" select="$field" />
         <xsl:with-param name="lookup" select="." />
         <xsl:with-param name="str" select="$value" />
-        <xsl:with-param name="style" select="$field/@style" />
       </xsl:call-template>
     </span>
     <xsl:text> </xsl:text>
@@ -219,36 +225,39 @@
 
   <!-- Recursive template that adds items to the "current selections" element. -->
   <xsl:template name="fill_ulselect_defacto">
-    <xsl:param name="lookup" />
+    <xsl:param name="field" />
     <xsl:param name="str" />
-    <xsl:param name="style" />
+    <xsl:param name="lookup" select="/.." />
+
+    <xsl:variable name="found_lookup" select="/*[not($lookup)]/*[local-name()=$field/@result]" />
+    <xsl:variable name="result" select="$lookup|$found_lookup" />
 
     <xsl:variable name="hascomma" select="contains($str,',')" />
-    <xsl:text> </xsl:text>
-    
-    <xsl:choose>
-      <xsl:when test="$hascomma">
-        <xsl:variable name="val" select="substring-before($str,',')" />
-        <xsl:variable name="sel" select="$lookup/*[@id=$val]" />
 
-        <xsl:apply-templates select="$sel" mode="construct_ulselect_defacto_item">
-          <xsl:with-param name="style" select="$style" />
-        </xsl:apply-templates>
+    <xsl:variable name="id">
+      <xsl:choose>
+        <xsl:when test="$hascomma">
+          <xsl:value-of select="substring-before($str,',')" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$str" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
 
-        <xsl:call-template name="fill_ulselect_defacto">
-          <xsl:with-param name="lookup" select="$lookup" />
-          <xsl:with-param name="str" select="substring-after($str,',')" />
-          <xsl:with-param name="style" select="$style" />
-        </xsl:call-template>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:variable name="sel" select="$lookup/*[@id=$str]" />
-        <xsl:apply-templates select="$sel" mode="construct_ulselect_defacto_item">
-          <xsl:with-param name="style" select="$style" />
-        </xsl:apply-templates>
-      </xsl:otherwise>
-    </xsl:choose>
+    <xsl:text>  </xsl:text>
 
+    <xsl:apply-templates select="$result/*[@id=$id]" mode="construct_ulselect_defacto_item">
+      <xsl:with-param name="style" select="$field/@style" />
+    </xsl:apply-templates>
+
+    <xsl:if test="$hascomma">
+      <xsl:call-template name="fill_ulselect_defacto">
+        <xsl:with-param name="field" select="$field" />
+        <xsl:with-param name="lookup" select="$result" />
+        <xsl:with-param name="str" select="substring-after($str,',')" />
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="*[@id]" mode="construct_ulselect_defacto_item">
