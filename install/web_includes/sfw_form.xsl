@@ -8,7 +8,6 @@
 
   <xsl:import href="sfw_generics.xsl" />
   <xsl:import href="sfw_utilities.xsl" />
-  <xsl:import href="sfw_ulselect.xsl" />
   <xsl:import href="sfw_schema.xsl" />
 
   <xsl:output method="xml"
@@ -558,7 +557,6 @@
     </xsl:element>
     
   </xsl:template>
-
 
 
 

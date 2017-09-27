@@ -13,6 +13,7 @@
   <xsl:import href="sfw_table.xsl" />
   <xsl:import href="sfw_form.xsl" />
   <xsl:import href="sfw_calendar.xsl" />
+  <xsl:import href="sfw_ulselect.xsl" />
 
   <xsl:output method="xml"
          doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
