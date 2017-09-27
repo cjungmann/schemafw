@@ -34,6 +34,8 @@ There are several sections.
     - [Interactive Classes](IClasses.md)
     - [Dependent Module Loading](DependentModuleLoad.md)
     - [Making Sense of *on_line_click*](OnLineClick.md)
+  - Special Controls and Widgets
+    - [ULSelect: Flexible Select Widget](ULSelect.md)
   - Extending the Framework
     - [Custom Interactive Classes](CustomIClasses.md)
     - [Customizing Titles](CustomizingTitles.md)
