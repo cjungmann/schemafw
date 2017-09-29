@@ -15,6 +15,7 @@
               omit-xml-declaration="yes"
               encoding="UTF-8"/>
 
+
   <!--
   The control consists of a three-part cluster, followed by a
   temporary drop-down section with a list of options.
@@ -27,9 +28,8 @@
   -->
 
   <!-- Mode-less template that matches the first ulselect field that matches the attribute name. -->
-  <xsl:template match="@*[/*/*[@rndx]/schema/field[@type='ulselect']/@name=local-name()]">
-    <xsl:variable
-        name="field" select="/*/*[@rndx]/schema/field[@name=local-name(current())][1]" />
+  <xsl:template match="@*[/*/*[@rndx]/schema/field[@type='ulselect']/@name=local-name(current())]">
+    <xsl:variable name="field" select="/*/*[@rndx]/schema/field[@name=local-name(current())][1]" />
     <xsl:call-template name="fill_ulselect_defacto">
       <xsl:with-param name="field" select="$field" />
       <xsl:with-param name="str" select="." />
@@ -37,9 +37,8 @@
   </xsl:template>
 
   <!-- Mode-less ulselect attribute-matching template that should be more discriminating. -->
-  <xsl:template match="@*[../../schema/field[@type='ulselect']/@name=local-name()]" >
-    <xsl:variable
-        name="field" select="../../schema/field[@name=local-name(current())]" />
+  <xsl:template match="@*[ancestor::*[@rndx]/schema/field[@type='ulselect']/@name=local-name(current())]" >
+    <xsl:variable name="field" select="ancestor::*[@rndx]/schema/field[@name=local-name(current())]" />
     <xsl:call-template name="fill_ulselect_defacto">
       <xsl:with-param name="field" select="$field" />
       <xsl:with-param name="str" select="." />
@@ -47,12 +46,11 @@
   </xsl:template>
 
   <!--
-      Mode-less ulselect attribute-matching template that matches a form-new schema (not in a result).
+      Mode-less ulselect attribute-matching template that matches a form-new schema when 
+      ancestor schema is not available(not in a result).
   -->
-  <xsl:template match="@*[not(../../schema)][/*/schema[1]/field[@type='ulselect']/@name=local-name()]">
-    <xsl:variable
-        name="field" select="/*/schema[1]/field[@name=local-name(current())]" />
-    <span>not(schema)/root/schema</span>
+  <xsl:template match="@*[not(ancestor::*[@rndx]/schema)][/*/schema[1]/field[@type='ulselect']/@name=local-name()]">
+    <xsl:variable name="field" select="/*/schema[1]/field[@name=local-name(current())]" />
     <xsl:call-template name="fill_ulselect_defacto">
       <xsl:with-param name="field" select="$field" />
       <xsl:with-param name="str" select="." />
@@ -139,6 +137,7 @@
       <xsl:if test="$field/@style='multiple'">
         <xsl:attribute name="data-multiple">yes</xsl:attribute>
       </xsl:if>
+
       <xsl:if test="$field/@on_add">
         <xsl:apply-templates select="$field/@on_add" mode="add_resolved_data_attribute" />
       </xsl:if>
@@ -165,23 +164,12 @@
       <li class="options_host">
         <div>
           <ul class="ulselect_options">
-            <xsl:choose>
-              <xsl:when test="$field/@flag='no-list'">
-                <li>No list, sucka!</li>
-              </xsl:when>
-              <xsl:otherwise>
-                <xsl:apply-templates select="$lu_result/*" mode="construct_ulselect_option">
-                  <xsl:with-param name="list" select="$list" />
-                  <xsl:with-param name="style" select="$field/@style" />
-                </xsl:apply-templates>
-              </xsl:otherwise>
-            </xsl:choose>
-            <!-- <xsl:if test="not($field/@flag='no-list')"> -->
-            <!--   <xsl:apply-templates select="$lu_result/*" mode="construct_ulselect_option"> -->
-            <!--     <xsl:with-param name="list" select="$list" /> -->
-            <!--     <xsl:with-param name="style" select="$field/@style" /> -->
-            <!--   </xsl:apply-templates> -->
-            <!-- </xsl:if> -->
+            <xsl:if test="not($field/@options='off')">
+              <xsl:apply-templates select="$lu_result/*" mode="construct_ulselect_option">
+                <xsl:with-param name="list" select="$list" />
+                <xsl:with-param name="style" select="$field/@style" />
+              </xsl:apply-templates>
+            </xsl:if>
           </ul>
         </div>
       </li>
@@ -229,6 +217,11 @@
     <xsl:param name="str" />
     <xsl:param name="lookup" select="/.." />
 
+    <xsl:text>  </xsl:text>
+    <xsl:if test="not($lookup)">
+      <xsl:value-of select="concat($apos,'val=',$str,$apos)" />
+    </xsl:if>
+
     <xsl:variable name="found_lookup" select="/*[not($lookup)]/*[local-name()=$field/@result]" />
     <xsl:variable name="result" select="$lookup|$found_lookup" />
 
@@ -244,8 +237,6 @@
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-
-    <xsl:text>  </xsl:text>
 
     <xsl:apply-templates select="$result/*[@id=$id]" mode="construct_ulselect_defacto_item">
       <xsl:with-param name="style" select="$field/@style" />
