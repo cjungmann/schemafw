@@ -1103,10 +1103,10 @@ function init_SFW(callback)
 
    function _get_row_from_result_id(result, idval)
    {
-      var idname = result.selectSingleNode("schema/field[@xrow-id or @auto-increment]/@name");
-      if (_confirm_not_null(idname, "Unable to identify id field."))
+      var idattr = result.selectSingleNode("schema/field[@xrow-id or @auto-increment]/@name");
+      if (_confirm_not_null(idattr, "Unable to identify id field."))
       {
-         var xpath = result.getAttribute("row-name") + "[@" + idname + "='" + idval + "']";
+         var xpath = result.getAttribute("row-name") + "[@" + idattr.value + "='" + idval + "']";
          return result.selectSingleNode(xpath);
       }
       else
