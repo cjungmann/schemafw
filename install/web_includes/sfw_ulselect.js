@@ -261,16 +261,29 @@
       {
          var result = this.get_result_to_update(cfobj);
          var newid = cfobj.update_row.getAttribute("id");
+
          this.update_row(cfobj);
          this.refresh_options();
 
-         if (newid && result)
+         if (result && newid)
          {
-            var el;
-            if ((el=this.get_li_by_id(newid)))
+            var field = this.get_field_actors("field");
+            if (field && field.getAttribute("options")=="off")
             {
-               this.select_option(el);
-               this.stage_input_focus();
+               var row = SFW.get_row_from_result_id(result, newid);
+               if (row)
+                  this.add_selection(row.getAttribute("id"));
+               else
+                  console.error("Updated result row not found in result.");
+            }
+            else
+            {
+               var el;
+               if ((el=this.get_li_by_id(newid)))
+               {
+                  this.select_option(el);
+                  this.stage_input_focus();
+               }
             }
          }
       }
@@ -665,9 +678,10 @@
       var name, schema, field;
       if ((name=this.get_field_name())
           && (schema=this.schema())
-          && (field=schema.selectSingleNode("field[@name='" + name + "']")))
+          && (field=schema.selectSingleNode("field[@name='" + name + "']"))
+          && field.getAttribute("options")!="off")
       {
-         SFW.xslobj.transformFill(this.ul_options,field);
+            SFW.xslobj.transformFill(this.ul_options,field);
       }
    };
 
