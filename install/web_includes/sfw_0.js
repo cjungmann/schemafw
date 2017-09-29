@@ -158,6 +158,8 @@ function init_SFW(callback)
 
    SFW.replace_results      = _replace_results;
 
+   SFW.get_row_from_result_id = _get_row_from_result_id;
+
    SFW.row_name_from_schema = _row_name_from_schema
 
    SFW.get_object_from_host = _get_object_from_host;
@@ -1097,6 +1099,18 @@ function init_SFW(callback)
              + (arrO.length ? ("\nObjects\n   " + arrO.join("\n   ")) : "")
              + (arrS.length ? ("\nStrings\n   " + arrS.join("\n   ")) : "")
              + (arrX.length ? ("\nOther\n   "   + arrX.join("\n   ")) : ""));
+   }
+
+   function _get_row_from_result_id(result, idval)
+   {
+      var idname = result.selectSingleNode("schema/field[@xrow-id or @auto-increment]/@name");
+      if (_confirm_not_null(idname, "Unable to identify id field."))
+      {
+         var xpath = result.getAttribute("row-name") + "[@" + idname + "='" + idval + "']";
+         return result.selectSingleNode(xpath);
+      }
+      else
+         return null;
    }
 
    function _row_name_from_schema(schema)
