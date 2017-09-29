@@ -218,9 +218,6 @@
     <xsl:param name="lookup" select="/.." />
 
     <xsl:text>  </xsl:text>
-    <xsl:if test="not($lookup)">
-      <xsl:value-of select="concat($apos,'val=',$str,$apos)" />
-    </xsl:if>
 
     <xsl:variable name="found_lookup" select="/*[not($lookup)]/*[local-name()=$field/@result]" />
     <xsl:variable name="result" select="$lookup|$found_lookup" />
