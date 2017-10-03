@@ -20,6 +20,7 @@
   -->
 
   <xsl:import href="sfw_generics.xsl" />
+  <xsl:import href="sfw_variables.xsl" />
 
   <xsl:variable name="vars" select="/*/*[@rndx][@type='variables']" />
 
@@ -316,8 +317,7 @@
   -->
   <xsl:template name="resolve_refs">
     <xsl:param name="str" />
-
-    <xsl:variable name="vv" select="substring($str,1)" />
+    <xsl:param name="row" select="/.." />
 
     <xsl:variable name="delim">
       <xsl:variable name="after" select="substring(substring-after($str,'{'),1,1)" />
@@ -343,7 +343,7 @@
         </xsl:if>
       </xsl:if>
     </xsl:variable>
-    
+
     <xsl:variable name="val">
       <xsl:choose>
         <xsl:when test="$len_before">
@@ -363,7 +363,16 @@
               </xsl:call-template>
             </xsl:when>
             <xsl:when test="$type='!'">
-              <xsl:value-of select="concat($delim, $ref, '}')" />
+              <xsl:choose>
+                <xsl:when test="$row">
+                  <xsl:apply-templates select="$row" mode="get_row_value">
+                    <xsl:with-param name="name" select="$ref" />
+                  </xsl:apply-templates>
+                </xsl:when>
+                <xsl:otherwise>
+                  <xsl:value-of select="concat($delim, $ref, '}')" />
+                </xsl:otherwise>
+              </xsl:choose>
             </xsl:when>
           </xsl:choose>
         </xsl:when>
@@ -372,7 +381,7 @@
     </xsl:variable>
 
     <xsl:value-of select="$val" />
-    
+
     <xsl:variable name="skiplen">
       <xsl:choose>
         <xsl:when test="string-length($ref) &gt; 0">
@@ -387,6 +396,7 @@
     <xsl:if test="string-length($str) &gt;= $skiplen">
       <xsl:call-template name="resolve_refs">
         <xsl:with-param name="str" select="substring($str, $skiplen)" />
+        <xsl:with-param name="row" select="$row" />
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
@@ -427,6 +437,11 @@
     <xsl:apply-templates select="$vars" mode="get_var_value">
       <xsl:with-param name="name" select="$name" />
     </xsl:apply-templates>
+  </xsl:template>
+
+  <xsl:template match="*" mode="get_row_value">
+    <xsl:param name="name" />
+    <xsl:value-of select="current()/@*[local-name()=$name]" />
   </xsl:template>
 
 </xsl:stylesheet>
