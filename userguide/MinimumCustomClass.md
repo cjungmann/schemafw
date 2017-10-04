@@ -7,12 +7,17 @@ custom classes.
 To create a new class, especially an input form widget, there are a few steps that must be
 taken to ensure the new widget is loaded and recognized.
 
-## Create an XSL Stylesheet
+## Steps for Creating a New Class
+
+### Create a Template to Build The HTML.
+
+This example assumes that there will be a new XSL stylesheet for the new class.
 
 To create the new form widget, it is necessary to create a template of mode **construct_input**
 that matches a specific field.  Notice in the stylesheet fragment below how the template matches
 a field of type *newtype*:
 
+Example file *newtype.xsl*:
 ~~~xsl
 <?xml version="1.0" encoding="UTF-8" ?>
 <xsl:stylesheet
@@ -59,9 +64,10 @@ each contribute to the proper handling of the class:
   the *data-sfw-class* attribute of the hosting element from overwriting the class
   name of the custom input class as the framework scans through its ancestors.
 
-## Create a Javascript Module
+### Create a Javascript Module
 
-The new class must be registered into the *SFW.types* array.
+The new class must be registered into the *SFW.types* array.  This is done with the command
+`SFW.derive()` as described below.
 
 The first line in the following *_init()* function will delay until the **SFW** object has
 been created, and further, if necessary, to ensure that the base class of the new widget has
@@ -80,7 +86,7 @@ was not defined.  Notice how this function calls the parent class using the *SFW
 array.
 
 ~~~js
-// sfw_newtype.js
+// newtype.js
 (function _init()
 {
    if ((!("SFW" in window) && setTimeout(_init,100))
@@ -103,10 +109,80 @@ array.
 })();
 ~~~
 
-## CSS Stylesheet
+### CSS Stylesheet
 
 There will be no examples here, but most projects will need to consider the need for
 CSS rules to ensure the custom input looks and runs properly.
+
+### Ensure the New Scripts are Loaded.
+
+There are two ways to do this.  For objects that will be part of the framework, update
+files *sfw_scripts.xsl* and *sfw_debug.xsl*.  For one-off customization, add the references
+to the *default.xsl* file.
+
+#### Option 1: Add to Schema Framework
+
+Add the new Javascript file to *sfw_scripts.xsl*.  The variable **jslist_sfw_debug** holds the
+list of Javascript file names (without the *.js* extension).  Simply add the new script file name
+to the end of the list.
+
+~~~xsl
+<xsl:stylesheet version="1.0" ...>
+  .
+  .
+  <xsl:variable name="jslist_sfw_brief">sfw</xsl:variable>
+  <xsl:variable name="jslist_sfw_minified">sfw.min</xsl:variable>
+  <xsl:variable name="jslist_sfw_debug">sfw_0 sfw_tbase sfw_calendar sfw_debug sfw_dom sfw_form sfw_ulselect sfw_mixed_view sfw_onload sfw_table sfw_iltable</xsl:variable>
+  
+  <!-- Set jslist_sfw to one of the above variables for the desired script-set. -->
+  <xsl:variable name="jslist_sfw" select="$jslist_sfw_debug" /> 
+  .
+</xsl:stylesheet>  
+~~~
+
+Note that when running `sudo make update-client`, a minimized Javascript file will be made from
+the concatenated contents of all the *sfw*-prefixed, *js* extension files in the directory.  The
+production version of your application should define the variable *jslist_sfw* to be
+*$jslist_sfw_minified* to load the minimized version.  Use the debug version for development
+because it's easier to debug.
+
+Add the new XSL stylesheet as an xsl:import element to the *sfw_debug.xsl* file.  Pay
+attention to template matching preferences when deciding where in the list the new file
+should be added.
+
+#### Option 2: Add to *default.xsl*
+
+For one-off customization, update the *default.xsl* as follows:
+
+~~~xsl
+<xsl:stylesheet version="1.0" ...>
+  .
+  <xsl:import href="includes/sfw_debug.xsl" />
+  <!-- <xsl:import href="includes/sfw_compiled.xsl" /> -->
+
+  <xsl:import href="newtype.xsl" />
+  .
+  <xsl:template match="/">
+     <html>
+        <head>
+          <title>Your Title</title>
+          <xsl:apply-templates select="*" mode="fill_head" />
+          <script type="text/javascript" src="newtype.js"></script>
+        </head>
+     .
+     .
+  </xsl:template>
+  -
+  -
+</xsl:stylesheet>  
+~~~
+
+Note the `<xsl:import href="newtype.xsl" />` that adds the new stylesheet to the project,
+and, the the *<head>* section, the `<script type="text/javascript" src="newtype.js"></script>`
+statement that adds the Javascript file.
+
+Also note the top import statements.  By default, it uses the *sfw_debug.xsl* stylesheet that
+makes it easier to debug the stylesheet with a tool like [Oxygen](http://www.oxygenxml.com).
 
 ## Notes and Recommendations
 
