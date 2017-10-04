@@ -38,7 +38,15 @@ Example file *newtype.xsl*:
     <xsl:template match="field[@type='newtype']" mode="construct_input">
        <xsl:param name="data" />
 
-       <div class="newtype" data-sfw-class="newtype" data-sfw-input="input">
+       <xsl:element name="div">
+          <xsl:attribute name="class">newtype</xsl:attribute>
+          <xsl:attribute name="data-sfw-class">newtype</xsl:attribute>
+          <xsl:attribute name="data-sfw-input">input</xsl:attribute>
+          .
+          .
+       </xsl:element>
+
+
        .
        .
        .
@@ -51,8 +59,11 @@ Within the *construct_input* template, you will add the parts necessary to build
 control.  That might mean a *table*, with *tr* and *td* elements, or a *ul* with
 *li* elements.  They can be in the template, or called from the template.
 
-In the example above, a *div* element is created.  The three attributes of the *div*
-each contribute to the proper handling of the class:
+In the example above, a *div* element is created.  For flexibility in adding attributes,
+It is better to use *xsl:element* rather than the element itself.
+
+The three attributes of the example *div* element each contribute to the proper handling
+of the class:
 
 - **class="newtype"** is included to signal to a CSS stylesheet how to display the
   class.
@@ -63,6 +74,16 @@ each contribute to the proper handling of the class:
   hosted by another *data-sfw-class* element.  This attribute is important to prevent
   the *data-sfw-class* attribute of the hosting element from overwriting the class
   name of the custom input class as the framework scans through its ancestors.
+
+As an example of the possible need for additional attributes, and as justification for the
+more verbose *xsl:element* construction, you might want to add the following:
+
+~~~xsl
+          <xsl:apply-templates select="." mode="add_on_line_click_attribute" />
+~~~
+
+to add the value of an `on_line_click` SRM instruction to the anchor element in order to use
+`tbase.prototype.get_line_click_info()`.
 
 ### Create a Javascript Module
 
