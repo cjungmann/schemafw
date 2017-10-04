@@ -1,5 +1,9 @@
 # Custom Interactive Classes
 
+This page, along with [Minimum Custom Class](MinimumCustomClass.md) explain how to
+create custom classes, how they work, and the conventions to follow for successful
+custom classes.
+
 Interactive classes, AKA _iclasses_, animate views constructed from XML resultsets
 using XSL.
 

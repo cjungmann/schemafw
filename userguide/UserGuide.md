@@ -37,6 +37,7 @@ There are several sections.
   - Special Controls and Widgets
     - [ULSelect: Flexible Select Widget](ULSelect.md)
   - Extending the Framework
+    - [Minimum Custom Class](MinimumCustomClass.md)
     - [Custom Interactive Classes](CustomIClasses.md)
     - [Customizing Titles](CustomizingTitles.md)
     - [Templates for Custom Interactions](CustomTemplates.md)
