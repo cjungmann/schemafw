@@ -145,14 +145,6 @@
       }
    };
 
-   _table.prototype.get_sfw_attribute = function(aname)
-   {
-      var schema, name = null;
-      if ((schema=this.schema()) && !(name=schema.getAttribute(aname)))
-         name = this.xmldocel().getAttribute(aname);
-      return name;
-   };
-
    _table.prototype.initialize = function()
    {
       var anchor = SFW.seek_child_anchor(this.host());
