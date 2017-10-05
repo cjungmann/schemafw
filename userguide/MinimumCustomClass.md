@@ -42,6 +42,7 @@ Example file *newtype.xsl*:
           <xsl:attribute name="class">newtype</xsl:attribute>
           <xsl:attribute name="data-sfw-class">newtype</xsl:attribute>
           <xsl:attribute name="data-sfw-input">input</xsl:attribute>
+          <xsl:attribute name="tabindex">0</xsl:attribute>
           .
           .
        </xsl:element>
@@ -74,6 +75,8 @@ of the class:
   hosted by another *data-sfw-class* element.  This attribute is important to prevent
   the *data-sfw-class* attribute of the hosting element from overwriting the class
   name of the custom input class as the framework scans through its ancestors.
+- **tabindex** is necessary to make it possible for the custom input element to receive
+  focus, which, in turn, is necessary for the object to respond to a mouse-click.
 
 As an example of the possible need for additional attributes, and as justification for the
 more verbose *xsl:element* construction, you might want to add the following:
