@@ -275,7 +275,7 @@
             rval.data_name = dname;
       }
 
-      return ravl;
+      return rval;
    };
 
    _tbase.prototype.get_line_click_info = function(tr)
