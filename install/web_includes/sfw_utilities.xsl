@@ -318,6 +318,7 @@
   <xsl:template name="resolve_refs">
     <xsl:param name="str" />
     <xsl:param name="row" select="/.." />
+    <xsl:param name="break" />
 
     <xsl:variable name="delim">
       <xsl:variable name="after" select="substring(substring-after($str,'{'),1,1)" />
@@ -380,7 +381,16 @@
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:value-of select="$val" />
+    <xsl:choose>
+      <xsl:when test="$break">
+        <xsl:element name="{$break}">
+          <xsl:value-of select="$val" />
+        </xsl:element>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$val" />
+      </xsl:otherwise>
+    </xsl:choose>
 
     <xsl:variable name="skiplen">
       <xsl:choose>
