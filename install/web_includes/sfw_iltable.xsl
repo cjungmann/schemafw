@@ -21,13 +21,22 @@
       <xsl:variable name="row_id">
         <xsl:apply-templates select="$result/schema" mode="get_id_field_name" />
       </xsl:variable>
-      <ul>
-        <xsl:apply-templates select="." mode="show_members">
-          <xsl:with-param name="str" select="$value" />
-          <xsl:with-param name="result" select="$result" />
-          <xsl:with-param name="row_id" select="$row_id" />
-        </xsl:apply-templates>
-      </ul>
+      <xsl:element name="table">
+        <xsl:attribute name="class">iltable</xsl:attribute>
+        <xsl:attribute name="data-sfw-class">iltable</xsl:attribute>
+        <xsl:attribute name="data-sfw-input">input</xsl:attribute>
+        <xsl:attribute name="tabindex">0</xsl:attribute>
+        <tbody>
+          <xsl:apply-templates select="." mode="show_members">
+            <xsl:with-param name="str" select="$value" />
+            <xsl:with-param name="result" select="$result" />
+            <xsl:with-param name="row_id" select="$row_id" />
+          </xsl:apply-templates>
+        </tbody>
+        <tfoot><tr><td colspan="99">
+          <input type="hidden" name="{@name}" value="{$value}" />
+        </td></tr></tfoot>
+      </xsl:element>
     </xsl:template>
 
     <xsl:template match="field[@type='iltable']" mode="show_members">
@@ -35,22 +44,21 @@
       <xsl:param name="result" select="/.." />
       <xsl:param name="row_id" select="'id'" />
 
+      <xsl:variable name="c_id" select="substring-before($str,',')" />
+      <xsl:variable name="s_id" select="substring($str,1 div boolean(string-length($c_id)=0))" />
+      <xsl:variable name="id_val" select="concat($c_id,$s_id)" />
 
-      <xsl:variable name="hascomma" select="contains($str,',')" />
-      <xsl:variable name="c_val" select="substring-before($str,',')" />
-      <xsl:variable name="s_val" select="substring($str,1 div boolean(string-length($c_val)=0))" />
-      <xsl:variable name="val" select="concat($c_val,$s_val)" />
+      <xsl:variable name="row" select="$result/*[@*[local-name()=$row_id]=$id_val][1]" />
 
-      <xsl:variable name="row" select="$result/*[@*[local-name()=$row_id]=$val][1]" />
-
-      <xsl:element name="li">
+      <tr data-id="{$id_val}">
         <xsl:call-template name="resolve_refs">
           <xsl:with-param name="str" select="@template" />
           <xsl:with-param name="row" select="$row" />
+          <xsl:with-param name="break" select="'td'" />
         </xsl:call-template>
-      </xsl:element>
+      </tr>
 
-      <xsl:if test="string-length($c_val)">
+      <xsl:if test="string-length($c_id)">
         <xsl:apply-templates select="." mode="show_members">
           <xsl:with-param name="str" select="substring-after($str,',')" />
           <xsl:with-param name="result" select="$result" />
