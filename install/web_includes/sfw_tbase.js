@@ -252,10 +252,10 @@
     */
    _tbase.prototype.get_cell_click_info = function(td)
    {
-      var task, did, dname;
+      var task, did, dname, rval=null;
       if ((task=this.get_on_cell_click()))
       {
-         var rval = { target:td, task:task, id_name:this.get_cell_click_id_name() };
+         rval = { target:td, task:task, id_name:this.get_cell_click_id_name() };
 
          // As a cell-click procedure, set data_id=0 if there is no
          // data-id attribute.  That indicates an empty record.  I assume
@@ -273,16 +273,14 @@
          // would be the date.
          if ((dname=this.get_cell_name(td)))
             rval.data_name = dname;
-
-         return rval;
       }
 
-      return null;
+      return ravl;
    };
 
    _tbase.prototype.get_line_click_info = function(tr)
    {
-      var task, did;
+      var task, did, rval=null;
       if ((task=this.get_on_line_click())
           && tr.parentNode.tagName.toLowerCase()=="tbody")
       {
@@ -290,11 +288,9 @@
 
          if ((did=this.get_row_id(tr)))
             rval.data_id = did;
-
-         return rval;
       }
 
-      return null;
+      return rval;
    };
 
    _tbase.prototype.process_click_info = function(info)
