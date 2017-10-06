@@ -206,6 +206,14 @@
    };
 
 
+   _tbase.prototype.get_sfw_attribute = function(aname)
+   {
+      var schema, name = null;
+      if ((schema=this.schema()) && !(name=schema.getAttribute(aname)))
+         name = this.xmldocel().getAttribute(aname);
+      return name;
+   };
+
    _tbase.prototype.get_cell_click_id_name = function()
    {
       return this.get_sfw_attribute("cell_click_id") || "id";
@@ -223,6 +231,9 @@
    _tbase.prototype.get_row_name = 
       _tbase.prototype.get_cell_name =
       function(el) { return el.getAttribute("data-name");};
+
+   _tbase.prototype.get_on_cell_click = function() { return this.get_data_value("on_cell_click"); };
+   _tbase.prototype.get_on_line_click = function() { return this.get_data_value("on_line_click"); };
 
 
    /**
@@ -242,7 +253,7 @@
    _tbase.prototype.get_cell_click_info = function(td)
    {
       var task, did, dname;
-      if ((task=this.get_data_value("on_cell_click")))
+      if ((task=this.get_on_cell_click()))
       {
          var rval = { target:td, task:task, id_name:this.get_cell_click_id_name() };
 
@@ -272,7 +283,7 @@
    _tbase.prototype.get_line_click_info = function(tr)
    {
       var task, did;
-      if ((task=this.get_data_value("on_line_click"))
+      if ((task=this.get_on_line_click())
           && tr.parentNode.tagName.toLowerCase()=="tbody")
       {
          rval = { target:tr, task:task, id_name:this.get_line_click_id_name() };
