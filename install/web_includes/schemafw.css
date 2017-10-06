@@ -204,7 +204,7 @@ form.Moveable legend:hover { background-color:#CCCCCC; }
 form.Schema td { vertical-align:top; }
 
 /* ul selection styles */
-ul.ulselect { list-style:none; padding:0; min-width:8em; }
+ul.ulselect { list-style:none; padding:0; min-width:16em; }
 ul.ulselect span.item
 {
     border-radius: 4px;
@@ -265,6 +265,10 @@ ul.ulselect li.cluster input.typing { outline:none; display:none; border:0; widt
 ul.ulselect li.shadow { display:none; }
 ul.ulselect li.in { color:#999999; }
 ul.ulselect li.out { color:#000000; cursor:pointer; }
+
+table.iltable { list-style:none; padding:0; min-width:16em; }
+table.iltable tfoot    { display:node; }
+table.iltable tr:hover { background-color:#9999ff; cursor:pointer; }
 
 table.calendar { border-collapse:collapse; border-spacing:0; font-family:sans-serif; }
 table.calendar tbody tr { height:2em; }
