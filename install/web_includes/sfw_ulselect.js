@@ -1,5 +1,5 @@
 
-// sfw_select.js
+// sfw_ulselect.js
 
 (function _init()
 {
@@ -13,6 +13,7 @@
    function _ulselect(actors)
    {
       SFW.base.call(this,actors);
+      var widget = this.widget();
       var ths = this;
       function fi(n)
       {
@@ -22,19 +23,19 @@
             if (tn=="input")
             {
                if (n.className=="transfer")
-                  ths.input_transfer = n;
+                  ths._input = n;
                else
                   ths.input_el = n;
             }
          }
          return false;
       }
-      SFW.find_child_matches(actors.input,fi,true,true);
+      SFW.find_child_matches(widget,fi,true,true);
       
       function fu(n) { return n.nodeType==1 && n.tagName.toLowerCase()=="ul"; }
-      this.ul_options = SFW.find_child_matches(actors.input,fu,true,true);
+      this.ul_options = SFW.find_child_matches(widget,fu,true,true);
 
-      this.is_multiple = actors.input.getAttribute("data-multiple")=="yes";
+      this.is_multiple = this.get_schema_field_attribute("style")=="multiple";
    }
 
    _ulselect.prototype.get_phantom_row = function(value)
@@ -200,7 +201,7 @@
          var val = this.input_el.value.trim();
          if (val.length>0)
          {
-            var url = this.input().getAttribute("data-on_add");
+            var url = this.get_schema_field_attribute("on_add");
             if (url)
             {
                SFW.open_interaction(SFW.stage,
@@ -500,7 +501,7 @@
    _ulselect.prototype.clear_selections = function()
    {
       var p = this.input_el.parentNode;
-      this.input_transfer.value = "";
+      this._input.value = "";
       function f(n)
       {
          if (n.nodeType==1 && n.className=="item")
@@ -567,7 +568,7 @@
 
    _ulselect.prototype.get_defacto_span = function()
    {
-      var nl = this.input().getElementsByTagName("span");
+      var nl = this.widget().getElementsByTagName("span");
       if (nl)
       {
          for (var i=0,stop=nl.length; i<stop; ++i)
@@ -592,7 +593,8 @@
 
    _ulselect.prototype.get_value = function()
    {
-      var val = this.input_transfer.getAttribute("value");
+      var i = this._input;
+      var val = i.value || i.getAttribute("value");
       return val ? val.trim() : "";
    };
 
@@ -605,8 +607,8 @@
     */
    _ulselect.prototype.set_value = function(val)
    {
-      this.input_transfer.setAttribute("value", val);
-      this.input_transfer.value = val;
+      var i=this._input;
+      i.setAttribute("value",(i.value=val));
    }
 
    _ulselect.prototype.add_selection = function(val)
