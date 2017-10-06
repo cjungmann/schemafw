@@ -336,7 +336,7 @@ function init_SFW(callback)
                   is_control=t.getAttribute("data-sfw-input");
                   if (is_control)
                   {
-                     rval["input"] = t;
+                     rval["widget"] = t;
                      ++fcount;
                   }
                }
@@ -1215,8 +1215,8 @@ function init_SFW(callback)
    function _base(actors)
    {
       this._host_el = actors.host;
-      if ("input" in actors)
-         this._input = actors.input;
+      if ("widget" in actors)
+         this._widget = actors.widget;
    };
 
    _base.prototype.host     = function() { return this._host_el||null; };
@@ -1236,6 +1236,7 @@ function init_SFW(callback)
    _base.prototype.baseproto = function() { return this._baseproto; };
    _base.prototype.button_processors = {};
 
+   _base.prototype.widget = function() { return ("_widget" in this)?this._widget:null; };
    _base.prototype.input = function() { return ("_input" in this)?this._input:null;};
    _base.prototype.caller = function()
    {
@@ -1316,24 +1317,21 @@ function init_SFW(callback)
          return rval;
    };
 
-   _base.prototype.get_field_name =  function(){return this.get_field_actors("name");};
-   _base.prototype.get_ref_result =  function(){return this.get_field_actors("result");};
-
-   _base.prototype.get_schema_field =function(xpath)
+   _base.prototype.get_field_name   = function() { return this.get_field_actors("name");   };
+   _base.prototype.get_ref_result   = function() { return this.get_field_actors("result"); };
+   _base.prototype.get_schema_field = function() { return this.get_field_actors("field");  };
+   _base.prototype.get_schema_field_attribute = function(name)
    {
-      var field = null;
-      var schema = this.schema();
-      if (schema)
+      var f = this.get_schema_field();
+      if (f)
       {
-         if (xpath.includes('['))
-            field = schema.selectSingleNode(xpath);
-         else
-            field = schema.selectSingleNode("field[@name='" + xpath + "']");
+         var v = f.getAttribute(name);
+         if (v && v.length>0)
+            return v;
       }
-
-      return field;
+      return null;
    };
-   
+
    _base.prototype.get_result_name_from_top = function()
    {
       var top = this.top();
