@@ -46,6 +46,21 @@
       return null;
    };
 
+   _tbase.prototype.make_phantom_row = function(value)
+   {
+      var result, row = null;
+      var factors = this.get_field_actors();
+      var name = this.get_field_name();
+      if ("result" in factors)
+      {
+         result = factors.result;
+         row = addEl("phantom_row", result);
+         row.setAttribute(name, value);
+      }
+
+      return row;
+   };
+
    _tbase.prototype.replot = function(result)
    {
       console.error("This function should be overridden!");
@@ -180,9 +195,13 @@
          else if (cfobj.rtype=="update")
          {
             urow = preserve_result ? _get_copied_node(target,urow) : urow;
-            target.insertBefore(urow, xrow);
             if (xrow)
+            {
+               var before = SFW.next_sibling_element(xrow);
                target.removeChild(xrow);
+               xrow = before;
+            }
+            target.insertBefore(urow, xrow);
          }
          else
             SFW.alert("Don't know what to do with the update row.");
@@ -252,7 +271,7 @@
     */
    _tbase.prototype.get_cell_click_info = function(td)
    {
-      var task, did, dname, rval=null;
+      var field, task, did, dname, rval=null;
       if ((task=this.get_on_cell_click()))
       {
          rval = { target:td, task:task, id_name:this.get_cell_click_id_name() };
@@ -273,6 +292,9 @@
          // would be the date.
          if ((dname=this.get_cell_name(td)))
             rval.data_name = dname;
+
+         if((result=this.get_ref_result()))
+            rval.result = result;
       }
 
       return rval;
@@ -280,7 +302,7 @@
 
    _tbase.prototype.get_line_click_info = function(tr)
    {
-      var task, did, rval=null;
+      var result, task, did, rval=null;
       if ((task=this.get_on_line_click())
           && tr.parentNode.tagName.toLowerCase()=="tbody")
       {
@@ -288,6 +310,9 @@
 
          if ((did=this.get_row_id(tr)))
             rval.data_id = did;
+
+         if((result=this.get_ref_result()))
+            rval.result = result;
       }
 
       return rval;
@@ -314,8 +339,9 @@
          }
          else if ((id=info.data_id))
          {
+            var result = ("result" in info) ? info.result : this.result();
             function f(n) { return n.nodeType==1 && n.getAttribute(info.id_name)==id; }
-            xrow = SFW.find_child_matches(this.result(), f, true);
+            xrow = SFW.find_child_matches(result, f, true);
          }
       }
 
