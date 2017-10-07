@@ -38,28 +38,6 @@
       this.is_multiple = this.get_schema_field_attribute("style")=="multiple";
    }
 
-   _ulselect.prototype.get_phantom_row = function(value)
-   {
-      var pname, result, row = null;
-      var factors = this.get_field_actors();
-      if ("result" in factors)
-      {
-         if ((pname=SFW.row_name_from_schema(factors.schema)))
-         {
-            pname = "phantom_" + pname;
-            result = factors.result;
-            row = result.selectSingleNode(pname);
-            if (!row)
-               row = addEl(pname, result);
-         }
-      }
-
-      if (row)
-         row.setAttribute(factors.name, value);
-
-      return row;
-   };
-
    // Primary public method for integration with framework:
    _ulselect.prototype.process = function(e,t)
    {
@@ -622,11 +600,12 @@
       else if ((','+list+',').search(','+val+',')<0)
          list += ',' + val;
 
-      var phantom = this.get_phantom_row(list);
+      var phantom = this.make_phantom_row(list);
       if (phantom)
       {
          this.set_value(list);
          this.update_defacto_display(phantom);
+         phantom.parentNode.removeChild(phantom);
       }
       return false;
    };
@@ -644,11 +623,12 @@
             list = arr.join(',');
          }
 
-         var phantom = this.get_phantom_row(list);
+         var phantom = this.make_phantom_row(list);
          if (phantom)
          {
             this.set_value(list);
             this.update_defacto_display(phantom);
+            phantom.parentNode.removeChild(phantom);
          }
       }
    };
