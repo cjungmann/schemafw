@@ -27,36 +27,14 @@
      to the server as part of the form POST.
   -->
 
-  <!-- Mode-less template that matches the first ulselect field that matches the attribute name. -->
-  <xsl:template match="@*[/*/*[@rndx]/schema/field[@type='ulselect']/@name=local-name(current())]">
-    <xsl:variable name="field" select="/*/*[@rndx]/schema/field[@name=local-name(current())][1]" />
+  <!-- Modeless attribute match for like-named field of proper type in hosting schema. -->
+  <xsl:template match="@*[ancestor::schema/field[@name=local-name(current())][@type='ulselect']]">
+    <xsl:variable name="field" select="ancestor::schema/field[@name=local-name(current())]" />
     <xsl:call-template name="fill_ulselect_defacto">
       <xsl:with-param name="field" select="$field" />
       <xsl:with-param name="str" select="." />
     </xsl:call-template>
   </xsl:template>
-
-  <!-- Mode-less ulselect attribute-matching template that should be more discriminating. -->
-  <xsl:template match="@*[ancestor::*[@rndx]/schema/field[@type='ulselect']/@name=local-name(current())]" >
-    <xsl:variable name="field" select="ancestor::*[@rndx]/schema/field[@name=local-name(current())]" />
-    <xsl:call-template name="fill_ulselect_defacto">
-      <xsl:with-param name="field" select="$field" />
-      <xsl:with-param name="str" select="." />
-    </xsl:call-template>
-  </xsl:template>
-
-  <!--
-      Mode-less ulselect attribute-matching template that matches a form-new schema when 
-      ancestor schema is not available(not in a result).
-  -->
-  <xsl:template match="@*[not(ancestor::*[@rndx]/schema)][/*/schema[1]/field[@type='ulselect']/@name=local-name()]">
-    <xsl:variable name="field" select="/*/schema[1]/field[@name=local-name(current())]" />
-    <xsl:call-template name="fill_ulselect_defacto">
-      <xsl:with-param name="field" select="$field" />
-      <xsl:with-param name="str" select="." />
-    </xsl:call-template>
-  </xsl:template>
-  
 
   <!-- Generic template for rebuilding the options list -->
   <xsl:template match="field[@type='ulselect']">
