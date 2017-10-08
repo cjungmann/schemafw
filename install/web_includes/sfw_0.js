@@ -1371,6 +1371,14 @@ function init_SFW(callback)
          return null;
    };
 
+   _base.prototype.add_schema_shadow = function(name, value)
+   {
+      var s, n;
+      if ((s=this.schema()) && (n=addEl("shadow", s)))
+         n.setAttribute(name, value);
+      return n;
+   };
+
    _base.prototype.sfw_close = function _sfw_close()
    {
       var v = this.host();
