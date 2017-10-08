@@ -46,21 +46,6 @@
       return null;
    };
 
-   _tbase.prototype.make_phantom_row = function(value)
-   {
-      var result, row = null;
-      var factors = this.get_field_actors();
-      var name = this.get_field_name();
-      if ("result" in factors)
-      {
-         result = factors.result;
-         row = addEl("phantom_row", result);
-         row.setAttribute(name, value);
-      }
-
-      return row;
-   };
-
    _tbase.prototype.replot = function(result)
    {
       console.error("This function should be overridden!");
