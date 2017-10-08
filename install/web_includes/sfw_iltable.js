@@ -20,8 +20,23 @@
             return (ths._input=n);
          return false;
       }
-      SFW.find_child_matches(actors.input,f,true,true);
+      SFW.find_child_matches(actors.anchor,f,true,true);
+      this._tbody = actors.anchor.getElementsByTagName("tbody")[0];
    }
+
+   _iltable.prototype.replot = function(result)
+   {
+      var val = this._input.value.trim();
+      var fname = this.get_field_name();
+      var shadow = this.add_schema_shadow(fname,val);
+      if (shadow)
+      {
+         var el = this._tbody;
+         if (el)
+            SFW.xslobj.transformFill(el, shadow.attributes[0]);
+         shadow.parentNode.removeChild(shadow);
+      }
+   };
 
    _iltable.prototype.get_on_line_click = function()
    {
