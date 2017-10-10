@@ -235,15 +235,12 @@ function prepare_xhr_functions()
          {
             if (callback)
                callback(doc);
-            else
-               return doc;
          }
          else if (cb_failed)
             cb_failed(xhr);
          else
             alert(xhr.responseText);
       }
-      return null;
    }
 
    xhr_get = function(url,cb,cb_failed,headers,mimetype)
@@ -252,7 +249,7 @@ function prepare_xhr_functions()
          cb_failed = function(xhr) {
             console.error("Failed to get document");
          };
-      
+
       var async = cb?true:false;
       var xhr = getXHRObject();
       if (xhr)
@@ -264,10 +261,11 @@ function prepare_xhr_functions()
          if (ie_mode)
             xhr.responseType = "msxml-document";
          if (async)
-            xhr.onreadystatechange = function() { return check_xhr(xhr,cb,cb_failed); };
+            xhr.onreadystatechange = function() { check_xhr(xhr,cb,cb_failed); };
          xhr.send(null);
 
-         return async ? null : check_xhr(xhr,cb,cb_failed);
+         // return async ? null : check_xhr(xhr,cb,cb_failed);
+         return (!async && check_xhr(xhr,cb,cb_failed)) ? xhr.responseXML : null;
       }
       return null;
    };
@@ -276,18 +274,17 @@ function prepare_xhr_functions()
    {
       var async = cb?true:false;
       var xhr = getXHRObject();
+
       if (xhr)
       {
          xhr.open("POST",url,async);
          load_request_headers(xhr,headers);
          if (ie_mode)
             xhr.responseType = "msxml-document";
-         xhr.onreadystatechange = function() { return check_xhr(xhr,cb,cb_failed); };
+         xhr.onreadystatechange = function() { check_xhr(xhr,cb,cb_failed); };
          xhr.send(data);
-         if (async)
-            return null;
-         else
-            return check_xhr(xhr,cb,cb_failed);
+
+         return (!async && check_xhr(xhr,cb,cb_failed)) ? xhr.responseXML : null;
       }
       return null;
    };
