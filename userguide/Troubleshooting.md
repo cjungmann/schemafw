@@ -1,4 +1,4 @@
-# Troubleshooting SchemaFW
+# Troubleshooting SchemaFW Messages
 
 This guide helps explain how to fix various problems whose solution might
 be not be readily apparent.  In order to facilitate debugging framework

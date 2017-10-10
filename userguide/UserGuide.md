@@ -44,7 +44,8 @@ There are several sections.
     - [Custom Fields](CustomFields.md)
     - [Why Not Use xsl:include?](WhyNotInclude.md)
   - Debugging
-    - [Troubleshooting SchemaFW](Troubleshooting.md)
+    - [Troubleshooting SchemaFW Messages](Troubleshooting.md)
+    - [Troubleshooting Unexpected Behavior](TroubleshootingBehavior.md)
     - [Running Websites on LocalHost](RunningOnLocalhost.md)
     - [MySQL Command Line Queries](MySQLCLQueries.md)
     - [Debugging with Command Line Options](SchemaFCGIOptions.md)
