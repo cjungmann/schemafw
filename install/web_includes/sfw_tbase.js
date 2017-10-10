@@ -236,8 +236,8 @@
       _tbase.prototype.get_cell_name =
       function(el) { return el.getAttribute("data-name");};
 
-   _tbase.prototype.get_on_cell_click = function() { return this.get_data_value("on_cell_click"); };
-   _tbase.prototype.get_on_line_click = function() { return this.get_data_value("on_line_click"); };
+   _tbase.prototype.get_cell_click_action = function() { return this.get_data_value("on_cell_click"); };
+   _tbase.prototype.get_line_click_action = function() { return this.get_data_value("on_line_click"); };
 
 
    /**
@@ -257,7 +257,7 @@
    _tbase.prototype.get_cell_click_info = function(td)
    {
       var field, task, did, dname, rval=null;
-      if ((task=this.get_on_cell_click()))
+      if ((task=this.get_cell_click_action()))
       {
          rval = { target:td, task:task, id_name:this.get_cell_click_id_name() };
 
@@ -288,7 +288,7 @@
    _tbase.prototype.get_line_click_info = function(tr)
    {
       var result, task, did, rval=null;
-      if ((task=this.get_on_line_click())
+      if ((task=this.get_line_click_action())
           && tr.parentNode.tagName.toLowerCase()=="tbody")
       {
          rval = { target:tr, task:task, id_name:this.get_line_click_id_name() };
@@ -337,27 +337,31 @@
       if (SFW.has_value(window,info.task))
          return window[info.task](info.target, xrow, info);
 
-      // The default behavior is that an item click, either line or cell,
-      // should open an edit dialog.  A sparse table should create a custom
-      // handler to respond to *new* or *edit* requests.
-      // Because of the preceding, this function only continues if an xrow is
-      // found.
-      if (xrow)
+      // If still here, we'll open a dialog starting with the task as a url,
+      // modified as appropriate according to what else is available:
+      if ("task" in info)
       {
-         var url = info.task;
+         var url = info.task
 
-         if (url.indexOf('&')==-1)
-            url += "=" + id;
-         else
-            url = SFW.apply_row_context(url, xrow);
+         if (xrow && id)
+         {
+            if (url.indexOf('&')==-1)
+               url += "=" + id;
+            else
+               url = SFW.apply_row_context(url, xrow);
+         }
 
          var os = SFW.get_page_offset();  // Get offset before discarding contents
          var host = this.host();
 
+         var open_obj = { os:os, host:host };
+         if (xrow)
+            open_obj.xrow = xrow;
+
          SFW.open_interaction(SFW.stage,
                               url,
                               this,
-                              { os:os, host:host, xrow:xrow }
+                              open_obj
                              );
 
          return false;
