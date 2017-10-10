@@ -253,6 +253,7 @@ will contain the YYYY-MM-DD date.
     <tr>
       <td colspan="2" class="calnav cn_left">
         <xsl:element name="button">
+          <xsl:attribute name="type">button</xsl:attribute>
           <xsl:attribute name="data-type">calmove</xsl:attribute>
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$year_last" />
@@ -263,6 +264,7 @@ will contain the YYYY-MM-DD date.
           <xsl:text> &lt;&lt;&lt; </xsl:text>
         </xsl:element>
         <xsl:element name="button">
+          <xsl:attribute name="type">button</xsl:attribute>
           <xsl:attribute name="data-type">calmove</xsl:attribute>
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$month_last" />
@@ -281,6 +283,7 @@ will contain the YYYY-MM-DD date.
       </td>
       <td colspan="2" class="calnav cn_right">
         <xsl:element name="button">
+          <xsl:attribute name="type">button</xsl:attribute>
           <xsl:attribute name="data-type">calmove</xsl:attribute>
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$month_next" />
@@ -291,6 +294,7 @@ will contain the YYYY-MM-DD date.
           <xsl:text> &gt; </xsl:text>
         </xsl:element>
         <xsl:element name="button">
+          <xsl:attribute name="type">button</xsl:attribute>
           <xsl:attribute name="data-type">calmove</xsl:attribute>
           <xsl:attribute name="data-jump">
             <xsl:value-of select="$year_next" />
