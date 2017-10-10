@@ -74,6 +74,7 @@
   <xsl:template match="@manage" mode="construct_button">
     <p>
       <xsl:element name="button">
+        <xsl:attribute name="type">button</xsl:attribute>
         <xsl:attribute name="data-type">manage_subview</xsl:attribute>
         <xsl:attribute name="data-task">
           <xsl:call-template name="resolve_refs">
