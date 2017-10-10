@@ -38,11 +38,24 @@
       }
    };
 
-   _iltable.prototype.get_on_line_click = function()
+   _iltable.prototype.get_line_click_action = function()
    {
       var field = this.get_schema_field();
       return field ? field.getAttribute("on_line_click") : null;
    }
+
+   _iltable.prototype.get_on_add_info = function()
+   {
+      var rval = null;
+      var field = this.get_schema_field();
+      if (field)
+      {
+         var result, url;
+         if ((url=field.getAttribute("on_add")) && (result=this.get_ref_result()))
+            rval = { task:url, result:result};
+      }
+      return rval;
+   };
 
    _iltable.prototype.process = function(e,t)
    {
@@ -59,11 +72,25 @@
       var click_info;
       while (t && t!=table_el)
       {
-         if(t.tagName.toLowerCase()=="tr")
+         var tn = t.tagName.toLowerCase();
+         if (tn=="button")
+         {
+            if (t.name=="add")
+            {
+               click_info = this.get_on_add_info();
+               break;
+            }
+         }
+         if (tn=="tr")
+         {
             if ((click_info=this.get_line_click_info(t)))
-               return this.process_click_info(click_info);
+               break;
+         }
          t = t.parentNode;
       }
+
+      if (click_info)
+         return this.process_click_info(click_info);
 
       return true;
    }
