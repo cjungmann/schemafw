@@ -417,17 +417,18 @@
     </xsl:call-template>
   </xsl:template>
 
+  <!-- For resolving a @ reference, named attribute in a form-type result. -->
   <xsl:template name="get_data_value">
     <xsl:param name="name" />
     <xsl:variable name="results" select="/*/*[@rndx and not(@type='variables')]" />
-    <xsl:variable name="fresults"
-                  select="$results[count(*[local-name()!='schema'])=1]" />
-    <xsl:variable name="rows" select="$fresults/*[local-name()!='schema']" />
-    <xsl:if test="count($rows)">
-      <xsl:variable name="attrs" select="$rows/@*[local-name()=$name]" />
-      <xsl:if test="count($attrs)">
-        <xsl:value-of select="$attrs[1]" />
-      </xsl:if>
+
+    <xsl:variable name="formrs" 
+                  select="$results[count(*[local-name()=../@row-name])=1]" />
+    <xsl:variable name="rows" select="$formrs/*[local-name()=../@row-name]" />
+    <xsl:variable name="attrs" select="$rows/@*[local-name()=$name]" />
+
+    <xsl:if test="count($attrs)">
+      <xsl:value-of select="$attrs[1]" />
     </xsl:if>
   </xsl:template>
 
