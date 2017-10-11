@@ -359,49 +359,6 @@
     </xsl:choose>
   </xsl:template>
     
-  <xsl:template match="schema/field" mode="get_value">
-    <xsl:param name="data" />
-
-    <xsl:variable name="name" select="@name" />
-
-    <xsl:choose>
-      <xsl:when test="@html-value">
-        <xsl:value-of select="@html-value" />
-      </xsl:when>
-      <xsl:when test="@value">
-        <xsl:call-template name="resolve_refs">
-          <xsl:with-param name="str" select="@value" />
-        </xsl:call-template>
-      </xsl:when>
-      <xsl:when test="@ref-value">
-        <xsl:apply-templates select="$vars" mode="get_value">
-          <xsl:with-param name="name" select="@ref-value" />
-        </xsl:apply-templates>
-      </xsl:when>
-      <xsl:when test="@map-value">
-        <xsl:value-of select="$data/@*[local-name()=current()/@map-value]" />
-      </xsl:when>
-      <xsl:when test="$data and (not(@nodetype) or @nodetype='attribute')">
-        <xsl:variable name="v" select="$data/@*[name()=$name]" />
-        <xsl:if test="$v">
-          <xsl:value-of select="$v" />
-        </xsl:if>
-      </xsl:when>
-      <xsl:when test="$data and @nodetype='child'">
-        <xsl:variable name="v" select="$data/*[local-name()=$name]" />
-        <xsl:if test="$v">
-          <xsl:value-of select="$v" />
-        </xsl:if>
-      </xsl:when>
-      
-      <xsl:otherwise>
-        <xsl:value-of select="$data" />
-      </xsl:otherwise>
-      
-    </xsl:choose>
-
-  </xsl:template>
-
 
   <!-- Named template for makeing a table (do we ever use this?). -->
 
