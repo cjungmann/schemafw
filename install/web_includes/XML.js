@@ -264,8 +264,10 @@ function prepare_xhr_functions()
             xhr.onreadystatechange = function() { check_xhr(xhr,cb,cb_failed); };
          xhr.send(null);
 
-         // return async ? null : check_xhr(xhr,cb,cb_failed);
-         return (!async && check_xhr(xhr,cb,cb_failed)) ? xhr.responseXML : null;
+         if (async)
+            check_xhr(xhr,cb,cb_failed);
+         else
+            return xhr.responseXML;
       }
       return null;
    };
@@ -284,7 +286,10 @@ function prepare_xhr_functions()
          xhr.onreadystatechange = function() { check_xhr(xhr,cb,cb_failed); };
          xhr.send(data);
 
-         return (!async && check_xhr(xhr,cb,cb_failed)) ? xhr.responseXML : null;
+         if (async)
+            check_xhr(xhr,cb,cb_failed);
+         else
+            return xhr.responseXML;
       }
       return null;
    };
