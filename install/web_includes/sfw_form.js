@@ -137,6 +137,8 @@
       {
          if (SFW.check_for_preempt(doc))
          {
+            SFW.add_update_results(doc);
+
             if (ths.caller())
                ths.caller().child_finished(ths.cfobj_from_doc(doc));
          }
