@@ -134,6 +134,7 @@ function init_SFW(callback)
    SFW.update_selected_view = _update_selected_view;
    SFW.change_view          = _change_view;
    SFW.process_event        = _process_event;
+   SFW.add_update_results   = _add_update_results
 
    // The following commonly-used search function is found in sfw_dom.js:
    // SFW.find_child_matches(parent, function, first_only, recurse)
@@ -860,6 +861,97 @@ function init_SFW(callback)
             && (n.tagName.toLowerCase()=="schema" || n.getAttribute("rndx"));
       }
       return SFW.find_child_matches(doc.documentElement,f,true,false);
+   }
+
+   function _replace_element(newel, oldel)
+   {
+      var parent = oldel.parentNode;
+
+      var before = null;
+      if (oldel)
+      {
+         before = SFW.next_sibling_element(oldel);
+         parent.removeChild(oldel);
+      }
+
+      if (before)
+         parent.insertBefore(newel, before);
+      else
+         parent.appendChild(newel);
+   }
+
+   /** Attempts to get a result name from a result.
+    *
+    * Looks for, in this order, attempting each step ig the previous step failed.
+    * - name of field with primary-key attribute
+    * - name of field with xrow_id attribute
+    * - the name of the first attribute of the first element in the result
+    * - the name of the first attribute of the row element
+    */
+   function _get_result_idname(result, row)
+   {
+      var field;
+      if (!(field=result.selectSingleNode("schema/field[@primary-key]")))
+         field=result.selectSingleNode("schema/field[@xrow_id]");
+
+      if (field)
+         return field.getAttribute("name");
+      else
+      {
+         var attr, rowname = result.getAttribute("row-name");
+         if (!(attr=result.selectSingleNode(rowname + "[1]/@*[1]")))
+            attr = row.selectSingleNode("@*[1]");
+
+         if (attr)
+            return attr.name;
+      }
+      console.error("get_result_idname cannot find an id field.");
+      return null;
+   }
+
+   function _get_oldrow(target, row)
+   {
+      var idname, idval, rowname;
+      if ((idname=_get_result_idname(target,row))
+          && (idval=row.getAttribute(idname))
+          && (rowname=target.getAttribute("row-name")))
+         return target.selectSingleNode(rowname + "[@" + idname + "='" + idval + "']");
+
+      return null;
+   }
+
+   function _get_target_result(update, pagedoc)
+   {
+      var rname, target = null;
+      if ((rname=update.getAttribute("target")))
+         target = pagedoc.selectSingleNode("/*/" + rname);
+      else if ((rname=update.getAttribute("row-name")))
+         target = pagedoc.selectSingleNode("/*/*[@rndx][@row-name='" + rname + "']");
+
+      return target;
+   }
+
+   function _put_row_into_target(target, row)
+   {
+      var oldrow = _get_oldrow(target,row);
+
+      if (oldrow)
+         _replace_element(row,oldrow);
+      else
+         target.appendChild(row);
+   }
+
+   function _add_update_results(doc)
+   {
+      var pagedoc = SFW.xmldoc;
+      var arr = doc.selectNodes("/*/*[@rndx][@type='update']");
+      for (var i=0, stop=arr.length; i<stop; ++i)
+      {
+         var result = arr[i];
+         var target = _get_target_result(result, pagedoc);
+         if (target)
+            _put_row_into_target(target, result.selectSingleNode("*"));
+      }
    }
 
    function _seek_top_merged_element(doc)
