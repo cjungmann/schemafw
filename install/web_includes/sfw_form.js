@@ -197,6 +197,7 @@
       return this.process_clicked_button(t, fdone);
    };
 
+   _form.prototype.initialize = 
    _form.prototype.post_transform = function()
    {
       this.focus_on_first_field();
