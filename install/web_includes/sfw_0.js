@@ -168,12 +168,7 @@ function init_SFW(callback)
    SFW.get_urow_from_cfobj  = function(o) {
       return ("update_row" in o)?o.update_row:null; };
 
-   SFW.get_xrow_from_cfobj  = function(o) {
-      if (_has_value(o,"cdata", "xrow"))
-         return o.cdata.xrow;
-      else
-         return null;
-   },
+   SFW.get_xrow_from_cfobj  = function(o) { return _get_property(o,"cdata","xrow"); };
 
    SFW.stage                = document.getElementById("SFW_Content");
    SFW.px                   = _px;
@@ -251,16 +246,38 @@ function init_SFW(callback)
     * Like _has_value(), gets successive properties according to the argument list,
     * returning the property that matches the final argument if found.  If any
     * of the named properties are missing, the function immediately returns null.
+    *
+    * If a property is a function, a function object will be created that calls
+    * the function as a zero-parameter member function of the current rval value.
+    *
+    * If the function is the last property requested, it will be returned as a
+    * function object, otherwise it will be evaluated before extracting the next
+    * property in the list.
     */
    function _get_property(obj)
    {
       var rval = obj;
-      for (var i=1, stop=arguments.length; rval!==null && i<stop; ++i)
+      if (obj)
       {
-         var name = arguments[i];
-         if (!(name in rval))
-            return null;
-         rval = rval[name];
+         for (var i=1, stop=arguments.length; i<stop; ++i)
+         {
+            if (typeof(rval)=="function")
+               rval = rval();
+
+            var name = arguments[i];
+
+            if (typeof(rval)!="object" || !(name in rval))
+               return null;
+
+            if (typeof(rval[name])=="function")
+            {
+               var o = rval;
+               var f = rval[name];
+               rval = function() { return f.call(o); };
+            }
+            else
+               rval = rval[name];
+         }
       }
       return rval;
    }
@@ -978,9 +995,11 @@ function init_SFW(callback)
          }
       }
       SFW.find_child_matches(newdoc.documentElement,f,false,false);
+
+      return merge_number;
    }
 
-   function _remove_merged_elements(pagedoc)
+   function _remove_merged_elements(pagedoc, merge_number)
    {
       var docel = pagedoc.documentElement;
       var el = _seek_top_merged_element(pagedoc);
@@ -1010,7 +1029,11 @@ function init_SFW(callback)
                // page document (lookup results, etc):
                if ((pagedoc=caller.xmldoc()))
                {
-                  _merge_into_pagedoc(pagedoc, xdoc);
+                  // Ensure that a data object exists to which the merge number will be attached.
+                  if (!data)
+                     data = {};
+
+                  data.merge_number = _merge_into_pagedoc(pagedoc, xdoc);
                   xdoc = pagedoc;
                }
                else
@@ -1563,7 +1586,7 @@ function init_SFW(callback)
       return rval;
    };
 
-  _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
+   _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
    {
       var type = b.getAttribute("data-type");
       var url = b.getAttribute("data-task") || b.getAttribute("data-url");
@@ -1597,9 +1620,10 @@ function init_SFW(callback)
          case "close":
             if (this.caller())
             {
-               var child = this.cfobj_from_cmd(type);
-               child.hide();
-               this.caller().child_finished(child, true);
+               var cfobj = this.cfobj_from_cmd(type);
+               cfobj.hide();
+
+               this.caller().child_finished(cfobj, true);
             }
             return false;
          
@@ -1621,23 +1645,28 @@ function init_SFW(callback)
       return true;
    };
 
+   /** Remove associated merged_data and remove merged_data value to prevent second attempt. */
+   _base.prototype.remove_merged_results = function()
+   {
+      var data = _get_property(this,"host","data");
+      if (data && "merge_number" in data)
+      {
+         var mnum = data.merge_number;
+         delete data.merge_number;
+         _remove_merged_elements(this.xmldoc(), mnum);
+      }
+   };
+
    _base.prototype.pre_transform = function() { };
    _base.prototype.post_transform = function() { };
    _base.prototype.initialize = function() { };
-
-   _base.prototype.clear_merged_elements = function()
-   {
-      _remove_merged_elements(this.xmldoc()); 
-   };
 
    _base.prototype.child_ready = function(child) { };
 
    _base.prototype.child_finished = function(cfobj, cancelled)
    {
-      // This must be done, cancelled or not:
-      this.clear_merged_elements();
-      
-      cfobj.close();
+      cfobj.child.remove_merged_results();
+      cfobj.close(); 
    };
 
    /** Buttons are all processed the same way, so handle consistently in base class. */
