@@ -233,7 +233,6 @@ function prepare_xhr_functions()
 
          function f()
          {
-            xhr.onreadystatechange=empty;
             var doc = xhr.responseXML;
             if (doc)
             {
