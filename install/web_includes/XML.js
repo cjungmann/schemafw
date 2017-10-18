@@ -230,16 +230,23 @@ function prepare_xhr_functions()
       {
          // release closure:
          xhr.onreadystatechange=empty;
-         var doc = xhr.responseXML;
-         if (doc)
+
+         function f()
          {
-            if (callback)
-               callback(doc);
+            xhr.onreadystatechange=empty;
+            var doc = xhr.responseXML;
+            if (doc)
+            {
+               if (callback)
+                  callback(doc);
+            }
+            else if (cb_failed)
+               cb_failed(xhr);
+            else
+               alert(xhr.responseText);
          }
-         else if (cb_failed)
-            cb_failed(xhr);
-         else
-            alert(xhr.responseText);
+         
+         setTimeout(f);
       }
    }
 
