@@ -134,6 +134,7 @@ function init_SFW(callback)
    SFW.update_selected_view = _update_selected_view;
    SFW.change_view          = _change_view;
    SFW.process_event        = _process_event;
+   SFW.get_copied_node      = _get_copied_node;
    SFW.add_update_results   = _add_update_results
 
    // The following commonly-used search function is found in sfw_dom.js:
@@ -880,6 +881,47 @@ function init_SFW(callback)
       return SFW.find_child_matches(doc.documentElement,f,true,false);
    }
 
+   function _get_copied_node(target, source)
+   {
+      var doc = target.ownerDocument;
+      function ca(target,source)
+      {
+         // Copy attribtes separately, since they are not included in the child list:
+         for (var s,i=0,sa=source.attributes,stop=sa.length; i<stop && (s=sa[i]); ++i)
+            target.setAttribute(s.nodeName,s.nodeValue); 
+      }
+
+      function cp(target,source)
+      {
+         ca(target,source);
+
+         var node, next = source.firstChild;
+         while((node=next))
+         {
+            next = node.nextSibling;
+            switch(node.nodeType)
+            {
+               case 1:  // element
+                  cp(doc.createElement(node.tagName),node);
+                  break;
+               // no case 2: ca() copies attributes
+               case 3:  // text
+                  target.appendChild(doc.createTextNode(node.nodeValue));
+                  break;
+               case 5: // EntityReference
+                  target.appendChild(doc.createEntityReference(n.nodeName));
+                  break;
+               default: break;
+            }
+         }
+      }
+
+      var newnode = doc.createElement(source.tagName);
+
+      cp(newnode, source);
+      return newnode;
+   }
+
    function _replace_element(newel, oldel)
    {
       var parent = oldel.parentNode;
@@ -943,7 +985,7 @@ function init_SFW(callback)
       if ((rname=update.getAttribute("target")))
          target = pagedoc.selectSingleNode("/*/" + rname);
       else if ((rname=update.getAttribute("row-name")))
-         target = pagedoc.selectSingleNode("/*/*[@rndx][@row-name='" + rname + "']");
+         target = pagedoc.selectSingleNode("/*/*[@rndx][not(@merged)][@row-name='" + rname + "']");
 
       return target;
    }
@@ -951,11 +993,12 @@ function init_SFW(callback)
    function _put_row_into_target(target, row)
    {
       var oldrow = _get_oldrow(target,row);
+      var nrow = _get_copied_node(target,row);
 
       if (oldrow)
-         _replace_element(row,oldrow);
+         _replace_element(nrow,oldrow);
       else
-         target.appendChild(row);
+         target.appendChild(nrow);
    }
 
    function _add_update_results(doc)
@@ -1552,10 +1595,9 @@ function init_SFW(callback)
       if (result)
       {
          var rname = result.getAttribute("row-name") || "row";
-         var xpathrow = "*[local-name()='" + rname + "']";
          var target_name = result.getAttribute("target");
          rval.result = result;
-         rval.update_row = result.selectSingleNode(xpathrow);
+         rval.update_row = result.selectSingleNode(rname);
          rval.rtype = result.getAttribute("type") || null;
          rval.target_name = result.getAttribute("target");
          rval["rname"] = rname;
