@@ -67,47 +67,6 @@
       }
    };
 
-   function _get_copied_node(target, source)
-   {
-      var doc = target.ownerDocument;
-      function ca(target,source)
-      {
-         // Copy attribtes separately, since they are not included in the child list:
-         for (var s,i=0,sa=source.attributes,stop=sa.length; i<stop && (s=sa[i]); ++i)
-            target.setAttribute(s.nodeName,s.nodeValue); 
-      }
-
-      function cp(target,source)
-      {
-         ca(target,source);
-
-         var node, next = source.firstChild;
-         while((node=next))
-         {
-            next = node.nextSibling;
-            switch(node.nodeType)
-            {
-               case 1:  // element
-                  cp(doc.createElement(node.tagName),node);
-                  break;
-               // no case 2: ca() copies attributes
-               case 3:  // text
-                  target.appendChild(doc.createTextNode(node.nodeValue));
-                  break;
-               case 5: // EntityReference
-                  target.appendChild(doc.createEntityReference(n.nodeName));
-                  break;
-               default: break;
-            }
-         }
-      }
-
-      var newnode = doc.createElement(source.tagName);
-
-      cp(newnode, source);
-      return newnode;
-   }
-
    _tbase.prototype.delete_row = function(xrow)
    {
       if (this.result(xrow) && xrow)
@@ -179,7 +138,7 @@
          }
          else if (cfobj.rtype=="update")
          {
-            urow = preserve_result ? _get_copied_node(target,urow) : urow;
+            urow = preserve_result ? SFW.get_copied_node(target,urow) : urow;
             if (xrow)
             {
                var before = SFW.next_sibling_element(xrow);
@@ -201,7 +160,7 @@
 
       if (!cancelled)
       {
-         this.update_row(cfobj);
+         // this.update_row(cfobj);
          this.replot();
       }
 
