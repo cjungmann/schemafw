@@ -152,11 +152,31 @@
       }
    };
 
-   _tbase.prototype.child_finished = function(cfobj, cancelled)
+   _tbase.prototype.preview_result = function(returned_doc, child)
+   {
+      var docel = returned_doc.documentElement;
+      var mtype = docel.getAttribute("mode-type");
+      var result, xrow = SFW.get_property(child,"host","data","xrow");
+      if (mtype=="delete" && xrow)
+      {
+         if ((result=docel.selectSingleNode("*[@rndx][@type='delete']"))
+             && result.getAttribute("deleted")!=0)
+         {
+            console.log("We would be deleting a row here.");
+            // xrow.parentNode.removeChild(xrow);
+         }
+      }
+      else
+      {
+         console.log("Mtype is " + mtype);
+      }
+   };
+
+   _tbase.prototype.child_finished = function(child, cancelled)
    {
       // Must call base::child_finished() to clean out
       // any merged elements before calling replot().
-      SFW.base.prototype.child_finished.call(this, cfobj, cancelled);
+      SFW.base.prototype.child_finished.call(this, child, cancelled);
 
       if (!cancelled)
       {
@@ -164,8 +184,11 @@
          this.replot();
       }
 
-      if (SFW.has_value(cfobj,"cdata","os"))
-         SFW.set_page_offset(cfobj.cdata.os);
+      var os = SFW.get_property(child,"host","data","os");
+      if (os)
+         SFW.set_page_offset(os);
+      // if (SFW.has_value(cfobj,"cdata","os"))
+      //    SFW.set_page_offset(cfobj.cdata.os);
    };
 
 
