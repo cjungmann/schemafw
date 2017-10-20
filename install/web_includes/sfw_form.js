@@ -124,6 +124,11 @@
       return top?_find_first_editable_field(top):null;
    };
 
+   _form.prototype.get_context_row = function()
+   {
+      return SFW.get_property(this,"host","data","xrow");
+   };
+
    _form.prototype.process_submit = function _process_submit()
    {
       var form = this.top();
@@ -137,10 +142,13 @@
       {
          if (SFW.check_for_preempt(doc))
          {
-            SFW.add_update_results(doc);
-
-            if (ths.caller())
-               ths.caller().child_finished(ths.cfobj_from_doc(doc));
+            var caller = ths.caller();
+            if (caller)
+            {
+               caller.preview_result(doc, ths);
+               SFW.update_xmldoc(doc, ths);
+               caller.child_finished(ths);
+            }
          }
       }
 
@@ -191,7 +199,7 @@
          if (_is_failed_delete_request(cmd))
             SFW.alert("Delete operation failed.");
          else if (ths.caller())
-            ths.caller().child_finished(ths.cfobj_from_cmd(cmd));
+            ths.caller().child_finished(ths,cmd=="cancel");
       }
       
       return this.process_clicked_button(t, fdone);
