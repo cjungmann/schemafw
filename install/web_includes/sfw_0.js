@@ -135,7 +135,7 @@ function init_SFW(callback)
    SFW.change_view          = _change_view;
    SFW.process_event        = _process_event;
    SFW.get_copied_node      = _get_copied_node;
-   SFW.add_update_results   = _add_update_results
+   SFW.update_xmldoc        = _update_xmldoc
 
    // The following commonly-used search function is found in sfw_dom.js:
    // SFW.find_child_matches(parent, function, first_only, recurse)
@@ -1001,16 +1001,33 @@ function init_SFW(callback)
          target.appendChild(nrow);
    }
 
-   function _add_update_results(doc)
+   function _confirm_delete_result(doc)
    {
-      var pagedoc = SFW.xmldoc;
-      var arr = doc.selectNodes("/*/*[@rndx][@type='update']");
-      for (var i=0, stop=arr.length; i<stop; ++i)
+      var attr = docel.selectSingleNode("/*/*[@rndx][@type='delete']/@attr");
+      return attr && attr.value!=0;
+   }
+
+   function _update_xmldoc(doc, form)
+   {
+      var mtype = doc.documentElement.getAttribute("mode-type");
+
+      if (mtype=="delete")
       {
-         var result = arr[i];
-         var target = _get_target_result(result, pagedoc);
-         if (target)
-            _put_row_into_target(target, result.selectSingleNode("*"));
+         var xrow = form.get_context_row();
+         if (_confirm_delete_result(doc) && xrow)
+            xrow.parentNode.removeChild(xrow);
+      }
+      else if (mtype=="form-submit")
+      {
+         var pagedoc = SFW.xmldoc;
+         var arr = doc.selectNodes("/*/*[@rndx][@type='update']");
+         for (var i=0, stop=arr.length; i<stop; ++i)
+         {
+            var result = arr[i];
+            var target = _get_target_result(result, pagedoc);
+            if (target)
+               _put_row_into_target(target, result.selectSingleNode("*"));
+         }
       }
    }
 
@@ -1630,6 +1647,7 @@ function init_SFW(callback)
 
    _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
    {
+      var caller;
       var type = b.getAttribute("data-type");
       var url = b.getAttribute("data-task") || b.getAttribute("data-url");
       var cmsg = b.getAttribute("data-confirm");
@@ -1660,12 +1678,10 @@ function init_SFW(callback)
             break;
          case "cancel":
          case "close":
-            if (this.caller())
+            if ((caller=this.caller()))
             {
-               var cfobj = this.cfobj_from_cmd(type);
-               cfobj.hide();
-
-               this.caller().child_finished(cfobj, true);
+               this.sfw_hide();
+               caller.child_finished(this,true);
             }
             return false;
          
@@ -1691,9 +1707,9 @@ function init_SFW(callback)
    _base.prototype.remove_merged_results = function()
    {
       var data = _get_property(this,"host","data");
-      if (data && "merge_number" in data)
+      var mnum = _get_property(data,"merge_number");
+      if (mnum)
       {
-         var mnum = data.merge_number;
          delete data.merge_number;
          _remove_merged_elements(this.xmldoc(), mnum);
       }
@@ -1705,10 +1721,12 @@ function init_SFW(callback)
 
    _base.prototype.child_ready = function(child) { };
 
-   _base.prototype.child_finished = function(cfobj, cancelled)
+   _base.prototype.preview_result = function(returned_doc) { };
+
+   _base.prototype.child_finished = function(child, cancelled)
    {
-      cfobj.child.remove_merged_results();
-      cfobj.close(); 
+      child.remove_merged_results();
+      child.sfw_close(); 
    };
 
    /** Buttons are all processed the same way, so handle consistently in base class. */
