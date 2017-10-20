@@ -176,9 +176,13 @@
     
     <xsl:attribute name="{$name}">
       <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str" select="." />
+        <xsl:with-param name="str">
+          <xsl:if test="local-name()='task'">
+            <xsl:apply-templates select="." mode="fix_srm_selfref"/>
+          </xsl:if>
+          <xsl:value-of select="." />
+        </xsl:with-param>
       </xsl:call-template>
-      <!-- <xsl:value-of select="." /> -->
     </xsl:attribute>
   </xsl:template>
 
