@@ -166,10 +166,6 @@
             // xrow.parentNode.removeChild(xrow);
          }
       }
-      else
-      {
-         console.log("Mtype is " + mtype);
-      }
    };
 
    _tbase.prototype.child_finished = function(child, cancelled)
