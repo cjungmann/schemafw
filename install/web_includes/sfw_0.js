@@ -168,6 +168,7 @@ function init_SFW(callback)
 
    SFW.get_object_from_host = _get_object_from_host;
    SFW.get_cfobj_result     = _get_cfobj_result;
+   SFW.get_update_row       = _get_update_row
    SFW.get_urow_from_cfobj  = function(o) {
       return ("update_row" in o)?o.update_row:null; };
 
@@ -973,7 +974,8 @@ function init_SFW(callback)
    function _get_oldrow(target, row)
    {
       var idname, idval, rowname;
-      if ((idname=_get_result_idname(target,row))
+      if (row
+          && (idname=_get_result_idname(target,row))
           && (idval=row.getAttribute(idname))
           && (rowname=target.getAttribute("row-name")))
          return target.selectSingleNode(rowname + "[@" + idname + "='" + idval + "']");
@@ -1326,6 +1328,12 @@ function init_SFW(callback)
          return new SFW.types[type]({host:host});
       else
          return null;
+   }
+
+   function _get_update_row(doc)
+   {
+      var xpath = "/*/*[@rndx][@type='update']/*[local-name()=../@row-name]";
+      return doc?doc.selectSingleNode(xpath):null;
    }
 
    /**
