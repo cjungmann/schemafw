@@ -129,6 +129,11 @@
       return SFW.get_property(this,"host","data","xrow");
    };
 
+   _form.prototype.get_saved_os = function()
+   {
+      return SFW.get_property(this,"host","data","os");
+   };
+
    _form.prototype.process_submit = function _process_submit()
    {
       var form = this.top();
@@ -167,15 +172,6 @@
       xhr_get(url,cb);
    };
 
-   var _xpath_delete_check = "/*[@mode-type='delete']/*[@rndx=1]/*[1]/@deleted";
-   function _is_failed_delete_request(cmd)
-   {
-      var a;
-      return ("documentElement" in cmd
-              && (a=cmd.selectSingleNode(_xpath_delete_check))
-                 && a.nodeValue=="0");
-   }
-
    _form.prototype.set_field = function _set_field(name,value)
    {
       var form = this.top();
@@ -196,12 +192,26 @@
       var ths = this;
       function fdone(cmd)
       {
-         if (_is_failed_delete_request(cmd))
-            SFW.alert("Delete operation failed.");
-         else if (ths.caller())
-            ths.caller().child_finished(ths,cmd=="cancel");
+         var attr, caller;
+         if ((attr=SFW.get_deleted_attribute(cmd)))
+         {
+            if (attr.value=="0")
+            {
+               SFW.alert("Delete operation failed.");
+               return;
+            }
+            else
+               SFW.remove_deleted_row(cmd,ths);
+         }
+         else if (cmd=="cancel") // from delete-confirm dialog
+         {
+            // just return, leave record dialog open:
+            return;
+         }
+
+         if ((caller=ths.caller()))
+            caller.child_finished(ths,cmd=="cancel");
       }
-      
       return this.process_clicked_button(t, fdone);
    };
 
