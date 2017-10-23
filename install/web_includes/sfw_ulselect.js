@@ -58,6 +58,7 @@
          {
             this.set_li_class_by_id(val,"out");
             this.remove_selection(val);
+            this.update_defacto_display();
             this.close_and_clear();
             this.stage_input_focus();
             return false;
@@ -225,51 +226,42 @@
          _set_prefill_field(obj,val);
    };
 
+   _ulselect.prototype.preview_result = function(returned_doc, child)
+   {
+      SFW.types["tbase"].prototype.preview_result.call(this,returned_doc,child);
+
+      var crow = child.get_context_row();
+      var xpath = "/*/*[@rndx][@type='update']/*[local-name()=../@row-name]";
+      var newrow = returned_doc.selectSingleNode(xpath);
+      if (newrow && !crow)
+      {
+         var rid = newrow.getAttribute("id");
+         if (rid)
+            this.add_selection(rid);
+      }
+   };
+
    /** At present, the only reason I can think that a child
     *   would have been opened is for adding a missing option,
     *   in which case the lookup table would need to be updated
     *   AND the new option should be used as the current seletion.
     */
-   _ulselect.prototype.child_finished = function(cfobj, cancelled)
+   _ulselect.prototype.child_finished = function(child, cancelled)
    {
       // Must call base::child_finished() to clean out
       // any merged elements before calling replot().
-      SFW.base.prototype.child_finished.call(this, cfobj, cancelled);
+      SFW.base.prototype.child_finished.call(this, child, cancelled);
 
-      if (!cancelled && cfobj.rtype=="update" && cfobj.update_row)
+      if (!cancelled)
       {
-         var result = this.get_result_to_update(cfobj);
-         var newid = cfobj.update_row.getAttribute("id");
-
-         this.update_row(cfobj);
          this.refresh_options();
-
-         if (result && newid)
-         {
-            var field = this.get_field_actors("field");
-            if (field && field.getAttribute("options")=="off")
-            {
-               var row = SFW.get_row_from_result_id(result, newid);
-               if (row)
-                  this.add_selection(row.getAttribute("id"));
-               else
-                  console.error("Updated result row not found in result.");
-            }
-            else
-            {
-               var el;
-               if ((el=this.get_li_by_id(newid)))
-               {
-                  this.select_option(el);
-                  this.stage_input_focus();
-               }
-            }
-         }
+         this.update_defacto_display();
       }
 
-      var dobj = cfobj.cdata;
-      if (dobj && "os" in dobj)
-         SFW.set_page_offset(dobj.os);
+      // Restore previous page position when form closes.
+      var os = child.get_saved_os();
+      if (os)
+         SFW.set_page_offset(os);
    };
 
    _ulselect.prototype.process_arrow_press = function(up)
@@ -425,6 +417,7 @@
       {
          this.set_li_class_by_id(id,"out");
          this.remove_selection(id);
+         this.update_defacto_display();
       }
    };
 
@@ -499,6 +492,7 @@
 
       el.className = "in";
       this.add_selection(el.getAttribute("data-value"));
+      this.update_defacto_display();
       this.close_and_clear();
    };
 
@@ -556,17 +550,19 @@
       return null;
    };
 
-   _ulselect.prototype.update_defacto_display = function(value)
+   _ulselect.prototype.update_defacto_display = function()
    {
       var span = this.get_defacto_span();
       if (span)
       {
          var fname = this.get_field_name();
+         var value = this.get_value();
+
          var shadow = this.add_schema_shadow(fname,value);
          if (shadow)
          {
             var span, attr;
-            if ((span=this.get_defacto_span()) && (attr=shadow.attributes[0]))
+            if ((span=this.get_defacto_span()) && (attr=shadow.selectSingleNode("@"+fname)))
                SFW.xslobj.transformFill(span, attr);
 
             shadow.parentNode.removeChild(shadow);
@@ -606,7 +602,6 @@
          list += ',' + val;
 
       this.set_value(list);
-      this.update_defacto_display(list);
       return false;
    };
 
@@ -624,7 +619,6 @@
          }
 
          this.set_value(list);
-         this.update_defacto_display(list);
       }
    };
 
