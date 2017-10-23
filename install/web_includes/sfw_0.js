@@ -135,6 +135,8 @@ function init_SFW(callback)
    SFW.change_view          = _change_view;
    SFW.process_event        = _process_event;
    SFW.get_copied_node      = _get_copied_node;
+   SFW.get_deleted_attribute= _get_deleted_attribute;
+   SFW.remove_deleted_row   = _remove_deleted_row;
    SFW.update_xmldoc        = _update_xmldoc
 
    // The following commonly-used search function is found in sfw_dom.js:
@@ -1001,23 +1003,29 @@ function init_SFW(callback)
          target.appendChild(nrow);
    }
 
-   function _confirm_delete_result(doc)
+   function _get_deleted_attribute(doc)
    {
-      var attr = docel.selectSingleNode("/*/*[@rndx][@type='delete']/@attr");
-      return attr && attr.value!=0;
+      var attr;
+      if (typeof(doc)=="object" && "selectSingleNode" in doc)
+      {
+         var xpath = "/*/*[@rndx]/*[local-name()=(../@row-name)]/@deleted";
+         attr = doc.selectSingleNode(xpath);
+      }
+      return attr;
+   }
+
+   function _remove_deleted_row(doc, form)
+   {
+      var xrow = form.get_context_row();
+      if (xrow)
+         xrow.parentNode.removeChild(xrow);
    }
 
    function _update_xmldoc(doc, form)
    {
       var mtype = doc.documentElement.getAttribute("mode-type");
 
-      if (mtype=="delete")
-      {
-         var xrow = form.get_context_row();
-         if (_confirm_delete_result(doc) && xrow)
-            xrow.parentNode.removeChild(xrow);
-      }
-      else if (mtype=="form-submit")
+      if (mtype=="form-submit")
       {
          var pagedoc = SFW.xmldoc;
          var arr = doc.selectNodes("/*/*[@rndx][@type='update']");
@@ -1173,11 +1181,19 @@ function init_SFW(callback)
       return true;
    }
 
-   function _find_schema(doc)
+   function _find_schema(doc, merge_number)
    {
       var docel = doc.documentElement;
       var schema = null;
-      var arrx = ["schema[@merged]", "result[@merged]/schema", "schema[1]", "*[@rndx=1]/schema"];
+
+      var arrx = ["schema[1]", "*[@rndx=1]/schema"];
+      
+      if (merge_number)
+      {
+         var mpred = "[@merged='"+merge_number+"']";
+         arrx = ["schema"+mpred, "*[@rndx]"+mpred];
+      }
+
       for (var i=0,stop=arrx.length; !schema && i<stop; ++i)
          schema = docel.selectSingleNode(arrx[i]);
 
@@ -1407,7 +1423,7 @@ function init_SFW(callback)
 
    _base.prototype.class_name = "iclass";
    _base.prototype.top       = function() { return _find_anchor(this.host()); };
-   _base.prototype.schema    = function() { return _find_schema(this.xmldoc()); };
+   _base.prototype.schema    = function() { return _find_schema(this.xmldoc(), this.merge_number()); };
    _base.prototype.baseproto = function() { return this._baseproto; };
    _base.prototype.button_processors = {};
 
@@ -1652,55 +1668,62 @@ function init_SFW(callback)
       var url = b.getAttribute("data-task") || b.getAttribute("data-url");
       var cmsg = b.getAttribute("data-confirm");
 
+      // For setTimeout callback functions:
+      var funcForTimeout = null;
+      var ths = this;
+
       if (cmsg && !SFW.confirm(cmsg))
       {
-         cb("cancel");
+         funcForTimeout = function(){cb("cancel"); };
+      }
+      else
+      {
+         switch(type)
+         {
+            case "jump":
+            case "open":
+            case "import":
+               if (url)
+                  funcForTimeout = function(){window.location=url;};
+               break;
+            case "call":
+               if (url in window)
+                  funcForTimeout = function(){window[url]();};
+               break;
+            case "cancel":
+            case "close":
+               if ((caller=this.caller()))
+               {
+                  ths.sfw_hide();
+                  funcForTimeout = function(){caller.child_finished(ths,true);};
+               }
+               break;
+
+            default:
+               // Gotta detect delete-type buttons and process without _open_interaction!
+
+               var pbtype = "process_button_"+type;
+               if (pbtype in this)
+                  funcForTimeout = function(){ths[pbtype](b,cb);};
+               else if (url)
+               {
+                  funcForTimeout = function()
+                  {
+                     url = _translate_url(url, ths.xmldocel());
+                     _open_interaction(ths.top().parentNode, url, ths);
+                  }
+               }
+               break;
+         }
+      }
+
+      if (funcForTimeout)
+      {
+         setTimeout(funcForTimeout);
          return false;
       }
-
-      switch(type)
-      {
-         case "jump":
-         case "open":
-         case "import":
-            if (url)
-            {
-               window.location = url;
-               return false;
-            }
-            break;
-         case "call":
-            if (url in window)
-            {
-               window[url]();
-               return false;
-            }
-            break;
-         case "cancel":
-         case "close":
-            if ((caller=this.caller()))
-            {
-               this.sfw_hide();
-               caller.child_finished(this,true);
-            }
-            return false;
-         
-         default:
-            // Gotta detect delete-type buttons and process without _open_interaction!
-
-         
-            var pbtype = "process_button_"+type;
-            if (pbtype in this)
-               return this[pbtype](b,cb);
-            else if (url)
-            {
-               url = _translate_url(url, this.xmldocel());
-               _open_interaction(this.top().parentNode, url, this);
-            }
-            break;
-      }
-
-      return true;
+      else
+         return true;
    };
 
    /** Remove associated merged_data and remove merged_data value to prevent second attempt. */
@@ -1715,6 +1738,11 @@ function init_SFW(callback)
       }
    };
 
+   _base.prototype.merge_number = function()
+   {
+      return _get_property(this,"host","data","merge_number") || 0;
+   };
+   
    _base.prototype.pre_transform = function() { };
    _base.prototype.post_transform = function() { };
    _base.prototype.initialize = function() { };
