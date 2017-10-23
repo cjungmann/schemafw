@@ -231,8 +231,7 @@
       SFW.types["tbase"].prototype.preview_result.call(this,returned_doc,child);
 
       var crow = child.get_context_row();
-      var xpath = "/*/*[@rndx][@type='update']/*[local-name()=../@row-name]";
-      var newrow = returned_doc.selectSingleNode(xpath);
+      var newrow = SFW.get_update_row(returned_doc);
       if (newrow && !crow)
       {
          var rid = newrow.getAttribute("id");
