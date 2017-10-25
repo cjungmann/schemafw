@@ -144,6 +144,7 @@ function init_SFW(callback)
 
    SFW.setup_sfw_host        = _setup_sfw_host;
    SFW.get_last_SFW_Host    = _get_last_SFW_Host;
+   SFW.keep_top_merged_element = _seek_top_merged_element;
    SFW.arrange_in_host      = _arrange_in_host;
    SFW.resize_page          = _resize_page;
    SFW.translate_url        = _translate_url;
@@ -494,6 +495,11 @@ function init_SFW(callback)
          n = n.previousSibling;
       }
       return null;
+   }
+
+   function _seek_top_merged_element(doc)
+   {
+      return doc.selectSingleNode("/*/*[@merged]");
    }
 
    function _resize_host_titles()
@@ -1034,11 +1040,6 @@ function init_SFW(callback)
          if (target)
             _put_row_into_target(target, result.selectSingleNode("*"));
       }
-   }
-
-   function _seek_top_merged_element(doc)
-   {
-      return doc.selectSingleNode("/*/*[@merged]");
    }
 
    function _merge_into_pagedoc(pagedoc, newdoc)
