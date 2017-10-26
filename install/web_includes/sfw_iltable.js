@@ -1,6 +1,8 @@
 
 // sfw_iltable.js
 
+/* iltable = InLine TABLE */
+
 (function _init()
 {
    if ((!("SFW" in window) && setTimeout(_init,100))
@@ -21,20 +23,23 @@
          return false;
       }
       SFW.find_child_matches(actors.anchor,f,true,true);
-      this._tbody = actors.anchor.getElementsByTagName("tbody")[0];
+      this._tbody = actors.anchor.getElementsByTagName("tbody")[1];
    }
 
    _iltable.prototype.replot = function(result)
    {
-      var val = this._input.value.trim();
-      var fname = this.get_field_name();
-      var shadow = this.add_schema_shadow(fname,val);
-      if (shadow)
+      if (!this.do_proxy_override("replot",arguments))
       {
-         var el = this._tbody;
-         if (el)
-            SFW.xslobj.transformFill(el, shadow.attributes[0]);
-         shadow.parentNode.removeChild(shadow);
+         var val = this._input.value.trim();
+         var fname = this.get_field_name();
+         var shadow = this.add_schema_shadow(fname,val);
+         if (shadow)
+         {
+            var el = this._tbody;
+            if (el)
+               SFW.xslobj.transformFill(el, shadow.attributes[0]);
+            shadow.parentNode.removeChild(shadow);
+         }
       }
    };
 
