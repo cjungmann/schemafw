@@ -162,6 +162,7 @@ function init_SFW(callback)
    SFW.remove_string_pres   = _remove_string_pres;
 
    SFW.replace_results      = _replace_results;
+   SFW.get_schema_idfield   = _get_schema_idfield;
 
    SFW.get_row_from_result_id = _get_row_from_result_id;
 
@@ -499,6 +500,8 @@ function init_SFW(callback)
 
    function _seek_top_merged_element(doc)
    {
+      if (!doc)
+         doc = SFW.xmldoc;
       return doc.selectSingleNode("/*/*[@merged]");
    }
 
@@ -948,6 +951,21 @@ function init_SFW(callback)
          parent.appendChild(newel);
    }
 
+   /** Searches for an id field, using most to least explicit methods. */
+   function _get_schema_idfield(schema)
+   {
+      var field = null;
+      if (schema)
+      {
+         field = schema.selectSingleNode("field[@primary-key]")
+            || schema.selectSingleNode("field[@xrow_id]")
+            || schema.selectSingleNode("field[@name='id']")
+            || schema.selectSingleNode("field[1]");
+      }
+
+      return field;
+   }
+
    /** Attempts to get a result name from a result.
     *
     * Looks for, in this order, attempting each step ig the previous step failed.
@@ -958,9 +976,7 @@ function init_SFW(callback)
     */
    function _get_result_idname(result, row)
    {
-      var field;
-      if (!(field=result.selectSingleNode("schema/field[@primary-key]")))
-         field=result.selectSingleNode("schema/field[@xrow_id]");
+      var field = _get_schema_idfield(result.selectSingleNode("schema"));
 
       if (field)
          return field.getAttribute("name");
@@ -1448,6 +1464,21 @@ function init_SFW(callback)
          e.caller = caller;
       if (data)
          e.data = data;
+   };
+
+   _base.prototype.do_proxy_override = function(name,args)
+   {
+      var field = this.get_schema_field();
+      if (field)
+      {
+         var fname = field.getAttribute("proxy_" + name);
+         if (fname && fname in window)
+         {
+            window[fname](this, args);
+            return true;
+         }
+      }
+      return false;
    };
 
    /**
