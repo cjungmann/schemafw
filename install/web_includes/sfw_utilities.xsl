@@ -326,7 +326,6 @@
 
     <xsl:variable name="delim">
       <xsl:variable name="after" select="substring(substring-after($str,'{'),1,1)" />
-      <!-- <xsl:if test="$after='@' or $after='$'"> -->
       <xsl:if test="$after and contains('@$!', $after)">
         <xsl:value-of select="concat('{',$after)" />
       </xsl:if>
@@ -385,17 +384,6 @@
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:choose>
-      <xsl:when test="$break">
-        <xsl:element name="{$break}">
-          <xsl:value-of select="$val" />
-        </xsl:element>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="$val" />
-      </xsl:otherwise>
-    </xsl:choose>
-
     <xsl:variable name="skiplen">
       <xsl:choose>
         <xsl:when test="string-length($ref) &gt; 0">
@@ -404,13 +392,35 @@
         <xsl:when test="$len_before">
           <xsl:value-of select="$len_before+1" />
         </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="string-length($str)" />
+        </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:if test="string-length($str) &gt;= $skiplen">
+    <xsl:variable name="is_end" select="$skiplen &gt;= string-length($str)" />
+    <xsl:variable name="trimmed" select="normalize-space($val)" />
+
+    <xsl:choose>
+      <xsl:when test="$break">
+        <xsl:if test="string-length($trimmed)">
+          <xsl:element name="{$break}">
+            <xsl:value-of select="$trimmed" />
+          </xsl:element>
+        </xsl:if>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:if test="not($is_end) or string-length($trimmed)"> 
+          <xsl:value-of select="$val" />
+        </xsl:if>
+      </xsl:otherwise>
+    </xsl:choose>
+
+    <xsl:if test="not($is_end)">
       <xsl:call-template name="resolve_refs">
         <xsl:with-param name="str" select="substring($str, $skiplen)" />
         <xsl:with-param name="row" select="$row" />
+        <xsl:with-param name="break" select="$break" />
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
