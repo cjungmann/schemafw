@@ -340,7 +340,7 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="schema/field" mode="write_cell_content">
+  <xsl:template match="schema/field[not(@associated)]" mode="write_cell_content">
     <xsl:param name="data" />
 
     <xsl:variable name="val">
@@ -359,6 +359,15 @@
     </xsl:choose>
   </xsl:template>
     
+  <xsl:template match="schema/field[@associated]" mode="write_cell_content">
+    <xsl:param name="data" />
+    <xsl:if test="@result">
+      <xsl:apply-templates select="." mode="show_associations">
+        <xsl:with-param name="data" select="$data" />
+      </xsl:apply-templates>
+    </xsl:if>
+  </xsl:template>
+
 
   <!-- Named template for makeing a table (do we ever use this?). -->
 
