@@ -81,10 +81,15 @@
     <xsl:value-of select="substring($t,2)" />
   </xsl:template>
 
+  <!--
+  It's perhaps ill-advised, but if neither xrow_id or primary_key attributes indicate
+  the id field, this template assumes that the first field is the id field.
+  -->
   <xsl:template match="schema" mode="get_id_field_name">
     <xsl:variable name="xid" select="field[@xrow_id]" />
     <xsl:variable name="pid" select="field[not($xid)][@primary-key]" />
-    <xsl:value-of select="($xid|$pid)/@name" />
+    <xsl:variable name="lid" select="field[not($xid|$pid)][1]" />
+    <xsl:value-of select="($xid|$pid|$lid)/@name" />
   </xsl:template>
 
   <xsl:template match="field" mode="get_id_value">
