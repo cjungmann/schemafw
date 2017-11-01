@@ -87,6 +87,14 @@
     <xsl:value-of select="($xid|$pid)/@name" />
   </xsl:template>
 
+  <xsl:template match="field" mode="get_id_value">
+    <xsl:param name="data" />
+    <xsl:variable name="idname">
+      <xsl:apply-templates select=".." mode="get_id_field_name" />
+    </xsl:variable>
+    <xsl:value-of select="$data/@*[local-name()=$idname]" />
+  </xsl:template>
+
   <xsl:template match="schema/field" mode="get_name">
     <xsl:choose>
       <xsl:when test="@html-name">
