@@ -73,8 +73,7 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="field[@associated][@style='csv']"
-                mode="transform_row">
+  <xsl:template match="field[@associated][@style='csv']" mode="transform_row">
     <xsl:param name="id" />
     <xsl:param name="row" />
     <xsl:param name="more" />
@@ -145,6 +144,21 @@
     <xsl:variable name="associated_row" select="$lresult/*[local-name()=../@row-name][@id=$id_value]" />
 
     <xsl:value-of select="$associated_row/@*[local-name()=current()/@name]" />
+  </xsl:template>
+
+  <!-- Special handling for associated fields, to override matching template in sfw_form.xsl. -->
+  <xsl:template match="field[@associated]" mode="display_value">
+    <xsl:param name="data" />
+  </xsl:template>
+
+    <!-- Special handling for associated fields, to override matching template in sfw_form.xsl. -->
+  <xsl:template match="field[@associated][@style='table']" mode="display_value">
+    <xsl:param name="data" />
+    <table>
+      <xsl:apply-templates select="." mode="show_associations">
+        <xsl:with-param name="data" select="$data" />
+      </xsl:apply-templates>
+    </table>
   </xsl:template>
 
 
