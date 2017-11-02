@@ -52,7 +52,7 @@
         <xsl:call-template name="resolve_refs">
           <xsl:with-param name="str" select="@template" />
           <xsl:with-param name="row" select="$row" />
-          <xsl:with-param name="break" select="'td'" />
+          <xsl:with-param name="enclose" select="'td'" />
         </xsl:call-template>
       </xsl:if>
     </xsl:element>

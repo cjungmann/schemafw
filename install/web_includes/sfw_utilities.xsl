@@ -322,7 +322,7 @@
   <xsl:template name="resolve_refs">
     <xsl:param name="str" />
     <xsl:param name="row" select="/.." />
-    <xsl:param name="break" />
+    <xsl:param name="enclose" />
 
     <xsl:variable name="delim">
       <xsl:variable name="after" select="substring(substring-after($str,'{'),1,1)" />
@@ -402,9 +402,9 @@
     <xsl:variable name="trimmed" select="normalize-space($val)" />
 
     <xsl:choose>
-      <xsl:when test="$break">
-        <xsl:if test="string-length($trimmed)">
-          <xsl:element name="{$break}">
+      <xsl:when test="$enclose">
+        <xsl:if test="string-length($ref) or string-length($trimmed)">
+          <xsl:element name="{$enclose}">
             <xsl:value-of select="$trimmed" />
           </xsl:element>
         </xsl:if>
@@ -420,7 +420,7 @@
       <xsl:call-template name="resolve_refs">
         <xsl:with-param name="str" select="substring($str, $skiplen)" />
         <xsl:with-param name="row" select="$row" />
-        <xsl:with-param name="break" select="$break" />
+        <xsl:with-param name="enclose" select="$enclose" />
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
