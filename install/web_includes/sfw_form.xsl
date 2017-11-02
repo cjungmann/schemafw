@@ -284,7 +284,7 @@
 
         <xsl:when test="$view-mode">
           <div class="field_content" name="{$name}">
-            <xsl:apply-templates select="." mode="get_value">
+            <xsl:apply-templates select="." mode="display_value">
               <xsl:with-param name="data" select="$data" />
             </xsl:apply-templates>
           </div>
@@ -303,6 +303,15 @@
         </xsl:otherwise>
       </xsl:choose>
     </p>
+  </xsl:template>
+
+  <xsl:template match="field" mode="display_value">
+    <xsl:param name="data" />
+    <xsl:variable name="val">
+      <xsl:apply-templates select="." mode="get_value">
+        <xsl:with-param name="data" select="$data" />
+      </xsl:apply-templates>
+    </xsl:variable>
   </xsl:template>
 
 
