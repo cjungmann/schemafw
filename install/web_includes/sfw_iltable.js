@@ -68,7 +68,7 @@
       if (e.type!="click")
          return true;
 
-      var table_el = this.top();
+      var table_el = this.widget();
 
       // Allow base class to process generic buttons
       if (!SFW.base.prototype.process.call(this,e,t))
