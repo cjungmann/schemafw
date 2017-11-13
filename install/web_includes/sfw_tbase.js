@@ -321,13 +321,10 @@
       {
          var url = info.task
 
-         if (xrow && id)
-         {
-            if (url.indexOf('&')==-1)
-               url += "=" + id;
-            else
-               url = SFW.apply_row_context(url, xrow);
-         }
+         if (id && url.indexOf('&')==-1)
+            url += "=" + id;
+         else if (xrow)
+            url = SFW.apply_row_context(url, xrow);
 
          var os = SFW.get_page_offset();  // Get offset before discarding contents
          var host = this.host();
