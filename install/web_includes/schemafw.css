@@ -170,9 +170,10 @@ form.Embedded
 fieldset.Schema
 {
     margin:1em;
-    display:table;
-    border-collapse: separate;
-    border-spacing: 0 .25em;
+    padding-left:2em;
+    /* display:table; */
+    /* border-collapse: separate; */
+    /* border-spacing: 0 .25em; */
 }
 fieldset.Schema legend
 {
@@ -185,14 +186,17 @@ fieldset.Schema legend
 }
 
 
-
-fieldset.Schema p.row { display: table-row }
-fieldset.Schema p.row > * { display: table-cell; }
+/* fieldset.Schema p.row { display: table-row } */
+/* fieldset.Schema p.row > * { display: table-cell; } */
 fieldset.Schema label
 {
     text-align:right;
+    margin-left:-1em;
     padding-right: .5em;
+    vertical-align:top;
 }
+
+fieldset.Schema label button { margin-right: .25em; }
 
 fieldset.Schema label::after {content : ":"}
 fieldset.Schema p.buttons { display:block; text-align:center; margin-bottom:.25em; }
