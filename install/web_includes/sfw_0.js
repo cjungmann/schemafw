@@ -1605,11 +1605,8 @@ function init_SFW(callback)
    /** Get value of data-{name} attribute from the top element. */
    _base.prototype.get_data_value = function(name)
    {
-      var anchor, attr;
-      if ((anchor=this.top()) && (attr=anchor.getAttribute("data-"+name)))
-         return attr;
-      else
-         return null;
+      function rdata(a) { return a?a.getAttribute("data-"+name):null; }
+      return rdata(this.top()) || rdata(this.widget());
    };
 
    _base.prototype.add_schema_shadow = function(name, value)
