@@ -340,7 +340,7 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="schema/field[not(@associated)]" mode="write_cell_content">
+  <xsl:template match="schema/field[not(@type='assoc')]" mode="write_cell_content">
     <xsl:param name="data" />
 
     <xsl:variable name="val">
@@ -359,7 +359,7 @@
     </xsl:choose>
   </xsl:template>
     
-  <xsl:template match="schema/field[@associated]" mode="write_cell_content">
+  <xsl:template match="schema/field[@type='assoc']" mode="write_cell_content">
     <xsl:param name="data" />
     <xsl:if test="@result">
       <xsl:apply-templates select="." mode="show_associations">
