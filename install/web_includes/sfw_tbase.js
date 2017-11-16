@@ -196,27 +196,18 @@
       return name;
    };
 
-   _tbase.prototype.get_cell_click_id_name = function()
+   _tbase.prototype.get_click_id_name = function(name)
    {
-      return this.get_sfw_attribute("cell_click_id") || "id";
-   };
+      return this.get_sfw_attribute(name+"_click_id") || "id";
+   }
 
-   _tbase.prototype.get_line_click_id_name = function()
+   _tbase.prototype.get_el_id = function(el)     { return el.getAttribute("data-id"); }
+   _tbase.prototype.get_data_name = function(el) { return el.getAttribute("data-name"); }
+
+   _tbase.prototype.get_click_action = function(name)
    {
-      return this.get_sfw_attribute("line_click_id") || "id";
-   };
-
-   _tbase.prototype.get_row_id = 
-      _tbase.prototype.get_cell_id =
-      function(el) { return el.getAttribute("data-id");};
-
-   _tbase.prototype.get_row_name = 
-      _tbase.prototype.get_cell_name =
-      function(el) { return el.getAttribute("data-name");};
-
-   _tbase.prototype.get_cell_click_action = function() { return this.get_data_value("on_cell_click"); };
-   _tbase.prototype.get_line_click_action = function() { return this.get_data_value("on_line_click"); };
-
+      return this.get_data_value("on_" + name + "_click");
+   }
 
    /**
     * The assumption is that an application that allows table cell-based
@@ -235,16 +226,16 @@
    _tbase.prototype.get_cell_click_info = function(td)
    {
       var field, task, did, dname, rval=null;
-      if ((task=this.get_cell_click_action()))
+      if ((task=this.get_click_action("cell")))
       {
-         rval = { target:td, task:task, id_name:this.get_cell_click_id_name() };
+         rval = { target:td, task:task, id_name:this.get_click_id_name("cell") };
 
          // As a cell-click procedure, set data_id=0 if there is no
          // data-id attribute.  That indicates an empty record.  I assume
          // (and may be wrong about this) that any cell-editing table
          // will likely be potentially sparsely-populated. That is, there
          // may be some empty cells without it being an error.
-         if ((did=this.get_cell_id(td)))
+         if ((did=this.get_el_id(td)))
             rval.data_id = did;
          else
             rval.data_id = 0;
@@ -253,7 +244,7 @@
          // table to know what kind of object should be created.  An
          // example is a calendar date with no contents, and the data-name
          // would be the date.
-         if ((dname=this.get_cell_name(td)))
+         if ((dname=this.get_data_name(td)))
             rval.data_name = dname;
 
          if((result=this.get_ref_result()))
@@ -266,13 +257,53 @@
    _tbase.prototype.get_line_click_info = function(tr)
    {
       var result, task, did, rval=null;
-      if ((task=this.get_line_click_action())
+      if ((task=this.get_click_action("line"))
           && tr.parentNode.tagName.toLowerCase()=="tbody")
       {
-         rval = { target:tr, task:task, id_name:this.get_line_click_id_name() };
+         rval = { target:tr, task:task, id_name:this.get_click_id_name("line") };
 
-         if ((did=this.get_row_id(tr)))
+         if ((did=this.get_el_id(tr)))
             rval.data_id = did;
+
+         if((result=this.get_ref_result()))
+            rval.result = result;
+      }
+
+      return rval;
+   };
+
+   /**
+    * This is a generic get_click_info function that searches for element names
+    * other than tr or td, which call get_line_* and get_cell_* functions.
+    * The framework will search "on_xxx_click" instructions, where the "xxx" is
+    * replaced by the element name.
+    */
+   _tbase.prototype.get_el_click_info = function(el)
+   {
+      var field, task, did, dname, rval=null;
+      var elname = el.tagName.toLowerCase();
+
+      if (elname=="tr")
+         elname = "line";
+      else if (elname=="td")
+         elname = "cell";
+
+      if ((task=this.get_click_action(elname)))
+      {
+         rval = { target:el, task:task, id_name:this.get_click_id_name(elname) };
+
+         // For sparsly-filled constructions, there may be no id.
+         if ((did=this.get_el_id(el)))
+            rval.data_id = did;
+         else
+            rval.data_id = 0;
+
+         // There should be a data-name attribute that allows a sparse
+         // table to know what kind of object should be created.  An
+         // example is a calendar date with no contents, and the data-name
+         // would be the date.
+         if ((dname=this.get_data_name(el)))
+            rval.data_name = dname;
 
          if((result=this.get_ref_result()))
             rval.result = result;
