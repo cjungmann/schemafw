@@ -13,7 +13,7 @@
   
   <xsl:variable name="jslist_sfw_brief">sfw</xsl:variable>
   <xsl:variable name="jslist_sfw_minified">sfw.min</xsl:variable>
-  <xsl:variable name="jslist_sfw_debug">sfw_0 sfw_tbase sfw_calendar sfw_debug sfw_dom sfw_form sfw_ulselect sfw_mixed_view sfw_onload sfw_table sfw_iltable</xsl:variable>
+  <xsl:variable name="jslist_sfw_debug">sfw_0 sfw_tbase sfw_calendar sfw_debug sfw_dom sfw_form sfw_ulselect sfw_mixed_view sfw_onload sfw_table sfw_assoc sfw_iltable</xsl:variable>
   
   <!-- Set jslist_sfw to one of the above variables for the desired script-set. -->
   <xsl:variable name="jslist_sfw" select="$jslist_sfw_debug" /> 
