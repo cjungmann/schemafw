@@ -256,6 +256,15 @@
     <p class="{$class}">
       
       <label for="{$name}">
+        <xsl:if test="$view-mode and @on_field_click">
+          <xsl:element name="button">
+            <xsl:attribute name="type">button</xsl:attribute>
+            <xsl:attribute name="data-url">
+              <xsl:apply-templates select="@on_field_click" mode="resolve_refs" />
+            </xsl:attribute>
+            <xsl:text>Edit</xsl:text>
+          </xsl:element>
+        </xsl:if>
         <xsl:value-of select="$label" />
       </label>
 
@@ -280,6 +289,12 @@
                       data-url="{$manage}">Manage</button>
             </xsl:when>
           </xsl:choose>
+        </xsl:when>
+
+        <xsl:when test="@type='assoc'">
+          <xsl:apply-templates select="." mode="construct_input">
+            <xsl:with-param name="data" select="$data" />
+          </xsl:apply-templates>
         </xsl:when>
 
         <xsl:when test="$view-mode">
@@ -312,8 +327,8 @@
         <xsl:with-param name="data" select="$data" />
       </xsl:apply-templates>
     </xsl:variable>
+    <xsl:value-of select="$val" />
   </xsl:template>
-
 
   <xsl:template match="field[@dtd]" mode="get_list_string">
     <xsl:variable name="paren" select="substring-after(@dtd,'(')" />
