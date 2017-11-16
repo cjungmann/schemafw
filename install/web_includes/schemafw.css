@@ -303,3 +303,24 @@ td.cal_day div.day_head
     margin:0;
     background-color:#99FF99;
 }
+
+div.assoc
+{
+    margin:0;
+    padding:0;
+}
+
+div.assoc span
+{
+    border: solid 1px black;
+    padding: 0 .25em;
+    margin:0 .25em;
+}
+
+div.assoc.active span:hover,
+table.assoc.active tr:hover
+{
+    cursor: pointer;
+    background-color:#99FF99;
+}
+
