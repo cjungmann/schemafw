@@ -1485,7 +1485,7 @@ function init_SFW(callback)
     * Returns a populated object, or if actor_name set, the named sub-object.
     *
     * This function makes an object with as many of the following as it can find:
-    * - input  (the HTML input element)
+    * - input  (the HTML input element, if any)
     * - name   (the name of the pertinent field)
     * - schema (the schema element that governs the input)
     * - field  (the field element in the schema)
@@ -1495,9 +1495,10 @@ function init_SFW(callback)
     * the earlier objects, so it is only necessary to check for the latest object
     * required.
     *
-    * It only returns meaningful information if the derived object is an input field.
-    * It will work with a form derived from _base, but the return value will be an
-    * an empty object or, if actor_name, null.
+    * The function looks for a field name, first by an input field, and if that fails,
+    * by trying to get the @for value from the label elemtn.
+    *
+    * If a field name is found, the function continues to find and save field actors.
     *
     * By returning several objects, this function streamlines execution by
     * retaining the useful objects that give access to subsequent objects.
@@ -1521,6 +1522,20 @@ function init_SFW(callback)
          {
             rval.input = input;
             rval.name = input.getAttribute("name");
+         }
+         else
+         {
+            var widget = this.widget();
+            if (widget)
+            {
+               var label = widget.parentNode.getElementsByTagName("label")[0];
+               if (label)
+                  rval.name = label.getAttribute("for");
+            }
+         }
+
+         if (rval.name)
+         {
             var schema = this.schema();
             if (schema)
             {
