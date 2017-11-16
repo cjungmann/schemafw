@@ -315,6 +315,41 @@
     </xsl:if>
   </xsl:template>
 
+  <xsl:template name="add_enclose_attributes">
+    <xsl:param name="hints" />
+    <xsl:variable name="c_hint" select="substring-before($hints,'|')" />
+    <xsl:variable name="s_hint" select="substring($hints,1 div boolean(string-length($c_hint)=0))" />
+    <xsl:variable name="hint" select="concat($c_hint,$s_hint)" />
+
+    <xsl:variable name="name" select="normalize-space(substring-before($hint,'='))" />
+    <xsl:variable name="val" select="substring-after($hint,'=')" />
+
+    <xsl:attribute name="{$name}">
+      <xsl:value-of select="$val" />
+    </xsl:attribute>
+
+    <xsl:if test="string-length($c_hint)&gt;0">
+      <xsl:call-template name="add_enclose_attributes">
+        <xsl:with-param name="hints" select="substring-after($hints,'|')" />
+      </xsl:call-template>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template name="enclose_val">
+    <xsl:param name="str" />
+    <xsl:param name="tag" />
+    <xsl:param name="hints" />
+
+    <xsl:element name="{$tag}">
+      <xsl:if test="string-length($hints)&gt;0">
+        <xsl:call-template name="add_enclose_attributes">
+          <xsl:with-param name="hints" select="$hints" />
+        </xsl:call-template>
+      </xsl:if>
+      <xsl:value-of select="$str" />
+    </xsl:element>
+  </xsl:template>
+
   <!--
       This template produces a string from the "str" param with tokens
       replaced with values included in document.
@@ -339,7 +374,7 @@
 
     <xsl:variable name ="len_before" select="string-length($before)" />
 
-    <xsl:variable name="ref">
+    <xsl:variable name="raw_ref">
       <xsl:if test="starts-with($str,$delim)">
         <xsl:variable name="end" select="substring-before($str,'}')" />
         <xsl:if test="$end and not (contains($end,' '))">
@@ -347,6 +382,11 @@
         </xsl:if>
       </xsl:if>
     </xsl:variable>
+
+    <xsl:variable name="ref_hints" select="substring-after($raw_ref,';')" />
+    <xsl:variable name="b_ref" select="substring-before($raw_ref,';')" />
+    <xsl:variable name="s_ref" select="substring($raw_ref,1 div boolean(string-length($b_ref)=0))" />
+    <xsl:variable name="ref" select="concat($b_ref, $s_ref)" />
 
     <xsl:variable name="val">
       <xsl:choose>
@@ -386,8 +426,8 @@
 
     <xsl:variable name="skiplen">
       <xsl:choose>
-        <xsl:when test="string-length($ref) &gt; 0">
-          <xsl:value-of select="string-length($ref)+4" />
+        <xsl:when test="string-length($raw_ref) &gt; 0">
+          <xsl:value-of select="string-length($raw_ref)+4" />
         </xsl:when>
         <xsl:when test="$len_before">
           <xsl:value-of select="$len_before+1" />
@@ -404,9 +444,11 @@
     <xsl:choose>
       <xsl:when test="$enclose">
         <xsl:if test="string-length($ref) or string-length($trimmed)">
-          <xsl:element name="{$enclose}">
-            <xsl:value-of select="$trimmed" />
-          </xsl:element>
+          <xsl:call-template name="enclose_val">
+            <xsl:with-param name="str" select="$trimmed" />
+            <xsl:with-param name="tag" select="$enclose" />
+            <xsl:with-param name="hints" select="$ref_hints" />
+          </xsl:call-template>
         </xsl:if>
       </xsl:when>
       <xsl:otherwise>
