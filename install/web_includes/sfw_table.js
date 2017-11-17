@@ -237,30 +237,18 @@
       var click_info;
       while (t && t!=table_el)
       {
-         var tag = t.tagName.toLowerCase();
-         switch(tag)
+         if (t.getAttribute("data-id"))
          {
-            case "td":
-               if ((click_info=this.get_cell_click_info(t)))
-                  return this.process_click_info(click_info);
-               break;
-               
-            case "tr":
-               if ((click_info=this.get_line_click_info(t)))
-                  return this.process_click_info(click_info);
-
-            case "th":
+            if ((click_info=this.get_el_click_info(t)))
+               return this.process_click_info(click_info);
+         }
+         else if (t.tagName.toLowerCase()=="th")
+         {
+            if (class_includes(t,'sortable'))
             {
-               if ((class_includes(t,'sortable')))
-               {
-                  // if (result_is_free_to_replot(bndl.result))
-                  // {
-                     this.set_sort_column(t);
-                     this.replot();
-                     return false;
-                  // }
-               }
-               break;
+               this.set_sort_column(t);
+               this.replot();
+               return false;
             }
          }
          t = t.parentNode;
