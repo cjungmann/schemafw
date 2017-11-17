@@ -91,16 +91,8 @@
             }
          }
          else if (t.getAttribute("data-id"))
-         // if (tn=="tr")
          {
-            if (tn=="tr")
-               click_info=this.get_line_click_info(t);
-            else if (tn=="td")
-               click_info=this.get_cell_click_info(t);
-            else
-               click_info=this.get_el_click_info(t);
-               
-            if (click_info)
+            if ((click_info=this.get_el_click_info(t)))
                return this.process_click_info(click_info);
          }
          t = t.parentNode;
