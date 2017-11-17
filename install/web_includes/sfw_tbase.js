@@ -210,73 +210,14 @@
    }
 
    /**
-    * The assumption is that an application that allows table cell-based
-    * editing must allow for empty cells.  Thus the standard implementation
-    * of get_cell_click_info sets the click_info object property data_id=0
-    * if the cell is empty.
-    *
-    * This differs from get_line_click_info, where it is assumed that any
-    * line that is displayed actually exists in the data.
-    *
-    * Variations from these assumptions should be handled with custom
-    * implementations or get_cell_click_info, get_line_click_info, or
-    * a custom object or window method that can be called with the
-    * click_info object.
-    */
-   _tbase.prototype.get_cell_click_info = function(td)
-   {
-      var field, task, did, dname, rval=null;
-      if ((task=this.get_click_action("cell")))
-      {
-         rval = { target:td, task:task, id_name:this.get_click_id_name("cell") };
-
-         // As a cell-click procedure, set data_id=0 if there is no
-         // data-id attribute.  That indicates an empty record.  I assume
-         // (and may be wrong about this) that any cell-editing table
-         // will likely be potentially sparsely-populated. That is, there
-         // may be some empty cells without it being an error.
-         if ((did=this.get_el_id(td)))
-            rval.data_id = did;
-         else
-            rval.data_id = 0;
-
-         // There should be a data-name attribute that allows a sparse
-         // table to know what kind of object should be created.  An
-         // example is a calendar date with no contents, and the data-name
-         // would be the date.
-         if ((dname=this.get_data_name(td)))
-            rval.data_name = dname;
-
-         if((result=this.get_ref_result()))
-            rval.result = result;
-      }
-
-      return rval;
-   };
-
-   _tbase.prototype.get_line_click_info = function(tr)
-   {
-      var result, task, did, rval=null;
-      if ((task=this.get_click_action("line"))
-          && tr.parentNode.tagName.toLowerCase()=="tbody")
-      {
-         rval = { target:tr, task:task, id_name:this.get_click_id_name("line") };
-
-         if ((did=this.get_el_id(tr)))
-            rval.data_id = did;
-
-         if((result=this.get_ref_result()))
-            rval.result = result;
-      }
-
-      return rval;
-   };
-
-   /**
     * This is a generic get_click_info function that searches for element names
-    * other than tr or td, which call get_line_* and get_cell_* functions.
+    * other than tr or td, which used to call get_line_* and get_cell_* functions.
     * The framework will search "on_xxx_click" instructions, where the "xxx" is
     * replaced by the element name.
+    *
+    * A _tr_ is converted to _line_ and _td_ is converted to _cell_ to maintain
+    * those more familiar terms.  Having a *on_span_click* instruction in a response
+    * mode will be used when a user clicks on a _span_ element.
     */
    _tbase.prototype.get_el_click_info = function(el)
    {
@@ -292,7 +233,8 @@
       {
          rval = { target:el, task:task, id_name:this.get_click_id_name(elname) };
 
-         // For sparsly-filled constructions, there may be no id.
+         // For sparsly-filled constructions, like cells of a spreadsheet,
+         // a given cell might be empty and have no assigned id.
          if ((did=this.get_el_id(el)))
             rval.data_id = did;
          else
@@ -322,8 +264,6 @@
          // 1. A missing data_id is a failure and should be diagnosed
          // 2. Table cells may be sparsely populated, ie, some cells may
          //    be empty.  In that case, data_id will be set to 0.
-         //    This is something to keep in mind for custom implementations
-         //    of the get_cell_click_info().
          // 3. Another situation that might have a 0 data_id is if the
          //    intent is to create a new record.
          if (!(SFW.has_value(info,"data_id")))
