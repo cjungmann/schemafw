@@ -21,13 +21,11 @@
   </xsl:template>
 
   <!-- prevent extra text printing for other add_on_click_attribute template. -->
-  <xsl:template match="field/@*" mode="add_on_click_attribute"></xsl:template>
+  <xsl:template match="@*" mode="add_on_click_attribute"></xsl:template>
 
-  <xsl:template
-      match="field/@*[starts-with(local-name(),'on_') and contains(local-name(),'_click')]"
+  <xsl:template match="@*[starts-with(local-name(),'on_') and contains(local-name(),'_click')]"
       mode="add_on_click_attribute">
     <xsl:variable name="aname" select="concat('data-', local-name())" />
-
     <xsl:attribute name="{$aname}">
       <xsl:apply-templates select="." mode="fix_srm_selfref" />
       <xsl:call-template name="resolve_refs">
