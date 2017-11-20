@@ -328,7 +328,8 @@ will contain the YYYY-MM-DD date.
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:apply-templates select="." mode="add_result_attribute" />
       <xsl:apply-templates select=".." mode="add_sfw_class_attribute" />
-      <xsl:apply-templates select="." mode="add_on_cell_click_attribute" />
+      <!-- schema is optional, so union with result: -->
+      <xsl:apply-templates select="..|../schema" mode="add_on_click_attributes" />
       <xsl:apply-templates select="../@calmove_base" mode="add_url_attribute" />
       <thead>
         <xsl:apply-templates select="$buttons" mode="show_buttons" />

@@ -43,10 +43,7 @@
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:apply-templates select="." mode="add_result_attribute" />
       <xsl:apply-templates select="." mode="add_sfw_class_attribute" />
-      <xsl:apply-templates select="." mode="add_on_line_click_attribute" />
-      <!-- <xsl:apply-templates select=".." mode="add_data_attribute"> -->
-      <!--   <xsl:with-param name="name">on_line_click</xsl:with-param> -->
-      <!-- </xsl:apply-templates> -->
+      <xsl:apply-templates select="." mode="add_on_click_attributes" />
 
       <thead>
         <xsl:if test="not($static)">
