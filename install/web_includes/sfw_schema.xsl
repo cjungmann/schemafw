@@ -34,46 +34,30 @@
     </xsl:attribute>
   </xsl:template>
 
-  <xsl:template match="*" mode="add_on_x_click_attribute">
-    <xsl:param name="type" />
-    <xsl:variable name="c_s" select="ancestor-or-self::schema/@*[local-name()=$type]" />
-    <xsl:variable name="c_r" select="ancestor-or-self::*[not($c_s)][@rndx]/@*[local-name()=$type]" />
-    <xsl:variable name="c_d" select="/*[not($c_s|$c_r)]/@*[local-name()=$type]" />
-    <xsl:variable name="all" select="$c_s|$c_r|$c_d" />
-    <xsl:variable name="aname" select="concat('data-', $type)" />
+  <!--
+  1. Get $all from all on_xxx_click attributes in ancestor chain
+` 2. Get (from $all) attribute sets a_s, a_r, a_m from schema, result, and root
+  3. Get exclusive set x_r (for result, not found in schema)
+  4. Get exclusive set x_m (for mode, not found in schema or result)
+  5. Write out reconciled on_xxx_click attributes from union of a_s|x_r|x_m
+  -->
+  <xsl:template match="*" mode="add_on_click_attributes">
+    <xsl:variable
+        name="all"
+        select="ancestor-or-self::*/@*[starts-with(local-name(),'on_') and contains(local-name(),'_click')]" />
 
-    <xsl:if test="$all">
-      <xsl:attribute name="{$aname}">
-        <xsl:apply-templates select="$all" mode="fix_srm_selfref" />
-        <xsl:value-of select="$all" />
-      </xsl:attribute>
-    </xsl:if>
+    <xsl:variable name="a_s" select="$all[parent::schema]" />
+    <xsl:variable name="a_r" select="$all[parent::*[@rndx] and not(parent::schema)]" />
+    <xsl:variable name="a_m" select="$all[not(parent::schema) and not(parent::*[@rndx])]" />
+
+    <xsl:variable name="x_r" select="$a_r[not(local-name($a_s)=local-name())]" />
+    <xsl:variable
+        name="x_m"
+        select="$a_m[not(local-name($a_s)=local-name())][not(local-name($a_r)=local-name())]" />
+
+    <xsl:apply-templates select="$a_s|$x_r|$x_m" mode="add_on_click_attribute" />
+
   </xsl:template>
-
-  <xsl:template match="*" mode="add_on_line_click_attribute">
-    <xsl:apply-templates select="." mode="add_on_x_click_attribute">
-      <xsl:with-param name="type" select="'on_line_click'" />
-    </xsl:apply-templates>
-  </xsl:template>
-
-  <xsl:template match="*" mode="add_on_cell_click_attribute">
-    <xsl:apply-templates select="." mode="add_on_x_click_attribute">
-      <xsl:with-param name="type" select="'on_cell_click'" />
-    </xsl:apply-templates>
-  </xsl:template>
-
-  <!-- <xsl:template match="schema" mode="add_on_line_click_attribute"> -->
-  <!--   <xsl:variable name="lc_s" select="@on_line_click" /> -->
-  <!--   <xsl:variable name="lc_r" select="parent::*[not($lc_s)][@rndx]/@on_line_click" /> -->
-  <!--   <xsl:variable name="lc_d" select="/*[not($lc_s|$lc_r)]/@on_line_click" /> -->
-  <!--   <xsl:variable name="all" select="$lc_s|$lc_r|$lc_d" /> -->
-  <!--   <xsl:if test="$all"> -->
-  <!--     <xsl:attribute name="data-on_line_click"> -->
-  <!--       <xsl:apply-templates select="$all" mode="fix_srm_selfref" /> -->
-  <!--       <xsl:value-of select="$all" /> -->
-  <!--     </xsl:attribute> -->
-  <!--   </xsl:if> -->
-  <!-- </xsl:template> -->
 
   <xsl:template match="schema" mode="get_form_action">
     <xsl:variable name="ta" select="@form-action" />
