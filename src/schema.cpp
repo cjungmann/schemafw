@@ -681,8 +681,15 @@ void Schema_Printer::print_schema_fields(const ab_handle *fields)
       // Print attributes non-MySQL attributes:
       if (field)
          print_adhoc_attributes(m_out, field, arr_field_reserved);
-      
-      ifputs(" />\n", m_out);
+
+      if (field->has_children())
+      {
+         ifputs(">\n", m_out);
+         print_adhoc_elements(m_out, field, arr_field_reserved);
+         ifputs("</field>\n", m_out);
+      }
+      else
+         ifputs(" />\n", m_out);
    }
 }
 
