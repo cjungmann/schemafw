@@ -269,7 +269,7 @@
 
     <xsl:if test="not(local-name()='buttons')">
       <xsl:variable name="par" select="parent::*" />
-      <xsl:if test="$par">
+      <xsl:if test="$par[@buttons | @button]">
         <xsl:apply-templates select="$par" mode="show_buttons">
           <xsl:with-param name="class" select="$class" />
           <xsl:with-param name="host-type" select="$host-type" />
@@ -300,9 +300,12 @@
           </tr>
         </xsl:when>
         <xsl:otherwise>
-          <p class="{$host_class}">
+          <xsl:element name="{$host-type}">
+            <xsl:attribute name="class">
+              <xsl:value-of select="$host_class" />
+            </xsl:attribute>
             <xsl:apply-templates select="$buttons" mode="show" />
-          </p>
+          </xsl:element>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:if>
