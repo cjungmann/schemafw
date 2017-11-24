@@ -263,14 +263,14 @@
 
   <!-- Recursive template to create button lines.
        Print 1. parent, 2. self, 3. self/buttons -->
-  <xsl:template match="*" mode="show_buttons">
+  <xsl:template match="*" mode="construct_buttons">
     <xsl:param name="class" />
     <xsl:param name="host-type" select="'tr'" />
 
     <xsl:if test="not(local-name()='buttons')">
       <xsl:variable name="par" select="parent::*" />
       <xsl:if test="$par[@buttons | @button]">
-        <xsl:apply-templates select="$par" mode="show_buttons">
+        <xsl:apply-templates select="$par" mode="construct_buttons">
           <xsl:with-param name="class" select="$class" />
           <xsl:with-param name="host-type" select="$host-type" />
         </xsl:apply-templates>
@@ -295,7 +295,7 @@
         <xsl:when test="$host-type='tr'">
           <tr class="{$host_class}">
             <td colspan="99" style="background-color #66FF66">
-              <xsl:apply-templates select="$buttons" mode="show" />
+              <xsl:apply-templates select="$buttons" mode="construct_button" />
             </td>
           </tr>
         </xsl:when>
@@ -304,14 +304,14 @@
             <xsl:attribute name="class">
               <xsl:value-of select="$host_class" />
             </xsl:attribute>
-            <xsl:apply-templates select="$buttons" mode="show" />
+            <xsl:apply-templates select="$buttons" mode="construct_button" />
           </xsl:element>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:if>
 
     <xsl:if test="not(local-name()='buttons')">
-      <xsl:apply-templates select="buttons" mode="show_buttons">
+      <xsl:apply-templates select="buttons" mode="construct_buttons">
         <xsl:with-param name="class" select="$class" />
         <xsl:with-param name="host-type" select="$host-type" />
       </xsl:apply-templates>

@@ -332,7 +332,7 @@ will contain the YYYY-MM-DD date.
       <xsl:apply-templates select="..|../schema" mode="add_on_click_attributes" />
       <xsl:apply-templates select="../@calmove_base" mode="add_url_attribute" />
       <thead>
-        <xsl:apply-templates select="$buttons" mode="show_buttons" />
+        <xsl:apply-templates select="$buttons" mode="construct_buttons" />
         <xsl:apply-templates select="." mode="build_calendar_head" />
       </thead>
       <tbody>

@@ -40,7 +40,7 @@
         </xsl:if>
 
         <h3>Buttons:</h3>
-        <xsl:apply-templates select="$schema" mode="show_buttons" />
+        <xsl:apply-templates select="$schema" mode="construct_buttons" />
 
         <xsl:apply-templates select="$schema/field" mode="construct_subview" />
       </xsl:element>
