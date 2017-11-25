@@ -10,7 +10,7 @@ Currently, the following error messages are explained below:
 - Unable to find a result element
 - The update row name (xxx) does not match the result's row-name (XXX)
 - Don't know what to do with the update row
-- TABLE with GROUP BY field is missing xrow_id
+- Table with GROUP BY field is missing xrow_id
 - The import query failed (Lost connection to MySQL server during query)
 
 ## Unable to find a result element
@@ -113,7 +113,7 @@ Consult the following guides for more reminders about setting up these interacti
 - [Deleting Records](CSDeleteInteraction.md)
 
 
-## TABLE with GROUP BY field is missing xrow_id
+## Table with GROUP BY field is missing xrow_id
 
 ### Problem
 
