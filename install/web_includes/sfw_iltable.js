@@ -23,24 +23,28 @@
          return false;
       }
       SFW.find_child_matches(actors.anchor,f,true,true);
-      this._tbody = actors.anchor.getElementsByTagName("tbody")[1];
+
+      this._tbody = actors.anchor.getElementsByTagName("tbody")[0];
    }
+
+   _iltable.prototype.shadow_transform = function(val)
+   {
+      var fname = this.get_field_name();
+      var shadow = this.add_schema_shadow(fname,val.trim());
+      if (shadow)
+      {
+         SFW.show_string_in_pre(serialize(SFW.xmldoc));
+         var el = this._tbody;
+         if (el)
+            SFW.xslobj.transformFill(el, shadow.attributes[0]);
+         shadow.parentNode.removeChild(shadow);
+      }
+   };
 
    _iltable.prototype.replot = function(result)
    {
       if (!this.do_proxy_override("replot",arguments))
-      {
-         var val = this._input.value.trim();
-         var fname = this.get_field_name();
-         var shadow = this.add_schema_shadow(fname,val);
-         if (shadow)
-         {
-            var el = this._tbody;
-            if (el)
-               SFW.xslobj.transformFill(el, shadow.attributes[0]);
-            shadow.parentNode.removeChild(shadow);
-         }
-      }
+         this.shadow_transform(this._input.value);
    };
 
    _iltable.prototype.get_line_click_action = function()
