@@ -257,6 +257,10 @@
     </xsl:element>
   </xsl:template>
 
+  <!-- Null-output template paired to other get_row_class (following)
+       to prevent white-space output for non-matching fields. -->
+  <xsl:template match="*" mode="get_row_class"></xsl:template>
+
   <xsl:template match="schema/field[@row_class]" mode="get_row_class">
     <xsl:param name="data" />
     <xsl:variable name="value">
@@ -300,9 +304,7 @@
 
     <xsl:element name="tr">
       <xsl:if test="string-length($row_class) &gt; 0">
-        <xsl:attribute name="class">
-          <xsl:value-of select="$row_class" />
-        </xsl:attribute>
+        <xsl:attribute name="class"><xsl:value-of select="$row_class" /></xsl:attribute>
       </xsl:if>
 
       <xsl:if test="@show_and_highlight">
@@ -331,6 +333,8 @@
         </xsl:attribute>
       </xsl:if>
 
+      <!-- No child elements can precede write_cell_contents because
+           that template may need to add an attribute to the "td" element. -->
       <xsl:apply-templates select="." mode="write_cell_content">
         <xsl:with-param name="data" select="$data" />
       </xsl:apply-templates>
@@ -355,14 +359,31 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-    
+  
   <xsl:template match="schema/field[@type='assoc']" mode="write_cell_content">
     <xsl:param name="data" />
     <xsl:if test="@result">
+      <xsl:apply-templates select="." mode="add_assoc_attribute" />
       <xsl:apply-templates select="." mode="show_associations">
         <xsl:with-param name="data" select="$data" />
       </xsl:apply-templates>
     </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="schema/field[@type='assoc'][@style='table']"
+                mode="write_cell_content">
+    <xsl:param name="data" />
+    <xsl:if test="@result">
+      <table>
+        <xsl:element name="tbody">
+          <xsl:apply-templates select="." mode="add_assoc_attribute" />
+          <xsl:apply-templates select="." mode="show_associations">
+            <xsl:with-param name="data" select="$data" />
+          </xsl:apply-templates>
+        </xsl:element>
+      </table>
+    </xsl:if>
+    
   </xsl:template>
 
 
