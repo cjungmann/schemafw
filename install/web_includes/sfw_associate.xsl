@@ -14,6 +14,23 @@
               omit-xml-declaration="yes"
               encoding="UTF-8"/>
 
+  <xsl:template match="field[@type='assoc'][parent::schema[@merged]][parent::schema/@merged=/*/*[@rndx]/@merged]">
+    <xsl:variable name="schema" select=".." />
+    <xsl:variable name="mnum" select="$schema/@merged" />
+    <xsl:variable name="result" select="/*/*[@rndx][@merged=$mnum][@row-name=$schema/@name]" />
+
+    <xsl:apply-templates select="." mode="build_associated_row">
+      <xsl:with-param name="row" select="$result/*[local-name()=$result/@row-name]" />
+    </xsl:apply-templates>
+
+  </xsl:template>
+
+  <xsl:template match="field[@type='assoc']" mode="add_assoc_attribute">
+    <xsl:attribute name="data-sfw-assoc">
+      <xsl:value-of select="@name" />
+    </xsl:attribute>
+  </xsl:template>
+
   <xsl:template match="field[@type='assoc']" mode="add_class">
     <xsl:variable name="cname">
       <xsl:text>assoc</xsl:text>
@@ -29,36 +46,38 @@
       <xsl:if test="@active">
         <xsl:attribute name="data-sfw-class">assoc</xsl:attribute>
         <xsl:attribute name="data-sfw-input">assoc</xsl:attribute>
+        <xsl:apply-templates select="." mode="add_assoc_attribute" />
         <xsl:apply-templates select="@*" mode="add_on_click_attribute" />
       </xsl:if>
       
-      <xsl:apply-templates select="." mode="inner_construct_input">
-        <xsl:with-param name="data" select="$data" />
+      <xsl:apply-templates select="." mode="build_associated_row">
+        <xsl:with-param name="row" select="$data" />
       </xsl:apply-templates>
     </xsl:element>
   </xsl:template>
 
   <xsl:template match="field[@type='assoc'][@style='table']" mode="construct_input">
     <xsl:param name="data" />
+
+    <xsl:if test="buttons">
+      <xsl:apply-templates select="buttons" mode="construct_buttons">
+        <xsl:with-param name="host-type" select="'div'" />
+      </xsl:apply-templates>
+    </xsl:if>
+
     <xsl:element name="table">
       <xsl:apply-templates select="." mode="add_class" />
       <xsl:if test="@active">
         <xsl:attribute name="data-sfw-class">assoc</xsl:attribute>
         <xsl:attribute name="data-sfw-input">input</xsl:attribute>
         <xsl:apply-templates select="@*" mode="add_on_click_attribute" />
-        <!-- <xsl:if test="@on_line_click"> -->
-        <!--   <xsl:attribute name="data-on_line_click"> -->
-        <!--     <xsl:call-template name="resolve_refs"> -->
-        <!--       <xsl:with-param name="str" select="@on_line_click" /> -->
-        <!--     </xsl:call-template> -->
-        <!--   </xsl:attribute> -->
-        <!-- </xsl:if> -->
       </xsl:if>
-      <tbody>
-        <xsl:apply-templates select="." mode="inner_construct_input">
-          <xsl:with-param name="data" select="$data" />
+      <xsl:element name="tbody">
+        <xsl:apply-templates select="." mode="add_assoc_attribute" />
+        <xsl:apply-templates select="." mode="build_associated_row">
+          <xsl:with-param name="row" select="$data" />
         </xsl:apply-templates>
-      </tbody>
+      </xsl:element>
     </xsl:element>
   </xsl:template>
 
@@ -92,14 +111,15 @@
   </xsl:template>
 
 
-  <xsl:template match="field[@type='assoc']" mode="inner_construct_input">
-    <xsl:param name="data" />
+  <xsl:template match="field[@type='assoc']" mode="build_associated_row">
+    <xsl:param name="row" />
 
     <xsl:variable name="alist">
       <xsl:apply-templates select="." mode="get_association_list">
-        <xsl:with-param name="data" select="$data" />
+        <xsl:with-param name="data" select="$row" />
       </xsl:apply-templates>
     </xsl:variable>
+
     <xsl:variable name="ref_result" select="/*/*[local-name()=current()/@result]" />
     <xsl:variable name="aaresult"
                   select="/*/*[local-name()=$ref_result[@type='association']/@result]" />
@@ -139,15 +159,9 @@
 
     <xsl:variable name="lresult" select="/*/*[local-name()=current()/@result]" />
 
-    <xsl:call-template name="transform_associated_references">
-      <xsl:with-param name="result" select="/*/*[local-name()=$lresult/@result]" />
-      <xsl:with-param name="field" select="." />
-      <xsl:with-param name="str">
-        <xsl:apply-templates select="." mode="get_int_list">
-          <xsl:with-param name="data" select="$data" />
-        </xsl:apply-templates>
-      </xsl:with-param>
-    </xsl:call-template>
+    <xsl:apply-templates select="." mode="build_associated_row">
+      <xsl:with-param name="row" select="$data" />
+    </xsl:apply-templates>
   </xsl:template>
 
   <!-- Default transform_row template.
@@ -156,6 +170,7 @@
   <xsl:template match="field[@type='assoc'][@style='table']" mode="transform_row">
     <xsl:param name="id" />
     <xsl:param name="row" />
+
     <xsl:element name="tr">
       <xsl:if test="$id">
         <xsl:attribute name="data-id"><xsl:value-of select="$id" /></xsl:attribute>
