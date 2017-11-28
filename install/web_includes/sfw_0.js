@@ -1020,11 +1020,19 @@ function init_SFW(callback)
    {
       var oldrow = _get_oldrow(target,row);
       var nrow = _get_copied_node(target,row);
+      var rname = nrow.localName;
+      var trname = target.getAttribute("row-name");
 
-      if (oldrow)
-         _replace_element(nrow,oldrow);
+      if (rname==trname)
+      {
+         if (oldrow)
+            _replace_element(nrow,oldrow);
+         else
+            target.appendChild(nrow);
+      }
       else
-         target.appendChild(nrow);
+         SFW.alert("The update row name (" + (rname||"NULL") +
+                   ") does not match the result's row-name (" + trname +").");
    }
 
    function _get_deleted_attribute(doc)
@@ -1609,6 +1617,18 @@ function init_SFW(callback)
       return rdata(this.top()) || rdata(this.widget());
    };
 
+   /** Checks the argument list for a name that replaces "xxx" a on_xxx_click instruction. */
+   _base.prototype.get_on_click_value = function(cname)
+   {
+      var ndx, rval;
+      for (ndx in arguments)
+      {
+         if ((rval=this.get_data_value("on_" + arguments[ndx] + "_click")))
+            return rval;
+      }
+      return null;
+   };
+
    _base.prototype.add_schema_shadow = function(name, value)
    {
       var s, n;
@@ -1720,9 +1740,11 @@ function init_SFW(callback)
       var ths = this;
 
       if (cmsg && !SFW.confirm(cmsg))
-      {
          funcForTimeout = function(){cb("cancel"); };
-      }
+      else if (url in this)
+         funcForTimeout = function(){ths[url](b,cb)};
+      else if (url in window)
+         funcForTimeout = function(){window[url](b,cb)};
       else
       {
          switch(type)
@@ -1800,8 +1822,38 @@ function init_SFW(callback)
 
    _base.prototype.child_finished = function(child, cancelled)
    {
+      if (!cancelled)
+         this.update_associations(child);
+
       child.remove_merged_results();
       child.sfw_close(); 
+   };
+
+   _base.prototype.update_associations = function()
+   {
+      var fu = _get_property(this,"caller","update_associations");
+      if (fu)
+         fu();
+
+      function f(n) { return n.nodeType==1 && n.getAttribute("data-sfw-assoc"); }
+      var assocs = SFW.find_child_matches(this.host(), f, false, true);
+      if (assocs)
+      {
+         var acount = assocs.length;
+         var schema = this.schema();
+         var fields = schema.selectNodes("field[@type='assoc']");
+         for (var i=0, stop=fields.length; i<stop; ++i)
+         {
+            var field = fields[i];
+            for (var j=0; j<acount; ++j)
+            {
+               var assoc = assocs[j];
+               if (assoc.getAttribute("data-sfw-assoc")==field.getAttribute("name"))
+                  SFW.xslobj.transformFill(assoc, field);
+            }
+         }
+      }
+
    };
 
    /** Buttons are all processed the same way, so handle consistently in base class. */
