@@ -43,8 +43,30 @@
 
    _assoc.prototype.replot = function(result)
    {
-      if (!this.do_proxy_override("replot",arguments))
-         this.shadow_transform(this._input.value);
+      this.do_proxy_override("replot", arguments);
+   };
+
+   _assoc.prototype.child_finished = function(child, cancelled)
+   {
+      var schema = this.schema();
+      if (schema)
+      {
+         var name = this.get_field_name();
+         var field = this.get_schema_field();
+         if (!field)
+            field = schema.selectSingleNode("field[@name='" + name + "']");
+
+         if (field)
+         {
+            var cont = this.widget();
+            if (cont)
+               SFW.xslobj.transformReplace(cont, field);
+         }
+      }
+
+      // When done, call the base method to clean up the merged stuff
+      // and close the child window.
+      SFW.base.prototype.child_finished.apply(this, arguments);
    };
 
    _assoc.prototype.get_line_click_action = function()
