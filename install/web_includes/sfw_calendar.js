@@ -81,22 +81,20 @@
    _calendar.prototype.process = function (e,t)
    {
       var did, tag, mon, top = this.top();
-      
+
       if (e.type!="click")
          return true;
 
-      if (!SFW.types["table"].prototype.process.call(this,e,t))
-         return false;
-
-      // Don't disturb the arguments array:
+      // Preserve value of 't' for default process function:
       var tel = t;
+
       while (tel && tel!=top)
       {
          if (tel.nodeType==1 && (tag=tel.tagName.toLowerCase()))
          {
-            if (tag=="td" && (did=tel.getAttribute("data-date")))
-               return this.process_day_click(tel, did);
-            if (tag=="button" && (mon=tel.getAttribute("data-jump")))
+            if (tag=="td" && (did=tel.getAttribute("data-name")))
+               return this.process_cell_click(tel, did);
+            else if (tag=="button" && (mon=tel.getAttribute("data-jump")))
                return this.process_month_jump(mon);
          }
 
@@ -106,4 +104,48 @@
       return this.call_super_event("table", "process", arguments);
    };
 
+   _calendar.prototype.get_el_click_info = function(el)
+   {
+      var did, dname, task, rval=null;
+      if ((did=el.getAttribute("data-id")) && class_includes(el,"day_content")
+          || (dname=el.getAttribute("data-name")) && class_includes(el,"cal_day"))
+      {
+         rval = { target : el,
+                  task   : this.get_on_click_value("day", el.tagName.toLowerCase()),
+                  idname : this.get_click_id_name("td") || this.get_click_id_name("day")
+                };
+
+         if (did)
+            rval.did = did;
+         else if (dname)
+            rval.dname = dname;
+      }
+      return rval;
+   };
+
+   _calendar.prototype.process = function (e,t)
+   {
+      var clickinfo, tag, mon, top = this.top();
+      
+      if (e.type!="click")
+         return true;
+
+      // Preserve the arguments for last-resort call to table::process().
+      var tel = t;
+      while (tel && tel!=top)
+      {
+         if ((click_info = this.get_el_click_info(tel)))
+            return this.process_click_info(click_info);
+         else if ((tag=tel.tagName.toLowerCase())=="button")
+         {
+            if (mon=tel.getAttribute("data-jump"))
+               return this.process_month_jump(mon);
+         }
+
+         tel = tel.parentNode;
+      }
+
+      return this.call_super_event("table", "process", arguments);
+   };
+   
 })();
