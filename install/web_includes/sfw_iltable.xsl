@@ -15,12 +15,26 @@
               encoding="UTF-8"/>
 
   <!-- Modeless attribute match for like-named field of proper type in hosting schema. -->
-  <xsl:template match="@*[ancestor::schema/field[@name=local-name()][@type='iltable']]">
-    <xsl:variable name="field" select="ancestor::schema/field[@name=local-name(current())]" />
+  <xsl:template match="@*[local-name()=(ancestor::schema/field[@type='iltable']/@name)]">
 
-    <xsl:apply-templates select="$field" mode="show_associations">
-      <xsl:with-param name="str" select="." />
-    </xsl:apply-templates>
+    <xsl:variable name="field" select="ancestor::schema/field[@name=local-name(current())]" />
+    <xsl:variable name="result" select="/*/*[local-name()=$field/@result][@rndx]" />
+
+    <div>Field = <xsl:value-of select="$field/@name" /> </div>
+    <div>Field/@result = <xsl:value-of select="$field/@result" /> </div>
+
+    <xsl:choose>
+      <xsl:when test="not($result)">
+        <div>Failed to find required result for itable instruction.</div>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="transform_associated_references">
+          <xsl:with-param name="result" select="$result" />
+          <xsl:with-param name="field" select="$field" />
+          <xsl:with-param name="str" select="." />
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <!-- Template that is called by construct_form via
@@ -38,7 +52,7 @@
     </xsl:variable>
 
     <xsl:variable name="jresult" select="/*/*[local-name()=current()/@result]" />
-      
+
     <xsl:element name="table">
       <xsl:attribute name="class">iltable</xsl:attribute>
       <xsl:attribute name="data-sfw-class">iltable</xsl:attribute>
