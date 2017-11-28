@@ -25,6 +25,8 @@
 
   </xsl:template>
 
+  <!-- Call this template when building a host to assoc-type fields so the
+       framework can find the approriate field and host element for updates. -->
   <xsl:template match="field[@type='assoc']" mode="add_assoc_attribute">
     <xsl:attribute name="data-sfw-assoc">
       <xsl:value-of select="@name" />
