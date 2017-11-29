@@ -11,6 +11,7 @@ Currently, the following error messages are explained below:
 - The update row name (xxx) does not match the result's row-name (XXX)
 - Don't know what to do with the update row
 - Table with GROUP BY field is missing xrow_id
+- update_associations failed to find a data-id attribute for "*field_name*."
 - The import query failed (Lost connection to MySQL server during query)
 
 ## Unable to find a result element
@@ -157,6 +158,17 @@ However, tables that use **GROUP_CONCAT** fields necessarily also use the
 *AUTO_INCREMENT* and *PRIMARY KEY* field attributes.  Even if the field has
 been declared appropriately in the *CREATE TABLE* command, the *xrow_id*
 instruction must be explicitly declared as shown in the *Solution* above.
+
+# update_associations failed to find a data-id attribute for "*field_name*."
+
+This error occurs if a table table row (tr) element hosting a *assoc* cell (td)
+does not include a *data-id* attribute.
+
+## The Solution
+
+If this error ever occurs, it will likely require an additional method for the
+framework to retrieve the source XML element for the table row.  This is necessary
+for the XSL stylesheet to find the updated data that should go in the cell.
 
 # The import query failed (Lost connection to MySQL server during query)
 
