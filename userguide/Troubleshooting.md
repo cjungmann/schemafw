@@ -11,6 +11,7 @@ Currently, the following error messages are explained below:
 - The update row name (xxx) does not match the result's row-name (XXX)
 - Don't know what to do with the update row
 - Table with GROUP BY field is missing xrow_id
+- Failed to find a usable id value for row named "xxx"
 - update_associations failed to find a data-id attribute for "*field_name*."
 - The import query failed (Lost connection to MySQL server during query)
 
@@ -141,7 +142,7 @@ not check the value.  That way the value can be *1*, or *true*, or *yes*, but
 it also means that a value of *0*, or *false*, or *no* will also be interpreted
 as a *xrow_id* field.
 
-## Explanation
+### Explanation
 
 The framework needs an item ID in order to request to appropriate record
 from the database.  This value is normally written in the _tr_ table element
@@ -159,24 +160,37 @@ However, tables that use **GROUP_CONCAT** fields necessarily also use the
 been declared appropriately in the *CREATE TABLE* command, the *xrow_id*
 instruction must be explicitly declared as shown in the *Solution* above.
 
-# update_associations failed to find a data-id attribute for "*field_name*."
+## Failed to find a usable id value for row named "xxx"
+
+For a given XML data row, the framework was unable to determine the id value.
+
+### The Solution
+
+The framework has searched the schema fields to find one that indicates it is
+an identity field.  Generally, this is a primary key field, but in the absence
+of a primary key (in a GROUP_BY query, for example), a developer should mark
+the identity field with an *xrow_id* instruction.
+
+see *Table with GROUP BY field is missing xrow_id*
+
+## update_associations failed to find a data-id attribute for "*field_name*."
 
 This error occurs if a table table row (tr) element hosting a *assoc* cell (td)
 does not include a *data-id* attribute.
 
-## The Solution
+### The Solution
 
 If this error ever occurs, it will likely require an additional method for the
 framework to retrieve the source XML element for the table row.  This is necessary
 for the XSL stylesheet to find the updated data that should go in the cell.
 
-# The import query failed (Lost connection to MySQL server during query)
+## The import query failed (Lost connection to MySQL server during query)
 
 This error is shown if *ssconvert* has not been installed to aid with
 importing.  Other errors may also trigger this error, so don't give up
 if the following solution does not solve your problem.
 
-## The Solution
+### The Solution
 
 Open a terminal window and install (www.gnumeric.org)[Gnumeric].
 
@@ -184,7 +198,7 @@ Open a terminal window and install (www.gnumeric.org)[Gnumeric].
 sudo apt-get install gnumeric
 ~~~
 
-## Explanation
+### Explanation
 
 In otrder to allow data import, the Schema Framework uses a utility from
 a third-party open-source application.  (www.gnumeric.org)[Gnumeric] was,
