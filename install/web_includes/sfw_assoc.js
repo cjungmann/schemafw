@@ -33,7 +33,7 @@
       var shadow = this.add_schema_shadow(fname,val.trim());
       if (shadow)
       {
-         SFW.show_string_in_pre(serialize(SFW.xmldoc));
+         // SFW.show_string_in_pre(serialize(SFW.xmldoc));
          var el = this._tbody;
          if (el)
             SFW.xslobj.transformFill(el, shadow.attributes[0]);
@@ -43,6 +43,7 @@
 
    _assoc.prototype.replot = function(result)
    {
+      this.shadow_transform(this._input.value);
       this.do_proxy_override("replot", arguments);
    };
 
@@ -58,9 +59,16 @@
 
          if (field)
          {
+            var id, xrow = SFW.get_property(this,"host","data","xrow");
+            if (xrow && (id=SFW.get_row_id_value(xrow)))
+               field.setAttribute("data-id", id);
+
             var cont = this.widget();
             if (cont)
                SFW.xslobj.transformReplace(cont, field);
+
+            if (id)
+               field.removeAttribute("data-id");
          }
       }
 
