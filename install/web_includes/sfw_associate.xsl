@@ -14,16 +14,67 @@
               omit-xml-declaration="yes"
               encoding="UTF-8"/>
 
-  <xsl:template match="field[@type='assoc'][parent::schema[@merged]][parent::schema/@merged=/*/*[@rndx]/@merged]">
-    <xsl:variable name="schema" select=".." />
-    <xsl:variable name="mnum" select="$schema/@merged" />
-    <xsl:variable name="result" select="/*/*[@rndx][@merged=$mnum][@row-name=$schema/@name]" />
+  <xsl:template match="field[@type='assoc'][@result]">
 
-    <xsl:apply-templates select="." mode="build_associated_row">
-      <xsl:with-param name="row" select="$result/*[local-name()=$result/@row-name]" />
+    <xsl:variable name="an_result" select="ancestor::*[@merged]" />
+    <xsl:variable name="so_result"
+                  select="/*/*[local-name($an_result)='schema'][@rndx][@merged=$an_result/@merged]" />
+
+    <xsl:variable name="sresult" select="($an_result|$so_result)[not(@type='update')]" />
+    <xsl:variable name="row" select="$sresult/*[local-name()=$sresult/@row-name]" />
+
+    <xsl:apply-templates select="$row" mode="build_with_associated_row">
+      <xsl:with-param name="field" select="." />
     </xsl:apply-templates>
-
   </xsl:template>
+
+  <!-- This should a field in a non-merged result/schema for the root-document.
+       It is likely for a table, and should get a nodeset rather than a node.
+  -->
+  <xsl:template match="field[@type='assoc'][@result][@data-id][not(ancestor::*/@merge-type)]">
+
+    <xsl:variable name="idname">
+      <xsl:apply-templates select=".." mode="get_id_field_name" />
+    </xsl:variable>
+    <xsl:variable name="rowname" select="ancestor::*[@rndx]/@row-name" />
+    <xsl:variable name="result" select="ancestor::*[@rndx]" />
+    <xsl:variable name="row" select="$result/*[@*[local-name()=$idname] = current()/@data-id]" />
+
+    <xsl:apply-templates select="$row" mode="build_with_associated_row">
+      <xsl:with-param name="field" select="." />
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <xsl:template match="*" mode="build_with_associated_row">
+    <xsl:param name="field" />
+
+    <xsl:variable name="alist">
+      <xsl:apply-templates select="$field" mode="get_association_list">
+        <xsl:with-param name="data" select="." />
+      </xsl:apply-templates>
+    </xsl:variable>
+
+    <xsl:variable name="dresult" select="/*/*[@rndx][local-name()=$field/@result]" />
+    <xsl:variable name="aresult" select="/*/*[local-name()=$dresult[@type='association']/@result]" />
+
+    <xsl:call-template name="transform_associated_references">
+      <xsl:with-param name="result" select="$aresult|$dresult[not($aresult)]" />
+      <xsl:with-param name="field" select="$field" />
+      <xsl:with-param name="str" select="$alist" />
+    </xsl:call-template>
+  </xsl:template>
+
+
+  <!-- <xsl:template match="field[@type='assoc'][@result]"> -->
+
+  <!--   <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/@result]" /> -->
+  <!--   <xsl:variable name="row" select="$result/*[local-name()=$result/@row-name]" /> -->
+
+  <!--   <xsl:apply-templates select="." mode="build_associated_row"> -->
+  <!--     <xsl:with-param name="row" -->
+  <!--                     select="$result/*[local-name()=$result/@row-name]" /> -->
+  <!--   </xsl:apply-templates> -->
+  <!-- </xsl:template> -->
 
   <!-- Call this template when building a host to assoc-type fields so the
        framework can find the approriate field and host element for updates. -->
@@ -112,8 +163,7 @@
 
   </xsl:template>
 
-
-  <xsl:template match="field[@type='assoc']" mode="build_associated_row">
+  <xsl:template match="field[@type='assoc']" mode="final_build_associated_row">
     <xsl:param name="row" />
 
     <xsl:variable name="alist">
@@ -132,6 +182,28 @@
       <xsl:with-param name="str" select="$alist" />
     </xsl:call-template>
 
+  </xsl:template>
+
+  <xsl:template match="field[@type='assoc']" mode="build_associated_row">
+    <xsl:param name="row" />
+    <xsl:apply-templates select="." mode="final_build_associated_row">
+      <xsl:with-param name="row" select="$row" />
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <!-- Handles special case of assoc contents in a table cell rather row. -->
+  <xsl:template match="field[@type='assoc'][@data-id]" mode="build_associated_row">
+    <xsl:param name="row" />
+    <xsl:variable name="idname">
+      <xsl:apply-templates select=".." mode="get_id_field_name" />
+    </xsl:variable>
+
+    <xsl:variable name="srow"
+                  select="$row[@*[local-name()=$idname]=current()/@data-id]" />
+
+    <xsl:apply-templates select="." mode="final_build_associated_row">
+      <xsl:with-param name="row" select="$srow" />
+    </xsl:apply-templates>
   </xsl:template>
 
   <xsl:template match="field[@type='assoc'][@style='table']" mode="construct_assoc_input">
