@@ -163,6 +163,7 @@ function init_SFW(callback)
 
    SFW.replace_results      = _replace_results;
    SFW.get_schema_idfield   = _get_schema_idfield;
+   SFW.get_row_id_value     = _get_row_id_value;
 
    SFW.get_row_from_result_id = _get_row_from_result_id;
 
@@ -966,6 +967,23 @@ function init_SFW(callback)
       return field;
    }
 
+   function _get_row_id_value(row)
+   {
+      var val;
+      var schema = row.selectSingleNode("../schema");
+      if (schema)
+      {
+         var field = _get_schema_idfield(schema);
+         if (field)
+            val = row.getAttribute(field.getAttribute("name"));
+      }
+      else if (!(val=row.getAttribute("id")))
+         SFW.alert("Failed to find a usable id value for row named \""
+                   + row.tagName
+                   + "\"");
+      return val;
+   }
+
    /** Attempts to get a result name from a result.
     *
     * Looks for, in this order, attempting each step ig the previous step failed.
@@ -1207,14 +1225,8 @@ function init_SFW(callback)
    {
       var docel = doc.documentElement;
       var schema = null;
-
-      var arrx = ["schema[1]", "*[@rndx=1]/schema"];
-      
-      if (merge_number)
-      {
-         var mpred = "[@merged='"+merge_number+"']";
-         arrx = ["schema"+mpred, "*[@rndx]"+mpred];
-      }
+      var merge_attr = merge_number ? "[@merged='"+merge_number+"']" : "[not(@merged)]";
+      var arrx = ["schema"+merge_attr+"[1]", "*"+merge_attr+"[@rndx=1]/schema"];
 
       for (var i=0,stop=arrx.length; !schema && i<stop; ++i)
          schema = docel.selectSingleNode(arrx[i]);
@@ -1779,7 +1791,7 @@ function init_SFW(callback)
                   funcForTimeout = function()
                   {
                      url = _translate_url(url, ths.xmldocel());
-                     _open_interaction(ths.top().parentNode, url, ths);
+                     _open_interaction(SFW.stage, url, ths);
                   }
                }
                break;
@@ -1829,31 +1841,94 @@ function init_SFW(callback)
       child.sfw_close(); 
    };
 
-   _base.prototype.update_associations = function()
+   _base.prototype.update_field_association = function(xrow, child)
+   {
+      function f(n) { return n.nodeType==1 && n.getAttribute("data-sfw-assoc"); }
+      var assoc_hosts = SFW.find_child_matches(this.host(), f, false, true);
+      var schema = this.schema();
+      if (assoc_hosts)
+      {
+         for (var i=0,stop=assoc_hosts.length; i<stop; ++i)
+         {
+            var host = assoc_hosts[i];
+            var fname = host.getAttribute("data-sfw-assoc");
+            var field = schema.selectSingleNode("field[@name='" + fname + "']");
+            if (field)
+            {
+               field.setAttribute("data-id", xrow.getAttribute("id"));
+               SFW.xslobj.transformFill(host, field);
+               field.removeAttribute("data-id");
+            }
+         }
+      }
+   }
+
+   _base.prototype.update_hosted_associations = function()
+   {
+      function f(n) { return n.nodeType==1 && n.getAttribute("data-sfw-assoc"); }
+      var assoc_hosts = SFW.find_child_matches(this.host(), f, false, true);
+      var schema = this.schema();
+      if (assoc_hosts && schema)
+      {
+         var fields = schema.selectNodes("field[@type='assoc']");
+         var fstop = fields.length;
+
+         try
+         {
+            for (var i=0, istop=assoc_hosts.length; i<istop; ++i)
+            {
+               var assoc = assoc_hosts[i];
+               for (var j=0; j<fstop; ++j)
+               {
+                  var field = fields[j];
+                  var fname = field.getAttribute("name");
+                  if (assoc.getAttribute("data-sfw-assoc")==fname)
+                  {
+                     // A "td" suggests a "tr" host that should have a data-id attribute:
+                     if (assoc.tagName.toLowerCase()=="td")
+                     {
+                        var id = assoc.parentNode.getAttribute("data-id");
+                        if (id)
+                           field.setAttribute("data-id", id);
+                        else
+                        {
+                           SFW.alert("update_associations failed to find a data-id"
+                                     + " attribute for \"" + fname+".\"");
+                           field.removeAttribute("data-id");
+                        }
+                     }
+
+                     SFW.xslobj.transformFill(assoc, field);
+                  }
+               }
+            }
+         }
+         catch(e)
+         {
+            SFW.alert("Exception updating associations.");
+         }
+
+         // Just wait until finished before removing the data-id attributes:
+         for (var i=0; i<fstop; ++i)
+         {
+            var field = fields[i];
+            if (field.hasAttribute("data-id"))
+               field.removeAttribute("data-id");
+         }
+      }
+   };
+
+   _base.prototype.update_associations = function(child)
    {
       var fu = _get_property(this,"caller","update_associations");
       if (fu)
          fu();
 
-      function f(n) { return n.nodeType==1 && n.getAttribute("data-sfw-assoc"); }
-      var assocs = SFW.find_child_matches(this.host(), f, false, true);
-      if (assocs)
-      {
-         var acount = assocs.length;
-         var schema = this.schema();
-         var fields = schema.selectNodes("field[@type='assoc']");
-         for (var i=0, stop=fields.length; i<stop; ++i)
-         {
-            var field = fields[i];
-            for (var j=0; j<acount; ++j)
-            {
-               var assoc = assocs[j];
-               if (assoc.getAttribute("data-sfw-assoc")==field.getAttribute("name"))
-                  SFW.xslobj.transformFill(assoc, field);
-            }
-         }
-      }
-
+      var xrow = _get_property(this,"host", "data","xrow");
+      if (xrow)
+         this.update_field_association(xrow, child);
+      else
+         this.update_hosted_associations();
    };
 
    /** Buttons are all processed the same way, so handle consistently in base class. */
