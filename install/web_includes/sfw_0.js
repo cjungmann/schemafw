@@ -134,6 +134,7 @@ function init_SFW(callback)
    SFW.update_selected_view = _update_selected_view;
    SFW.change_view          = _change_view;
    SFW.process_event        = _process_event;
+   SFW.process_host_keydown = _process_host_keydown;
    SFW.get_copied_node      = _get_copied_node;
    SFW.get_deleted_attribute= _get_deleted_attribute;
    SFW.remove_deleted_row   = _remove_deleted_row;
@@ -169,6 +170,7 @@ function init_SFW(callback)
 
    SFW.row_name_from_schema = _row_name_from_schema
 
+   SFW.get_tasks_from_host  = _get_tasks_from_host;
    SFW.get_object_from_host = _get_object_from_host;
    SFW.get_cfobj_result     = _get_cfobj_result;
    SFW.get_update_row       = _get_update_row
@@ -498,7 +500,7 @@ function init_SFW(callback)
       }
       return null;
    }
-
+ 
    function _seek_top_merged_element(doc)
    {
       if (!doc)
@@ -623,9 +625,11 @@ function init_SFW(callback)
          }
 
          if (e.type=="keydown")
-            if (SFW.keychar_from_event(e)=='q')
-               if (e.ctrlKey)
-                  debugger;
+         {
+            var host, obj;
+            if ((host=_get_last_SFW_Host()) && (obj=_get_object_from_host(host)))
+               return _process_host_keydown(e, host,obj);
+         }
 
          return true;
       }
@@ -807,6 +811,76 @@ function init_SFW(callback)
          return obj.process(e,t);
       else
          return true;
+   }
+
+   function _is_shiftable(ch) { return (ch>=65 && ch<=90) || (ch>=61 && ch<=122); }
+
+   function _key_matches_task(e, el)
+   {
+      var kcode = _keycode_from_event(e);
+      var ccode = _keychar_from_event(e).toLowerCase();
+      var key_spec = el.getAttribute("data-key").split("-");
+      var key = key_spec.splice(-1,1)[0].toLowerCase();
+      var map = {c:true, a:true, s:true};
+
+      if (key==ccode)
+      {
+         for (var i=0; i<key_spec.length; ++i)
+         {
+            switch(key_spec[i][0].toLowerCase())
+            {
+               case "c":
+                  map.c = e.ctrlKey;
+                  break;
+               case "a":
+                  map.a = e.altKey;
+                  break;
+               case "s":
+                  if (_is_shiftable(key))
+                     map.s = e.shiftKey;
+                  break;
+               default:
+                  break;
+            }
+         }
+
+         return map.c && map.a && map.s;
+      }
+
+      return false;
+   }
+
+   function _process_host_keydown(e, host, obj)
+   {
+      var kc = _keycode_from_event(e);
+
+      if (kc==27 && obj.closeable())
+      {
+         obj.sfw_hide();
+         var caller = obj.caller();
+         if (caller)
+            caller.child_finished(obj, true)
+         obj.sfw_close();
+         return false;
+      }
+      else if (kc!=16 && kc!=17 && kc!=18)
+      {
+         var task_els = _get_tasks_from_host(host);
+         if (task_els)
+         {
+            for (var i=0,stop=task_els.length; i<stop; ++i)
+            {
+               var el = task_els[i];
+
+               if (_key_matches_task(e, el))
+               {
+                  obj.process_clicked_button(el);
+                  return false;
+               }
+            }
+         }
+         return true;
+      }
    }
 
    function _translate_url(url, xmldocel)
@@ -1351,6 +1425,12 @@ function init_SFW(callback)
       return name;
    }
 
+   function _get_tasks_from_host(host)
+   {
+      function f(n) { return n.nodeType==1 && n.getAttribute("data-key"); }
+      return SFW.find_child_matches(host,f,false,true);
+   }
+
    function _get_object_from_host(host)
    {
       var anchor, type;
@@ -1485,6 +1565,7 @@ function init_SFW(callback)
       if (data)
          e.data = data;
    };
+   _base.prototype.closeable = function() { return false; };
 
    _base.prototype.do_proxy_override = function(name,args)
    {
@@ -1651,9 +1732,9 @@ function init_SFW(callback)
 
    _base.prototype.sfw_close = function _sfw_close()
    {
-      var v = this.host();
-      if (v)
-         v.parentNode.removeChild(v);
+      var v,p;
+      if ((v=this.host()) && (p=v.parentNode))
+         p.removeChild(v);
    };
 
    _base.prototype.sfw_hide = function _sfw_hide()
