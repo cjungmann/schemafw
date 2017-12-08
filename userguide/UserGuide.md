@@ -34,6 +34,10 @@ There are several sections.
     - [Interactive Classes](IClasses.md)
     - [Dependent Module Loading](DependentModuleLoad.md)
     - [Making Sense of *on_line_click*](OnLineClick.md)
+  - Associations
+     - [Introduction](Associations_Intro.md)
+     - [Data Model](Associations_Model.md)
+     - [Connecting Items](Associations_Connecting.md)
   - Special Controls and Widgets
     - [ULSelect: Flexible Select Widget](ULSelect.md)
   - Extending the Framework
@@ -64,6 +68,7 @@ There are several sections.
     - [Importing Data](ImportingData.md)
   - Other Topics
     - [Adding Buttons](AddingButtons.md)
+    - [Keystroke-matched Buttons](KeyStrokeButtons.md)
     - [Context References](ContextReferences.md)
     - [Result Dialogs (type:form-result)](ResultDialogs.md)
     - [Mixed-view Interaction](MixedView.md)

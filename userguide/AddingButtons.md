@@ -10,6 +10,8 @@ There are several sections in this topic:
 - **Adding Buttons**: how to include buttons
 - **Button Types**:  add, delete, call, jump, and open
 - **Skipping Buttons**: how to conditionally omit buttons
+- [Keystroke-matched Buttons](KeyStrokeButtons.md) is an advanced button topic
+  on another page.
 
 ## Button Locations
 
