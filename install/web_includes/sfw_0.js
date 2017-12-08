@@ -813,7 +813,49 @@ function init_SFW(callback)
          return true;
    }
 
-   function _is_shiftable(ch) { return (ch>=65 && ch<=90) || (ch>=61 && ch<=122); }
+   // The first three characters of the keyname is unique enough to
+   // identify the keys .
+   var _keymap = {  8:"bac",   // backspace
+                    9:"tab",
+                    13:"ent",  // enter
+                    27:"esc",  // escape
+                    32:"spa",  // space
+                    33:"pgu",  // pgup
+                    34:"dow",  // down
+                    35:"end",
+                    36:"hom",  // home
+                    37:"lef",  // left
+                    38:"up",
+                    39:"rig",  // right
+                    40:"pgd",  // pgdn
+                    45:"ins",  // insert
+                    46:"del",  // delete
+                    108:"min", // minus
+                    187:"plu", // plus
+                    189:"min"  // minus
+                 };
+
+   function _key_matches_code(key,code)
+   {
+      if (code>=112 && code<=123)
+      {
+         var val = "f" + String(code-111);
+         SFW.alert("alert \"" + key + "\" to \"" + val + "\"");
+         return key=="f"+String(code-111);
+      }
+      else
+         return key.substring(0,3)==_keymap[code];
+   }
+
+   function _is_shiftable(ch)
+   {
+      return (ch>=65 && ch<=90)  // A-Z
+         || (ch>=97 && ch<=122)  // a-z (likely not used for keycode);
+         || (ch>=32 && ch<=46)   // keypad keys
+         || (ch<=20)             // control keys like backspace, space, tab, enter
+         || ch==45 || ch==46     // insert and delete
+      ;
+   }
 
    function _key_matches_task(e, el)
    {
@@ -821,28 +863,26 @@ function init_SFW(callback)
       var ccode = _keychar_from_event(e).toLowerCase();
       var key_spec = el.getAttribute("data-key").split("-");
       var key = key_spec.splice(-1,1)[0].toLowerCase();
-      var map = {c:true, a:true, s:true};
+      var map = {c:false, a:false, s:false};
 
-      if (key==ccode)
+      var match = key.length==1?(key==ccode):_key_matches_code(key,kcode);
+
+      if (match)
       {
          for (var i=0; i<key_spec.length; ++i)
          {
             switch(key_spec[i][0].toLowerCase())
             {
-               case "c":
-                  map.c = e.ctrlKey;
-                  break;
-               case "a":
-                  map.a = e.altKey;
-                  break;
-               case "s":
-                  if (_is_shiftable(key))
-                     map.s = e.shiftKey;
-                  break;
-               default:
-                  break;
+               case "c": map.c = true; break;
+               case "a": map.a = true; break;
+               case "s": map.s = true; break;
+               default : break;
             }
          }
+
+         map.c = (map.c == e.ctrlKey);
+         map.a = (map.a == e.altKey);
+         map.s = (!_is_shiftable(kcode) || map.s == e.shiftKey);
 
          return map.c && map.a && map.s;
       }
@@ -872,10 +912,13 @@ function init_SFW(callback)
             {
                var el = task_els[i];
 
-               if (_key_matches_task(e, el))
+               if (!class_includes(_get_property(el,"parentNode", "parentNode"), "floater"))
                {
-                  obj.process_clicked_button(el);
-                  return false;
+                  if (_key_matches_task(e, el))
+                  {
+                     obj.process_clicked_button(el);
+                     return false;
+                  }
                }
             }
          }
