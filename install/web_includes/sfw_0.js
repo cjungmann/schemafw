@@ -857,21 +857,28 @@ function init_SFW(callback)
       ;
    }
 
-   function _key_matches_task(e, el)
+   /**
+    * Reports whether or not the keyboard event matches the keystroke described by key_spec.
+    *
+    * @param keyspec String of the form *ctrl-alt-delete* or *plus* or *alt-g*
+    * @param event   The keyboard event
+    */
+   function _keyspec_matches_event(keyspec, event)
    {
-      var kcode = _keycode_from_event(e);
-      var ccode = _keychar_from_event(e).toLowerCase();
-      var key_spec = el.getAttribute("data-key").split("-");
-      var key = key_spec.splice(-1,1)[0].toLowerCase();
+      var ev_code = _keycode_from_event(event);
+      var ev_char = _keychar_from_event(event).toLowerCase();
+
+      var keylist = keyspec.split("-");
+      var key = keylist.splice(-1,1)[0].toLowerCase();
       var map = {c:false, a:false, s:false};
 
-      var match = key.length==1?(key==ccode):_key_matches_code(key,kcode);
+      var match = key.length==1?(key==ev_char):_key_matches_code(key,ev_code);
 
       if (match)
       {
-         for (var i=0; i<key_spec.length; ++i)
+         for (var i=0; i<keylist.length; ++i)
          {
-            switch(key_spec[i][0].toLowerCase())
+            switch(keylist[i][0].toLowerCase())
             {
                case "c": map.c = true; break;
                case "a": map.a = true; break;
@@ -880,11 +887,24 @@ function init_SFW(callback)
             }
          }
 
-         map.c = (map.c == e.ctrlKey);
-         map.a = (map.a == e.altKey);
-         map.s = (!_is_shiftable(kcode) || map.s == e.shiftKey);
+         map.c = (map.c == event.ctrlKey);
+         map.a = (map.a == event.altKey);
+         map.s = (!_is_shiftable(ev_code) || map.s == event.shiftKey);
 
          return map.c && map.a && map.s;
+      }
+
+      return false;
+   }
+
+   function _event_matches_el(event, el)
+   {
+      var key_array = el.getAttribute("data-key").split(/\s/);
+
+      for (var i=0,stop=key_array.length; i<stop; ++i)
+      {
+         if (_keyspec_matches_event(key_array[i], event))
+            return true;
       }
 
       return false;
@@ -903,6 +923,7 @@ function init_SFW(callback)
          obj.sfw_close();
          return false;
       }
+      // Ignore alt, control, and shift keys until processing the key
       else if (kc!=16 && kc!=17 && kc!=18)
       {
          var task_els = _get_tasks_from_host(host);
@@ -914,7 +935,7 @@ function init_SFW(callback)
 
                if (!class_includes(_get_property(el,"parentNode", "parentNode"), "floater"))
                {
-                  if (_key_matches_task(e, el))
+                  if (_event_matches_el(e, el))
                   {
                      obj.process_clicked_button(el);
                      return false;
