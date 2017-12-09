@@ -38,14 +38,18 @@ user presses Alt-A, the *Add Record* button will fire.
 
 ## The Key Instruction
 
-The key instruction associates a keystroke with the button.  When a keystroke can be matched
-to a button, the button's action is executed.  A key instruction is a key name, optionally
-preceded by zero or more key modifiers.  The modifiers and keyname are to be separated by a
-single hyphen and no spaces.  Valid key instruction values include,
+A key specifier, or *key spec* is a string consisting of a keyname, optionally preceded by key
+modifiers *control*, *alt*, and *shift*.  Valid key specs include
 
 - Shift-A
 - Control-Shift-Delete
 - Control-Alt-Q
+
+A key instruction is a key tag with one or more key spec strings.  `key : shift-a` is an example
+that has only a single key spec association.  `key : alt-plus alt-=` is an example where both the
+shifted and unshifted characters of a key match.
+
+When a keystroke matches a key spec associated with a button, the button's action is executed.
 
 ### Matching a Keystroke
 
