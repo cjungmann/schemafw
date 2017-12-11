@@ -221,6 +221,8 @@
       this.focus_on_first_field();
    };
 
+   _form.prototype.closeable = function() { return true; };
+
    _form.prototype.process = function _form_process_message(e,t)
    {
       if (e.type!="click")
