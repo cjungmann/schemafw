@@ -838,11 +838,7 @@ function init_SFW(callback)
    function _key_matches_code(key,code)
    {
       if (code>=112 && code<=123)
-      {
-         var val = "f" + String(code-111);
-         SFW.alert("alert \"" + key + "\" to \"" + val + "\"");
          return key=="f"+String(code-111);
-      }
       else
          return key.substring(0,3)==_keymap[code];
    }
@@ -1222,6 +1218,21 @@ function init_SFW(callback)
       }
    }
 
+   /**
+    * Modifies and merges new document contents into root document.
+    * 
+    * Before the elements of the merged document are incorporated into the
+    * root document, they must be massaged to carry some extra information to
+    * facilitate their use and for housekeeping when the merged interactions
+    * are terminated.
+    *
+    * The elements are tagged with a *merged* integer attribute that links the
+    * elements together and distinguishes them from other merged elements.
+    *
+    * The other merge attribute is the *script* attribute in case the SRM file
+    * of the merge document is different than that root document.  An accurate
+    * *script* attribute is necessary for self-referencing URLs (that begin with ?).
+    */
    function _merge_into_pagedoc(pagedoc, newdoc)
    {
       var ibefore = _find_insertbefore_able(pagedoc);
@@ -1237,6 +1248,9 @@ function init_SFW(callback)
          {
             var pl = make_importable_node(pagedoc, n, true);
             pl.setAttribute("merged",merge_number);
+            var script = docel.getAttribute("script");
+            if (script)
+               pl.setAttribute("script",script);
             docel.insertBefore(pl, ibefore);
          }
       }
