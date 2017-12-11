@@ -211,7 +211,7 @@
           <xsl:with-param name="skip-data-prefix" select="' name value disabled '" />
         </xsl:apply-templates>
         
-        <xsl:value-of select="@label" />
+        <xsl:apply-templates select="@label" mode="resolve_refs" />
       </xsl:element>
     </xsl:if>
   </xsl:template>
