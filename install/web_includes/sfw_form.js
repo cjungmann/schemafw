@@ -216,7 +216,7 @@
                if (is_deleted==0)
                   SFW.alert("Delete operation failed.");
                else  // no deleted attribute OR SFW.check_for_preempt() returned false:
-                  SFW.alert("Expected a response to delete operation.");
+                  SFW.alert("Couldn't find attribute \"deleted\" in delete row.");
 
                return;  // return without closing the dialog
             }
