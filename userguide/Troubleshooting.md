@@ -14,6 +14,7 @@ Currently, the following error messages are explained below:
 - Failed to find a usable id value for row named "xxx"
 - update_associations failed to find a data-id attribute for "*field_name*."
 - The import query failed (Lost connection to MySQL server during query)
+- Couldn't find attribute "deleted" in delete row.
 
 ## Unable to find a result element
 
@@ -208,3 +209,30 @@ the data in a Quarantine table.
 
 See also, (Building the Framework)[BuildingTheFramework.md] and
 (Importing Data)[ImportingData.md] for more information.
+
+## Couldn't Find Attribute "deleted" in Delete Row.
+
+This message can be ambiguous.  It's designed for a delete operation and
+should not occur in other cases.  Extra work on the framework will be needed
+if this message occurs after a non-delete operation.
+
+However, assuming a delete operation:
+
+For the default framework, a delete procedure is expected to run a query
+that returns the number of records deleted.  It should look like this (simplified):
+
+~~~sql
+CREATE PROCEDURE App_Delete_Person(id INT UNSIGNED)
+BEGIN
+   DELETE FROM p USING Person AS p
+    WHERE p.id = id
+      AND p.id_account = @session_confirmed_account;
+
+   -- Note how the row's single attribute will be "deleted"
+   SELECT ROW_COUNT() AS deleted;
+END $$
+~~~
+
+If the procedure saves the ROW_COUNT() value for subsequent queries, make sure
+the variable name in which the value is stored is *deleted* or that it is
+renamed with *AS* in the *SELECT*.
