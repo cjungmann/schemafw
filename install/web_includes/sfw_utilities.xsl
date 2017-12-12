@@ -89,8 +89,9 @@
   </xsl:template>
 
   <xsl:template match="@*" mode="fix_srm_selfref">
-    <xsl:if test="substring(.,1,1)='?' and /*[@script]">
-      <xsl:value-of select="/*/@script" />
+    <!-- <xsl:if test="substring(.,1,1)='?' and /*[@script]"> -->
+    <xsl:if test="substring(.,1,1)='?' and ancestor-or-self::*/@script">
+      <xsl:value-of select="(ancestor-or-self::*/@script)[last()]" />
     </xsl:if>
   </xsl:template>
   
