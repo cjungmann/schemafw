@@ -159,6 +159,9 @@ function init_SFW(callback)
    SFW.base                 = _base;  // "base class" for _form, _table, etc.
    SFW.types["iclass"]      = _base;
 
+   SFW.is_xmldoc            = function _is_xmldoc(e)
+                              { return typeof(e)==="object" && "documentElement" in e; };
+
    SFW.show_string_in_pre   = _show_string_in_pre;
    SFW.remove_string_pres   = _remove_string_pres;
 
@@ -1190,7 +1193,7 @@ function init_SFW(callback)
    function _get_deleted_attribute(doc)
    {
       var attr;
-      if (typeof(doc)=="object" && "selectSingleNode" in doc)
+      if (_is_xmldoc(doc))
       {
          var xpath = "/*/*[@rndx]/*[local-name()=(../@row-name)]/@deleted";
          attr = doc.selectSingleNode(xpath);
@@ -1248,7 +1251,7 @@ function init_SFW(callback)
          {
             var pl = make_importable_node(pagedoc, n, true);
             pl.setAttribute("merged",merge_number);
-            var script = docel.getAttribute("script");
+            var script = newdoc.documentElement.getAttribute("script");
             if (script)
                pl.setAttribute("script",script);
             docel.insertBefore(pl, ibefore);
@@ -1359,12 +1362,21 @@ function init_SFW(callback)
       else
       {
          var n = docel.firstChild;
+         var errnode;
          while(n)
          {
-            if (n.nodeType==1 && (tname=n.tagName.toLowerCase())=="message")
+            if (n.nodeType==1)
             {
-               _alert_notice(n);
-               return false;
+               if (n.getAttribute("rndx"))
+                  errnode = n.selectSingleNode("message");
+               else if (tname=n.tagName.toLowerCase()=="message")
+                  errnode = n;
+
+               if (errnode)
+               {
+                  _alert_notice(errnode);
+                  return false;
+               }
             }
 
             n = n.nextSibling;
@@ -1881,7 +1893,7 @@ function init_SFW(callback)
    _base.prototype.cfobj_from_cmd = function(cmd)
    {
       var rval;
-      if (typeof(cmd)=="object" && "documentElement" in cmd)
+      if (_is_xmldoc(cmd))
          rval =this.cfobj_from_doc(cmd);
       else
       {
