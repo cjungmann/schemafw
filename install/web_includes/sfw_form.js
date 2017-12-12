@@ -193,20 +193,33 @@
       function fdone(cmd)
       {
          var attr, caller;
-         if ((attr=SFW.get_deleted_attribute(cmd)))
+
+         // Look at _base.prototype.process_clicked_button()...
+
+         // fdone is called with string=='cancel' is a confirmation
+         // message was NOT confirmed.  We will need to rework this
+         // code if fdone gets a string argument in a context other
+         // than a declined confirmation dialog.
+         if (typeof(cmd)==="string" && cmd=="cancel")
+            return; // without closing the dialog
+
+         if (SFW.is_xmldoc(cmd))
          {
-            if (attr.value=="0")
-            {
-               SFW.alert("Delete operation failed.");
-               return;
-            }
-            else
+            var is_deleted;
+            if (SFW.check_for_preempt(cmd))
+               is_deleted = SFW.get_deleted_attribute(cmd);
+
+            if (is_deleted)
                SFW.remove_deleted_row(cmd,ths);
-         }
-         else if (cmd=="cancel") // from delete-confirm dialog
-         {
-            // just return, leave record dialog open:
-            return;
+            else
+            {
+               if (is_deleted==0)
+                  SFW.alert("Delete operation failed.");
+               else  // no deleted attribute OR SFW.check_for_preempt() returned false:
+                  SFW.alert("Expected a response to delete operation.");
+
+               return;  // return without closing the dialog
+            }
          }
 
          if ((caller=ths.caller()))
