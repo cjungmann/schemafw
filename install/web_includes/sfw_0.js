@@ -159,8 +159,7 @@ function init_SFW(callback)
    SFW.base                 = _base;  // "base class" for _form, _table, etc.
    SFW.types["iclass"]      = _base;
 
-   SFW.is_xmldoc            = function _is_xmldoc(e)
-                              { return typeof(e)==="object" && "documentElement" in e; };
+   SFW.is_xmldoc            = _is_xmldoc;
 
    SFW.show_string_in_pre   = _show_string_in_pre;
    SFW.remove_string_pres   = _remove_string_pres;
@@ -304,6 +303,11 @@ function init_SFW(callback)
       }
       return true;
    }
+
+   function _is_xmldoc(e)
+   {
+      return typeof(e)==="object" && "documentElement" in e;
+   };
 
    function _is_anchor(n)
    {
