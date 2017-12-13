@@ -27,6 +27,22 @@
       this._tbody = actors.anchor.getElementsByTagName("tbody")[0];
    }
 
+   /**
+    * Override schema method to handle get the appropriate schema.
+*
+    * The _assoc object is a widget, a field in a form.  The schema that
+    * should be returned is the host form's schema.  This method will do that.
+    */
+   _assoc.prototype.schema = function()
+   {
+      var formobj = SFW.get_object_from_host(this.host());
+      if (formobj)
+         return formobj.schema();
+
+      console.error("Failed to get assoc's form's schema.");
+      return null;
+   };
+
    _assoc.prototype.shadow_transform = function(val)
    {
       var fname = this.get_field_name();
