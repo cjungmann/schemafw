@@ -1304,19 +1304,6 @@ function init_SFW(callback)
       }
    }
 
-   // function _update_xmldoc(doc, form)
-   // {
-   //    var pagedoc = SFW.xmldoc;
-   //    var arr = doc.selectNodes("/*/*[@rndx][@type='update']");
-   //    for (var i=0, stop=arr.length; i<stop; ++i)
-   //    {
-   //       var result = arr[i];
-   //       var target = _get_target_result(result, pagedoc);
-   //       if (target)
-   //          _put_row_into_target(target, result.selectSingleNode("*"));
-   //    }
-   // }
-
    /**
     * Now does both delete and add/replace updates.
     *
