@@ -221,7 +221,7 @@
     */
    _tbase.prototype.get_el_click_info = function(el)
    {
-      var field, task, did, dname, rval=null;
+      var field, task, did, dname, result, rval=null;
       var elname = el.tagName.toLowerCase();
 
       if (elname=="tr")
