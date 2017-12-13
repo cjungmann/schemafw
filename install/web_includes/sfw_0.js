@@ -1128,27 +1128,22 @@ function init_SFW(callback)
    /** Attempts to get a result name from a result.
     *
     * Looks for, in this order, attempting each step ig the previous step failed.
-    * - name of field with primary-key attribute
-    * - name of field with xrow_id attribute
-    * - the name of the first attribute of the first element in the result
-    * - the name of the first attribute of the row element
+    * - in _get_schema_idfield()
+    *   - name of field with primary-key attribute
+    *   - name of field with xrow_id attribute
+    * - the name of the first attribute of the data element in the result
     */
    function _get_result_idname(result, row)
    {
-      var field = _get_schema_idfield(result.selectSingleNode("schema"));
+      var attr, field = _get_schema_idfield(result.selectSingleNode("schema"));
 
       if (field)
          return field.getAttribute("name");
-      else
-      {
-         var attr, rowname = result.getAttribute("row-name");
-         if (!(attr=result.selectSingleNode(rowname + "[1]/@*[1]")))
-            attr = row.selectSingleNode("@*[1]");
+      else if ((row || (row=result.selectSingleNode("*[local-name()=../@row-name]")))
+               && (attr=row.selectSingleNode("@*[1]")))
+         return attr.name;
 
-         if (attr)
-            return attr.name;
-      }
-      console.error("get_result_idname cannot find an id field.");
+      console.error("get_result_idname failed to find an id field");
       return null;
    }
 
@@ -1173,6 +1168,15 @@ function init_SFW(callback)
          target = pagedoc.selectSingleNode("/*/*[@rndx][not(@merged)][@row-name='" + rname + "']");
 
       return target;
+   }
+
+   function _get_result_from_field(field, docel)
+   {
+      var result = docel.selectSingleNode(field.getAttribute("result"));
+      if (result.getAttribute("type")=="association")
+         result = docel.selectSingleNode(result.getAttribute("result"));
+
+      return result
    }
 
    function _put_row_into_target(target, row)
@@ -1212,17 +1216,127 @@ function init_SFW(callback)
          xrow.parentNode.removeChild(xrow);
    }
 
+   function _remove_deletes(pagedocel, newdocel, form)
+   {
+      var deleted_count = 0;
+      var xpath_id = "@*[local-name()!='deleted']";
+      var dresults = newdocel.selectNodes("*[@rndx][*[local-name()=../@row-name][@deleted]]");
+      for (var i=0,stop=dresults.length; i<stop; ++i)
+      {
+         dresult = dresults[i];
+         var dels = dresult.selectNodes(dresult.getAttribute("row-name")+"[@deleted]");
+
+         if (dels.length==0)
+            continue;
+
+         var rowname, idname;
+         var target = pagedocel.selectSingleNode(dresult.getAttribute("target")||"*[1=0]");
+         if (target)
+         {
+            rowname = target.getAttribute("row-name");
+            idname = _get_result_idname(target);
+         }
+
+         var id_attr, row_id;
+         for (var j=0, jstop=dels.length; j<jstop; ++j)
+         {
+            var row_to_remove;
+            var del = dels[j];
+            var is_del = del.getAttribute("deleted");
+            if (is_del==1)
+            {
+               if (i==0 && j==0 && !target && form)
+                  row_to_remove = form.get_context_row();
+               else if (target)
+               {
+                  if ((id_attr=del.selectSingle(xpath_id)) && (row_id=id_attr.value))
+                  {
+                     var xpath_row = rowname + "[@" + idname + "='" + row_id + "']";
+                     row_to_remove = target.selectSingleNode(xpath_row);
+                  }
+               }
+            }
+
+            if (row_to_remove)
+            {
+               ++deleted_count;
+               row_to_remove.parentNode.removeChild(row_to_remove);
+            }
+         }  // end of for(var j...) loop
+
+      } // end of for(var i...) loop
+
+      return deleted_count;
+   }
+
+   function _process_updates(pagedocel, newdocel, form)
+   {
+      var updates = newdocel.selectNodes("*[@rndx][@type='update']");
+      for (var i=0, stop=updates.length; i<stop; ++i)
+      {
+         var result = updates[i];
+         var urows = result.selectNodes("*[local-name()=../@row-name]");
+
+         if (urows.length==0)
+            continue;
+
+         var target = pagedocel.selectSingleNode(result.getAttribute("target")||"");
+         if (target)
+         {
+            var rowname = target.getAttribute("row-name");
+            var idname = _get_result_idname(target);
+            var xpathbase = rowname + "[@" + idname + "='";
+
+            for (var j=0,jstop=urows.length; j<jstop; ++j)
+            {
+               var urow = _get_copied_node(target, urows[j]);
+               var xpath = xpathbase + urow.getAttribute("id") + "']";
+               var oldrow = target.selectSingleNode(xpath);
+
+               if (oldrow)
+                  _replace_element(urow,oldrow);
+               else
+                  target.appendChild(urow);
+            }
+         }
+         else
+            console.error("update target result '" + result.name + "' has no target attribute.");
+      }
+   }
+
+   // function _update_xmldoc(doc, form)
+   // {
+   //    var pagedoc = SFW.xmldoc;
+   //    var arr = doc.selectNodes("/*/*[@rndx][@type='update']");
+   //    for (var i=0, stop=arr.length; i<stop; ++i)
+   //    {
+   //       var result = arr[i];
+   //       var target = _get_target_result(result, pagedoc);
+   //       if (target)
+   //          _put_row_into_target(target, result.selectSingleNode("*"));
+   //    }
+   // }
+
+   /**
+    * Now does both delete and add/replace updates.
+    *
+    * To facilitate appropriate behavior in form.prototype.process_button(), this
+    * function will return false if it failed to delete any record when mode-type=="delete".
+    *
+    * If a record delete succeeds, the deleted record form should close to avoid attempts
+    * to modify the now missing record.
+    */
    function _update_xmldoc(doc, form)
    {
-      var pagedoc = SFW.xmldoc;
-      var arr = doc.selectNodes("/*/*[@rndx][@type='update']");
-      for (var i=0, stop=arr.length; i<stop; ++i)
-      {
-         var result = arr[i];
-         var target = _get_target_result(result, pagedoc);
-         if (target)
-            _put_row_into_target(target, result.selectSingleNode("*"));
-      }
+      var pagedocel = SFW.xmldoc.documentElement;
+      var newdocel = doc.documentElement;
+
+      _process_updates(pagedocel, newdocel, form);
+
+      if (newdocel.getAttribute("mode-type")=="delete")
+         return _remove_deletes(pagedocel, newdocel, form) > 0;
+
+      return true;
    }
 
    /**
@@ -1738,10 +1852,9 @@ function init_SFW(callback)
                var field = schema.selectSingleNode("field[@name='"+rval.name+"']");
                if (field)
                {
-                  rval.field = field;
-                  var result_name = field.getAttribute("result");
-                  if (result_name)
-                     rval.result = this.xmldocel().selectSingleNode(result_name);
+                  var result = _get_result_from_field(field, this.xmldocel());
+                  if (result)
+                     rval.result = result;
                }
             }
          }
