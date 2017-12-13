@@ -205,20 +205,16 @@
 
          if (SFW.is_xmldoc(cmd))
          {
-            var is_deleted;
             if (SFW.check_for_preempt(cmd))
-               is_deleted = SFW.get_deleted_attribute(cmd);
-
-            if (is_deleted)
-               SFW.remove_deleted_row(cmd,ths);
-            else
             {
-               if (is_deleted==0)
-                  SFW.alert("Delete operation failed.");
-               else  // no deleted attribute OR SFW.check_for_preempt() returned false:
-                  SFW.alert("Couldn't find attribute \"deleted\" in delete row.");
+               var is_del_mode = cmd.documentElement.getAttribute("mode-type")=="delete";
+               var update_ok = SFW.update_xmldoc(cmd,ths);
 
-               return;  // return without closing the dialog
+               if (is_del_mode && !update_ok)
+               {
+                  SFW.alert("Delete operation failed");
+                  return;  // return without closing the dialog
+               }
             }
          }
 
