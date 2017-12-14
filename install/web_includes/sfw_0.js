@@ -1249,7 +1249,7 @@ function init_SFW(callback)
                   row_to_remove = form.get_context_row();
                else if (target)
                {
-                  if ((id_attr=del.selectSingle(xpath_id)) && (row_id=id_attr.value))
+                  if ((id_attr=del.selectSingleNode(xpath_id)) && (row_id=id_attr.value))
                   {
                      var xpath_row = rowname + "[@" + idname + "='" + row_id + "']";
                      row_to_remove = target.selectSingleNode(xpath_row);
