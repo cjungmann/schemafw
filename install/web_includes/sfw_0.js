@@ -1281,6 +1281,8 @@ function init_SFW(callback)
             continue;
 
          var tname = result.getAttribute("target");
+
+         // Backup result target search backup attempts to match to row-name of a result:
          var txpath = tname?tname:"*[@rndx][@row-name='" + urows[0].localName + "']";
 
          var target = pagedocel.selectSingleNode(txpath);
