@@ -1280,7 +1280,10 @@ function init_SFW(callback)
          if (urows.length==0)
             continue;
 
-         var target = pagedocel.selectSingleNode(result.getAttribute("target")||"");
+         var tname = result.getAttribute("target");
+         var txpath = tname?tname:"*[@rndx][@row-name='" + urows[0].localName + "']";
+
+         var target = pagedocel.selectSingleNode(txpath);
          if (target)
          {
             var rowname = target.getAttribute("row-name");
