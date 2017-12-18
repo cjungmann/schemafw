@@ -173,55 +173,6 @@
       return true;
    };
 
-   _table.prototype._old_process_line_click = function(tr)
-   {
-      if (!(url=this.get_data_value("on_line_click")))
-         return true;
-      
-      // By default, process the line if and only if it's under a tbody.
-      // That is, skip rows in thead and tfoot elements.
-      if (tr.parentNode.tagName.toLowerCase()!="tbody")
-         return null;
-
-      var id, url;
-      
-      if (!(id=tr.getAttribute("data-id")))
-      {
-         this.diagnose_missing_data_id(tr);
-         return true;
-      }
-      
-      var idname = this.get_line_click_id_name();
-      function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
-
-      // Somehow get row-name, perhaps saved in the attributes of the table,
-      // and pass it as an argument to result():
-      var xrow = SFW.find_child_matches(this.result(), f, true);
-
-      if (xrow)
-      {
-         if (url.indexOf('&')==-1)
-            url += "=" + id;
-         else
-            url = SFW.apply_row_context(url, xrow);
-
-         var os = SFW.get_page_offset();  // Get offset before discarding contents
-         var host = this.host();
-
-         // this.empty_node(host);
-
-         SFW.open_interaction(SFW.stage,
-                              url,
-                              this,
-                              { os:os, host:host, xrow:xrow }
-                             );
-
-         return false;
-      }
-
-      return true;
-   };
-
    _table.prototype.process = function _table_process_message(e,t)
    {
       var table_el = this.top();
