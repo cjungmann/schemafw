@@ -2145,29 +2145,25 @@ function init_SFW(callback)
 
    _base.prototype.update_hosted_associations = function()
    {
-      function f(n) { return n.nodeType==1 && n.getAttribute("data-sfw-assoc"); }
-      var assoc_hosts = SFW.find_child_matches(this.host(), f, false, true);
       var schema = this.schema();
-      if (assoc_hosts && schema)
-      {
-         var fields = schema.selectNodes("field[@type='assoc']");
-         var fstop = fields.length;
+      var field, fname, fields = schema.selectNodes("field[@type='assoc']");
+      var fcount = fields.length;
 
-         try
+      function f(n)
+      {
+         var aname;
+         if (n.nodeType==1 && (aname=n.getAttribute("data-sfw-assoc")))
          {
-            for (var i=0, istop=assoc_hosts.length; i<istop; ++i)
+            for (var i=0; i<fcount; ++i)
             {
-               var assoc = assoc_hosts[i];
-               for (var j=0; j<fstop; ++j)
+               field = fields[i];
+               fname = field.name;
+               if (aname == fname)
                {
-                  var field = fields[j];
-                  var fname = field.getAttribute("name");
-                  if (assoc.getAttribute("data-sfw-assoc")==fname)
-                  {
                      // A "td" suggests a "tr" host that should have a data-id attribute:
-                     if (assoc.tagName.toLowerCase()=="td")
+                     if (n.tagName.toLowerCase()=="td")
                      {
-                        var id = assoc.parentNode.getAttribute("data-id");
+                        var id = n.parentNode.getAttribute("data-id");
                         if (id)
                            field.setAttribute("data-id", id);
                         else
@@ -2178,24 +2174,18 @@ function init_SFW(callback)
                         }
                      }
 
-                     SFW.xslobj.transformFill(assoc, field);
-                  }
+                     SFW.xslobj.transformFill(n, field);
                }
             }
          }
-         catch(e)
-         {
-            SFW.alert("Exception updating associations.");
-         }
-
-         // Just wait until finished before removing the data-id attributes:
-         for (var i=0; i<fstop; ++i)
-         {
-            var field = fields[i];
-            if (field.hasAttribute("data-id"))
-               field.removeAttribute("data-id");
-         }
       }
+
+      if (fcount>0)
+         SFW.find_child_matches(this.host(), f, false, true);
+
+      // Clean-up after last data-id is used:
+      for (var i=0; i<fcount; ++i)
+         fields[i].removeAttribute("data-id");
    };
 
    _base.prototype.update_associations = function(child)
