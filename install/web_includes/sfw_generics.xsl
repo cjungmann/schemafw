@@ -20,7 +20,7 @@
   <!-- apostrophe, apostrophe -->
   <xsl:variable name="apospair">&apos;&apos;</xsl:variable>
   <!-- apostrophe AKA: alias for apostrophe for later replacement -->
-  <xsl:variable name="aposaka">&#127;</xsl:variable>
+  <xsl:variable name="aposaka">&#xfffd;</xsl:variable>
 
   <!-- for changing case -->
   <xsl:variable name="lowers">abcdefghijklmnopqrstuvwxyz</xsl:variable>
