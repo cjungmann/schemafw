@@ -735,8 +735,13 @@ function load_xml_doc(doc)
    {
       function finish(xsl)
       {
-         fix_output_element(xsl);
          document.XSLDocument = xsl;
+
+         fix_output_element(xsl);
+
+         if ("SFW" in window && "update_xsl_keys" in SFW)
+            SFW.update_xsl_keys(doc, xsl);
+
          transform_doc(xsl,doc);
       }
       
