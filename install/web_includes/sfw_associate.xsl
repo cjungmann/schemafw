@@ -150,9 +150,11 @@
           </xsl:apply-templates>
         </xsl:variable>
 
-        <xsl:variable
-            name="row"
-            select="$aresult/*[local-name()=$aresult/@row-name][@id=$idval]" />
+        <xsl:variable name="krow" select="key(@xslkey, $idval)" />
+        <xsl:variable name="drow"
+                      select="$aresult[not($krow)]/*[local-name()=$aresult/@row-name][@id=$idval]" />
+
+        <xsl:variable name="row" select="$krow|$drow" />
 
         <xsl:value-of select="$row/@*[local-name()=current()/@name]" />
       </xsl:when>
@@ -233,10 +235,52 @@
 
     <xsl:variable name="lresult" select="/*/*[local-name()=current()/@result]" />
 
+    <xsl:variable name="idval">
+      <xsl:apply-templates select="." mode="get_id_value">
+        <xsl:with-param name="data" select="$data" />
+      </xsl:apply-templates>
+    </xsl:variable>
+
+    <!-- <xsl:choose> -->
+    <!--   <xsl:when test="$lresult/@xslkey and not($lresult/@xslkey='auto')"> -->
+
+
+    <!--     <xsl:apply-templates select="key($lresult/@xslkey, $idval)" mode="build_assoc"> -->
+    <!--       <xsl:with-param name="field" select="." /> -->
+    <!--     </xsl:apply-templates> -->
+
+    <!--   </xsl:when> -->
+    <!--   <xsl:otherwise> -->
+
+    <!--     <xsl:apply-templates -->
+    <!--         select="$lresult/*[local-name()=../@row-name][@id=$idval]" -->
+    <!--         mode="build_assoc"> -->
+    <!--       <xsl:with-param name="field" select="." /> -->
+    <!--     </xsl:apply-templates> -->
+
+
+    <!--     <xsl:apply-templates select="." mode="build_with_row"> -->
+    <!--       <xsl:with-param name="row" select="$lresult/*[local-name()=../@row-name][@id=$idval]" /> -->
+    <!--     </xsl:apply-templates> -->
+        
+    <!--   </xsl:otherwise> -->
+    <!-- </xsl:choose> -->
+
+    <span><xsl:value-of select="concat('idval=',$idval)" /></span>
+
+
     <xsl:apply-templates select="." mode="build_associated_row">
       <xsl:with-param name="row" select="$data" />
     </xsl:apply-templates>
   </xsl:template>
+
+  <xsl:template match="*[@rndx][@result]/*" mode="build_assoc">
+    <xsl:param name="field" />
+
+    <xsl:text>build-assoc</xsl:text>
+  </xsl:template>
+
+
 
   <!-- Default transform_row template.
        Override this template with a following template with more specific field match.
