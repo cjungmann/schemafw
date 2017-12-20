@@ -131,15 +131,11 @@
 
    var key_prefix = "gndx_";
 
-   function _generate_key_name(attr)
+   function _generate_key_name(result)
    {
-      var result = attr.ownerElement || attr.parentNode;
-      if (result)
-      {
-         var rname = result.localName;
-         var dname = result.ownerDocument.documentElement.getAttribute("script").replace(".","");
-         return key_prefix + dname + "_" + rname;
-      }
+      var rname = result.localName;
+      var dname = result.ownerDocument.documentElement.getAttribute("script").replace(".","");
+      return key_prefix + dname + "_" + rname;
    }
 
    function _get_xsl_document()
@@ -174,9 +170,8 @@
       xpath += "/" + result.getAttribute("row-name");
    }
 
-   function _add_xsl_key(attr, name, xsl)
+   function _add_xsl_key(result, name, xsl)
    {
-      var result = attr.ownerElement||attr.parentNode;
       var uses = "@"+SFW.get_result_idname(result);
       var match = _get_result_key_match(result);
 
@@ -194,13 +189,16 @@
       if (!xsl)
          xsl = _get_xsl_document();
 
-      var keys = doc.selectNodes("/*/*[@rndx]/@xslkey");
-      for (var i=0,stop=keys.length; i<stop; ++i)
+      var kresults = doc.selectNodes("/*/*[@rndx][@xslkey]");
+      for (var i=0,stop=kresults.length; i<stop; ++i)
       {
-         var key = keys[i];
-         var keyname = _generate_key_name(key);
+         var result = kresults[i];
+         var keyname = _generate_key_name(result);
          if (_lacks_xsl_key(keyname, xsl))
-            _add_xsl_key(key, keyname, xsl);
+         {
+            _add_xsl_key(result, keyname, xsl);
+            result.setAttribute("xslkey", keyname);
+         }
       }
    }
 
