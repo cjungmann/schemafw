@@ -1,6 +1,9 @@
 
 // sfw_0.js
 
+if ("SFW" in window)
+   window._saved_SFW = window.SFW;
+
 var SFW = { types     : {},
             preloads  : {},      /**< Object to associate preload names with callback functions. */
             start_app : null,    /**< callback for after all preloads are completed. */
@@ -105,14 +108,20 @@ var SFW = { types     : {},
                }
                try_adding();
             }
-          };
+          };  // end of SFW definition
+
+if ("_saved_SFW" in window)
+{
+   for (p in window._saved_SFW)
+      SFW[p] = window._saved_SFW[p];
+
+   delete window._saved_SFW;
+}
 
 function init_SFW(callback)
 {
    SFW.start_app            = callback;
 
-   SFW.alert                = _alert;
-   SFW.confirm              = _confirm;
    SFW.log_error            = _log_error;
    SFW.has_value            = _has_value;
    SFW.get_property         = _get_property;
@@ -126,6 +135,16 @@ function init_SFW(callback)
    SFW.document_object      = _document_object;
    SFW.add_event            = _add_event;
    SFW.setup_event_handling = _setup_event_handling;
+
+   // functions found in sfw_doc.js:
+   // SFW.alert
+   // SFW.confirm
+   // SFW.alert_notice
+   // SFW.is_xmldoc
+   // SFW.get_schema_idfield;
+   // SFW.get_result_idname
+   // SFW.check_for_preempt
+   // SFW.update_xsl_keys
 
    SFW.keycode_from_event   = _keycode_from_event;
    SFW.keychar_from_event   = _keychar_from_event;
@@ -153,19 +172,14 @@ function init_SFW(callback)
    SFW.render_interaction   = _render_interaction;
    SFW.open_interaction     = _open_interaction;
    SFW.get_director         = _get_director;
-   SFW.alert_notice         = _alert_notice;
-   SFW.check_for_preempt    = _check_for_preempt;
    SFW.update_location_arg  = _update_location_arg;
    SFW.base                 = _base;  // "base class" for _form, _table, etc.
    SFW.types["iclass"]      = _base;
-
-   SFW.is_xmldoc            = _is_xmldoc;
 
    SFW.show_string_in_pre   = _show_string_in_pre;
    SFW.remove_string_pres   = _remove_string_pres;
 
    SFW.replace_results      = _replace_results;
-   SFW.get_schema_idfield   = _get_schema_idfield;
    SFW.get_row_id_value     = _get_row_id_value;
 
    SFW.get_row_from_result_id = _get_row_from_result_id;
@@ -192,16 +206,6 @@ function init_SFW(callback)
    {
       // The following function is from XML.js (in case of error):
       return add_namespace_el(tag,ns||"",parent,before);
-   }
-
-   function _alert(str)
-   {
-      window.alert(str);
-   }
-
-   function _confirm(str)
-   {
-      return window.confirm(str);
    }
 
    function _log_error(msg)
@@ -303,11 +307,6 @@ function init_SFW(callback)
       }
       return true;
    }
-
-   function _is_xmldoc(e)
-   {
-      return typeof(e)==="object" && "documentElement" in e;
-   };
 
    function _is_anchor(n)
    {
@@ -1093,28 +1092,13 @@ function init_SFW(callback)
          parent.appendChild(newel);
    }
 
-   /** Searches for an id field, using most to least explicit methods. */
-   function _get_schema_idfield(schema)
-   {
-      var field = null;
-      if (schema)
-      {
-         field = schema.selectSingleNode("field[@primary-key]")
-            || schema.selectSingleNode("field[@xrow_id]")
-            || schema.selectSingleNode("field[@name='id']")
-            || schema.selectSingleNode("field[1]");
-      }
-
-      return field;
-   }
-
    function _get_row_id_value(row)
    {
       var val;
       var schema = row.selectSingleNode("../schema");
       if (schema)
       {
-         var field = _get_schema_idfield(schema);
+         var field = SFW.get_schema_idfield(schema);
          if (field)
             val = row.getAttribute(field.getAttribute("name"));
       }
@@ -1125,33 +1109,11 @@ function init_SFW(callback)
       return val;
    }
 
-   /** Attempts to get a result name from a result.
-    *
-    * Looks for, in this order, attempting each step ig the previous step failed.
-    * - in _get_schema_idfield()
-    *   - name of field with primary-key attribute
-    *   - name of field with xrow_id attribute
-    * - the name of the first attribute of the data element in the result
-    */
-   function _get_result_idname(result, row)
-   {
-      var attr, field = _get_schema_idfield(result.selectSingleNode("schema"));
-
-      if (field)
-         return field.getAttribute("name");
-      else if ((row || (row=result.selectSingleNode("*[local-name()=../@row-name]")))
-               && (attr=row.selectSingleNode("@*[1]")))
-         return attr.name;
-
-      console.error("get_result_idname failed to find an id field");
-      return null;
-   }
-
    function _get_oldrow(target, row)
    {
       var idname, idval, rowname;
       if (row
-          && (idname=_get_result_idname(target,row))
+          && (idname=SFW.get_result_idname(target,row))
           && (idval=row.getAttribute(idname))
           && (rowname=target.getAttribute("row-name")))
          return target.selectSingleNode(rowname + "[@" + idname + "='" + idval + "']");
@@ -1201,7 +1163,7 @@ function init_SFW(callback)
    function _get_deleted_attribute(doc)
    {
       var attr;
-      if (_is_xmldoc(doc))
+      if (SFW.is_xmldoc(doc))
       {
          var xpath = "/*/*[@rndx]/*[local-name()=(../@row-name)]/@deleted";
          attr = doc.selectSingleNode(xpath);
@@ -1234,7 +1196,7 @@ function init_SFW(callback)
          if (target)
          {
             rowname = target.getAttribute("row-name");
-            idname = _get_result_idname(target);
+            idname = SFW.get_result_idname(target);
          }
 
          var id_attr, row_id;
@@ -1289,7 +1251,7 @@ function init_SFW(callback)
          if (target)
          {
             var rowname = target.getAttribute("row-name");
-            var idname = _get_result_idname(target);
+            var idname = SFW.get_result_idname(target);
             var xpathbase = rowname + "[@" + idname + "='";
 
             for (var j=0,jstop=urows.length; j<jstop; ++j)
@@ -1393,8 +1355,10 @@ function init_SFW(callback)
       function got(xdoc)
       {
          var merge, pagedoc, node_to_remove;
-         if (_check_for_preempt(xdoc))
+         if (SFW.check_for_preempt(xdoc))
          {
+            SFW.update_xsl_keys(xdoc);
+
             if (xdoc.documentElement.getAttribute("mode-type")=="merge")
             {
                // Copy new stuff into page document so the new
@@ -1438,61 +1402,6 @@ function init_SFW(callback)
       }
 
       return null;
-   }
-
-   function _alert_notice(el)
-   {
-      var type = el.getAttribute("type");
-      var msg = el.getAttribute("message");
-      var where = el.getAttribute("where");
-      var detail = el.getAttribute("detail");
-      var str = type + ":\n" + msg;
-      if (where)
-         str += "\n\nwhere:\n" + where;
-      else if (detail)
-         str += "\n\ndetail:\n" + detail;
-      SFW.alert(str);
-   }
-
-   function _check_for_preempt(doc)
-   {
-      var docel = doc.documentElement;
-      var tname = docel.tagName.toLowerCase();
-      var jump;
-      if (tname=="notice")
-      {
-         _alert_notice(docel);
-         return false;
-      }
-      else if ((jump=docel.getAttribute("meta-jump")))
-      {
-         window.location = jump;
-         return false;
-      }
-      else
-      {
-         var n = docel.firstChild;
-         var errnode;
-         while(n)
-         {
-            if (n.nodeType==1)
-            {
-               if (n.getAttribute("rndx"))
-                  errnode = n.selectSingleNode("message");
-               else if (tname=n.tagName.toLowerCase()=="message")
-                  errnode = n;
-
-               if (errnode)
-               {
-                  _alert_notice(errnode);
-                  return false;
-               }
-            }
-
-            n = n.nextSibling;
-         }
-      }
-      return true;
    }
 
    function _find_schema(doc, merge_number)
@@ -2002,7 +1911,7 @@ function init_SFW(callback)
    _base.prototype.cfobj_from_cmd = function(cmd)
    {
       var rval;
-      if (_is_xmldoc(cmd))
+      if (SFW.is_xmldoc(cmd))
          rval =this.cfobj_from_doc(cmd);
       else
       {
