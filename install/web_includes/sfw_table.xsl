@@ -46,12 +46,12 @@
       <xsl:apply-templates select="." mode="add_on_click_attributes" />
 
       <thead>
+        <xsl:apply-templates select="." mode="construct_thead_rows" />
         <xsl:if test="not($static)">
           <xsl:apply-templates select="." mode="construct_thead_rows" >
             <xsl:with-param name="class" select="'floater'" />
           </xsl:apply-templates>
         </xsl:if>
-        <xsl:apply-templates select="." mode="construct_thead_rows" />
       </thead>
       
       <tbody>
