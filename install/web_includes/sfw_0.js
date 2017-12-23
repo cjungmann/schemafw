@@ -1942,10 +1942,6 @@ function init_SFW(callback)
 
       if (cmsg && !SFW.confirm(cmsg))
          funcForTimeout = function(){cb("cancel"); };
-      else if (url in this)
-         funcForTimeout = function(){ths[url](b,cb)};
-      else if (url in window)
-         funcForTimeout = function(){window[url](b,cb)};
       else
       {
          switch(type)
@@ -1957,8 +1953,15 @@ function init_SFW(callback)
                   funcForTimeout = function(){window.location=url;};
                break;
             case "call":
-               if (url in window)
-                  funcForTimeout = function(){window[url]();};
+               if (url)
+               {
+                  if (url in this)
+                     funcForTimeout = function(){ths[url](b,cb)};
+                  else if (url in window)
+                     funcForTimeout = function(){window[url](b,cb)};
+               }
+               else
+                  funcForTimeout = function(){SFW.alert("Call button missing url."); };
                break;
             case "cancel":
             case "close":
