@@ -1955,13 +1955,18 @@ function init_SFW(callback)
             case "call":
                if (url)
                {
+                  // var button = get_srm_button() or something similar
+                  // Use parameter sub-instructions to create an argument
+                  // array with which to use call() to invoke the function
+                  // SEE AddingButtons.md -> Button Type _call_ -> Future Features
+
                   if (url in this)
                      funcForTimeout = function(){ths[url](b,cb)};
                   else if (url in window)
                      funcForTimeout = function(){window[url](b,cb)};
                }
                else
-                  funcForTimeout = function(){SFW.alert("Call button missing url."); };
+                  funcForTimeout = function(){SFW.alert("Call button type without url or task."); };
                break;
             case "cancel":
             case "close":
