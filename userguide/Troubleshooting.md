@@ -15,6 +15,7 @@ Currently, the following error messages are explained below:
 - update_associations failed to find a data-id attribute for "*field_name*."
 - The import query failed (Lost connection to MySQL server during query)
 - Couldn't find attribute "deleted" in delete row.
+- Call button type without url or task.
 
 ## Unable to find a result element
 
@@ -236,3 +237,23 @@ END $$
 If the procedure saves the ROW_COUNT() value for subsequent queries, make sure
 the variable name in which the value is stored is *deleted* or that it is
 renamed with *AS* in the *SELECT*.
+
+## Call button type without url or task.
+
+In addition to standard button types _open_, _close_, _jump_, etc, the **call**
+button type calls a named function.  In general, a _call_ button instruction
+should look like:
+
+~~~srm
+   button
+      type : call
+      label : Calendar Mode
+      task  : switch_to_calendar_mode
+~~~
+
+Note that a _url_ instruction is treated as if it were a _task_ function.
+
+The error message _Call button type without url or task_ is generated when
+a _call_ button lacks _url_ or _task_.
+
+See [Adding Buttons](AddingButtons.md) for information.

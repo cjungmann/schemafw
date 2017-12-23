@@ -118,14 +118,42 @@ parameters are required, they must be provided using
 
 #### Button Type _call_
 
-This button type will call the function named in the _task_ instruction.  This generally
-requires custom javascript included with a _script_ instruction.
+This button type will call the function named in the _task_ instruction, though it will
+recognize _url_ as if it were a _task_ value.  The framework will look for the function
+first as a method of the current object, or, failing that, as a global function.
+
+The first version calls the named function with two parameters, the button that
+triggered the cal, and the callback function if defined.  The called function is not
+required to use either of the arguments.
+
+NOTE: The _task_ or _url_ instruction should only include the function's name, not
+any parameters.  See _Future Features_ below for how this might change.
 
 ~~~srm
 button
    label : Do Strange Thing
    type  : call
    task  : my_do_strange_thing_function
+~~~
+
+##### Future Features
+
+In the future, the _task_ instruction may include a parameter list.  As of 2017/12/23,
+the plan is to process _param_ instructions under the _task_ instruction, like these:
+
+~~~srm
+## PARAM instructions not yet implemented!  Preview Only ##
+button
+   label : Set Calendar Mode
+   type  : call
+   task  : set_obj_mode
+      param : calendar
+
+button
+   label : Enter Edit Mode
+   type  : call
+   task  : set_form_mode
+      param : {@form-mode}
 ~~~
 
 #### Button Type _jump_
