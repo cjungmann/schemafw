@@ -47,6 +47,9 @@ There are several sections.
     - [Templates for Custom Interactions](CustomTemplates.md)
     - [Custom Fields](CustomFields.md)
     - [Why Not Use xsl:include?](WhyNotInclude.md)
+  - [XSL Programming](XSLProgramming.md)
+    - [Template Selection](XSLTemplateSelection.md)
+    - [XPath Ranked Selection](XPathRankedSelection.md)
   - Debugging
     - [Troubleshooting SchemaFW Messages](Troubleshooting.md)
     - [Troubleshooting Unexpected Behavior](TroubleshootingBehavior.md)
