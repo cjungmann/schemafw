@@ -280,6 +280,7 @@ public:
    static bool confirm_mysql_connection(void);
    static int wait_for_requests(loop_sentry sentry, FILE *out);
 
+   static bool is_srm_file(const char *arg);
    static int process_command_line(int argc, char **argv);
 
 

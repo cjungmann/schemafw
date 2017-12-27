@@ -4384,6 +4384,14 @@ void initialize_fake_stdin(int fh)
 }
 #pragma pop_macro("FILE")
 
+
+bool Schema::is_srm_file(const char *arg)
+{
+   const char *found = strstr(arg,".srm");
+   return (found && strlen(found)==4);
+}
+
+
 /**
  * @brief More complicated command-line processing code isolated from main()
  *
@@ -4447,6 +4455,13 @@ int Schema::process_command_line(int argc, char **argv)
                   return 1;
                break;
          }
+      }
+      else if (*ptr==argv[1] && is_srm_file(*ptr))
+      {
+         // Don't increment ptr like above because we're not pointing
+         // at the -s argument but at the actual srm file value:
+         bash_specs_file = *ptr;
+         setenv("PATH_TRANSLATED", bash_specs_file, true);
       }
       else if (0==strcmp("--version", *ptr))
       {
@@ -4553,6 +4568,8 @@ bool is_command_line_mode(int argc, char **argv)
                break;
          }
       }
+      else if (Schema::is_srm_file(*ptr))
+         rval = true;
       else if (0==strcmp(*ptr, "--version"))
          rval = true;
    }
