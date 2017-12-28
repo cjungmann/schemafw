@@ -148,9 +148,22 @@ a subordinate table or even an SVG drawing using linked data.
 </xsl:template>
 ~~~
 
+### Form Overrides
+
+The framework builds forms that, for each display field in the schema, has a
+label element followed by a named element linked to the label element.  The
+framework creates the label element, then invokes
+`<xsl:apply-templates match="something" mode="construct_input">` to create the
+linked element.
+
+Like the **construct_line_cell** and **write_cell_content** templates used when
+building a table, the **construct_input** template matches a field element and
+defines a `<xsl:param name="data" />` element.
 
 ## Framework Examples
 
 The framework uses the methods described in this guide to expand on basic
 table and form elements.  Both files *sfw_ulselect.xsl* and *sfw_lookup.xsl*
-define templates with mode = **write_cell_content**.
+define templates with mode = **write_cell_content**.  Though a work-in-progress at
+the writing of this guide, **sfw_lookup.xsl** should include **construct_line_cell**
+and **construct_input** templates for linked fields and results.
