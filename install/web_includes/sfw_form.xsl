@@ -62,6 +62,8 @@
     <xsl:variable name="sfw-class">
       <xsl:choose>
         <xsl:when test="$type"><xsl:value-of select="$type" /></xsl:when>
+        <xsl:when test="@merge-type"><xsl:value-of select="@merge-type" /></xsl:when>
+        <xsl:when test="@type"><xsl:value-of select="@type" /></xsl:when>
         <xsl:otherwise><xsl:value-of select="$mode-type" /></xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
@@ -100,7 +102,7 @@
       <xsl:attribute name="method"><xsl:value-of select="$method" /></xsl:attribute>
       <xsl:attribute
           name="data-sfw-class"><xsl:value-of select="$sfw-class" /></xsl:attribute>
-      
+
       <fieldset class="Schema">
         <xsl:element name="legend">
           <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
