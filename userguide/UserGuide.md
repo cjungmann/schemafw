@@ -50,6 +50,7 @@ There are several sections.
   - [XSL Programming](XSLProgramming.md)
     - [Template Selection](XSLTemplateSelection.md)
     - [XPath Ranked Selection](XPathRankedSelection.md)
+    - [Framework Template Overrides](FrameworkTemplateOverrides.md)
   - Debugging
     - [Troubleshooting SchemaFW Messages](Troubleshooting.md)
     - [Troubleshooting Unexpected Behavior](TroubleshootingBehavior.md)
