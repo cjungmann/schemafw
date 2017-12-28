@@ -156,7 +156,7 @@
         <p class="result-msg"><xsl:value-of select="$result-row/@msg" /></p>
       </xsl:when>
       <xsl:when test="$msg-el and $msg-el/@type='error'">
-        <xsl:apply-templates select="$msg-el" />
+        <xsl:apply-templates select="$msg-el" mode="construct" />
       </xsl:when>
       <xsl:otherwise><p>Undefined error</p></xsl:otherwise>
     </xsl:choose>

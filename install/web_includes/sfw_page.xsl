@@ -70,6 +70,9 @@
      support fundamental Schema Framework operations.
   -->
   <xsl:template match="/*" mode="fill_head">
+    <xsl:call-template name="css_includes" />
+    <xsl:apply-templates select="." mode="construct_scripts" />
+
     <xsl:choose>
     <xsl:when test="$err_condition=0">
       <xsl:choose>
@@ -79,10 +82,6 @@
         <xsl:when test="meta-jump">
           <xsl:apply-templates select="meta-jump" mode="fill_head" />
         </xsl:when>
-        <xsl:otherwise>
-          <xsl:call-template name="css_includes" />
-          <xsl:apply-templates select="." mode="construct_scripts" />
-        </xsl:otherwise>
       </xsl:choose>
     </xsl:when>
     <xsl:when test="$err_condition=1">
@@ -229,6 +228,18 @@
     </xsl:element>
   </xsl:template>
 
+  <xsl:template match="message/@*" mode="construct_parts">
+    <xsl:element name="p">
+      <xsl:attribute name="class"><xsl:value-of select="local-name()" /></xsl:attribute>
+      <xsl:value-of select="." />
+    </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="message" mode="construct">
+    <div class="message">
+      <xsl:apply-templates select="@*" mode="construct_parts" />
+    </div>
+  </xsl:template>
 
 
 </xsl:stylesheet>
