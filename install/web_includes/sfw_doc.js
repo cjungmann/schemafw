@@ -154,7 +154,7 @@
       return !key;
    }
 
-   function _get_result_key_match(result)
+   function _get_result_xpath(result)
    {
       if (result.getAttribute("merged"))
          throw "Can't key on merged results.";
@@ -167,21 +167,56 @@
       else
          xpath += rname;
 
-      xpath += "/" + result.getAttribute("row-name");
+      return xpath + "[not(@merged)]";
    }
 
+   /**
+    * This function adds, to the XSL stylesheet, key elements and templates that use the keys.
+    *
+    * The new templates must be at the bottom of the stylesheet in order to override other
+    * templates with the same mode="use_linked_result", so both the keys and the templates
+    * will go down there.
+    */
    function _add_xsl_key(result, name, xsl)
    {
+      function addEl(tag, parent)
+      {
+         var el = add_namespace_el(tag, nsXSL, parent, null, xsl);
+
+         var a = arguments;
+         for (var i=3, stop=a.length; i<stop; i+=2)
+            el.setAttribute(a[i-1], a[i]);
+
+         return el;
+      }
+
+      var xpath_result = _get_result_xpath(result);
+
+      // key element attributes:
       var uses = "@"+SFW.get_result_idname(result);
-      var match = _get_result_key_match(result);
+      var match = xpath_result + "/" + result.getAttribute("row-name");
 
       var docel = xsl.documentElement;
-      var before = docel.selectSingleNode("xsl:template");
 
-      var newkey = addEl("xsl:key", docel, before);
-      newkey.setAttribute("name", name);
-      newkey.setAttribute("match", match);
-      newkey.setAttribute("use", uses);
+      // Add the key:
+      var newkey = addEl("xsl:key",docel,
+                         "name",name,
+                         "match",match,
+                         "use", uses);
+
+      // Add template to use key:
+      var newtemp = addEl("xsl:template", docel,
+                          "match", "*[@rndx][@xslkey='" + name + "']",
+                          "mode", "use_linked_result");
+
+      addEl("xsl:param",newtemp,"name","id");
+      addEl("xsl:param",newtemp,"name","link");
+
+      var apply = addEl("xsl:apply-templates", newtemp,
+                        "select", "key('" + name + "', $id)",
+                        "mode", "use_linked_row");
+
+      addEl("xsl:with-param", apply, "name","link","select","$link");
    }
 
    function _update_xsl_keys(doc, xsl)
