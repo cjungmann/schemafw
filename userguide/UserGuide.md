@@ -34,6 +34,9 @@ There are several sections.
     - [Interactive Classes](IClasses.md)
     - [Dependent Module Loading](DependentModuleLoad.md)
     - [Making Sense of *on_line_click*](OnLineClick.md)
+  - Data Indirection
+     - [Indexed References (premature)](IndexedReferences.md)
+     - [Using Linked Data (premature)](UsingLinkedData.md)
   - Associations
      - [Introduction](Associations_Intro.md)
      - [Data Model](Associations_Model.md)
