@@ -37,10 +37,10 @@ const _CType CTyper::s_types[] = {
      "float", "value"},
 
    { MYSQL_TYPE_SHORT, false, CT_INT_SHORT, _CType::TYPE_SHORT,
-     sizeof(int16_t), ai_short::cast_and_use, "SMALLINT", "shortint",
+     sizeof(int16_t), ai_short::cast_and_use, "SMALLINT", "smallint",
      "float", "value"},
    { MYSQL_TYPE_SHORT, true, CT_UINT_SHORT, _CType::TYPE_USHORT,
-     sizeof(int16_t), ai_ushort::cast_and_use, "SMALLINT", "shortint",
+     sizeof(int16_t), ai_ushort::cast_and_use, "SMALLINT", "smallint",
      "float", "value"},
 
    { MYSQL_TYPE_LONG, false, CT_INT_LONG, _CType::TYPE_LONG,
