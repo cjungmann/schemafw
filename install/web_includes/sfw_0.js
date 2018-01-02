@@ -149,6 +149,7 @@ function init_SFW(callback)
    SFW.keycode_from_event   = _keycode_from_event;
    SFW.keychar_from_event   = _keychar_from_event;
 
+   SFW.close_subhosts       = _close_subhosts;
    SFW.set_view_renderer    = _set_view_renderer;
    SFW.update_selected_view = _update_selected_view;
    SFW.change_view          = _change_view;
@@ -723,6 +724,19 @@ function init_SFW(callback)
       show_el(viewlist,0);
 
       alert(arr.join("\n"));
+   }
+
+   function _close_subhosts()
+   {
+      var host, obj;
+      while ((host=_get_last_SFW_Host()) && (obj=_get_object_from_host(host)))
+      {
+         if (obj.closeable())
+            obj.selfclose();
+         else
+            break;
+      }
+      return host;
    }
 
    function _get_view_renderer_element(xsldoc)
