@@ -918,11 +918,7 @@ function init_SFW(callback)
 
       if (kc==27 && obj.closeable())
       {
-         obj.sfw_hide();
-         var caller = obj.caller();
-         if (caller)
-            caller.child_finished(obj, true)
-         obj.sfw_close();
+         this.selfclose();
          return false;
       }
       // Ignore alt, control, and shift keys until processing the key
@@ -1675,6 +1671,14 @@ function init_SFW(callback)
          e.data = data;
    };
    _base.prototype.closeable = function() { return false; };
+   _base.prototype.selfclose = function()
+   {
+      var c;
+      this.sfw_hide();
+      if ((c=this.caller()))
+         c.child_finished(this, true);
+      this.sfw_close();
+   };
 
    _base.prototype.do_proxy_override = function(name,args)
    {
