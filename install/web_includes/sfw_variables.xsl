@@ -85,15 +85,19 @@
   Build $gresult from a view or as a fallback, the first result in the resultset.
   -->
   <xsl:variable
-      name="merged_result"
+      name="m_res"
       select="/*/*[@rndx][@merge-type]" />
   <xsl:variable
-      name="view_result"
-      select="/*[not($merged_result)][$gview]/*[@rndx][local-name()=$gview/@result]"/>
+      name="b_res"
+      select="/*[not($m_res)]/*[local-name()=/*/@base_result]" />
+                
   <xsl:variable
-      name="first_result"
-      select="/*[not($merged_result|$view_result)]/*[@rndx=1]" />
+      name="v_res"
+      select="/*[not($m_res|$b_res)][$gview]/*[@rndx][local-name()=$gview/@result]"/>
+  <xsl:variable
+      name="f_res"
+      select="/*[not($m_res|$b_res|$v_res)]/*[@rndx=1]" />
 
-  <xsl:variable name="gresult" select="$merged_result|$view_result|$first_result" />
+  <xsl:variable name="gresult" select="$m_res|$b_res|$v_res|$f_res" />
 
 </xsl:stylesheet>
