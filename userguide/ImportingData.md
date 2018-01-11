@@ -252,6 +252,7 @@ review
       url   : ?abandon
 
 accept
+   # NOTE Make sure the accept procedure deletes the quarantine records.
    type      : import-verdict
    procedure : App_Contacts_Upload_Integrate
    jump      : default.srm?home  # Full URL needed to jump to another SRM file
