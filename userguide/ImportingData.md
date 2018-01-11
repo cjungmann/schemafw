@@ -262,3 +262,40 @@ abandon
    jump      : default.srm?home
 
 ~~~
+
+## Importing Without a Session
+
+The framework will normally refuse to accept an import without a running session.  The
+recommended practice of offering a confirmation step when importing data means that the
+uploaded data is quarantined in a separate table pending the user's confirmation that the
+data is good.  The session identifier value allows the framework to offer confirmation
+pages to multiple users who might be uploading at the same time.
+
+### But You Don't Want a Session
+
+It is possible to manage an import without a session.  A session might not be required
+if the data is immediately incorporated into the database.  A session might also be avoided
+if there is no chance of simultaneous multiple uploads.
+
+The framework offers a special instruction to allow an import to continue without a session,
+**waive : session**, which can be added to a import mode:
+
+~~~srm
+import_submit
+   type   : import
+   waive  : session  # bypass missing session error
+   target : QT_Table
+   jump   : ?import_review
+~~~
+
+### BUT: Use a Session, Anyway!
+
+Admittedly, sessions can be complicated.  The [Sessions Overview](SessionOverview.md) explains many
+details of creating a session.  However, a simple session is all that is required for safe importing.
+A session sufficient for importing can be created with a simple global instruction:
+
+~~~srm
+$session-type : simple
+~~~
+
+It's so easy to start a session that there really should be no reason to avoid it.

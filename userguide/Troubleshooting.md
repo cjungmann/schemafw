@@ -16,6 +16,7 @@ Currently, the following error messages are explained below:
 - The import query failed (Lost connection to MySQL server during query)
 - Couldn't find attribute "deleted" in delete row.
 - Call button type without url or task.
+- Session required for import.
 
 ## Unable to find a result element
 
@@ -257,3 +258,39 @@ The error message _Call button type without url or task_ is generated when
 a _call_ button lacks _url_ or _task_.
 
 See [Adding Buttons](AddingButtons.md) for information.
+
+## Session required for import.
+
+An import request has been refused for lack of a running session.
+
+### Problem
+
+Because importing is a multi-step process, with a review stage that allows the user
+to confirm the imported data before committing the upload, it is necessary to tag the
+uploaded data with a session identifier to keep it separate from possible uploads from
+other users.  See [Importing Data](ImportingData.md) instructions on how to prepare an
+import feature.
+
+### Solution
+
+There are two possibilities, to initiate a session or to waive the session requirement.
+
+A simple session is sufficient for importing.  A simple session will work even if there are
+no session information tables or other provisions for the session.  It will work with a
+simple global instruction:
+
+~~~srm
+$session-type : simple
+~~~
+
+The alternative is to waive the session requirement with a **waive : session** instruction:
+
+~~~
+import_submit
+   type   : import
+   waive  : session  # bypass missing session error
+   target : QT_Table
+   jump   : ?import_review
+~~~
+
+Refer to  *Importing Without a Session* at the bottom of [Importing Data](ImportingData.md).
