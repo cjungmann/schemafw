@@ -2691,7 +2691,30 @@ void Schema::process_response_mode(void)
 
          // Detect request types:
          if (m_mode_action==MACTION_IMPORT)
-            process_import();
+         {
+            auto waive = m_mode->seek("waive","session");
+            if (stype==STYPE_NONE && !waive)
+            {
+               const char *sname = m_specsreader->scriptname();
+               const char *mname = m_mode->tag();
+               // Only need length of first string because strcpy() adds terminating \0
+               int lsname = strlen(sname);
+               int len = lsname + strlen(mname) + 2; // 2 for ':' and \0
+               char *mode_identifier = static_cast<char*>(alloca(len));
+               char *p = mode_identifier;
+               strcpy(p, sname);
+               p += lsname;
+               *p++ = ':';
+               strcpy(p, mname);
+                  
+               print_message_as_xml(m_out,
+                                    "error",
+                                    "Session required for import.",
+                                    mode_identifier);
+            }
+            else
+               process_import();
+         }
          else
          {
             const ab_handle* ds_branch;
