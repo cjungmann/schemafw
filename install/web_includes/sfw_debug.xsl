@@ -12,6 +12,7 @@
   <xsl:import href="sfw_page.xsl" />
   <xsl:import href="sfw_table.xsl" />
   <xsl:import href="sfw_form.xsl" />
+  <xsl:import href="sfw_lookup.xsl" />
   <xsl:import href="sfw_associate.xsl" />
   <xsl:import href="sfw_iltable.xsl" />
   <xsl:import href="sfw_calendar.xsl" />
