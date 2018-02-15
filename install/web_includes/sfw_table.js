@@ -19,6 +19,23 @@
    // Adding useful local functions to global object
    SFW.fix_table_heads = _fix_table_heads;
 
+   _table.prototype._f_schema = function() { return this._schema; };
+
+   _table.prototype.schema = function()
+   {
+      var result_name = this.top().getAttribute("data-result");
+      if (result_name)
+      {
+         var xpath = "*/" + result_name + "/schema";
+         // Prepare and replace  for pre-found schema function
+         this._schema = this.xmldoc().selectSingleNode(xpath);
+         this.schema = _table.prototype._f_schema;
+         return this.schema();
+      }
+
+      console.error("\"top\" missing data-result attribute.");
+      return null;
+   };
 
    _table.prototype.get_sort_field = function()
    {
@@ -28,8 +45,11 @@
       return SFW.find_child_matches(this.schema(),f,true);
    };
 
-   _table.prototype.get_named_field = function(name)
+   _table.prototype.get_column_field = function(th)
    {
+      var name = th.getAttribute("data-name");
+      var schema = this.schema();
+
       function f(n) { return n.nodeType==1
                       && n.tagName=="field"
                       && n.getAttribute("name")==name; }
@@ -66,7 +86,7 @@
 
    _table.prototype.set_sort_column = function(th)
    {
-      var field = this.get_named_field(th.getAttribute("data-name"));
+      var field = this.get_column_field(th);
       if (field)
       {
          var descending = false;

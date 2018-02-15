@@ -11,6 +11,7 @@ Currently, the following error messages are explained below:
 - The update row name (xxx) does not match the result's row-name (XXX)
 - Don't know what to do with the update row
 - Table with GROUP BY field is missing xrow_id
+- "top" missing data-result attribute.
 - Failed to find a usable id value for row named "xxx"
 - update_associations failed to find a data-id attribute for "*field_name*."
 - The import query failed (Lost connection to MySQL server during query)
@@ -162,6 +163,25 @@ However, tables that use **GROUP_CONCAT** fields necessarily also use the
 *AUTO_INCREMENT* and *PRIMARY KEY* field attributes.  Even if the field has
 been declared appropriately in the *CREATE TABLE* command, the *xrow_id*
 instruction must be explicitly declared as shown in the *Solution* above.
+
+## "top" missing data-result attribute.
+
+The framework uses a special attribute, **data-result** to help find the
+source result and its resident schema.
+
+### Solution
+
+Ensure that the top element of a table includes a **data-result** attribute
+that provides a path to the result from which the table is built.
+
+### Explanation
+
+There can be multiple table-like results in a resultset document.  Each result
+can be used separately to generate a table.  The standard method of finding
+a schema will not work in this case, so the **_table** class overrides the
+*schema()* method to use the *data-result* attribute of the element returned
+by the *top()* method.
+
 
 ## Failed to find a usable id value for row named "xxx"
 
