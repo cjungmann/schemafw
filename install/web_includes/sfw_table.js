@@ -48,7 +48,6 @@
    _table.prototype.get_column_field = function(th)
    {
       var name = th.getAttribute("data-name");
-      var schema = this.schema();
 
       function f(n) { return n.nodeType==1
                       && n.tagName=="field"
