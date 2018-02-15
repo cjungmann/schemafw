@@ -216,8 +216,13 @@
          {
             if (class_includes(t,'sortable'))
             {
-               this.set_sort_column(t);
-               this.replot();
+               var ths = this;
+               var f = function()
+               {
+                  ths.set_sort_column(t);
+                  ths.replot();
+               }
+               setTimeout(f,0);
                return false;
             }
          }
