@@ -122,10 +122,12 @@ function init_SFW(callback)
 {
    SFW.start_app            = callback;
 
+
    SFW.log_error            = _log_error;
    SFW.has_value            = _has_value;
    SFW.get_property         = _get_property;
    SFW.confirm_not_null     = _confirm_not_null;
+   SFW.prepare_top_sfw_host = _prepare_top_sfw_host;
    SFW.seek_top_sfw_host    = _seek_top_sfw_host;
    SFW.seek_page_anchor     = _seek_page_anchor;
    SFW.seek_child_anchor    = _seek_child_anchor;
@@ -280,6 +282,9 @@ function init_SFW(callback)
             if (typeof(rval)=="function")
                rval = rval();
 
+            if (!rval)
+               break;
+
             var name = arguments[i];
 
             if (typeof(rval)!="object" || !(name in rval))
@@ -323,6 +328,23 @@ function init_SFW(callback)
    {
       function f(node) { return node.nodeType==1 && node.className=="SFW_Host"; }
       return SFW.find_child_matches(document, f, true, true);
+   }
+
+   function _prepare_top_sfw_host()
+   {
+      var sfwhost = SFW.seek_top_sfw_host();
+      if (sfwhost)
+      {
+         var obj = SFW.get_object_from_host(sfwhost);
+         if (obj)
+         {
+            SFW.base.call(obj, {host:sfwhost});
+            SFW.arrange_in_host(sfwhost, obj.top());
+
+            SFW.setup_sfw_host(sfwhost, SFW.xmldoc);
+            obj.initialize();
+         }
+      }
    }
 
    function _seek_page_anchor(levels, parent)

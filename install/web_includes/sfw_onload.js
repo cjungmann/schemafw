@@ -7,19 +7,7 @@ window.onload = function()
 
    function begin_app()
    {
-      var sfwhost = SFW.seek_top_sfw_host();
-      if (sfwhost)
-      {
-         var obj = SFW.get_object_from_host(sfwhost);
-         if (obj)
-         {
-            SFW.base.call(obj, {host:sfwhost});
-            SFW.arrange_in_host(sfwhost, obj.top());
-
-            SFW.setup_sfw_host(sfwhost, SFW.xmldoc);
-            obj.initialize();
-         }
-      }
+      SFW.prepare_top_sfw_host();
       SFW.setup_event_handling();
    }
 
