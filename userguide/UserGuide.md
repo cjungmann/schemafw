@@ -28,6 +28,7 @@ There are several sections.
   - [Creating a Calendar](CalendarCaseStudy.md)
   - [Using a Form-View](FormViewCaseStudy.md)
 - Advanced Topics
+  - [Schea Server Commmand Line Options](SchemaFCGIOptions.md)
   - [Data Security Measures](DataSecurity.md)
   - Framework Details
     - [Data Modeling](DataModeling.md)
