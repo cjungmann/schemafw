@@ -6,130 +6,233 @@
    xmlns:html="http://www.w3.org/1999/xhtml"
    exclude-result-prefixes="html">
 
+  <!-- <xsl:template match="*"> -->
+  <!--   <p>No match</p> -->
+  <!-- </xsl:template> -->
 
-  <xsl:template match="@*" mode="enum_attr">
-    <xsl:value-of select="concat(' ', local-name(), '=', $apos, string(.), $apos)" />
-  </xsl:template>
-
-  <xsl:template match="*" mode="show_element">
-    <p>
-      <xsl:value-of select="concat('for ', $apos,local-name(),$apos)" />
-      <xsl:apply-templates select="@*" mode="enum_attr" />
-    </p>
-  </xsl:template>
-
-
-  <!-- Entry-point templates -->
-  <xsl:template match="field[@type='linked']" mode="write_cell_content">
-    <xsl:param name="data" />
-    <xsl:apply-templates select="." mode="construct_linked_field">
-      <xsl:with-param name="data" select="$data" />
+  <!-- no-mode entry point for reploting field.  Matches a row that cohabits
+       with a schema including a linked field. -->
+  <xsl:template match="*[../schema/field[@name=current()/@lookup-field-match]]">
+    <xsl:variable name="field" select="../schema/field[@name=current()/@lookup-field-match]" />
+    <xsl:apply-templates select="$field" mode="host_linked_field">
+      <xsl:with-param name="data" select="." />
     </xsl:apply-templates>
   </xsl:template>
 
-  <xsl:template match="field[@type='linked']" mode="construct_input">
+  <!-- Override basic mode="write_cell_content" as entry point for table cells -->
+  <xsl:template match="schema/field[@type='linked']" mode="write_cell_content">
     <xsl:param name="data" />
-    <xsl:apply-templates select="." mode="construct_linked_field">
-      <xsl:with-param name="data" select="$data" />
-    </xsl:apply-templates>
-  </xsl:template>
-
-  <xsl:template match="field[@type='linked']" mode="construct_linked_field">
-    <xsl:param name="data" />
-
-    <xsl:variable name="v_str">
-      <xsl:if test="@virtual">
-        <xsl:apply-templates select="$data" mode="get_id_from_row" />
-      </xsl:if>
-    </xsl:variable>
-    <xsl:variable name="d_str" select="$data[not($v_str)]/@*[local-name()=current()/@name]" />
-
-    <xsl:variable name="rname" select="link/@result" />
-    <xsl:variable name="result" select="/*/*[local-name()=$rname]" />
 
     <xsl:apply-templates select="buttons" mode="construct_buttons" />
 
-    <xsl:apply-templates select="$result" mode="parse_result_links">
-      <xsl:with-param name="str" select="concat($v_str,$d_str)" />
-      <xsl:with-param name="link" select="link" />
-      <xsl:with-param name="idname">
-        <xsl:apply-templates select="$result" mode="lookup_id_name" />
-      </xsl:with-param>
+    <div>
+      <xsl:apply-templates select="." mode="host_linked_field">
+        <xsl:with-param name="data" select="$data" />
+      </xsl:apply-templates>
+    </div>
+  </xsl:template>
+
+  <!-- Override basic mode="construct_input" as entry point for form fields -->
+  <xsl:template match="field[@type='linked']" mode="construct_input">
+    <xsl:param name="data" />
+
+    <xsl:apply-templates select="buttons" mode="construct_buttons" />
+
+    <div>
+      <xsl:apply-templates select="." mode="host_linked_field">
+        <xsl:with-param name="data" select="$data" />
+      </xsl:apply-templates>
+    </div>
+  </xsl:template>
+
+  <!-- host_linked_field templates are the opportunity to "wrap" the contents.
+       before process_linked_fields template.
+       See table-wrapping @style='table' example below. -->
+  <xsl:template match="field" mode="host_linked_field">
+    <xsl:param name="data" />
+
+    <xsl:apply-templates select="." mode="process_linked_field">
+      <xsl:with-param name="data" select="$data" />
     </xsl:apply-templates>
   </xsl:template>
 
-  <!-- Warnings for incomplete linked fields -->
-  <xsl:template match="field[@type='linked'][not(link/@result)]" mode="construct_linked_field">
-     <span>Linked field without link instructions.</span>
+  <xsl:template match="field[display/@style='table']" mode="host_linked_field">
+    <xsl:param name="data" />
+
+    <xsl:element name="table">
+      <xsl:attribute name="class">lookup</xsl:attribute>
+      <xsl:attribute name="data-sfw-class">lookup</xsl:attribute>
+      <xsl:attribute name="data-sfw-input">input</xsl:attribute>
+      <xsl:attribute name="tabindex">0</xsl:attribute>
+      <xsl:apply-templates select="display/@*" mode="add_on_click_attribute" />
+      <xsl:attribute name="data-path">
+        <xsl:apply-templates select="$data" mode="gen_path" />
+      </xsl:attribute>
+      <tbody>
+        <xsl:apply-templates select="." mode="process_linked_field">
+          <xsl:with-param name="data" select="$data" />
+        </xsl:apply-templates>
+      </tbody>
+    </xsl:element>
+  </xsl:template>
+  
+  <!-- process the in-place attribute the hard way, without any indexes. -->
+  <xsl:template match="field" mode="process_linked_field">
+    <xsl:param name="data" />
+
+    <xsl:variable name="result" select="/*/*[local-name()=current()/@result]" />
+
+    <xsl:apply-templates select="$result" mode="get_result_rows">
+      <xsl:with-param name="str" select="$data/@*[local-name()=current()/@name]" />
+      <xsl:with-param name="display" select="display" />
+    </xsl:apply-templates>
+
+  </xsl:template>
+
+  <!-- Lookup virtual attribute value in linked result, without a key. -->
+  <xsl:template match="field[@virtual]" mode="process_linked_field">
+    <xsl:param name="data" />
+
+    <xsl:variable name="ctxt_result" select="ancestor::*[@rndx][1]" />
+
+    <!-- get id value of current to find row in target result. -->
+    <xsl:variable name="idname">
+      <xsl:apply-templates select="$ctxt_result" mode="get_idname" />
+    </xsl:variable>
+
+    <xsl:variable name="idval" select="$data/@*[local-name()=$idname]" />
+
+    <xsl:variable name="t_result" select="/*/*[local-name()=current()/@result]" />
+    <xsl:variable name="t_idname">
+      <xsl:apply-templates select="$t_result" mode="get_idname" />
+    </xsl:variable>
+    <xsl:variable
+        name="row"
+        select="$t_result/*[local-name()=../@row-name][@*[local-name()=$t_idname]=$idval]" />
+
+    <xsl:variable name="u_result" select="/*/*[local-name()=$t_result/@result]" />
+
+    <xsl:apply-templates select="$u_result" mode="get_result_rows">
+      <xsl:with-param name="str" select="$row/@*[local-name()=current()/@name]" />
+      <xsl:with-param name="display" select="display" />
+    </xsl:apply-templates>
+
+  </xsl:template>
+
+  <!-- process the extant field the hard way, using indexes. -->
+  <xsl:template match="field[../../@xslkey]" mode="process_linked_field">
+    <xsl:param name="data" />
+
+    <xsl:variable name="result" select="ancestor::*[@rndx][1]" />
+
+    <xsl:apply-templates select="$result" mode="get_result_rows">
+      <xsl:with-param name="str" select="$data/@*[local-name()=current()/@name]" />
+      <xsl:with-param name="display" select="display" />
+    </xsl:apply-templates>
+
+  </xsl:template>
+
+  <!-- Lookup virtual field value in linked result, USING a key. -->
+  <xsl:template match="field[@virtual][../../@xslkey]" mode="process_linked_field">
+    <xsl:param name="data" />
+
+    <xsl:variable name="idval">
+      <xsl:apply-templates select=".." mode="get_idval">
+        <xsl:with-param name="row" select="$data" />
+      </xsl:apply-templates>
+    </xsl:variable>
+
+    <xsl:variable name="result" select="ancestor::*[@rndx][1]" />
+
+    <xsl:apply-templates select="../.." mode="use_linked_result">
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <!-- This is the callback uses the virtual attribute to start the indexed rows search. -->
+  <xsl:template match="field[@virtual][../../@xslkey]" mode="use_linked_rows">
+    <xsl:param name="rows" />
+
+    <xsl:variable name="t_result_name" select="$rows[1]/../@result" />
+    <xsl:variable name="t_result" select="/*/*[local-name()=$t_result_name]" />
+
+    <xsl:apply-templates select="$t_result">
+      <xsl:with-param name="str" select="$row/@*[local-name()=current()/@name]" />
+      <xsl:with-param name="display" select="display" />
+    </xsl:apply-templates>
+
+  </xsl:template>
+
+  <xsl:template match="display" mode="use_linked_rows">
+    <xsl:param name="rows" />
+
+    <xsl:apply-templates select="." mode="display_row">
+      <xsl:with-param name="row" select="$rows" />
+    </xsl:apply-templates>
   </xsl:template>
 
 
-
-  <!-- Integer-string parsing templates -->
-
-  <xsl:template match="*[@rndx]" mode="parse_result_links">
+  <!-- get_result_rows is the heart of the process to resolve references.
+       It recursively parses a string of integers to get the targeted rows. -->
+  <xsl:template match="*[@rndx]" mode="get_result_rows">
     <xsl:param name="str" />
-    <xsl:param name="link" />
-    <xsl:param name="idname" />
+    <xsl:param name="display" />
 
     <xsl:variable name="c_id" select="substring-before($str,',')" />
     <xsl:variable name="c_id_len" select="string-length($c_id)" />
     <xsl:variable name="s_id" select="substring($str,1 div boolean($c_id_len=0))" />
     <xsl:variable name="r_id" select="concat($c_id,$s_id)" />
 
-    <xsl:apply-templates select="." mode="use_linked_result">
-      <xsl:with-param name="id" select="$r_id" />
-      <xsl:with-param name="link" select="$link" />
+    <xsl:apply-templates select="." mode="retrieve_row">
+      <xsl:with-param name="display" select="$display" />
+      <xsl:with-param name="idval" select="$r_id" />
     </xsl:apply-templates>
 
-    <xsl:if test="$c_id_len">
-      <xsl:apply-templates select="." mode="process_result_links">
+    <xsl:if test="$c_id_len&gt;0">
+      <xsl:apply-templates select="$display" mode="separate_following" />
+
+      <xsl:apply-templates select="." mode="get_result_rows">
         <xsl:with-param name="str" select="substring-after($str,',')" />
-        <xsl:with-param name="result" select="." />
-        <xsl:with-param name="idname" select="$idname" />
+        <xsl:with-param name="display" select="$display" />
       </xsl:apply-templates>
     </xsl:if>
+  </xsl:template>
+  
+
+  <xsl:template match="display[@style='csv']" mode="separate_following">
+    <xsl:text>, </xsl:text>
+  </xsl:template>
+
+  <!-- The retrieve_row templates get a row, with or without a key index,
+       according to whether or not the result includes an xslkey attribute
+       indicating the key template to use. -->
+  <xsl:template match="*[@rndx]" mode="retrieve_row">
+    <xsl:param name="display" />
+    <xsl:param name="idval" />
+
+    <xsl:variable name="idname">
+        <xsl:apply-templates select="." mode="get_idname" />
+    </xsl:variable>
+
+    <xsl:variable
+        name="row"
+        select="*[@*[local-name()=$idname]=$idval][local-name()=../@row-name]" />
+
+    <xsl:apply-templates select="$display" mode="use_linked_rows">
+      <xsl:with-param name="rows" select="$row" />
+    </xsl:apply-templates>
 
   </xsl:template>
 
+  <xsl:template match="*[@rndx][@xslkey]" mode="retrieve_row">
+    <xsl:param name="display" />
+    <xsl:param name="idval" />
 
-  <!-- Directly use the data -->
-  <xsl:template match="*" mode="use_linked_row">
-    <xsl:param name="link" />
-    <span>(end) Got here!</span>
-  </xsl:template>
-
-  <!-- Result is link to another result -->
-  <xsl:template match="*[../@links]" mode="use_linked_row">
-    <xsl:param name="link" />
-
-    <span>(links) Got here!</span>
-
-    <xsl:variable name="rname" select="../@result" />
-    <xsl:variable name="result" select="/*/*[local-name()=$rname]" />
-
-    <xsl:apply-templates select="$result" mode="parse_result_links">
-      <xsl:with-param name="str" select="string(@*[2])" />
-      <xsl:with-param name="link" select="$link" />
-      <xsl:with-param name="idname">
-        <xsl:apply-templates select="$result" mode="lookup_id_name" />
-      </xsl:with-param>
+    <!-- use_linked_result jumps out, to return to the local use_linked_rows template -->
+    <xsl:apply-templates select="." mode="use_linked_result">
+      <xsl:with-param name="id" select="$idval" />
+      <xsl:with-param name="link" select="$display" />
     </xsl:apply-templates>
   </xsl:template>
-
-  <xsl:template match="*[not(../@links) or not(../@result)]" mode="use_linked_row">
-    <span>Mode process_linked_row requires both links and result attributes.</span>
-  </xsl:template>
-
-
-
-
-
-
-
-
-
-
 
 
   <xsl:template match="*[@rndx]" mode="use_linked_result">
@@ -138,9 +241,8 @@
 
     <xsl:variable name="row" select="*[local-name()=../@row-name][@*[1]=$id]" />
 
-    <p>calling use_linked_row from result without schema</p>
-    <xsl:apply-templates select="$row" mode="use_linked_row">
-      <xsl:with-param name="link" select="$link" />
+    <xsl:apply-templates select="$link" mode="use_linked_rows">
+      <xsl:with-param name="rows" select="$row" />
     </xsl:apply-templates>
 
   </xsl:template>
@@ -155,219 +257,120 @@
 
     <xsl:variable name="row" select="*[local-name()=../@row-name][@*[local-name()=$idname]=$id]" />
 
-    <p>calling use_linked_row from result with schema</p>
-    <xsl:apply-templates select="$row" mode="use_linked_row">
-      <xsl:with-param name="link" select="$link" />
+    <xsl:apply-templates select="$link" mode="use_linked_rows">
+      <xsl:with-param name="rows" select="$row" />
     </xsl:apply-templates>
 
   </xsl:template>
 
-  <xsl:template match="*[@rndx]" mode="parse_links_list">
-    <xsl:param name="link" />
-    <xsl:param name="str" />
 
-    <xsl:variable name="c_id" select="substring-before($str,',')" />
-    <xsl:variable name="s_id" select="substring($str,1 div boolean(string-length($c_id)=0))" />
-
-    <xsl:apply-templates select="." mode="use_linked_result">
-      <xsl:with-param name="id" select="concat($c_id,$s_id)" />
-      <xsl:with-param name="link" select="$link" />
-    </xsl:apply-templates>
-
-    <xsl:if test="string-length($s_id)=0">
-      <xsl:apply-templates select="." mode="parse_links_list">
-        <xsl:with-param name="link" select="$link" />
-        <xsl:with-param name="str" select="substring-after($str,',')" />
-      </xsl:apply-templates>
-    </xsl:if>
-
-  </xsl:template>
-
-  <xsl:template match="*[local-name()=../@row-name]" mode="use_linked_row">
-    <xsl:param name="link" />
-    <p>about to use_linked_row from use_linked_row</p>
-    <xsl:apply-templates select="$link" mode="use_linked_row">
-      <xsl:with-param name="row" select="." />
-    </xsl:apply-templates>
-  </xsl:template>
-
-  <xsl:template match="*[local-name()=../@row-name][../@type='link']"
-                mode="use_linked_row">
-    <xsl:param name="link" />
-  </xsl:template>
-
-  
-
-  <xsl:template match="link" mode="construct_row">
-    <xsl:param name="row" />
-    <xsl:variable name="val" select="$row/@*[2]" />
-
-    <!-- branch on $link/@style, with a special case for @style='table' -->
-    <xsl:value-of select="concat('construct_row matched link...style=', @style, ', val=', $val)" />
-    <xsl:apply-templates select="." mode="show_element" />
-  </xsl:template>
-
-  <xsl:template match="link[@template][@style='csv']" mode="construct_row">
+  <xsl:template match="display[@style='table']" mode="display_row">
     <xsl:param name="row" />
 
-    <xsl:value-of select="concat('template = ', $apos, @template, $apos)" />
-    <xsl:apply-templates select="$row" mode="show_element" />
-
-    <xsl:variable name="val">
+    <xsl:element name="tr">
+      <xsl:if test="$row/@id">
+        <xsl:attribute name="data-id"><xsl:value-of select="$row/@id" /></xsl:attribute>
+      </xsl:if>
       <xsl:call-template name="resolve_refs">
         <xsl:with-param name="str" select="@template" />
         <xsl:with-param name="row" select="$row" />
+        <xsl:with-param name="enclose" select="'td'" />
       </xsl:call-template>
-    </xsl:variable>
+    </xsl:element>
+  </xsl:template>
 
-    <xsl:value-of select="$val" />
-    
+  <xsl:template match="display" mode="display_row">
+    <xsl:param name="row" />
+
+    <xsl:call-template name="resolve_refs">
+      <xsl:with-param name="str" select="@template" />
+      <xsl:with-param name="row" select="$row" />
+    </xsl:call-template>
   </xsl:template>
 
 
 
-  <xsl:template match="*[../@rndx]" mode="use_linked_row">
-    <xsl:param name="link" />
 
-    <p>use_linked_row: About to directly use a linked row.</p>
 
-    <xsl:apply-templates select="$link" mode="construct_row">
-      <xsl:with-param name="row" select="." />
-    </xsl:apply-templates>
+<!-- -->
+<!-- -->
+<!-- -->
+<!-- -->
+<!-- -->
+<!-- -->
 
-  </xsl:template>
+
+
+
+
 
   
-  <xsl:template match="*[../@result][../@links]" mode="use_linked_row">
-    <xsl:param name="link" />
 
-    <xsl:variable name="rname" select="../@result" />
-    <xsl:variable name="result" select="/*/*[local-name()=$rname]" />
+  <!-- <xsl:template match="field[@type='linked']" mode="construct_linked_field"> -->
+  <!--   <xsl:param name="data" /> -->
 
-    <xsl:apply-templates select="$result" mode="parse_result_links">
-      <xsl:with-param name="str" select="string(@*[2])" />
-      <xsl:with-param name="link" select="$link" />
-      <xsl:with-param name="idname">
-        <xsl:apply-templates select="$result" mode="lookup_id_name" />
-      </xsl:with-param>
-    </xsl:apply-templates>
+  <!--   <xsl:apply-templates select="." mode="construct_links"> -->
+  <!--     <xsl:with-param name="row" select="$data" /> -->
+  <!--   </xsl:apply-templates> -->
+  <!-- </xsl:template> -->
 
-  </xsl:template>
+  <!-- <xsl:template match="field[@type='linked'][display/@style='table']" mode="construct_linked_field"> -->
+  <!--   <xsl:param name="data" /> -->
 
-  <!-- Warning for badly-formed links row. -->
-  <xsl:template match="*[../@links][not(count(@*)=2)]" mode="use_linked_row">Links Result rows must have exactly 2 attributes.</xsl:template>
-  <!-- Warning for badly-formed links result. -->
-  <xsl:template match="*[../@links][not(../@result)]" mode="use_linked_row">Links Result missing results attribute.</xsl:template>
+  <!--   <div class="SFW_Host"> -->
+  <!--     <xsl:element name="table"> -->
+  <!--       <xsl:attribute name="class">Schema</xsl:attribute> -->
+  <!--       <xsl:attribute name="data-sfw-class">lookup</xsl:attribute> -->
+  <!--       <xsl:attribute name="data-sfw-input">input</xsl:attribute> -->
+  <!--       <xsl:apply-templates select="display/@*" mode="add_on_click_attribute" /> -->
+  <!--       <xsl:apply-templates select="ancestor::*[@rndx]" mode="add_result_attribute" /> -->
+  <!--       <tbody> -->
+  <!--         <xsl:apply-templates select="." mode="construct_links"> -->
+  <!--           <xsl:with-param name="row" select="$data" /> -->
+  <!--         </xsl:apply-templates> -->
+  <!--       </tbody> -->
+  <!--     </xsl:element> -->
+  <!--   </div> -->
+  <!-- </xsl:template> -->
+  
+  <!-- <xsl:template match="field[@type='linked'][not(child::display)]" mode="construct_linked_field"> -->
+  <!--    <span>Linked field without link instructions (<xsl:value-of select="@name" />).  Count=<xsl:value-of select="local-name(*)" /></span> -->
+  <!-- </xsl:template> -->
 
+  <!-- <xsl:template match="field[@type='linked']" mode="construct_links"> -->
+  <!--   <xsl:param name="row" /> -->
 
+  <!--   <xsl:variable name="str" select="$row/@*[local-name()=current()/@name]" /> -->
+  <!--   <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/@result]" /> -->
 
+  <!--   <xsl:apply-templates select="$result" mode="get_result_rows"> -->
+  <!--     <xsl:with-param name="str" select="str" /> -->
+  <!--     <xsl:with-param name="display" select="display" /> -->
+  <!--   </xsl:apply-templates> -->
 
+  <!-- </xsl:template> -->
 
+  <!-- <xsl:template match="field[@type='linked'][@virtual]" mode="construct_links"> -->
+  <!--   <xsl:param name="row" /> -->
 
-  <xsl:template match="*" mode="get_id_from_row">
-    <xsl:variable name="sname">
-      <xsl:apply-templates select="../schema" mode="get_id_field_name" />
-    </xsl:variable>
+  <!--   <xsl:variable name="idname"> -->
+  <!--     <xsl:apply-templates select="$row/parent::*[@rndx]" mode="get_idname" /> -->
+  <!--   </xsl:variable> -->
+  <!--   <xsl:variable name="idval" select="$row/@*[local-name()=$idname]" /> -->
 
-    <xsl:choose>
-      <xsl:when test="$sname">
-        <xsl:value-of select="@*[local-name()=$sname]" />
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="@*[1]" />
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
+  <!--   <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/@result]" /> -->
 
-  <xsl:template match="*[@rndx]" mode="lookup_id_name">
-    <xsl:variable name="fname">
-      <xsl:apply-templates select="schema" mode="get_id_field_name" />
-    </xsl:variable>
+  <!--   <xsl:apply-templates select="$result" mode="get_result_rows"> -->
+  <!--     <xsl:with-param name="str" select="$idval" /> -->
+  <!--     <xsl:with-param name="display" select="display" /> -->
+  <!--   </xsl:apply-templates> -->
 
-    <xsl:variable name="attr" select="*[not($fname)][../@row-name]/@*[1]" />
+  <!-- </xsl:template> -->
 
-    <xsl:choose>
-      <xsl:when test="$fname"><xsl:value-of select="$fname" /></xsl:when>
-      <xsl:when test="$attr"><xsl:value-of select="local-name($attr)" /></xsl:when>
-      <xsl:otherwise>id</xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
+  <!-- <xsl:template match="field[@type='linked'][not(@result)]" mode="construct_links"> -->
+  <!--   <span>Linked field without a target result.</span> -->
+  <!-- </xsl:template> -->
 
-  <xsl:template match="*" mode="get_attrib_value">
-    <xsl:param name="column" />
-    <xsl:value-of select="*/@*[local-name()=$column]" />
-  </xsl:template>
-
-  <xsl:template match="*[@rndx]" mode="lookup_value">
-    <xsl:param name="id" />
-    <xsl:param name="column" />
-
-    <xsl:variable name="idname">
-      <xsl:apply-templates select="." mode="lookup_id_name" />
-    </xsl:variable>
-
-    <xsl:variable name="row" select="*[local-name()=../@row-name/@*[local-name()=$idname]]" />
-
-    <xsl:apply-templates select="$row" mode="get_attrib_value">
-      <xsl:with-param name="column" select="$column" />
-    </xsl:apply-templates>
-
-  </xsl:template>
-
-  <xsl:template match="*[@rndx][@xslkey]" mode="lookup_value">
-    <xsl:param name="id" />
-    <xsl:param name="column" />
-
-    <xsl:variable name="row">
-      <xsl:apply-templates select="." mode="get_by_xsl_key">
-        <xsl:with-param name="id" select="$id" />
-      </xsl:apply-templates>
-    </xsl:variable>
-
-    <xsl:apply-templates select="$row" mode="get_attrib_value">
-      <xsl:with-param name="column" select="$column" />
-    </xsl:apply-templates>
-  </xsl:template>
-
-  <!-- Discriminate "build_row_with_field" bases on field attributes -->
-  <xsl:template match="field" mode="build_row_with_field">
-    <xsl:param name="row" />
-  </xsl:template>
-
-  <xsl:template match="*[@rndx]" mode="lookup_callback">
-    <xsl:param name="id" />
-    <xsl:param name="field" />
-
-    <xsl:variable name="idname">
-      <xsl:apply-templates select="." mode="lookup_id_name" />
-    </xsl:variable>
-
-    <xsl:variable name="row" select="*[local-name()=../@row-name/@*[local-name()=$idname]]" />
-
-    <xsl:if test="$row">
-      <xsl:apply-templates select="$field" mode="build_row_with_field">
-        <xsl:with-param name="row" select="$row" />
-      </xsl:apply-templates>
-    </xsl:if>
-  </xsl:template>
-
-  <xsl:template match="*[@rndx][@xslkey]" mode="lookup_callback">
-    <xsl:param name="id" />
-    <xsl:param name="field" />
-
-    <xsl:variable name="row">
-      <xsl:apply-templates select="." mode="get_by_xsl_key">
-        <xsl:with-param name="id" select="$id" />
-      </xsl:apply-templates>
-    </xsl:variable>
-
-    <xsl:if test="$row">
-      <xsl:apply-templates select="$field" mode="build_row_with_field">
-        <xsl:with-param name="row" select="$row" />
-      </xsl:apply-templates>
-    </xsl:if>
-
-  </xsl:template>
-
+    
 
 </xsl:stylesheet>
