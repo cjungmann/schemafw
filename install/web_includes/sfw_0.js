@@ -332,7 +332,7 @@ function init_SFW(callback)
 
    function _prepare_top_sfw_host()
    {
-      var sfwhost = SFW.seek_top_sfw_host();
+      var anchor, sfwhost = SFW.seek_top_sfw_host();
       if (sfwhost)
       {
          var obj = SFW.get_object_from_host(sfwhost);
@@ -343,6 +343,10 @@ function init_SFW(callback)
 
             SFW.setup_sfw_host(sfwhost, SFW.xmldoc);
             obj.initialize();
+         }
+         else if ((anchor=_find_anchor(sfwhost)))
+         {
+            SFW.arrange_in_host(sfwhost, anchor);
          }
       }
    }
@@ -1673,7 +1677,7 @@ function init_SFW(callback)
 
    _base.prototype.host     = function() { return this._host_el||null; };
    _base.prototype.xmldoc   = function() {
-      var r=this.host(); return (r && (r=r.xmldoc))?r:null;
+      var r=this.host(); return (r && (r=r.xmldoc))?r:SFW.xmldoc;
    };
 
    _base.prototype.xmldocel = function() {
@@ -1822,7 +1826,7 @@ function init_SFW(callback)
       return null;
    };
 
-   _base.prototype.get_result_name_from_top = function()
+   _base.prototype.get_result_path_from_top = function()
    {
       var top = this.top();
       if (top)
