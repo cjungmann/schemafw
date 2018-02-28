@@ -179,7 +179,7 @@
     */
    function _add_xsl_key(result, name, xsl)
    {
-      function addEl(tag, parent)
+      function xsl_addEl(tag, parent)
       {
          var el = add_namespace_el(tag, nsXSL, parent, null, xsl);
 
@@ -199,24 +199,28 @@
       var docel = xsl.documentElement;
 
       // Add the key:
-      var newkey = addEl("xsl:key",docel,
+      var newkey = xsl_addEl("xsl:key",docel,
                          "name",name,
                          "match",match,
                          "use", uses);
+      addText("\n",docel);
 
       // Add template to use key:
-      var newtemp = addEl("xsl:template", docel,
+      var newtemp = xsl_addEl("xsl:template", docel,
                           "match", "*[@rndx][@xslkey='" + name + "']",
                           "mode", "use_linked_result");
+      addText("\n",docel);
 
-      addEl("xsl:param",newtemp,"name","id");
-      addEl("xsl:param",newtemp,"name","link");
+      xsl_addEl("xsl:param",newtemp,"name","id");
+      xsl_addEl("xsl:param",newtemp,"name","link");
 
-      var apply = addEl("xsl:apply-templates", newtemp,
-                        "select", "key('" + name + "', $id)",
-                        "mode", "use_linked_row");
+      var keypath = "key('" + name + "', $id)";
 
-      addEl("xsl:with-param", apply, "name","link","select","$link");
+      var apply = xsl_addEl("xsl:apply-templates", newtemp,
+                            "select", "$link",
+                            "mode", "use_linked_rows");
+
+      xsl_addEl("xsl:with-param", apply, "name","rows","select",keypath);
    }
 
    function _update_xsl_keys(doc, xsl)
