@@ -41,12 +41,13 @@ var Moveable = {
 
       var object_tag = function(el)
       {
-         if (el.id && el.id.length>0)
-            id_object = el.id;
+         var oid = el.getAttribute("id");
+         if (oid && oid.length>0)
+            id_object = oid;
          else
          {
             id_object = last_resort_id;
-            el.id = id_object;
+            el.setAttribute("id", id_object);
          }
          return el;
       };
@@ -55,8 +56,8 @@ var Moveable = {
       var object_untag = function()
       {
          var el = object_get();
-         if (el && el.id==last_resort_id)
-            el.id = null;
+         if (el && el.getAttribute("id")==last_resort_id)
+            el.removeAttribute("id");
          return el;
       };
 
