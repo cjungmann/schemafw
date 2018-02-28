@@ -61,6 +61,7 @@
 
     <xsl:variable name="sfw-class">
       <xsl:choose>
+        <xsl:when test="$mode-type='form-import'">import</xsl:when>
         <xsl:when test="$type"><xsl:value-of select="$type" /></xsl:when>
         <xsl:when test="@merge-type"><xsl:value-of select="@merge-type" /></xsl:when>
         <xsl:when test="@type"><xsl:value-of select="@type" /></xsl:when>
@@ -138,15 +139,25 @@
         </xsl:apply-templates>
         <hr />
         <p class="buttons">
-          <xsl:choose>
-            <xsl:when test="$has_action">
+          <xsl:if test="$has_action">
               <input type="submit" value="Submit" />
-              <input type="button" value="Cancel" class="{$class}" data-type="cancel" />
-            </xsl:when>
-            <xsl:otherwise>
-              <input type="button" value="Close" class="{$class}" data-type="close" />
-            </xsl:otherwise>
-          </xsl:choose>
+          </xsl:if>
+
+          <xsl:variable name="btarget">
+            <xsl:choose>
+              <xsl:when test="$has_action">ancel</xsl:when>
+              <xsl:otherwise>lose</xsl:otherwise>
+            </xsl:choose>
+          </xsl:variable>
+
+          <xsl:element name="input">
+            <xsl:attribute name="type">button</xsl:attribute>
+            <xsl:attribute name="value">C<xsl:value-of select="$btarget" /></xsl:attribute>
+            <xsl:attribute name="data-type">c<xsl:value-of select="$btarget" /></xsl:attribute>
+            <xsl:if test="$class and $class!='Moveable'">
+              <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
+            </xsl:if>
+          </xsl:element>
         </p>
       </fieldset>
     </xsl:element>
@@ -255,8 +266,7 @@
       </xsl:if>
     </xsl:variable>
 
-    <p class="{$class}">
-      
+    <p>      
       <label for="{$name}">
         <xsl:if test="$view-mode and @on_field_click">
           <xsl:element name="button">
@@ -293,13 +303,7 @@
           </xsl:choose>
         </xsl:when>
 
-        <xsl:when test="@type='assoc'">
-          <xsl:apply-templates select="." mode="construct_input">
-            <xsl:with-param name="data" select="$data" />
-          </xsl:apply-templates>
-        </xsl:when>
-
-        <xsl:when test="$view-mode">
+        <xsl:when test="$view-mode and not(@active) and not(@type='linked')">
           <div class="field_content" name="{$name}">
             <xsl:apply-templates select="." mode="display_value">
               <xsl:with-param name="data" select="$data" />
