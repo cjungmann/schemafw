@@ -28,11 +28,13 @@
   -->
   <xsl:variable name="mtm_result"
                 select="/*/*[@rndx][@merged=$merge_num]/@merge-type" />
+  <xsl:variable name="mtm_rschema"
+                select="/*/*[not($mtm_result)][@rndx][@merged=$merge_num]/schema/@merge-type" />
   <xsl:variable name="mtm_schema"
-                select="/*[not($mtm_result)]/schema/@merge-type" />
+                select="/*[not($mtm_result|$mtm_rschema)]/schema/@merge-type" />
   <xsl:variable name="mt_root"
-                select="/*[not($mtm_result|$mtm_schema)]/@mode-type" />
-  <xsl:variable name="mode-type" select="$mtm_result|$mtm_schema|$mt_root" />
+                select="/*[not($mtm_result|$mtm_rschema|$mtm_schema)]/@mode-type" />
+  <xsl:variable name="mode-type" select="$mtm_result|$mtm_rschema|$mtm_schema|$mt_root" />
 
   <xsl:variable name="result-row"
                 select="/*[$mode-type='form-result']/*[@rndx=1]/*[@error]" />
@@ -74,7 +76,7 @@
   <xsl:variable
       name="rschema"
       select="/*[$is_form][not($mrschema|$dschema)]/*[@rndx=1]/schema" />
-  <xsl:variable name="gschema" select="$mrschema|$dschema|$rschema" />
+  <xsl:variable name="gschema" select="($mrschema|$dschema|$rschema)" />
 
   <!-- $gview, if available, will dictate which result to use. -->
   <xsl:variable name="gsview" select="/*/views/view[@selected]" />
