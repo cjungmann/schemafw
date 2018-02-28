@@ -15,16 +15,33 @@
       SFW.base.call(this,actors);
    }
 
-   // Can be overridden in derived classes:
-   _tbase.prototype.get_result_name = function() { return null; };
-
    _tbase.prototype.result = function()
    {
-      var xpath = this.get_result_name() || this.get_result_name_from_top();
+      var xpath = this.get_result_path_from_top();
       if (!xpath)
+      {
+         // Log a warning for missing data-result because all table types should include it:
+         console.error("\"top\" missing data-result attribute.");
          xpath = "*[@rndx=1][not(@merged)]";
+      }
          
       return this.xmldocel().selectSingleNode(xpath);
+   };
+
+   _tbase.prototype._f_schema = function() { return this._schema; };
+
+   _tbase.prototype.schema = function()
+   {
+      var result = this.result();
+      if (result)
+      {
+         var schema = result.selectSingleNode("schema");
+         this._schema = schema
+         this.schema = _tbase.prototype._f_schema;
+         return this.schema();
+      }
+
+      return null;
    };
 
    _tbase.prototype.find_matching_data_row = function(cfobj)
@@ -177,7 +194,7 @@
       if (!cancelled)
       {
          // this.update_row(cfobj);
-         this.replot();
+         this.replot(this.result());
       }
 
       var os = SFW.get_property(child,"host","data","os");
