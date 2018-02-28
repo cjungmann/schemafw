@@ -333,7 +333,7 @@
         </xsl:attribute>
       </xsl:if>
 
-      <!-- No child elements can precede write_cell_contents because
+      <!-- No child elements can precede write_cell_content because
            that template may need to add an attribute to the "td" element. -->
       <xsl:apply-templates select="." mode="write_cell_content">
         <xsl:with-param name="data" select="$data" />
@@ -341,7 +341,7 @@
     </xsl:element>
   </xsl:template>
 
-  <xsl:template match="schema/field[not(@type='assoc')]" mode="write_cell_content">
+  <xsl:template match="schema/field" mode="write_cell_content">
     <xsl:param name="data" />
 
     <xsl:variable name="val">
@@ -360,31 +360,50 @@
     </xsl:choose>
   </xsl:template>
   
-  <xsl:template match="schema/field[@type='assoc']" mode="write_cell_content">
-    <xsl:param name="data" />
-    <xsl:if test="@result">
-      <xsl:apply-templates select="." mode="add_assoc_attribute" />
-      <xsl:apply-templates select="." mode="show_associations">
-        <xsl:with-param name="data" select="$data" />
-      </xsl:apply-templates>
-    </xsl:if>
-  </xsl:template>
+  <!-- <xsl:template match="schema/field[not(@type='assoc')]" mode="write_cell_content"> -->
+  <!--   <xsl:param name="data" /> -->
 
-  <xsl:template match="schema/field[@type='assoc'][@style='table']"
-                mode="write_cell_content">
-    <xsl:param name="data" />
-    <xsl:if test="@result">
-      <table>
-        <xsl:element name="tbody">
-          <xsl:apply-templates select="." mode="add_assoc_attribute" />
-          <xsl:apply-templates select="." mode="show_associations">
-            <xsl:with-param name="data" select="$data" />
-          </xsl:apply-templates>
-        </xsl:element>
-      </table>
-    </xsl:if>
+  <!--   <xsl:variable name="val"> -->
+  <!--     <xsl:apply-templates select="." mode="get_value"> -->
+  <!--       <xsl:with-param name="data" select="$data" /> -->
+  <!--     </xsl:apply-templates> -->
+  <!--   </xsl:variable> -->
+
+  <!--   <xsl:choose> -->
+  <!--     <xsl:when test="@type='BOOL'"> -->
+  <!--       <xsl:if test="$val=1">x</xsl:if> -->
+  <!--     </xsl:when> -->
+  <!--     <xsl:otherwise> -->
+  <!--       <xsl:value-of select="$val" /> -->
+  <!--     </xsl:otherwise> -->
+  <!--   </xsl:choose> -->
+  <!-- </xsl:template> -->
+  
+  <!-- <xsl:template match="schema/field[@type='assoc']" mode="write_cell_content"> -->
+  <!--   <xsl:param name="data" /> -->
+  <!--   <xsl:if test="@result"> -->
+  <!--     <xsl:apply-templates select="." mode="add_assoc_attribute" /> -->
+  <!--     <xsl:apply-templates select="." mode="build_associations"> -->
+  <!--       <xsl:with-param name="data" select="$data" /> -->
+  <!--     </xsl:apply-templates> -->
+  <!--   </xsl:if> -->
+  <!-- </xsl:template> -->
+
+  <!-- <xsl:template match="schema/field[@type='assoc'][@style='table']" -->
+  <!--               mode="write_cell_content"> -->
+  <!--   <xsl:param name="data" /> -->
+  <!--   <xsl:if test="@result"> -->
+  <!--     <table> -->
+  <!--       <xsl:element name="tbody"> -->
+  <!--         <xsl:apply-templates select="." mode="add_assoc_attribute" /> -->
+  <!--         <xsl:apply-templates select="." mode="build_associations"> -->
+  <!--           <xsl:with-param name="data" select="$data" /> -->
+  <!--         </xsl:apply-templates> -->
+  <!--       </xsl:element> -->
+  <!--     </table> -->
+  <!--   </xsl:if> -->
     
-  </xsl:template>
+  <!-- </xsl:template> -->
 
 
   <!-- Named template for makeing a table (do we ever use this?). -->
