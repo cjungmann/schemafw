@@ -24,6 +24,66 @@
 
   <xsl:variable name="vars" select="/*/*[@rndx][@type='variables']" />
 
+
+  <xsl:template match="*[@rndx]" mode="get_idname">
+
+    <xsl:variable name="fname">
+      <xsl:apply-templates select="schema" mode="get_id_field_name" />
+    </xsl:variable>
+
+    <xsl:variable name="attr" select="*[../@row-name][1]/@*[1]" />
+
+    <xsl:choose>
+      <xsl:when test="schema"><xsl:value-of select="$fname" /></xsl:when>
+      <xsl:when test="$attr"><xsl:value-of select="local-name($attr)" /></xsl:when>
+      <xsl:otherwise>id</xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="*[@rndx]" mode="get_idval">
+    <xsl:param name="row" />
+    <xsl:variable name="idname">
+      <xsl:apply-templates select="." mode="get_idname" />
+    </xsl:variable>
+    <xsl:value-of select="$row/@*[local-name()=$idname]" />
+  </xsl:template>
+
+
+  <xsl:template match="@*" mode="gen_path">
+    <xsl:value-of select="concat('[@', local-name(), '=', $apos, ., $apos, ']')" />
+  </xsl:template>
+
+  <xsl:template match="*" mode="gen_path">
+    <xsl:variable name="par" select="parent::*" />
+    <xsl:if test="$par">
+      <xsl:apply-templates select="$par" mode="gen_path" />
+    </xsl:if>
+    <xsl:value-of select="concat('/', local-name())" />
+  </xsl:template>
+
+  <xsl:template match="*[local-name()=../@row-name]" mode="gen_path">
+    <xsl:variable name="par" select="parent::*" />
+    <xsl:if test="$par">
+      <xsl:apply-templates select="$par" mode="gen_path" />
+    </xsl:if>
+
+    <xsl:variable name="idname">
+      <xsl:apply-templates select=".." mode="get_idname" />
+    </xsl:variable>
+    <xsl:value-of select="concat('/', local-name())" />
+    <xsl:apply-templates select="@*[local-name()=$idname]" mode="gen_path" />
+  </xsl:template>
+
+  <xsl:template match="*[@rndx]" mode="gen_path">
+    <xsl:variable name="par" select="parent::*" />
+    <xsl:if test="$par">
+      <xsl:apply-templates select="$par" mode="gen_path" />
+    </xsl:if>
+    <xsl:value-of select="concat('/', local-name())" />
+    <xsl:apply-templates select="@rndx" mode="gen_path" />
+    <xsl:apply-templates select="@merged" mode="gen_path" />
+  </xsl:template>
+
   <xsl:template match="*" mode="add_result_attribute">
     <xsl:variable name="result_inst" select="ancestor-or-self::*[@result]/@result" />
     <xsl:variable name="result" select="ancestor-or-self::*[@rndx]" />
@@ -34,14 +94,7 @@
           <xsl:value-of select="$result_inst[1]" />
         </xsl:when>
         <xsl:when test="$result">
-          <xsl:variable name="name" select="local-name($result)" />
-          <xsl:choose>
-            <xsl:when test="$name='result'">
-              <xsl:value-of
-                  select="concat('result[@rndx=', $apos, $result/@rndx, $apos, ']')" />
-            </xsl:when>
-            <xsl:otherwise><xsl:value-of select="$name" /></xsl:otherwise>
-          </xsl:choose>
+          <xsl:apply-templates select="$result" mode="gen_path" />
         </xsl:when>
       </xsl:choose>
     </xsl:variable>
@@ -94,16 +147,20 @@
       <xsl:value-of select="(ancestor-or-self::*/@script)[last()]" />
     </xsl:if>
   </xsl:template>
+
+  <xsl:template match="@*" mode="resolve_url">
+    <xsl:call-template name="resolve_refs">
+      <xsl:with-param name="str">
+        <xsl:apply-templates select="." mode="fix_srm_selfref"/>
+        <xsl:value-of select="." />
+      </xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
   
   <xsl:template match="@*" mode="add_url_attribute">
     <xsl:variable name="aname" select="concat('data-url-',local-name())" />
     <xsl:attribute name="{$aname}">
-      <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str">
-          <xsl:apply-templates select="." mode="fix_srm_selfref"/>
-          <xsl:value-of select="." />
-        </xsl:with-param>
-      </xsl:call-template>
+      <xsl:apply-templates select="." mode="resolve_url" />
     </xsl:attribute>
   </xsl:template>
 
@@ -142,7 +199,7 @@
     <xsl:param name="skip" />
     <xsl:if test="starts-with(local-name(), 'html-')">
       <xsl:variable name="tag" select="substring(local-name(),6)" />
-      
+
       <xsl:variable name="omit">
         <xsl:if test="$skip">
           <xsl:variable name="_tag_" select="concat(' ',$tag,' ')" />
@@ -174,7 +231,7 @@
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-    
+
     <xsl:attribute name="{$name}">
       <xsl:call-template name="resolve_refs">
         <xsl:with-param name="str">
@@ -187,10 +244,20 @@
     </xsl:attribute>
   </xsl:template>
 
+  <xsl:template match="button/@url" mode="add_button_attribute">
+    <xsl:attribute name="data-url">
+      <xsl:apply-templates select="." mode="resolve_url" />
+    </xsl:attribute>
+  </xsl:template>
+
   <xsl:template match="@*" mode="make_jump_link">
+    <xsl:variable name="url">
+      <xsl:apply-templates select="." mode="resolve_url" />
+    </xsl:variable>
+
     <p>Click
     <xsl:element name="a">
-      <xsl:attribute name="href"><xsl:value-of select="." /></xsl:attribute>
+      <xsl:attribute name="href"><xsl:value-of select="$url" /></xsl:attribute>
     </xsl:element>
     if you are not taken there.
     </p>
@@ -206,12 +273,12 @@
     <xsl:if test="not(number($skip))">
       <xsl:element name="button">
         <xsl:attribute name="type">button</xsl:attribute>
-        
+
         <xsl:apply-templates select="@*[not(local-name()='label')]"
                              mode="add_button_attribute">
           <xsl:with-param name="skip-data-prefix" select="' name value disabled '" />
         </xsl:apply-templates>
-        
+
         <xsl:apply-templates select="@label" mode="resolve_refs" />
       </xsl:element>
     </xsl:if>
@@ -288,7 +355,7 @@
         <xsl:value-of select="concat(' ', $class)" />
       </xsl:if>
     </xsl:variable>
-    
+
     <xsl:variable name="buttons" select="button" />
 
     <xsl:if test="count($buttons)&gt;0">
@@ -363,6 +430,8 @@
     <xsl:param name="row" select="/.." />
     <xsl:param name="enclose" />
 
+    <!-- The 'delim' is the character just after the { that
+         indicates how the following work is interpreted. -->
     <xsl:variable name="delim">
       <xsl:variable name="after" select="substring(substring-after($str,'{'),1,1)" />
       <xsl:if test="$after and contains('@$!', $after)">
@@ -413,7 +482,7 @@
             <xsl:when test="$type='!'">
               <xsl:choose>
                 <xsl:when test="$row">
-                  <xsl:apply-templates select="$row" mode="get_row_value">
+                  <xsl:apply-templates select="$row" mode="get_value_from_row">
                     <xsl:with-param name="name" select="$ref" />
                   </xsl:apply-templates>
                 </xsl:when>
@@ -457,7 +526,7 @@
       </xsl:when>
       <xsl:otherwise>
         <xsl:if test="not($is_end) or string-length($trimmed)"> 
-          <xsl:value-of select="$val" />
+          <xsl:value-of select="normalize-space($val)" />
         </xsl:if>
       </xsl:otherwise>
     </xsl:choose>
@@ -510,10 +579,9 @@
     </xsl:apply-templates>
   </xsl:template>
 
-  <xsl:template match="*" mode="get_row_value">
+  <xsl:template match="*" mode="get_value_from_row">
     <xsl:param name="name" />
     <xsl:value-of select="current()/@*[local-name()=$name]" />
   </xsl:template>
-
 </xsl:stylesheet>
 
