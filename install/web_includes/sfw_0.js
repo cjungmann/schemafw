@@ -2076,7 +2076,8 @@ function init_SFW(callback)
    _base.prototype.child_finished = function(child, cancelled)
    {
       if (!cancelled)
-         this.update_associations(child);
+         // this.update_associations(child);
+         this.update_links(child);
 
       child.remove_merged_results();
       child.sfw_close(); 
@@ -2149,6 +2150,7 @@ function init_SFW(callback)
          fields[i].removeAttribute("data-id");
    };
 
+
    _base.prototype.update_associations = function(child)
    {
       var fu = _get_property(this,"caller","update_associations");
@@ -2160,6 +2162,35 @@ function init_SFW(callback)
          this.update_field_association(xrow, child);
       else
          this.update_hosted_associations();
+   };
+
+   _base.prototype.update_field_links = function(data)
+   {
+      if ("replace_row" in this)
+      {
+         var xrow = data.xrow;
+         var urow = data.target;
+         if (xrow && urow)
+            this.replace_row(urow, xrow);
+      }
+   };
+
+   _base.prototype.update_hosted_links = function()
+   {
+   };
+
+
+   _base.prototype.update_links = function(child)
+   {
+      var ul = _get_property(this,"caller","update_links");
+      if (ul)
+         ul();
+
+      var data = _get_property(this,"host","data");
+      if (data && "xrow" in data)
+         this.update_field_links(data, child);
+      else
+         this.update_hosted_links();
    };
 
    /** Buttons are all processed the same way, so handle consistently in base class. */
