@@ -22,6 +22,18 @@
     <xsl:apply-templates select="schema" mode="construct_table" />
   </xsl:template>
 
+  <xsl:template match="*[@sfw_replace_row_contents]">
+    <xsl:variable name="schema" select="../schema" />
+    <xsl:choose>
+      <xsl:when test="$schema">
+        <xsl:apply-templates select="$schema/field" mode="construct_line_cell">
+          <xsl:with-param name="data" select="." />
+        </xsl:apply-templates>
+      </xsl:when>
+      <xsl:otherwise>No schema found</xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
   <!--
   Creates a table element and fills it according to the instructions contained
   in the schema element.
