@@ -63,10 +63,10 @@
       return null;
    };
 
-   _tbase.prototype.replot = function(result)
-   {
-      console.error("This function should be overridden!");
-   };
+   function warn_override() { console.error("this function should be overridden!"); }
+
+   _tbase.prototype.replace_row = function(target_row, node) { warn_override(); };
+   _tbase.prototype.replot = function(result)                { warn_override(); };
 
    _tbase.prototype.empty_node = function(node)
    {
@@ -185,6 +185,38 @@
       }
    };
 
+   /**
+    * This function both checks for possibility of and if found, execute the
+    * row update.  Returns true if successful, false if not (not allowed, not
+    *  possible or failed in attempt).
+    *
+    * Conditions for allowed attempt:
+    * - Must access XML data row AND HTML element hosting the rendered data.
+    * - The current sort field must not be changed (which requires a full replot).
+    */
+   _tbase.prototype.attempt_row_update = function(child)
+   {
+      var data, schema;
+      if ((data = SFW.get_property(this,"host","data")) && (schema = this.schema()))
+      {
+         if ("xrow" in data && "target" in data)
+         {
+            var fields = schema.selectNodes("field");
+            for (var i=0, stop=fields.length; i<stop; ++i)
+            {
+               var field = fields[i];
+               if (field.getAttribute("sorting"))
+                  return false;
+            }
+
+            this.replace_row(data.target, data.xrow);
+            return true;
+         }
+      }
+
+      return false;
+   };
+
    _tbase.prototype.child_finished = function(child, cancelled)
    {
       // Must call base::child_finished() to clean out
@@ -193,15 +225,13 @@
 
       if (!cancelled)
       {
-         // this.update_row(cfobj);
-         this.replot(this.result());
+         if (!this.attempt_row_update(child))
+            this.replot(this.result());
       }
 
       var os = SFW.get_property(child,"host","data","os");
       if (os)
          SFW.set_page_offset(os);
-      // if (SFW.has_value(cfobj,"cdata","os"))
-      //    SFW.set_page_offset(cfobj.cdata.os);
    };
 
 
@@ -317,7 +347,7 @@
          var os = SFW.get_page_offset();  // Get offset before discarding contents
          var host = this.host();
 
-         var open_obj = { os:os, host:host };
+         var open_obj = { target:info.target, os:os, host:host };
          if (xrow)
             open_obj.xrow = xrow;
 
