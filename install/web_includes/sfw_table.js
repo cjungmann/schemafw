@@ -119,6 +119,17 @@
          n.removeAttribute("select");
    };
 
+   _table.prototype.replace_row = function(target_row, node)
+   {
+      node.setAttribute("sfw_replace_row_contents", "true");
+      SFW.xslobj.transformFill(target_row, node);
+      node.removeAttribute("sfw_replace_row_contents");
+
+      var top = this.top();
+      if (top)
+         _fix_table_heads(top);
+   };
+
    _table.prototype.replot = function(result)
    {
       this.pre_transform();
