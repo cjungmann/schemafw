@@ -266,7 +266,7 @@
       </xsl:if>
     </xsl:variable>
 
-    <p>      
+    <p class="form-row">
       <label for="{$name}">
         <xsl:if test="$view-mode and @on_field_click">
           <xsl:element name="button">
