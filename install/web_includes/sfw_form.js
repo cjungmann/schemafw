@@ -134,6 +134,40 @@
       return SFW.get_property(this,"host","data","os");
    };
 
+   _form.prototype.find_field = function(name)
+   {
+      var el, els = this.top().elements;
+      for (var i=0, stop=els.length; i<stop; ++i)
+      {
+         el = els[i];
+         if (el.getAttribute("name")==name)
+            return el;
+      }
+      return null;
+   };
+
+   _form.prototype.preview_result = function(returned_doc, child)
+   {
+      var row, schema, fields;
+      if ((row=this.get_context_row()) &&
+          (schema=this.schema())
+          && (fields=schema.selectNodes("field[@type='linked']")))
+      {
+         for (var i=0, stop=fields.length; i<stop; ++i)
+         {
+            var fld = fields[i];
+            var name = fld.getAttribute("name");
+            var f = this.find_field(fld.getAttribute("name"));
+            if (f)
+            {
+               node.setAttribute("lookup-field-match", name);
+               SFW.xslobj.transformFill(f, node);
+               node.removeAttribute("lookup-field-match");
+            }
+         }
+      }
+   };
+
    _form.prototype.process_submit = function _process_submit()
    {
       var form = this.top();
@@ -147,11 +181,12 @@
       {
          if (SFW.check_for_preempt(doc))
          {
+            SFW.update_xmldoc(doc, ths);
+
             var caller = ths.caller();
             if (caller)
             {
                caller.preview_result(doc, ths);
-               SFW.update_xmldoc(doc, ths);
                caller.child_finished(ths);
             }
          }
