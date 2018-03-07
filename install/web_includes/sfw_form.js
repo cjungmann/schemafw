@@ -134,14 +134,23 @@
       return SFW.get_property(this,"host","data","os");
    };
 
-   _form.prototype.find_field = function(name)
+   _form.prototype.find_form_input = function(name)
    {
-      var el, els = this.top().elements;
-      for (var i=0, stop=els.length; i<stop; ++i)
+      var labels = this.top().getElementsByTagName("label");
+      for (var i=0, stop=labels.length; i<stop; ++i)
       {
-         el = els[i];
-         if (el.getAttribute("name")==name)
-            return el;
+         var f = labels[i];
+         if (f.getAttribute("for")==name)
+         {
+            f = f.nextSibling;
+            while (f)
+            {
+               if (f.nodeType==1 && f.getAttribute("name")==name)
+                  return f;
+               else
+                  f = f.nextSibling;
+            }
+         }
       }
       return null;
    };
@@ -157,12 +166,12 @@
          {
             var fld = fields[i];
             var name = fld.getAttribute("name");
-            var f = this.find_field(fld.getAttribute("name"));
-            if (f)
+            var input = this.find_form_input(name);
+            if (input)
             {
-               node.setAttribute("lookup-field-match", name);
-               SFW.xslobj.transformFill(f, node);
-               node.removeAttribute("lookup-field-match");
+               row.setAttribute("lookup-field-match", name);
+               SFW.xslobj.transformFill(input, row);
+               row.removeAttribute("lookup-field-match");
             }
          }
       }
