@@ -1221,7 +1221,7 @@ function init_SFW(callback)
       var dresults = newdocel.selectNodes("*[@rndx][*[local-name()=../@row-name][@deleted]]");
       for (var i=0,stop=dresults.length; i<stop; ++i)
       {
-         dresult = dresults[i];
+         var dresult = dresults[i];
          var dels = dresult.selectNodes(dresult.getAttribute("row-name")+"[@deleted]");
 
          if (dels.length==0)
