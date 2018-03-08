@@ -157,6 +157,10 @@
 
    _form.prototype.preview_result = function(returned_doc, child)
    {
+      var caller = this.caller();
+      if (caller)
+         caller.preview_result(returned_doc,this);
+
       var row, schema, fields;
       if ((row=this.get_context_row()) &&
           (schema=this.schema())
