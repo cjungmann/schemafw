@@ -25,7 +25,7 @@
 
     <xsl:apply-templates select="buttons" mode="construct_buttons" />
 
-    <div>
+    <div name="{@name}">
       <xsl:apply-templates select="." mode="host_linked_field">
         <xsl:with-param name="data" select="$data" />
       </xsl:apply-templates>
@@ -38,7 +38,7 @@
 
     <xsl:apply-templates select="buttons" mode="construct_buttons" />
 
-    <div>
+    <div name="{@name}">
       <xsl:apply-templates select="." mode="host_linked_field">
         <xsl:with-param name="data" select="$data" />
       </xsl:apply-templates>
