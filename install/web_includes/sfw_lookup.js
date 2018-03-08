@@ -80,6 +80,19 @@
 
    _lookup.prototype.preview_result = function(returned_doc, child)
    {
+      var caller, whost;
+      if ((host=this.host()) && (caller=this.caller()))
+         caller.preview_result(returned_doc, whost);
+         
+      this.rebuild_content();
+   };
+
+   _lookup.prototype.child_finished = function(child, cancelled)
+   {
+      var caller = this.caller();
+      if (caller)
+         caller.child_finished(child, cancelled);
+
       this.rebuild_content();
    };
 
