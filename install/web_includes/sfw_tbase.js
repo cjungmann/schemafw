@@ -174,13 +174,25 @@
       var docel = returned_doc.documentElement;
       var mtype = docel.getAttribute("mode-type");
       var result, xrow = SFW.get_property(child,"host","data","xrow");
-      if (mtype=="delete" && xrow)
+
+      if (xrow)
       {
-         if ((result=docel.selectSingleNode("*[@rndx][@type='delete']"))
-             && result.getAttribute("deleted")!=0)
+         if (mtype=="delete")
          {
-            console.log("We would be deleting a row here.");
-            // xrow.parentNode.removeChild(xrow);
+            if ((result=docel.selectSingleNode("*[@rndx][@type='delete']"))
+                && result.getAttribute("deleted")!=0)
+            {
+               // console.log("We would be deleting a row here.");
+               xrow.parentNode.removeChild(xrow);
+            }
+         }
+         else
+         {
+            var target = SFW.get_property(this,"host","data","target");
+            if (target)
+            {
+               this.replace_row(target, xrow);
+            }
          }
       }
    };
