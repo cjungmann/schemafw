@@ -104,6 +104,9 @@
       <xsl:attribute
           name="data-sfw-class"><xsl:value-of select="$sfw-class" /></xsl:attribute>
 
+      <xsl:attribute
+          name="data-path"><xsl:apply-templates select="$data" mode="gen_path" /></xsl:attribute>
+
       <fieldset class="Schema">
         <xsl:element name="legend">
           <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
