@@ -1829,11 +1829,14 @@ function init_SFW(callback)
    _base.prototype.get_result_path_from_top = function()
    {
       var top = this.top();
-      if (top)
-         return top.getAttribute("data-result");
-      else
-         return null;
+      return top ? top.getAttribute("data-result") : null;
    };
+
+   _base.prototype.get_data_path_from_top = function()
+   {
+      var top = this.top();
+      return top ? top.getAttribute("data-path") : null;
+   }
 
    _base.prototype.get_host_form_data_row = function()
    {
@@ -2081,6 +2084,46 @@ function init_SFW(callback)
 
       child.remove_merged_results();
       child.sfw_close(); 
+   };
+
+   _base.prototype.update_contents = function(newdoc,type,child) {_alert("missing update_contents()");};
+
+   /**
+    * It's a bit confusing, but *this* is the object that must be updated,
+    * and the *child* is the object that is requesting the update.  In the
+    * basic case, *this* is a table object, *child* is a form object that
+    * was spawned by the table to do an operation.  This *child* object holds
+    * information about the context of the *this* when the *child* was spawned, 
+    * in particular, the selected HTML table row, context XML row, and a
+    * scroll position.  The *this* object that spawned the *child* adds the
+    * data to the *child* and should therefore be prepared for and satisfied
+    * with the data the *child* preserves.
+    *
+    * The function cascades, in the for each *this*, it first looks for
+    * a caller that spawned *this*, giving the originator a change to update.
+    * For each caller that updates, the *child* must be the *this*, which
+    * was the result of the spawn of the caller and thus preserves data the
+    * caller needs to recall the specifics saved during the spawn.
+    *
+    * The *type* parameter is passed down to all spawned updates because it
+    * shares the context of the server's response.  All levels of a cascade
+    * need to know if the operation is an add, delete, or update operation.
+    */
+   _base.prototype.cascade_updates = function(newdoc, type, child)
+   {
+      var caller = this.caller();
+      if (caller)
+         caller.cascade_updates(newdoc,type,this);
+
+      this.update_contents(newdoc,type, child);
+   };
+
+   _base.prototype.restart = function(child) { };
+
+   _base.prototype.dismantle = function()
+   {
+      this.remove_merged_results();
+      this.sfw_close();
    };
 
    _base.prototype.update_field_association = function(xrow, child)
