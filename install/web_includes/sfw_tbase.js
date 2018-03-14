@@ -32,16 +32,28 @@
 
    _tbase.prototype.schema = function()
    {
-      var result = this.result();
-      if (result)
+      var xpath, docel = this.xmldocel();
+      if ((xpath=this.get_result_path_from_top()))
       {
-         var schema = result.selectSingleNode("schema");
-         this._schema = schema
-         this.schema = _tbase.prototype._f_schema;
-         return this.schema();
+         this._schema = docel.selectSingleNode(xpath+"/schema");
+      }
+      else if ((xpath=this.get_data_path_from_top()))
+      {
+         var node = docel.selectSingleNode(xpath);
+         this._schema = node.selectSingleNode("../schema");
+         if (!this._schema)
+         {
+            var merged = node.parentNode.getAttribute("merged");
+            if (merged)
+               this._schema = docel.selectSingleNode("schema[@merged='" + merged + "']");
+            else
+               this._schema = docel.selectSingleNode("schema[not(@merged)]");
+         }
       }
 
-      return null;
+      this.schema = _tbase.prototype._f_schema;
+
+      return this.schema();
    };
 
    _tbase.prototype.find_matching_data_row = function(cfobj)
@@ -65,7 +77,6 @@
 
    function warn_override() { console.error("this function should be overridden!"); }
 
-   _tbase.prototype.replace_row = function(target_row, node) { warn_override(); };
    _tbase.prototype.replot = function(result)                { warn_override(); };
 
    _tbase.prototype.empty_node = function(node)
@@ -246,6 +257,40 @@
          SFW.set_page_offset(os);
    };
 
+   _tbase.prototype.replace_row = function(target_row, node)
+   {
+      node.setAttribute("sfw_replace_row_contents", "true");
+      SFW.xslobj.transformFill(target_row, node);
+      node.removeAttribute("sfw_replace_row_contents");
+
+      var top = this.top();
+      if (top)
+         SFW.fix_table_heads(top);
+   };
+
+   _tbase.prototype.update_contents = function(newdoc,type,child)
+   {
+      var docel = newdoc.documentElement;
+      var host = child.host();
+      var target, xrow;
+
+      if (type=="form-new")
+         this.replot();
+      else if ((target=SFW.get_property(host,"data","target")))
+      {
+         if (type=="form-delete")
+            target.parentNode.removeChild(target);
+         else if ((xrow=SFW.get_property(host,"data","xrow")))
+            this.replace_row(target, xrow);
+      }
+   };
+
+   _tbase.prototype.restart = function(child)
+   {
+      var os = SFW.get_property(child,"host","data","os");
+      if (os)
+         SFW.set_page_offset(os);
+   }
 
    _tbase.prototype.get_sfw_attribute = function(aname)
    {
