@@ -124,6 +124,16 @@
       return top?_find_first_editable_field(top):null;
    };
 
+   _form.prototype.get_data_path_row = function()
+   {
+      var xpath,form = this.top();
+
+      if ((xpath=form.getAttribute("data-path")))
+         return SFW.xmldoc.selectSingleNode(xpath);
+      else
+         return null;
+   };
+
    _form.prototype.get_context_row = function()
    {
       return SFW.get_property(this,"host","data","xrow");
@@ -155,14 +165,21 @@
       return null;
    };
 
-   _form.prototype.preview_result = function(returned_doc, child)
+/**
+   This function should branch based on the action taken
+   by the returned_doc.
+   1. Delete document: remove the row from any field views
+   2. Add document: add new data to any field views
+   3. Otherwise, it's an edit, just update.
+   
+   Note that the returned_doc will have already been incorporated
+   into (or out of) the XML document.  This function is only 
+   responsible for updating the display to conform to the existing data.
+*/
+   _form.prototype.update_contents = function(returned_doc, type, ichild)
    {
-      var caller = this.caller();
-      if (caller)
-         caller.preview_result(returned_doc,this);
-
       var row, schema, fields;
-      if ((row=this.get_context_row()) &&
+      if ((row=this.get_data_path_row() || this.get_context_row()) &&
           (schema=this.schema())
           && (fields=schema.selectNodes("field[@type='linked']")))
       {
@@ -181,9 +198,12 @@
       }
    };
 
+   _form.prototype.preview_result = _form.prototype.update_contents;
+
    _form.prototype.process_submit = function _process_submit()
    {
       var form = this.top();
+      var type = form.getAttribute("data-sfw-class");
       var arr = _get_form_data(form);
       var url = form.getAttribute("action");
       var enctype = form.getAttribute("enctype");
@@ -199,8 +219,12 @@
             var caller = ths.caller();
             if (caller)
             {
-               caller.preview_result(doc, ths);
-               caller.child_finished(ths);
+               // caller.preview_result(doc, ths);
+               // caller.child_finished(ths);
+
+               caller.cascade_updates(doc,type,ths);
+               caller.restart(ths);
+               ths.dismantle();
             }
          }
       }
@@ -251,7 +275,9 @@
          if (typeof(cmd)==="string" && cmd=="cancel")
             return; // without closing the dialog
 
-         if (SFW.is_xmldoc(cmd))
+         var is_xmldoc = SFW.is_xmldoc(cmd);
+
+         if (is_xmldoc)
          {
             if (SFW.check_for_preempt(cmd))
             {
@@ -267,7 +293,12 @@
          }
 
          if ((caller=ths.caller()))
-            caller.child_finished(ths,cmd=="cancel");
+         {
+            if (cmd!="cancel" && is_xmldoc)
+               caller.cascade_updates(cmd,ths);
+            ths.dismantle();
+            // caller.child_finished(ths,cmd=="cancel");
+        }
       }
       return this.process_clicked_button(t, fdone);
    };
