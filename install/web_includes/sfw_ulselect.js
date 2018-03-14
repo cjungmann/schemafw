@@ -240,6 +240,18 @@
       }
    };
 
+   _ulselect.prototype.update_contents = function(newdoc,type,child)
+   {
+      var crow = child.get_context_row();
+      var newrow = SFW.get_update_row(newdoc);
+      if (newrow && !crow)
+      {
+         var rid = newrow.getAttribute("id");
+         if (rid)
+            this.add_selection(rid);
+      }
+   };
+
    /** At present, the only reason I can think that a child
     *   would have been opened is for adding a missing option,
     *   in which case the lookup table would need to be updated
