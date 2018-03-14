@@ -22,6 +22,10 @@
     <xsl:apply-templates select="schema" mode="construct_table" />
   </xsl:template>
 
+  <xsl:template match="*[@rndx][schema][@sfw_refill_tbody]">
+    <xsl:apply-templates select="schema" mode="fill_tbody" />
+  </xsl:template>
+
   <xsl:template match="*[@sfw_replace_row_contents]">
     <xsl:variable name="schema" select="../schema" />
     <xsl:choose>
