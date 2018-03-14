@@ -96,6 +96,16 @@
       this.rebuild_content();
    };
 
+   _lookup.prototype.update_contents = function(newdoc,type,child)
+   {
+      var widget, host, xrow, fname;
+      if ((widget=this.widget()) && (host=widget.parentNode))
+      {
+         if ((xrow=this.get_form_xrow()) && (fname=this.get_field_name()))
+            _rebuild_lookup(host,xrow,fname);
+      }
+   };
+
    _lookup.prototype.replot = function(result)
    {
       this.rebuild_content();
