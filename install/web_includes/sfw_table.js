@@ -119,28 +119,30 @@
          n.removeAttribute("select");
    };
 
-   _table.prototype.replace_row = function(target_row, node)
-   {
-      node.setAttribute("sfw_replace_row_contents", "true");
-      SFW.xslobj.transformFill(target_row, node);
-      node.removeAttribute("sfw_replace_row_contents");
-
-      var top = this.top();
-      if (top)
-         _fix_table_heads(top);
-   };
-
    _table.prototype.replot = function(result)
    {
-      this.pre_transform();
-      
-      SFW.xslobj.transformFill(this.host(), SFW.xmldoc.documentElement);
-      
+      var ths = this;
       var top = this.top();
-      if (top)
-         _fix_table_heads(top);
+      if (!result)
+         result = this.result();
 
-      this.post_transform();
+      function f(el)
+      {
+         if (el.nodeType==1 && el.tagName.toLowerCase()=="tbody")
+         {
+            ths.pre_transform();
+
+            result.setAttribute("sfw_refill_tbody", "true");
+            SFW.xslobj.transformFill(el, result);
+            result.removeAttribute("sfw_refill_tbody");
+            
+            if (top)
+               _fix_table_heads(top);
+
+            ths.post_transform();
+         }
+      }
+      SFW.find_child_matches(top, f, true, true);
    };
 
    _table.prototype.diagnose_missing_data_id = function()
