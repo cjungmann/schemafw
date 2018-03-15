@@ -28,7 +28,7 @@
   -->
 
   <!-- Modeless attribute match for like-named field of proper type in hosting schema. -->
-  <xsl:template match="@*[ancestor::schema/field[@name=local-name()][@type='ulselect']]">
+  <xsl:template match="@*[ancestor::schema/field[@name=local-name(current())][@type='ulselect']]">
     <xsl:variable name="field" select="ancestor::schema/field[@name=local-name(current())]" />
     <xsl:call-template name="fill_ulselect_defacto">
       <xsl:with-param name="field" select="$field" />
