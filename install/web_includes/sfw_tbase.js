@@ -58,26 +58,6 @@
       this._schema = schema;
       this.schema = _tbase.prototype._f_schema;
 
-      // if ((xpath=this.get_result_path_from_top()))
-      // {
-      //    this._schema = docel.selectSingleNode(xpath+"/schema");
-      // }
-      // else if ((xpath=this.get_data_path_from_top()))
-      // {
-      //    var node = docel.selectSingleNode(xpath);
-      //    this._schema = node.selectSingleNode("../schema");
-      //    if (!this._schema)
-      //    {
-      //       var merged = node.parentNode.getAttribute("merged");
-      //       if (merged)
-      //          this._schema = docel.selectSingleNode("schema[@merged='" + merged + "']");
-      //       else
-      //          this._schema = docel.selectSingleNode("schema[not(@merged)]");
-      //    }
-      // }
-
-      // this.schema = _tbase.prototype._f_schema;
-
       return this.schema();
    };
 

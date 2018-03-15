@@ -39,18 +39,6 @@
       return null;
    }
    
-   // function _find_first_editable_field(form)
-   // {
-   //    var els = form.elements;
-   //    for (var i=0,stop=els.length; i<stop; ++i)
-   //    {
-   //       var el = els[i];
-   //       if ("value" in el && el.type!="button" && el.type!="hidden" && !el.readOnly)
-   //          return el;
-   //    }
-   //    return null;
-   // }
-
    function _focus_on_first_field(dlg)
    {
       var el = _find_first_editable_field(dlg);
@@ -63,24 +51,6 @@
             el.selectionEnd = el.value.length;
          }
       }
-      
-      // var nl = dlg.getElementsByTagName("label");
-      // if (nl && nl.length>0)
-      // {
-      //    var label = nl[0];
-      //    var name = label.getAttribute("for");
-      //    function f(n) { return n.nodeType==1 && n.getAttribute("name")==name; }
-      //    var el = SFW.find_child_matches(label.parentNode, f, true);
-      //    if (el)
-      //    {
-      //       el.focus();
-      //       if (el.getAttribute("type")=="text")
-      //       {
-      //          el.selectionStart = 0;
-      //          el.selectionEnd = el.value.length;
-      //       }
-      //    }
-      // }
    }
 
    function _get_multiple_value(el)
