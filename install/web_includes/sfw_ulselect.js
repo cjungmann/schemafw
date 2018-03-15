@@ -121,6 +121,18 @@
       {
          switch(keycode)
          {
+         case 9:
+            if (e.shiftKey)
+            {
+               var el = SFW.get_shift_tab_field(this.widget());
+               if (el)
+               {
+                  el.focus();
+                  e.preventDefault(); // e(vent), not el(ement)
+                  return false;
+               }
+            }
+            break;
          case 8:
          case 46:
             // We have to check before letter is erased (at keydown)

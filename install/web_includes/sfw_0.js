@@ -202,6 +202,9 @@ function init_SFW(callback)
    SFW.px                   = _px;
    SFW.addXMLEl             = _addXMLEl;
 
+   SFW.collect_form_fields  = _collect_form_fields;
+   SFW.get_shift_tab_field  = _get_shift_tab_field;
+
    function _px(num)    { return String(num)+"px"; };
 
    // Alternative to XML.js::addEl() to create elements without XHTML namespace:
@@ -1668,6 +1671,80 @@ function init_SFW(callback)
       return check(update_row) || check(xrow) || null;
    }
 
+   var html_itypes = ["input","select","textarea","button"];
+
+   // Call after confirming nodeType==1
+   function _is_tabable_input(n)
+   {
+      return n.nodeType==1 && 
+         (
+            n.getAttribute("data-sfw-input") ||
+            (
+               html_itypes.includes(n.tagName.toLowerCase())
+                  && !n.getAttribute("disabled")
+                  && !n.getAttribute("readOnly")
+                  && n.type!="hidden"
+            )
+         );
+   }
+
+   function _get_host_form(el)
+   {
+      while (el)
+      {
+         if (el.nodeType==1 && el.tagName.toLowerCase()=="form" && el.getAttribute("data-sfw-class"))
+            return el;
+         el = el.parentNode;
+      }
+
+      return null;
+   }
+
+   function _collect_form_fields(form)
+   {
+      return SFW.find_child_matches(form,_is_tabable_input,false,true);
+   }
+
+   function _find_tabable_ancestor(el)
+   {
+      while(el && el.nodeType==1)
+      {
+         if (_is_tabable_input(el))
+            return el;
+         else if (el.tagName.toLowerCase()=="form")
+            break;
+
+         el = el.parentNode;
+      }
+      return null;
+   }
+
+   // Returns the tabable field, in the same form, that immediately preceeds
+   // the passed field.
+   // Returns NULL if the field:
+   //   - is not in a form
+   //   - is not a tabable field
+   //   - is already the first tabable field in a form.
+   function _get_shift_tab_field(field)
+   {
+      var input, form;
+      if ((form=_get_host_form(field)) && (input=_find_tabable_ancestor(field)))
+      {
+         var arr = _collect_form_fields(form);
+         for (var i=0,stop=arr.length; i<stop; ++i)
+         {
+            if (arr[i]==input)
+            {
+               if (i)
+                  return arr[i-1];
+               else
+                  break;
+            }
+         }
+      }
+      return null;
+   }
+
    function _base(actors)
    {
       this._host_el = actors.host;
@@ -1699,7 +1776,7 @@ function init_SFW(callback)
       var h=this.host();
       return (h && "caller" in h) ? h.caller : null;
    };
-   
+
    _base.prototype.setup = function(xmldoc, caller, data)
    {
       console.error("This function is obsolete.");
@@ -1838,6 +1915,8 @@ function init_SFW(callback)
       return top ? top.getAttribute("data-path") : null;
    }
 
+   _base.prototype.get_host_form = function() { return _get_host_form(this.top()); };
+   
    _base.prototype.get_host_form_data_row = function()
    {
       var xpath, schema = this.schema();

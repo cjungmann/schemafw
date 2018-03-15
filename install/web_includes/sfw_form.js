@@ -26,18 +26,30 @@
    // Adding useful local functions to global object
    SFW.get_form_data        = _get_form_data;
    SFW.focus_on_first_field = _focus_on_first_field;
-   
+
    function _find_first_editable_field(form)
    {
-      var els = form.elements;
-      for (var i=0,stop=els.length; i<stop; ++i)
+      var arr = SFW.collect_form_fields(form);
+      for (var i=0,stop=arr.length; i<stop; ++i)
       {
-         var el = els[i];
-         if ("value" in el && el.type!="button" && el.type!="hidden" && !el.readOnly)
+         var el = arr[i];
+         if (!("type" in el) || el.type!="button")
             return el;
       }
       return null;
    }
+   
+   // function _find_first_editable_field(form)
+   // {
+   //    var els = form.elements;
+   //    for (var i=0,stop=els.length; i<stop; ++i)
+   //    {
+   //       var el = els[i];
+   //       if ("value" in el && el.type!="button" && el.type!="hidden" && !el.readOnly)
+   //          return el;
+   //    }
+   //    return null;
+   // }
 
    function _focus_on_first_field(dlg)
    {
