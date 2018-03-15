@@ -123,6 +123,7 @@
       <!--     data-sfw-class="ulselect" data-sfw-input="true"> -->
 
       <li class="cluster" tabindex="0">
+        <xsl:text>&#160;</xsl:text>
         <xsl:choose>
           <xsl:when test="$field/@style='multiple'">
             <xsl:apply-templates select="$lu_result" mode="construct_ulselect_cluster_multiple">
