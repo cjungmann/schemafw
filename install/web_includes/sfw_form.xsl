@@ -107,6 +107,9 @@
       <xsl:attribute
           name="data-path"><xsl:apply-templates select="$data" mode="gen_path" /></xsl:attribute>
 
+      <xsl:attribute
+          name="data-schema-path"><xsl:apply-templates select="." mode="gen_path" /></xsl:attribute>
+
       <fieldset class="Schema">
         <xsl:element name="legend">
           <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
