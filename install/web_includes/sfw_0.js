@@ -1270,39 +1270,66 @@ function init_SFW(callback)
       return deleted_count;
    }
 
+   function _update_result_from_result(target, source)
+   {
+      var urows = source.selectNodes("*[local-name()=../@row-name]");
+      var rowname = target.getAttribute("row-name");
+      var idname = SFW.get_result_idname(target);
+      var xpathbase = rowname + "[@" + idname + "='";
+
+      for (var j=0,jstop=urows.length; j<jstop; ++j)
+      {
+         var urow = _get_copied_node(target, urows[j]);
+         var xpath = xpathbase + urow.getAttribute("id") + "']";
+         var oldrow = target.selectSingleNode(xpath);
+
+         if (oldrow)
+            _replace_element(urow,oldrow);
+         else
+            target.appendChild(urow);
+      }
+   }
+
    function _process_updates(pagedocel, newdocel, form)
    {
+      var xrow, xresult;
+      if ((xrow=form.get_context_row()))
+         xresult = xrow.parentNode;
+
       var updates = newdocel.selectNodes("*[@rndx][@type='update']");
       for (var i=0, stop=updates.length; i<stop; ++i)
       {
-         var result = updates[i];
-         var urows = result.selectNodes("*[local-name()=../@row-name]");
-
-         if (urows.length==0)
-            continue;
+         var target, result = updates[i];
+         var rowname = result.getAttribute("row-name");
 
          var tname = result.getAttribute("target");
+         if (tname)
+         {
+            var target_xpath = tname?tname:"*[@rndx][not(@merged)][@row-name='"+rowname+"']";
+            target = pagedocel.selectSingleNode(target_xpath);
+         }
+         else if (xresult)
+            target = xresult;
 
-         // Backup result target search backup attempts to match to row-name of a result:
-         var txpath = tname?tname:"*[@rndx][@row-name='" + urows[0].localName + "']";
 
-         var target = pagedocel.selectSingleNode(txpath);
          if (target)
          {
-            var rowname = target.getAttribute("row-name");
-            var idname = SFW.get_result_idname(target);
-            var xpathbase = rowname + "[@" + idname + "='";
-
-            for (var j=0,jstop=urows.length; j<jstop; ++j)
+            var xrow_path;
+            if (xrow)
             {
-               var urow = _get_copied_node(target, urows[j]);
-               var xpath = xpathbase + urow.getAttribute("id") + "']";
-               var oldrow = target.selectSingleNode(xpath);
+               var idname = SFW.get_result_idname(target);
+               var idval = xrow.getAttribute(idname);
+               xrow_path = SFW.get_result_xpath(target);
+               xrow_path += "/*[local-name()=../@row-name][@"+idname+"='"+idval+"']";
+            }
 
-               if (oldrow)
-                  _replace_element(urow,oldrow);
-               else
-                  target.appendChild(urow);
+            _update_result_from_result(target, result);
+
+            if (xrow_path)
+            {
+               var newxrow = target.selectSingleNode(xrow_path);
+               if (newxrow)
+                  form.update_context_row(newxrow);
             }
          }
          else
