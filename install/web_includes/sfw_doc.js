@@ -17,6 +17,7 @@
    SFW.is_xmldoc         = _is_xmldoc;
    SFW.get_schema_idfield= _get_schema_idfield;
    SFW.get_result_idname = _get_result_idname;
+   SFW.get_result_xpath  = _get_result_xpath;
    SFW.check_for_preempt = _check_for_preempt;
    SFW.update_xsl_keys   = _update_xsl_keys;
    SFW.remove_xsl_keys   = _remove_xsl_keys;
@@ -88,6 +89,22 @@
          return "id";
    }
 
+   function _get_result_xpath(result)
+   {
+      if (result.getAttribute("merged"))
+         throw "Can't key on merged results.";
+
+      var xpath = "/*/";
+      var rname = result.localName;
+
+      if (rname=="result")
+         xpath += "*[@rndx=" + result.getAttribute("rndx") + "]";
+      else
+         xpath += rname;
+
+      return xpath + "[not(@merged)]";
+   }
+
    function _check_for_preempt(doc)
    {
       var docel = doc.documentElement;
@@ -152,22 +169,6 @@
    {
       var key = xsl.selectSingleNode("/xsl:stylesheet/xsl:key[@name='" + name + "']");
       return !key;
-   }
-
-   function _get_result_xpath(result)
-   {
-      if (result.getAttribute("merged"))
-         throw "Can't key on merged results.";
-
-      var xpath = "/*/";
-      var rname = result.localName;
-
-      if (rname=="result")
-         xpath += "*[@rndx=" + result.getAttribute("rndx") + "]";
-      else
-         xpath += rname;
-
-      return xpath + "[not(@merged)]";
    }
 
    /**
