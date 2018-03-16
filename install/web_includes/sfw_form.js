@@ -121,6 +121,13 @@
       return SFW.get_property(this,"host","data","xrow");
    };
 
+   _form.prototype.update_context_row = function(newrow)
+   {
+      var data = SFW.get_property(this,"host","data");
+      if (data)
+         data.xrow = newrow;
+   };
+
    _form.prototype.get_saved_os = function()
    {
       return SFW.get_property(this,"host","data","os");
