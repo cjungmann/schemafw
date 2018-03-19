@@ -203,7 +203,7 @@
       {
          if (SFW.check_for_preempt(doc))
          {
-            SFW.update_xmldoc(doc, ths);
+            SFW.update_xmldoc(doc, ths, type);
 
             var caller = ths.caller();
             if (caller)
@@ -270,8 +270,9 @@
          {
             if (SFW.check_for_preempt(cmd))
             {
-               var is_del_mode = cmd.documentElement.getAttribute("mode-type")=="delete";
-               var update_ok = SFW.update_xmldoc(cmd,ths);
+               var mtype = cmd.documentElement.getAttribute("mode-type");
+               var is_del_mode = mtype=="delete";
+               var update_ok = SFW.update_xmldoc(cmd,ths,mtype);
 
                if (is_del_mode && !update_ok)
                {
