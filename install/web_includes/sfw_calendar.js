@@ -104,24 +104,66 @@
       return this.call_super_event("table", "process", arguments);
    };
 
+   function _day_from_click(el)
+   {
+      while(el)
+      {
+         if (el.nodeType==1)
+         {
+            if (class_includes(el,"cal_day") && el.getAttribute("data-name"))
+               return el;
+         }
+         el = el.parentNode;
+      }
+
+      return el;
+   }
+
+   // _calendar.prototype.get_el_click_info = function(el)
+   // {
+   //    var did, dname, task, rval=null;
+   //    if ((did=el.getAttribute("data-id")) && class_includes(el,"day_content")
+   //        || (dname=el.getAttribute("data-name")) && class_includes(el,"cal_day"))
+   //    {
+   //       rval = { target : el,
+   //                task   : this.get_on_click_value("day", el.tagName.toLowerCase()),
+   //                idname : this.get_click_id_name("td") || this.get_click_id_name("day")
+   //              };
+
+   //       if (did)
+   //          rval.did = did;
+   //       else if (dname)
+   //          rval.dname = dname;
+   //    }
+   //    return rval;
+   // };
+
    _calendar.prototype.get_el_click_info = function(el)
    {
-      var did, dname, task, rval=null;
-      if ((did=el.getAttribute("data-id")) && class_includes(el,"day_content")
-          || (dname=el.getAttribute("data-name")) && class_includes(el,"cal_day"))
+      var rval = { target : el };
+      var dayel = _day_from_click(el);
+      var did;
+      if (dayel)
       {
-         rval = { target : el,
-                  task   : this.get_on_click_value("day", el.tagName.toLowerCase()),
-                  idname : this.get_click_id_name("td") || this.get_click_id_name("day")
-                };
+         rval.task = this.get_on_click_value("day",el.tagName.toLowerCase());
+         rval.idname = this.get_click_id_name("td");
+         rval.dname = dayel.getAttribute("data-name");
+         if (rval.idname=="id")
+            rval.idname = this.get_click_id_name("day");
 
-         if (did)
-            rval.did = did;
-         else if (dname)
-            rval.dname = dname;
+         function f(n)
+         {
+            if (n.nodeType==1 && class_includes(n,"day_content") && (did=n.getAttribute("data-id")))
+            {
+               rval.did = did;
+               return true;
+            }
+         }
+
+         SFW.find_child_matches(dayel,f,true,false);
       }
       return rval;
-   };
+   }
 
    _calendar.prototype.process = function (e,t)
    {
