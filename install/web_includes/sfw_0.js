@@ -157,7 +157,7 @@ function init_SFW(callback)
    SFW.change_view          = _change_view;
    SFW.process_event        = _process_event;
    SFW.process_host_keydown = _process_host_keydown;
-   SFW.get_copied_node      = _get_copied_node;
+   SFW.get_dup_node         = _get_dup_node;
    SFW.get_deleted_attribute= _get_deleted_attribute;
    SFW.remove_deleted_row   = _remove_deleted_row;
    SFW.update_xmldoc        = _update_xmldoc
@@ -1073,7 +1073,7 @@ function init_SFW(callback)
       return SFW.find_child_matches(doc.documentElement,f,true,false);
    }
 
-   function _get_copied_node(target, source)
+   function _get_dup_node(target, source)
    {
       var doc = target.ownerDocument;
       function ca(target,source)
@@ -1183,7 +1183,7 @@ function init_SFW(callback)
    function _put_row_into_target(target, row)
    {
       var oldrow = _get_oldrow(target,row);
-      var nrow = _get_copied_node(target,row);
+      var nrow = _get_dup_node(target,row);
       var rname = nrow.localName;
       var trname = target.getAttribute("row-name");
 
@@ -1272,16 +1272,42 @@ function init_SFW(callback)
 
    function _update_result_from_result(target, source)
    {
-      var urows = source.selectNodes("*[local-name()=../@row-name]");
       var rowname = target.getAttribute("row-name");
       var idname = SFW.get_result_idname(target);
+
+      function mm(dom,l,r) { SFW.alert("Mismatched "+dom+", "+l+"!="+r); }
+      function matched()
+      {
+         var msg;
+         var rname=source.getAttribute("row-name");
+         if (rname==rowname)
+         {
+            var iname = SFW.get_result_idname(source);
+            if (iname!=idname)
+            {
+               mm("idname",idname,iname);
+               return false;
+            }
+         }
+         else
+         {
+            mm("row-name",rowname,rname);
+            return false;
+         }
+         return true;
+      }
+
+      if (!matched())
+         return;
+
+      var urows = source.selectNodes(rowname);
       var xpathbase = rowname + "[@" + idname + "='";
 
       for (var j=0,jstop=urows.length; j<jstop; ++j)
       {
-         var urow = _get_copied_node(target, urows[j]);
-         var xpath = xpathbase + urow.getAttribute("id") + "']";
-         var oldrow = target.selectSingleNode(xpath);
+         var urow = _get_dup_node(target, urows[j]);
+         var id = urow.getAttribute(idname);
+         var oldrow = target.selectSingleNode(xpathbase+id+"']");
 
          if (oldrow)
             _replace_element(urow,oldrow);
@@ -1292,9 +1318,12 @@ function init_SFW(callback)
 
    function _process_updates(pagedocel, newdocel, form)
    {
-      var xrow, xresult;
+      var caller, xpath, xrow, xresult;
       if ((xrow=form.get_context_row()))
          xresult = xrow.parentNode;
+      if (!xresult)
+         if ((caller=form.caller()) && (xpath=caller.get_result_path_from_top()))
+            xresult = pagedocel.selectSingleNode(xpath);
 
       var updates = newdocel.selectNodes("*[@rndx][@type='update']");
       for (var i=0, stop=updates.length; i<stop; ++i)
@@ -1305,12 +1334,11 @@ function init_SFW(callback)
          var tname = result.getAttribute("target");
          if (tname)
          {
-            var target_xpath = tname?tname:"*[@rndx][not(@merged)][@row-name='"+rowname+"']";
-            target = pagedocel.selectSingleNode(target_xpath);
+            xpath = tname?tname:"*[@rndx][not(@merged)][@row-name='"+rowname+"']";
+            target = pagedocel.selectSingleNode(xpath);
          }
          else if (xresult)
             target = xresult;
-
 
          if (target)
          {
@@ -1346,12 +1374,12 @@ function init_SFW(callback)
     * If a record delete succeeds, the deleted record form should close to avoid attempts
     * to modify the now missing record.
     */
-   function _update_xmldoc(doc, form)
+   function _update_xmldoc(doc, form, type)
    {
       var pagedocel = SFW.xmldoc.documentElement;
       var newdocel = doc.documentElement;
 
-      _process_updates(pagedocel, newdocel, form);
+      _process_updates(pagedocel, newdocel, form, type);
 
       if (newdocel.getAttribute("mode-type")=="delete")
          return _remove_deletes(pagedocel, newdocel, form) > 0;
