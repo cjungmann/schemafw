@@ -326,7 +326,13 @@ will contain the YYYY-MM-DD date.
 
     <xsl:element name="table">
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
-      <xsl:apply-templates select="." mode="add_result_attribute" />
+
+      <!-- Hard-code data-result attribute instead of handing off to add_result_attribute. -->
+      <!-- <xsl:apply-templates select="." mode="add_result_attribute" /> -->
+      <xsl:attribute name="data-result">
+        <xsl:apply-templates select="ancestor-or-self::*[@rndx]" mode="gen_path" />
+      </xsl:attribute>
+
       <xsl:apply-templates select=".." mode="add_sfw_class_attribute" />
       <!-- schema is optional, so union with result: -->
       <xsl:apply-templates select="..|../schema" mode="add_on_click_attributes" />
@@ -374,6 +380,16 @@ will contain the YYYY-MM-DD date.
   <xsl:template match="calendar[@rndx]">
     <xsl:apply-templates select="*[local-name()=current()/@row-name]" mode="build_calendar" />
   </xsl:template>
+
+  <xsl:template match="*[@sfw_refill_body][row[@month][@initialDay][@countOfDays]]">
+    <xsl:call-template name="build_weeks">
+      <xsl:with-param name="today" select="row/@today" />
+      <xsl:with-param name="month" select="row/@month" />
+      <xsl:with-param name="lastday" select="row/@countOfDays" />
+      <xsl:with-param name="date" select="1-(row/@initialDay)" />
+    </xsl:call-template>
+  </xsl:template>
+
 
   <!--
       This template (and comment) will be discarded when sfw_calendar.xsl is
