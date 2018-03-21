@@ -153,9 +153,11 @@
 
          function f(n)
          {
-            if (n.nodeType==1 && class_includes(n,"day_content") && (did=n.getAttribute("data-id")))
+            if (n.nodeType==1 && class_includes(n,"day_content"))
             {
-               rval.did = did;
+               rval.target = n;
+               if ((did=n.getAttribute("data-id")))
+                  rval.did = did;
                return true;
             }
          }
