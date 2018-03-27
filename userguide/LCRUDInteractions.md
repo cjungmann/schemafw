@@ -27,7 +27,7 @@ _CaseStudy_.  That is what we'll use here, as well.
 
 .../setup/tables.sql
 ~~~sql
-SET storage_engine=InnoDB;
+SET default_storage_engine=InnoDB;
 CREATE TABLE IF NOT EXISTS ContactList
 (
    id    INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
