@@ -52,15 +52,20 @@ to create a new SchemaFW site.
 
    ~~~
    cd site
-   ln -s /usr/local/lib/schemafw/web_includes includes
    cp /usr/local/lib/schemafw/default.xsl .
+   ln -s /usr/local/lib/schemafw/web_includes includes
    ~~~
 
-   Note that the second line makes a directory link.  The linked directory
-   cannot be added to or deleted from, nor can one edit any of the files
-   contained in the directory.  Against these inconveniences, having a link
-   makes it easy to apply framework updates.  Custom Javascript or XSL files
-   can be added to the _site_ directory or a subdirectory of _site_.
+   - The second line copies a boilerplate XSLT stylesheet.  Replace the default
+     strings in the *title* and *h1* elements with strings appropriate to your
+     application.
+
+   - The third line makes a directory link to framework files.  As a link to
+     a privileged directory, the target directory cannot be added to or deleted
+     from, nor can one edit any of the files contained in the directory.  However,
+     using this link makes it easier to apply framework updates.  Custom
+     Javascript or XSL files can be added to the _site_ directory or a subdirectory
+     of _site_.
 
 4. Prepare MySQL with a new database and loading the system stored procedures.
    
