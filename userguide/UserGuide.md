@@ -8,6 +8,7 @@ There are several sections.
   - [Building the Framework](BuildingTheFramework.md)
   - [Configuring Apache](ConfiguringApache.md)
   - [Configuring MySQL](ConfiguringMySQL.md)
+  - [Install SRM-editing Emacs Mode](EmacsMode.md)
 - [SchemaFW Basics](SchemaFWBasics.md)
   - [Establish a New SchemaFW Site](CreateNewSite.md)
   - [Using MySQL Procedures](UsingMySQLProcedures.md)
