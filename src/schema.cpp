@@ -2660,7 +2660,9 @@ void Schema::process_response_mode(void)
 
       if (m_mode_action==MACTION_EXPORT)
       {
-         const char *filename = m_mode->seek_value("file-name");
+         const char *filename = m_mode->seek_value("filename");
+         if (!filename)
+            filename = m_mode->seek_value("file-name");
          if (filename)
          {
             ifputs("Content-Disposition: filename=\"", s_header_out);
