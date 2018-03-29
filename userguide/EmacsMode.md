@@ -23,10 +23,10 @@ into *~/.emacs.d/init.el* near the bottom of the file.
   ;; keywords parameter:
   '("schema" "type" "procedure" "schema-proc" "$database" "$xml-stylesheet"
     "$default-mode" "button" "label" "task" "on_line_click" "form-action"
-     "result" "confirm")
+     "filename" "url" "result" "confirm")
   ;; other highlighting parameter:
   '(("form-\\(new\\|edit\\|view\\|submit\\)" . font-lock-constant-face)
-    ("\\(delete\\|update\\|add\\)" . font-lock-constant-face)
+    ("\\(delete\\|update\\|add\\|export\\)" . font-lock-constant-face)
    )
   ;; filename templates parameter (files that activate this mode):
   '("\\.srm$")
