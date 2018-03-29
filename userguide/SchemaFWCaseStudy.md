@@ -4,14 +4,31 @@ The Schema Framework makes it easy to develop a basic CRUD (**C**reate, **R**ead
 **U**pdate, and **D**elete) application, and not much more difficult to extend
 the basics.
 
-This case study is intended to introduce you to how the CRUD interactions are
-prepared.  The interactions will be presented in order of increasing dependency,
-with the first **r**ead interaction being almost completely self-contained,
-and the following interactions making provisions for actions available in the
-context of the interaction.
+## Case Study Preview
 
-The interactions will work with a single table, _ContactList_.  The table
-definition for _ContactList_ is as follows:
+### Simplest Case Study
+
+This case study starts with an introduction to building a simple CRUD web
+application.  It will create a simple table called **ContactList** of people with
+phone numbers.  The initial application will simply create, read, update and
+delete records in this table.
+
+### Adding Advanced Features
+
+We will add case study features like import/export and authenticated access that
+can be difficult and time-consuming to add otherwise.  After adding these features,
+we'll go on to deriving a calendar display from the basic table, then adding form
+widgets to handle restricted input, and client-side table joins.
+
+## Download Case Study Files
+
+The case study files are available as a [repository](https://github.com/cjungmann/sfw_casestudy).
+The repository contains the full case study, including all the enhancements that we cover
+here.
+
+## Case Study Foundation 
+
+To start, we will create a simple table of contacts.
 
 ~~~sql
 SET storage_engine=InnoDB;
