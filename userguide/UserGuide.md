@@ -19,15 +19,18 @@ There are several sections.
   - [Enum Field Settings](SchemaEnumField.md)
   - [Definitions](Definitions.md)
 - [SchemaFW Case Study](SchemaFWCaseStudy.md)   
-  - [A Read Interaction](CSReadInteraction.md)
-  - [A List Interaction](CSListInteraction.md)
-  - [A Create Interaction](CSCreateInteraction.md)
-  - [An Update Interaction](CSUpdateInteraction.md)
-  - [A Delete Interaction](CSDeleteInteraction.md)
-  - [L-CRUD Files Listings](LCRUDInteractions.md)
-  - [Enhancing Case Study with Export](ExportingData.md)
-  - [Creating a Calendar](CalendarCaseStudy.md)
-  - [Using a Form-View](FormViewCaseStudy.md)
+  - Simple CRUD Foundation
+    - [A Read Interaction](CSReadInteraction.md)
+    - [A List Interaction](CSListInteraction.md)
+    - [A Create Interaction](CSCreateInteraction.md)
+    - [An Update Interaction](CSUpdateInteraction.md)
+    - [A Delete Interaction](CSDeleteInteraction.md)
+    - [L-CRUD Files Listings](LCRUDInteractions.md)
+  - Adding Features
+    - [Exporting Data](ExportingData.md)
+    - [Importing Data](ImportingData.md)
+    - [Creating a Calendar](CalendarCaseStudy.md)
+    - [Using a Form-View](FormViewCaseStudy.md)
 - Advanced Topics
   - [Schea Server Commmand Line Options](SchemaFCGIOptions.md)
   - [Data Security Measures](DataSecurity.md)
@@ -73,8 +76,6 @@ There are several sections.
     - [Explanation of Password Handling](PasswordHandling.md)
     - [SchemaFW Session Processing Procedures](SchemaFWSessionProcs.md)
     - [SchemaFW Session Authorization Strategy](SchemaFWAuthorizations.md)
-  - Importing and Exporting
-    - [Importing Data](ImportingData.md)
   - Other Topics
     - [Adding Buttons](AddingButtons.md)
     - [Keystroke-matched Buttons](KeyStrokeButtons.md)
