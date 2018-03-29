@@ -4,7 +4,7 @@ A read interaction is the simplest interaction.  It is used to display informati
 and to fill form fields when editing records.  The read interaction will be revisited
 with the **U**pdate interaction.
 
-The MySQL stored procedure _App_Contact_Value_ will be used as the **r**ead procedure.
+The MySQL stored procedure *App_Contact_Value* will be used as the **r**ead procedure.
 We will use _Value_ instead of _Name_ because the procedure will be more commonly used
 later in a different context where _Value_ more accurately describes its purpose.
 
