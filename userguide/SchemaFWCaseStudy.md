@@ -31,6 +31,8 @@ here.
 To start, we will create a simple table of contacts.
 
 ~~~sql
+-- setup/tables_contacts.sql
+
 SET storage_engine=InnoDB;
 CREATE TABLE IF NOT EXISTS ContactList
 (
