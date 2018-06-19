@@ -510,12 +510,15 @@ void Result_As_FODS::use_result_row(int result_number, DataStack<BindC> &ds)
          const char *ctype = ctyper->get_cell_type();
          if (ctype)
          {
+            if (0==strcmp(ctype,"date"))
+               ctype="string";
+
             fods_write(" office:value-type=\"");
             fods_write(ctype);
             fods_putc('"');
             
             const char *vtype = ctyper->get_value_attribute();
-            if (vtype && strcmp(vtype,"string"))
+            if (strcmp(ctype,"string") && vtype && strcmp(vtype,"string"))
             {
                fods_write(" office:");
                fods_write(vtype);
