@@ -961,7 +961,7 @@ function init_SFW(callback)
 
       if (kc==27 && obj.closeable())
       {
-         this.selfclose();
+         obj.selfclose();
          return false;
       }
       // Ignore alt, control, and shift keys until processing the key
