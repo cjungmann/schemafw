@@ -285,7 +285,11 @@
          if ((caller=ths.caller()))
          {
             if (cmd!="cancel" && is_xmldoc)
-               caller.cascade_updates(cmd,ths);
+            {
+               var form = ths.top();
+               var type = form.getAttribute("data-sfw-class");
+               caller.cascade_updates(cmd,type,ths);
+            }
             ths.dismantle();
             // caller.child_finished(ths,cmd=="cancel");
         }
