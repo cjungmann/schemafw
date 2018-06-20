@@ -5,7 +5,7 @@ h2 { text-align: center; margin:0; }
 
 #SFW_Content
 {
-    position: static;
+    position:relative;
 }
 
 #SFW_Header, #SFW_Ghost_Header
@@ -58,11 +58,11 @@ nav.views div.selected
 
 div.SFW_Host, div.SFW_Subhost
 {
-    position:relative;
+    position:absolute;
     top : 0px;
     left : 0px;
     width : 100%;
-    height:auto;
+    height: auto;
     background: url(/includes/screen.png) repeat;
 }
 

@@ -1055,8 +1055,19 @@ function init_SFW(callback)
 
    function _make_sfw_host(host, xmldoc, caller, data)
    {
+      // Get last host before creating a new one.
+      // A new host becomes the new last host, making
+      // _get_last_SFW_Host() return the wrong element.
+      var lhost = _get_last_SFW_Host();
+
       var thost = addEl("div",host);
       thost.className = "SFW_Host";
+
+      if (lhost)
+      {
+         thost.style.height = _px(lhost.offsetHeight);
+         thost.style.width  = _px(lhost.offsetWidth);
+      }
 
       _setup_sfw_host(thost, xmldoc, caller, data);
 
