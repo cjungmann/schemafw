@@ -1,5 +1,7 @@
 // Closure to setup dpicker, host singletons
-function process_dpicker(e,t)
+function process_dpicker(e,t) { return int_process_dpicker(e,t); }
+
+function int_process_dpicker(e,t)
 {
    var c_cur_input = null;
    var c_cur_calhost = null;
@@ -15,7 +17,6 @@ function process_dpicker(e,t)
 
    // make_calendar closure function
    var get_calendar_selected_td = null;
-   
 
    // HTML-DOM-related stuff, prepare functions:
    // 
@@ -34,7 +35,6 @@ function process_dpicker(e,t)
          el.appendChild(c_doc.createTextNode(text));
       };
    }
-
 
    function z(n) { return String(n+100).substr(1); }
    function a(host, tag) { return addEl(tag,host); }
@@ -67,12 +67,12 @@ function process_dpicker(e,t)
 
       var c = a(t.parentNode,"div");
       c.className = "dpicker_host";
+      c_cur_calhost = c;
+      c_cur_input = t;
+
       make_calendar(c);
       move_cal(c,t);
       c.style.display = "block";
-      
-      c_cur_input = t;
-      c_cur_calhost = c;
    }
 
    function make_calendar(host)
@@ -570,7 +570,7 @@ function process_dpicker(e,t)
    }
 
    // Install an execute the replacement function
-   process_dpicker = f;
+   int_process_dpicker = f;
    return f(e,t);
 }
 
