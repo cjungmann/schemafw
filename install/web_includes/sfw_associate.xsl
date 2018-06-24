@@ -209,9 +209,9 @@
   </xsl:template>
 
   <xsl:template match="field[@type='assoc'][@style='table']" mode="construct_assoc_input">
+    <xsl:param name="data" />
 
     <!-- Get parts from construct_input that work with transform_row -->
-    <div>Ha...got ya!  <xsl:value-of select="$source_result/@row-name" /></div>
     <table class="Schema">
        <tbody>
          <xsl:apply-templates select="." mode="transform_row">
@@ -230,7 +230,7 @@
   instruction to the field instruction to dictate which attributes
   to include and in what order.
   -->
-  <xsl:template match="field[@type='assoc']" mode="show_associations">
+  <xsl:template match="field[@type='assoc']" mode="build_associations">
     <xsl:param name="data" />
 
     <xsl:variable name="lresult" select="/*/*[local-name()=current()/@result]" />
@@ -241,43 +241,46 @@
       </xsl:apply-templates>
     </xsl:variable>
 
-    <!-- <xsl:choose> -->
-    <!--   <xsl:when test="$lresult/@xslkey and not($lresult/@xslkey='auto')"> -->
+    <xsl:variable name="kval">
+      <xsl:apply-templates select="$lresult" mode="get_by_xsl_key">
+        <xsl:with-param name="id" select="$idval" />
+      </xsl:apply-templates>
+    </xsl:variable>
 
+    <xsl:variable name="ival" select="$lresult/*[local-name()=../@row-name][@id=$idval]/@*[2]" />
 
-    <!--     <xsl:apply-templates select="key($lresult/@xslkey, $idval)" mode="build_assoc"> -->
-    <!--       <xsl:with-param name="field" select="." /> -->
-    <!--     </xsl:apply-templates> -->
+    <span>
+      <xsl:if test="$kval"><xsl:value-of select="concat('kval=', $kval,' ')" /></xsl:if>
+      <xsl:value-of select="concat('ival=', $ival)" />
+    </span>
 
-    <!--   </xsl:when> -->
-    <!--   <xsl:otherwise> -->
+    <!-- <span><xsl:value-of select="concat('kval=', $kval, ', rval=', $ival)" /></span> -->
 
-    <!--     <xsl:apply-templates -->
-    <!--         select="$lresult/*[local-name()=../@row-name][@id=$idval]" -->
-    <!--         mode="build_assoc"> -->
-    <!--       <xsl:with-param name="field" select="." /> -->
-    <!--     </xsl:apply-templates> -->
-
-
-    <!--     <xsl:apply-templates select="." mode="build_with_row"> -->
-    <!--       <xsl:with-param name="row" select="$lresult/*[local-name()=../@row-name][@id=$idval]" /> -->
-    <!--     </xsl:apply-templates> -->
-        
-    <!--   </xsl:otherwise> -->
-    <!-- </xsl:choose> -->
-
-    <span><xsl:value-of select="concat('idval=',$idval)" /></span>
-
+    <!-- <xsl:apply-templates select="$kval|$ival" mode="build_assoc"> -->
+    <!--   <xsl:with-param name="field" select="." /> -->
+    <!-- </xsl:apply-templates> -->
 
     <xsl:apply-templates select="." mode="build_associated_row">
       <xsl:with-param name="row" select="$data" />
     </xsl:apply-templates>
   </xsl:template>
 
+
   <xsl:template match="*[@rndx][@result]/*" mode="build_assoc">
     <xsl:param name="field" />
 
-    <xsl:text>build-assoc</xsl:text>
+    <xsl:variable name="val">
+      <xsl:choose>
+        <xsl:when test="$field/@xslkey">
+          <xsl:value-of select="$field/@xslkey" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:text>no key</xsl:text>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <span><xsl:value-of select="concat('val is ', $val)" /></span>
   </xsl:template>
 
 
@@ -398,7 +401,7 @@
   <xsl:template match="field[@type='assoc'][@style='table']" mode="display_value">
     <xsl:param name="data" />
     <table>
-      <xsl:apply-templates select="." mode="show_associations">
+      <xsl:apply-templates select="." mode="build_associations">
         <xsl:with-param name="data" select="$data" />
       </xsl:apply-templates>
     </table>
