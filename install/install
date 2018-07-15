@@ -1,0 +1,6 @@
+#!/bin/bash
+
+TARGET=schemafw2
+
+install -D --mode=644 web_includes/* -t /usr/local/lib/${TARGET}/web_includes/
+install --mode=644    default.xsl    /usr/local/lib/${TARGET}/
