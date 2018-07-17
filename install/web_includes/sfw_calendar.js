@@ -78,6 +78,18 @@
          window.location = url;
    };
 
+   _calendar.prototype.replot = function(result)
+   {
+      var top = this.top();
+      var host = top.parentNode;
+      if (!result)
+         result = this.result();
+
+      this.pre_transform();
+      SFW.xslobj.transformFill(host, result);
+      this.post_transform();
+   };
+
    _calendar.prototype.process = function (e,t)
    {
       var did, tag, mon, top = this.top();
@@ -178,13 +190,11 @@
       var tel = t;
       while (tel && tel!=top)
       {
+         if ((tag=tel.tagName.toLowerCase())=="button" &&
+             (mon=tel.getAttribute("data-jump")))
+            return this.process_month_jump(mon);
          if ((click_info = this.get_el_click_info(tel)))
             return this.process_click_info(click_info);
-         else if ((tag=tel.tagName.toLowerCase())=="button")
-         {
-            if (mon=tel.getAttribute("data-jump"))
-               return this.process_month_jump(mon);
-         }
 
          tel = tel.parentNode;
       }
