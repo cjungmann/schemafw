@@ -174,7 +174,10 @@
         <xsl:when test="$gview and $gview/@type">
           <xsl:value-of select="$gview/@type" />
         </xsl:when>
-        <xsl:when test="$mode-type">
+        <xsl:when test="not(../@merged) and /*/@mode-type">
+          <xsl:value-of select="/*/@mode-type" />
+        </xsl:when>
+        <xsl:when test="../@merged and $mode-type">
           <xsl:value-of select="$mode-type" />
         </xsl:when>
         <xsl:otherwise>table</xsl:otherwise>
