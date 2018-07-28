@@ -4,6 +4,10 @@
 **schema** an underlying organizational pattern or structure; conceptual framework
 [source: dictionary.com](http://dictionary.reference.com/browse/schema)
 
+**NOTE** The organization of this project has recently changed.  The FCGI server
+portion of the project has been spun off to the [SchemaServer](../SchemaServer)
+project.
+
 The Schema Framework (SchemaFW) includes several parts that, working together and
 using MySQL as the database, define a protocol by which the server workload is
 substantially reduced and the client assumes most of the responsibility for
