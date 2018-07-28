@@ -5,7 +5,7 @@
 [source: dictionary.com](http://dictionary.reference.com/browse/schema)
 
 **NOTE** The organization of this project has recently changed.  The FCGI server
-portion of the project has been spun off to the [SchemaServer](../SchemaServer)
+portion of the project has been spun off to the [SchemaServer](https://github.com/cjungmann/SchemaServer)
 project.
 
 The Schema Framework (SchemaFW) includes several parts that, working together and
