@@ -27,10 +27,7 @@
       mode="add_on_click_attribute">
     <xsl:variable name="aname" select="concat('data-', local-name())" />
     <xsl:attribute name="{$aname}">
-      <xsl:apply-templates select="." mode="fix_srm_selfref" />
-      <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str" select="." />
-      </xsl:call-template>
+      <xsl:apply-templates select="." mode="resolve_url" />
     </xsl:attribute>
   </xsl:template>
 
@@ -65,10 +62,7 @@
     <xsl:variable name="action" select="$ta|$fa" />
     
     <xsl:if test="$action">
-      <xsl:apply-templates select="$action" mode="fix_srm_selfref" />
-      <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str" select="$action" />
-      </xsl:call-template>
+      <xsl:apply-templates select="$action" mode="resolve_url" />
     </xsl:if>
   </xsl:template>
 

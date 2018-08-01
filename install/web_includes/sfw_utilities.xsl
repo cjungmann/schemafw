@@ -141,19 +141,21 @@
     </xsl:attribute>
   </xsl:template>
 
-  <xsl:template match="@*" mode="fix_srm_selfref">
-    <!-- <xsl:if test="substring(.,1,1)='?' and /*[@script]"> -->
-    <xsl:if test="substring(.,1,1)='?' and ancestor-or-self::*/@script">
-      <xsl:value-of select="(ancestor-or-self::*/@script)[last()]" />
-    </xsl:if>
-  </xsl:template>
-
   <xsl:template match="@*" mode="resolve_url">
+    <xsl:variable name="excl" select="number(substring(.,1,1)='!')" />
+    <xsl:variable name="ques" select="number(substring(.,($excl+1),1)='?')" />
+    <xsl:variable name="strpos" select="(1 + $excl)" />
+
+    <xsl:variable name="pre">
+      <xsl:if test="$ques='1'">
+        <xsl:value-of select="ancestor-or-self::*/@script" />
+      </xsl:if>
+    </xsl:variable>
+
+    <xsl:if test="$excl='1'">!</xsl:if>
+    <xsl:value-of select="$pre" />
     <xsl:call-template name="resolve_refs">
-      <xsl:with-param name="str">
-        <xsl:apply-templates select="." mode="fix_srm_selfref"/>
-        <xsl:value-of select="." />
-      </xsl:with-param>
+      <xsl:with-param name="str" select="substring(.,$strpos)" />
     </xsl:call-template>
   </xsl:template>
   
@@ -236,14 +238,24 @@
     </xsl:variable>
 
     <xsl:attribute name="{$name}">
-      <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str">
-          <xsl:if test="local-name()='task'">
-            <xsl:apply-templates select="." mode="fix_srm_selfref"/>
-          </xsl:if>
-          <xsl:value-of select="." />
-        </xsl:with-param>
-      </xsl:call-template>
+      <xsl:choose>
+        <xsl:when test="local-name()='task'">
+          <xsl:apply-templates select="." mode="resolve_url" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:call-template name="resolve_refs">
+            <xsl:with-param name="str" select="." />
+          </xsl:call-template>
+        </xsl:otherwise>
+      </xsl:choose>
+      <!-- <xsl:call-template name="resolve_refs"> -->
+      <!--   <xsl:with-param name="str"> -->
+      <!--     <xsl:if test="local-name()='task'"> -->
+      <!--       <xsl:apply-templates select="." mode="fix_srm_selfref"/> -->
+      <!--     </xsl:if> -->
+      <!--     <xsl:value-of select="." /> -->
+      <!--   </xsl:with-param> -->
+      <!-- </xsl:call-template> -->
     </xsl:attribute>
   </xsl:template>
 
