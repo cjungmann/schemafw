@@ -1,0 +1,58 @@
+\input texinfo
+@setfilename schemafw.info
+@settitle Using Schema Framework
+
+@dircategory Schema Framework Documents
+@direntry
+* Schema Framework: (schemafw).       Documentation for Schema Framework
+@end direntry
+
+@copying
+Offline Manual for the Schema Framework
+
+Copyright @copyright{} 2018 Charles P Jungmann
+@end copying
+
+@titlepage
+@title Using Schema Framework
+@author Charles P. Jungmann
+@page
+@insertcopying
+@end titlepage
+
+
+@ifnottex
+@node Top
+@top Using Schema Framework
+
+This manual is an offline reference for the Schema Framework, which
+is a stack of software that uses @code{schema.fcgi} to create a
+database-driving web application.
+
+I apologize to anyone finding this manual who hopes for a comprehensive
+treatment in the use of Schema Framework.  I began this manual to create
+@emph{offline} documentation that I can refer to when I need a
+reminder of syntax or usage.
+
+As long as this remains a personal project, I will have to limit my
+time writing documentation in favor of development, testing, and
+production.
+@end ifnottex
+
+@contents
+@menu
+* Introduction::
+* Forms::
+@end menu
+
+@node Introduction
+@chapter Introduction
+
+The Schema Framework is a client and consumer of the services
+provided by @code{schema.fcgi} server object.
+
+
+
+@include schemafw.forms.txi
+
+@bye

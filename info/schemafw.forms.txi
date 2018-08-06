@@ -1,0 +1,19 @@
+@node Forms
+@chapter Forms
+
+Forms are the fundamental interface between the user and the
+web application.  A form is a set of labeled fields into which
+a user provides information that will be sent as a request to
+the web server.
+
+The Schema Framework provides a simple foundation for implementing
+forms.  Developers should be aware that the built-in forms are
+just the start of what is possible.  There are a few specific form
+mode-types (@inforef{Mode Types, Mode Types, schema.fcgi} for more information),
+that have specific purposes, but beyond them, the developer is
+free to define custom interactions by using custom mode types and
+XSLT templates to interpret them.
+
+
+
+
