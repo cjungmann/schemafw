@@ -1,0 +1,37 @@
+@node Import Interactions
+@section Import Interactions
+
+@example
+import_form
+   type : form-import
+   form-action : ?import
+
+import
+  type   : import
+  target : QT_Person
+  jump   : ?review
+
+review
+  type      : table
+  procedure : App_Person_Import_Review
+  intro     : Please review the following data, matching columns with the data they contain.
+  button
+    type  : jump
+    label : Accept
+    url   : ?accept
+  button
+    type  : jump
+    label : Abandon
+    url   : ?abandon
+
+accept
+  type      : import-verdict
+  procedure : App_Person_Import_Accept
+  jump      : ?list
+
+abandon
+  type      : import-verdict
+  procedure : App_Person_Import_Abandon
+  jump      : ?list
+@end example
+

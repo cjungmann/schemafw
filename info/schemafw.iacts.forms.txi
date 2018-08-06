@@ -1,0 +1,42 @@
+@node Form Interactions
+@section Form Interactions
+
+@menu
+* Add Form Interaction::
+* Edit Form Interaction::
+@end menu
+
+
+@node Add Form Interaction
+@subsection Add Form Interaction
+
+@example
+add
+   type        : form-new
+   schema-proc : App_Person_Add
+   form-action : ?add-submit
+
+add-submit
+   type      : form-submit
+   procedure : App_Person_Add
+   result
+      type : update
+@end example
+
+@node Edit Form Interaction
+@subsection Edit Form Interaction
+
+@example
+edit
+   type        : form-edit
+   schema-proc : App_Person_Update
+   procedure   : App_Person_Value
+   form-action : ?edit_submit
+
+edit_submit
+   type    : form-submit
+   procedure : App_Person_Update
+   result
+      type : update
+@end example
+
