@@ -400,24 +400,39 @@
       if ("task" in info)
       {
          var url = info.task
+         var jump = false;
+
+         if (url[0]=='!')
+         {
+            jump = true;
+            url = url.substring(1);
+         }
 
          if (id && url.indexOf('&')==-1)
             url += "=" + id;
          else if (xrow)
             url = SFW.apply_row_context(url, xrow);
 
-         var os = SFW.get_page_offset();  // Get offset before discarding contents
-         var host = this.host();
+         if (jump)
+         {
+            window.location = url;
+         }
+         else
+         {
+            var os = SFW.get_page_offset();  // Get offset before discarding contents
+            var host = this.host();
 
-         var open_obj = { target:info.target, os:os, host:host };
-         if (xrow)
-            open_obj.xrow = xrow;
+            var open_obj = { target:info.target, os:os, host:host };
+            if (xrow)
+               open_obj.xrow = xrow;
 
-         SFW.open_interaction(SFW.stage,
-                              url,
-                              this,
-                              open_obj
-                             );
+            SFW.open_interaction(SFW.stage,
+                                 url,
+                                 this,
+                                 open_obj
+                                );
+         }
+
 
          return false;
       }
