@@ -81,6 +81,33 @@ function implement_functions()
    prepare_getDocument_functions();
 }
 
+function report_responseText(xhr)
+{
+   var lline, el, attr;
+   var larr=xhr.responseText.split("\n");
+   var ndx=larr.length-1;
+   do
+      lline=larr[ndx--];
+   while (lline.length==0 && ndx>=0);
+
+   // var sarr=[
+   //    "There are " + larr.length + " elements in the line array.",
+   //    "The last line is:",
+   //    "'" + lline + "'",
+   //    "The first two character of which are '" + lline[0] + "', and '" + lline[1] + "'"
+   // ];
+
+   // alert(sarr.join("\n"));
+
+   if (lline[0]=="<"
+       && lline[1]!="/"
+       && (el=parseXML(lline))
+       && (attr=el.documentElement.getAttribute("message")))
+      alert(attr);
+   else
+      prompt("Invalid XML document returned", xhr.responseText);
+}
+   
 function prepare_helper_functions()
 {
    var re_namespace_prefix = /^xmlns(:(.*))?$/;
@@ -223,7 +250,7 @@ function prepare_xhr_functions()
             def_headers.slice(ndx,1);
       }
    };
-   
+
    function check_xhr(xhr, callback, cb_failed)
    {
       if (xhr.readyState==4)
@@ -242,7 +269,7 @@ function prepare_xhr_functions()
             else if (cb_failed)
                cb_failed(xhr);
             else
-               alert(xhr.responseText);
+               report_responseText(xhr);
          }
          
          setTimeout(f);
@@ -394,7 +421,7 @@ function prepare_get_doc_functions()
    
    if (dom_parser)
    {
-      parseXML = function(str,ns) { return dom_parser.parseFromString(str); };
+      parseXML = function(str,ns) { return dom_parser.parseFromString(str, "text/xml"); };
    }
    else if ("ActiveXObject" in window)
    {
@@ -550,7 +577,7 @@ function prepare_getDocument_functions()
       function get_error(xhr)
       {
          if (!xhr.responseXML)
-            alert(xhr.responseText);
+            report_responseText(xhr);
          call_callback();
       }
       
