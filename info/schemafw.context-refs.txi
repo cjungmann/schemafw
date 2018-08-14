@@ -1,0 +1,19 @@
+@node Context References
+@chapter Context References
+
+A Schema Framework @dfn{context reference} is a special notation
+in an SRM instruction that will be replaced with the value of the
+target it names.
+
+@example
+list
+   type : table
+   procedure : App_Person_List
+   on-line-click : ?edit&lname=@{!lname@}
+
+edit
+   type : form-edit
+   schema-proc : App_Person_List
+   procedure   : App_Person_Value
+   title : 
+@end example
