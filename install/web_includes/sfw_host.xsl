@@ -119,10 +119,23 @@
     <xsl:variable name="dtitle" select="/*[not($rtitle|$stitle)]/@title" />
     <xsl:variable name="ltitle" select="$rtitle|$stitle|$dtitle" />
 
+    <xsl:variable name="rstitle" select="@subtitle" />
+    <xsl:variable name="sstitle" select="$lschema[not($rstitle)]/@subtitle" />
+    <xsl:variable name="dstitle" select="/*[not($rstitle|$sstitle)]/@subtitle" />
+    <xsl:variable name="lstitle" select="$rstitle|$sstitle|$dstitle" />
+
     <xsl:if test="$ltitle">
       <xsl:call-template name="construct_title">
         <xsl:with-param name="str" select="$ltitle" />
       </xsl:call-template>
+    </xsl:if>
+
+    <xsl:if test="$lstitle">
+      <h3>
+        <xsl:call-template name="resolve_refs">
+          <xsl:with-param name="str" select="$lstitle" />
+        </xsl:call-template>
+      </h3>
     </xsl:if>
   </xsl:template>
 
@@ -156,6 +169,9 @@
     <xsl:param name="view" />
     <nav class="views">
       <h2><xsl:value-of select="$view/@title" /></h2>
+      <xsl:if test="$view/@subtitle">
+        <h3><xsl:value-of select="$view/@subtitle" /></h3>
+      </xsl:if>
       <xsl:apply-templates select="view" mode="add_choice">
         <xsl:with-param name="current" select="$view" />
       </xsl:apply-templates>
