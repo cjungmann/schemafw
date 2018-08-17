@@ -527,7 +527,13 @@
     </xsl:variable>
 
     <xsl:variable name="is_end" select="$skiplen &gt;= string-length($str)" />
-    <xsl:variable name="trimmed" select="normalize-space($val)" />
+
+    <!-- Preserve one of trailing spaces by terminating with non-space
+         before normalize-space, then removing the terminating character. -->
+    <xsl:variable name="trimmed">
+      <xsl:variable name="extra" select="normalize-space(concat($val,'#'))" />
+      <xsl:value-of select="substring($extra,0,string-length($extra))" />
+    </xsl:variable>
 
     <xsl:choose>
       <xsl:when test="$enclose">
@@ -541,7 +547,7 @@
       </xsl:when>
       <xsl:otherwise>
         <xsl:if test="not($is_end) or string-length($trimmed)"> 
-          <xsl:value-of select="normalize-space($val)" />
+          <xsl:value-of select="$trimmed" />
         </xsl:if>
       </xsl:otherwise>
     </xsl:choose>
