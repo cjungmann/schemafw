@@ -206,11 +206,16 @@ fieldset.Schema label button { margin-right: .25em; }
 fieldset.Schema label::after {content : ":"}
 fieldset.Schema p.buttons { display:block; text-align:center; margin-bottom:.25em; }
 fieldset.Schema input.Embedded { display:none; }
+fieldset.Schema p.form-row { display: block; text-align:left; }
+fieldset.Schema p.form-row * { display : block; text-align:left; }
+/* fieldset.Schema p.form-row { display: table-row; } */
+/* fieldset.Schema p.form-row * { display : table-cell; } */
 
 form.Moveable legend       { cursor: pointer; }
 form.Moveable legend:hover { background-color:#CCCCCC; }
 
 form.Schema td { vertical-align:top; }
+
 
 /* ul selection styles */
 ul.ulselect { list-style:none; padding:0; min-width:16em; }
