@@ -68,6 +68,13 @@
     <xsl:param name="primary" />
     <xsl:apply-templates select="/*" mode="make_schemafw_meta" />
 
+    <xsl:variable name="cprimary">
+      <xsl:choose>
+        <xsl:when test="$primary"><xsl:value-of select="$primary" /></xsl:when>
+        <xsl:when test="$mode-type='form-page'"><xsl:value-of select="true()" /></xsl:when>
+      </xsl:choose>
+    </xsl:variable>
+
     <xsl:choose>
       <xsl:when test="$err_condition&gt;0">
         <xsl:call-template name="display_error" />
@@ -80,12 +87,12 @@
       </xsl:when>
       <xsl:when test="$gschema">
         <xsl:apply-templates select="$gschema" mode="construct_form">
-          <xsl:with-param name="primary" select="$primary" />
+          <xsl:with-param name="primary" select="$cprimary" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:when test="$gresult">
         <xsl:apply-templates select="$gresult" mode="result_fill_host">
-          <xsl:with-param name="primary" select="$primary" />
+          <xsl:with-param name="primary" select="$cprimary" />
         </xsl:apply-templates>
       </xsl:when>
     </xsl:choose>
