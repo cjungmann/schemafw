@@ -76,6 +76,9 @@
     <xsl:choose>
     <xsl:when test="$err_condition=0">
       <xsl:choose>
+        <xsl:when test="@mode-type='form-jump'">
+          <xsl:apply-templates select="*[@rndx=1]" mode="fill_head" />
+        </xsl:when>
         <xsl:when test="@meta-jump">
           <xsl:apply-templates select="@meta-jump" mode="fill_head" />
         </xsl:when>
@@ -106,6 +109,22 @@
       <xsl:value-of select="concat('location.replace(&quot;',$url,'&quot;);')" />
     </script>
     <xsl:value-of select="$nl" />
+  </xsl:template>
+
+  <xsl:template match="*[@rndx=1]" mode="fill_head">
+    <xsl:variable name="row" select="*[local-name()=../@row-name][1]" />
+    <xsl:variable name="tname" select="concat('jump',$row/@error)" />
+    <xsl:variable name="target" select="jumps/@*[local-name()=$tname]" />
+    <xsl:if test="$target">
+      <xsl:call-template name="meta-jump">
+        <xsl:with-param name="url">
+          <xsl:call-template name="resolve_refs">
+            <xsl:with-param name="str" select="$target" />
+          </xsl:call-template>
+        </xsl:with-param>
+        <xsl:with-param name="wait" select="2" />
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="@meta-jump" mode="fill_head">
