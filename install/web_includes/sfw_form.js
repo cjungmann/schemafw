@@ -330,6 +330,7 @@
 
    // With _form prototype complete, we can derive other classes from it:
    if(!SFW.derive(_form_new, "form-new", "form") ||
-      !SFW.derive(_form_edit, "form-edit", "form"))
+      !SFW.derive(_form_edit, "form-edit", "form") ||
+      !SFW.derive(_form_edit, "form-page", "form"))
       return;
 })();
