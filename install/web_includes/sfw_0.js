@@ -424,8 +424,19 @@ function init_SFW(callback)
    function _seek_event_object(t)
    {
       var actors = _seek_event_actors(t);
-      if (actors && actors.iclass in SFW.types)
-         return new SFW.types[actors.iclass](actors);
+      if (actors)
+      {
+         var iclass=actors.iclass
+         if (iclass in SFW.types)
+            return new SFW.types[iclass](actors);
+         else
+         {
+            SFW.alert("iclass '" + iclass + "' is not registered in SFW.types.");
+
+            // Squelch further warnings:
+            SFW.derive(_base, iclass, "iclass");
+         }
+      }
       return null;
    }
 
@@ -438,7 +449,7 @@ function init_SFW(callback)
    {
       if (!(name in SFW.types))
       {
-         _alert("Base class \"" + name + "\" is undefined.");
+         SFW.alert("Base class \"" + name + "\" is undefined.");
          return false;
       }
       return true;
@@ -448,7 +459,7 @@ function init_SFW(callback)
    {
       if (name in SFW.types)
       {
-         _alert("IClass \"" + name + "\" is already defined.");
+         SFW.alert("IClass \"" + name + "\" is already defined.");
          return false;
       }
       return true;
@@ -854,6 +865,9 @@ function init_SFW(callback)
 
          return false;
       }
+
+      if (e.type!="focus")
+         1==1;
 
       var obj = _seek_event_object(t);
       if (obj)
@@ -1607,7 +1621,7 @@ function init_SFW(callback)
          }
       }
 
-      _alert( "Object " + ("class_name" in p ? p.class_name  : "") + "\n"
+      SFW.alert( "Object " + ("class_name" in p ? p.class_name  : "") + "\n"
              + (arrF.length ? ("Functions\n   " + arrF.join("\n   ")) : "")
              + (arrO.length ? ("\nObjects\n   " + arrO.join("\n   ")) : "")
              + (arrS.length ? ("\nStrings\n   " + arrS.join("\n   ")) : "")
@@ -2231,7 +2245,7 @@ function init_SFW(callback)
       child.sfw_close(); 
    };
 
-   _base.prototype.update_contents = function(newdoc,type,child) {_alert("missing update_contents()");};
+   _base.prototype.update_contents = function(newdoc,type,child) {SFW.alert("missing update_contents()");};
 
    /**
     * It's a bit confusing, but *this* is the object that must be updated,
