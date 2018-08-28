@@ -201,7 +201,9 @@
   </xsl:template>
 
   <xsl:template match="navigation/target" mode="header">
-    <a href="{@url}"><xsl:value-of select="@label" /></a>
+    <a href="{@url}">
+      <xsl:apply-templates select="@label" mode="resolve_refs" />
+    </a>
   </xsl:template>
 
   <xsl:template match="/*/navigation" mode="header">
