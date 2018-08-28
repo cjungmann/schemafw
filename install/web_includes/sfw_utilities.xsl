@@ -23,6 +23,9 @@
   <xsl:import href="sfw_variables.xsl" />
 
   <xsl:variable name="vars" select="/*/*[@rndx][@type='variables']" />
+  <xsl:variable
+      name="alt_vars"
+      select="/*/*[@rndx][not(@type)][count(*[local-name()=../@row-name])=1]" />
 
 
   <xsl:template match="*[@rndx]" mode="get_idname">
@@ -582,11 +585,11 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="*[@rndx][@type='variables']" mode="get_var_value">
+  <xsl:template match="*[@rndx]" mode="get_var_value">
     <xsl:param name="name" />
     <xsl:variable name="row" select="*[local-name()=current()/@row-name]" />
     <xsl:if test="$row">
-      <xsl:variable name="val" select="$row/@*[local-name()=$name]" />
+      <xsl:variable name="val" select="$row[1]/@*[local-name()=$name]" />
       <xsl:if test="$val">
         <xsl:value-of select="$val" />
       </xsl:if>
@@ -595,9 +598,23 @@
 
   <xsl:template name="get_var_value">
     <xsl:param name="name" />
-    <xsl:apply-templates select="$vars" mode="get_var_value">
-      <xsl:with-param name="name" select="$name" />
-    </xsl:apply-templates>
+
+    <xsl:variable name="prime">
+      <xsl:apply-templates select="$vars" mode="get_var_value">
+        <xsl:with-param name="name" select="$name" />
+      </xsl:apply-templates>
+    </xsl:variable>
+
+    <xsl:choose>
+      <xsl:when test="string-length($prime)">
+        <xsl:value-of select="$prime" />
+      </xsl:when>
+      <xsl:when test="count($alt_vars) &gt; 0">
+        <xsl:apply-templates select="$alt_vars" mode="get_var_value">
+          <xsl:with-param name="name" select="$name" />
+        </xsl:apply-templates>
+      </xsl:when>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template match="*" mode="get_value_from_row">
