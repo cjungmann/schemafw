@@ -12,9 +12,20 @@ Replaces the token with the value of the named attribute in
 the currently-selected row.  This reference only makes sense
 in a selected line context like @command{on-line-click}.
 @item $ (variable reference)
-Replaces the token with the value of a variable with the
-same name.  (What happens if multiple variable groups
-have a variable with the same name?)
+Replaces the token with the value of a variable with the same name.
+
+The primary search looks for the value in results of type @emph{variables},
+then, failing that, the framework makes a backup search into any un-typed
+result with a single result row.
+
+In all cases, if more than one result contains the target value, only
+the first result is used.
+
+@strong{NOTE:} with the backup variable match, it's possible that
+an inappropriate match will be made.  Prevent the inappropriate match
+by adding a @emph{result} branch with an explicit @emph{type} instruction
+to remove that result from consideration for a backup variable search.
+
 @item @@ (form data result)
 Replaces the token with an attribute value of a form
 data section. (Confirm how this is restricted or not).
