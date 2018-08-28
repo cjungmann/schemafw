@@ -515,49 +515,42 @@
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:variable name="skiplen">
+    <xsl:variable name="after">
       <xsl:choose>
         <xsl:when test="string-length($raw_ref) &gt; 0">
-          <xsl:value-of select="string-length($raw_ref)+4" />
+          <xsl:value-of select="substring($str,string-length($raw_ref)+4)" />
         </xsl:when>
-        <xsl:when test="$len_before">
-          <xsl:value-of select="$len_before+1" />
+        <xsl:when test="$len_before &gt; 0">
+          <xsl:value-of select="substring($str,($len_before)+1)" />
         </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="string-length($str)" />
-        </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:variable name="is_end" select="$skiplen &gt;= string-length($str)" />
-
-    <!-- Preserve one of trailing spaces by terminating with non-space
-         before normalize-space, then removing the terminating character. -->
+    <!-- Preserve and compress, if necessary, spaces on either end of the string,
+         by surrounding the string with #s and removing them afterwards: -->
     <xsl:variable name="trimmed">
-      <xsl:variable name="extra" select="normalize-space(concat($val,'#'))" />
-      <xsl:value-of select="substring($extra,0,string-length($extra))" />
+      <xsl:variable name="extra" select="normalize-space(concat('#',$val,'#'))" />
+      <xsl:value-of select="substring($extra,2,string-length($extra) - 2)" />
     </xsl:variable>
 
-    <xsl:choose>
-      <xsl:when test="$enclose">
-        <xsl:if test="string-length($ref) or string-length($trimmed)">
+    <xsl:if test="string-length($trimmed) &gt; 0">
+      <xsl:choose>
+        <xsl:when test="$enclose">
           <xsl:call-template name="enclose_val">
             <xsl:with-param name="str" select="$trimmed" />
             <xsl:with-param name="tag" select="$enclose" />
             <xsl:with-param name="hints" select="$ref_hints" />
           </xsl:call-template>
-        </xsl:if>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:if test="not($is_end) or string-length($trimmed)"> 
+        </xsl:when>
+        <xsl:otherwise>
           <xsl:value-of select="$trimmed" />
-        </xsl:if>
-      </xsl:otherwise>
-    </xsl:choose>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
 
-    <xsl:if test="not($is_end)">
+    <xsl:if test="string-length($after) &gt; 0">
       <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str" select="substring($str, $skiplen)" />
+        <xsl:with-param name="str" select="$after" />
         <xsl:with-param name="row" select="$row" />
         <xsl:with-param name="enclose" select="$enclose" />
       </xsl:call-template>
