@@ -266,10 +266,18 @@ function prepare_xhr_functions()
                if (callback)
                   callback(doc);
             }
-            else if (cb_failed)
-               cb_failed(xhr);
             else
-               report_responseText(xhr);
+            {
+               if (xhr.responseText.substring(0,5)=="<?xml")
+               {
+                  console.error("Invalid XML document.");
+                  report_responseText(xhr);
+               }
+               else if (cb_failed)
+                  cb_failed(xhr);
+               else
+                  report_responseText(xhr);
+            }
          }
          
          setTimeout(f);
