@@ -1025,7 +1025,7 @@ function init_SFW(callback)
       return url;
    }
 
-   var reRplRowVals = /\{\!([^\}]+)\}/;
+   var reRplRowVals = /\{\!([^\}]+)\}/g;
 
    function _apply_row_context(url, row)
    {
@@ -1033,7 +1033,7 @@ function init_SFW(callback)
       {
          var aval = row.getAttribute(sub);
          if (aval)
-            return aval;
+            return encodeURIComponent(aval);
          else
          {
             console.error("Unable to find attribute " + matches[1]);
