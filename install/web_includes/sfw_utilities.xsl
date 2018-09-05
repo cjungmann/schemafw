@@ -21,6 +21,7 @@
 
   <xsl:import href="sfw_generics.xsl" />
   <xsl:import href="sfw_variables.xsl" />
+  <xsl:import href="sfw_uuescape.xsl" />
 
   <xsl:variable name="vars" select="/*/*[@rndx][@type='variables']" />
   <xsl:variable
@@ -157,8 +158,10 @@
 
     <xsl:if test="$excl='1'">!</xsl:if>
     <xsl:value-of select="$pre" />
+
     <xsl:call-template name="resolve_refs">
       <xsl:with-param name="str" select="substring(.,$strpos)" />
+      <xsl:with-param name="escape" select="1" />
     </xsl:call-template>
   </xsl:template>
   
@@ -447,6 +450,7 @@
     <xsl:param name="str" />
     <xsl:param name="row" select="/.." />
     <xsl:param name="enclose" />
+    <xsl:param name="escape" />
 
     <!-- The 'delim' is the character just after the { that
          indicates how the following work is interpreted. -->
@@ -479,25 +483,25 @@
     <xsl:variable name="s_ref" select="substring($raw_ref,1 div boolean(string-length($b_ref)=0))" />
     <xsl:variable name="ref" select="concat($b_ref, $s_ref)" />
 
-    <xsl:variable name="val">
+    <xsl:variable name="pval">
       <xsl:choose>
         <xsl:when test="$len_before">
           <xsl:value-of select="$before" />
         </xsl:when>
         <xsl:when test="string-length($ref)">
-          <xsl:variable name="type" select="substring($str,2,1)" />
+          <xsl:variable name="type" select="substring($str,1,2)" />
           <xsl:choose>
-            <xsl:when test="$type='$'">
+            <xsl:when test="$type='{$'">
               <xsl:call-template name="get_var_value">
                 <xsl:with-param name="name" select="$ref" />
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$type='@'">
+            <xsl:when test="$type='{@'">
               <xsl:call-template name="get_data_value">
                 <xsl:with-param name="name" select="$ref" />
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$type='!'">
+            <xsl:when test="$type='{!'">
               <xsl:choose>
                 <xsl:when test="$row">
                   <xsl:apply-templates select="$row" mode="get_value_from_row">
@@ -512,6 +516,18 @@
           </xsl:choose>
         </xsl:when>
         <xsl:otherwise><xsl:value-of select="$str" /></xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:variable name="val">
+      <xsl:choose>
+        <!-- if in escape mode, replace references will be URL-escaped -->
+        <xsl:when test="$escape='1' and string-length($raw_ref) and contains('$@',substring($delim,2,1))">
+          <xsl:call-template name="uuescape">
+            <xsl:with-param name="str" select="$pval" />
+          </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise><xsl:value-of select="$pval" /></xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
 
@@ -553,13 +569,16 @@
         <xsl:with-param name="str" select="$after" />
         <xsl:with-param name="row" select="$row" />
         <xsl:with-param name="enclose" select="$enclose" />
+        <xsl:with-param name="escape" select="$escape" />
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
 
   <xsl:template match="@*" mode="resolve_refs">
+    <xsl:param name="escape" />
     <xsl:call-template name="resolve_refs">
       <xsl:with-param name="str" select="." />
+      <xsl:with-param name="escape" select="$escape" />
     </xsl:call-template>
   </xsl:template>
 
