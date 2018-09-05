@@ -102,7 +102,14 @@
     <xsl:param name="url" select="'/'" />
     <xsl:param name="wait" select="0" />
 
-    <xsl:variable name="content" select="concat($wait,'; url=', $url)" />
+    <xsl:variable name="res_url">
+      <xsl:call-template name="resolve_refs">
+        <xsl:with-param name="str" select="$url" />
+        <xsl:with-param name="escape" select="1" />
+      </xsl:call-template>
+    </xsl:variable>
+
+    <xsl:variable name="content" select="concat($wait,'; url=', $res_url)" />
     <meta http-equiv="refresh" content="{$content}" />
 
     <script type="text/javascript">
@@ -111,17 +118,16 @@
     <xsl:value-of select="$nl" />
   </xsl:template>
 
+  <!-- Calls to meta-jump template need not resolve URL references
+       because meta-jump does it just before creating the meta element. -->
+
   <xsl:template match="*[@rndx=1]" mode="fill_head">
     <xsl:variable name="row" select="*[local-name()=../@row-name][1]" />
     <xsl:variable name="tname" select="concat('jump',$row/@error)" />
     <xsl:variable name="target" select="jumps/@*[local-name()=$tname]" />
     <xsl:if test="$target">
       <xsl:call-template name="meta-jump">
-        <xsl:with-param name="url">
-          <xsl:call-template name="resolve_refs">
-            <xsl:with-param name="str" select="$target" />
-          </xsl:call-template>
-        </xsl:with-param>
+        <xsl:with-param name="url" select="$target" />
         <xsl:with-param name="wait" select="2" />
       </xsl:call-template>
     </xsl:if>
@@ -135,9 +141,7 @@
 
   <xsl:template match="meta-jump" mode="fill_head">
     <xsl:call-template name="meta-jump">
-      <xsl:with-param name="url">
-        <xsl:apply-templates select="@url" mode="resolve_refs" />
-      </xsl:with-param>
+      <xsl:with-param name="url" select="@url" />
       <xsl:with-param name="wait" select="@wait" />
     </xsl:call-template>
   </xsl:template>
@@ -146,9 +150,13 @@
     <xsl:if test="$err_condition=0">
       <xsl:choose>
         <xsl:when test="@meta-jump">
+          <xsl:variable name="url">
+            <xsl:apply-templates select="@meta-jump" mode="resolve_url " />
+          </xsl:variable>
+          
           <script type="text/javascript">
             <xsl:text>location.replace(&quot;</xsl:text>
-            <xsl:value-of select="@meta-jump" />
+            <xsl:value-of select="$url" />
             <xsl:text>&quot;);</xsl:text>
           </script>
         </xsl:when>
@@ -201,9 +209,13 @@
   </xsl:template>
 
   <xsl:template match="navigation/target" mode="header">
-    <a href="{@url}">
-      <xsl:apply-templates select="@label" mode="resolve_refs" />
-    </a>
+      <xsl:variable name="url">
+        <xsl:apply-templates select="@url" mode="resolve_url" />
+      </xsl:variable>
+
+      <a href="{$url}">
+        <xsl:apply-templates select="@label" mode="resolve_refs" />
+      </a>
   </xsl:template>
 
   <xsl:template match="/*/navigation" mode="header">
