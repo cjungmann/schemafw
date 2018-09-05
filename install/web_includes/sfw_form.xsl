@@ -278,7 +278,9 @@
           <xsl:element name="button">
             <xsl:attribute name="type">button</xsl:attribute>
             <xsl:attribute name="data-url">
-              <xsl:apply-templates select="@on_field_click" mode="resolve_refs" />
+              <xsl:apply-templates select="@on_field_click" mode="resolve_refs">
+                <xsl:with-param name="escape" select="1" />
+              </xsl:apply-templates>
             </xsl:attribute>
             <xsl:text>Edit</xsl:text>
           </xsl:element>
@@ -300,7 +302,9 @@
             </xsl:when>
             <xsl:when test="@manage">
               <xsl:variable name="manage">
-                <xsl:apply-templates select="@manage" mode="resolve_refs" />
+                <xsl:apply-templates select="@manage" mode="resolve_refs">
+                  <xsl:with-param name="escape" select="1" />
+                </xsl:apply-templates>
               </xsl:variable>
               <button type="button"
                       data-type="view"
