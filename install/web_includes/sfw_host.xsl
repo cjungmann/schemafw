@@ -177,7 +177,7 @@
     <nav class="views">
       <h2><xsl:value-of select="$view/@title" /></h2>
       <xsl:if test="$view/@subtitle">
-        <h3><xsl:value-of select="$view/@subtitle" /></h3>
+        <h3><xsl:apply-templates select="$view/@subtitle" mode="resolve_refs" /></h3>
       </xsl:if>
       <xsl:apply-templates select="view" mode="add_choice">
         <xsl:with-param name="current" select="$view" />
