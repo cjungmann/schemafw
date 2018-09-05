@@ -151,7 +151,7 @@
       <xsl:choose>
         <xsl:when test="@meta-jump">
           <xsl:variable name="url">
-            <xsl:apply-templates select="@meta-jump" mode="resolve_url " />
+            <xsl:apply-templates select="@meta-jump" mode="resolve_url" />
           </xsl:variable>
           
           <script type="text/javascript">
