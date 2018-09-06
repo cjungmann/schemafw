@@ -1477,8 +1477,34 @@ function init_SFW(callback)
          if (SFW.check_for_preempt(xdoc))
          {
             SFW.update_xsl_keys(xdoc);
+            var modetype = xdoc.documentElement.getAttribute("mode-type");
 
-            if (xdoc.documentElement.getAttribute("mode-type")=="merge")
+            if (modetype=="form-jump")
+            {
+               var root="Mode-type form-jump failed to find the ";
+               var result=xdoc.selectSingleNode("/*/*[@rndx][jumps]");
+               if (result)
+               {
+                  var row=result.selectSingleNode("*[local-name()=../@row-name][@error]");
+                  if (row)
+                  {
+                     var xpath="jumps/@jump" + row.getAttribute("error");
+                     var destination=result.selectSingleNode(xpath);
+                     if (destination)
+                        window.location = destination.value;
+                     else
+                        console.error(root+"destination.");
+                  }
+                  else
+                     console.error(root+"error attribute.");
+               }
+               else
+                  console.error(root+"jumps element.");
+
+               return;
+            }
+
+            if (modetype=="merge")
             {
                // Copy new stuff into page document so the new
                // stuff can access common data residing in the
@@ -1495,6 +1521,7 @@ function init_SFW(callback)
                else
                   console.error("Can't find caller document for xdoc merging.");
             }
+
             _render_interaction(xdoc, host, caller, data);
          }
       }
