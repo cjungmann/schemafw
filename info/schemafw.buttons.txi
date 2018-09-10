@@ -1,0 +1,138 @@
+@node Buttons
+@chapter Buttons
+
+A button is a universal metaphor for a trigger to begin an action.  This
+framework provides a variety of button definitions in order to satisfy
+a developer's creativity.
+
+@menu
+* Canned Buttons::
+* Custom Buttons::
+@end menu
+
+@node Canned Buttons
+@section Canned Buttons
+
+The framework provides some buttons that trigger specific actions
+associated with common interactions.  The @code{add} button works with
+a table interaction to create new records.  The @code{delete} button
+is often added to an edit interation to indicate that the record
+should be deleted.
+
+These canned buttons are provided because they perform multiple steps
+with their action.
+
+@subsubheading Add Button
+
+This button is special because it preserves the current interaction
+context, displaying a dialog for entering information about a new
+record.  Upon a successful submission of the new record information,
+the framework adds the new record to the table interaction.
+
+@example
+list
+   type          : table
+   procedure     : App_Item_List
+   on_line_click : ?edit
+   result
+      button
+         type  : add
+         label : Add Item
+         url   : ?add
+@end example
+
+@subsubheading Delete Button
+
+Like the @code{add} button, The @code{delete} button is a multiple-step
+button.  It optionally presents the user with a confirmation dialog prior
+to continuing with this often unreversable action.  After a successful
+submission of the delete request, the framework can remove the target
+row from the table interaction (from which the edit dialog was generated).
+
+Notice the @ref{Context References, refs} in the @code{label},
+@code{confirm}, and @code{url} instructions.  They are form data
+references (@{@@ introduces a data reference) that are used here to
+give helpful context-specific prompts to give the user additional hints
+about what is about to happen.
+
+@example
+edit
+   type        : form-edit
+   schema-proc : App_Item_Update
+   procedure   : App_Item_Read
+   form-action : ?edit_submit
+   result
+      button
+         type    : delete
+         label   : Delete @{@@name@}?
+         confirm : Confirm delete @{@@name@}.
+         url     : ?delete&id=@{@@id@}&name=@{@@name@}
+@end example
+
+@node Custom Buttons
+@section Custom Buttons
+
+Custom buttons trigger actions that are independent of the current
+context.  The button will have a context because it is generated due to
+instructions in a response mode, there is no built-in context.
+
+@menu
+* Custom Call Button::
+* Custom Jump Button::
+* Custom Open Button::
+@end menu
+
+@node Custom Call Button
+@subsection Custom Call Button
+
+This button will trigger a call to a Javascript function.  Typically,
+the function be defined in the application's custom code.
+
+@example
+list
+   type      : table
+   procedure : App_Item_List
+   button
+      type  : call
+      label : Initiate Chat Help
+      task  : initiate_chat_help
+@end example
+
+
+@node Custom Jump Button
+@subsection Custom Jump Button
+
+This button initiates an immediate jump to a new page.
+
+@example
+list
+   type      : table
+   procedure : App_Item_List
+   button
+      type  : jump
+      label : Read the Latest Depressing News
+      url   : www.cnn.com
+@end example
+
+@node Custom Open Button
+@subsection Custom Open Button
+
+This button covers the current context with a new context according
+to the response mode type.  The target of this button should be a
+response mode in the current application.
+
+In the following example, the button will cause a new dialog to be
+displayed, as defined in the @code{change_password} response mode
+of the @file{login.srm} file.
+
+@example
+list
+   type      : table
+   procedure : App_Item_List
+   button
+      type  : open
+      label : Change the Password
+      url   : login.srm?change_password
+@end example
+
+

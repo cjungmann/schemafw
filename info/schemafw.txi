@@ -45,6 +45,7 @@ production.
 * Forms::
 * Interactions::
 * Context References::
+* Buttons::
 @end menu
 
 @node Introduction
@@ -58,5 +59,6 @@ provided by @code{schema.fcgi} server object.
 @include schemafw.forms.txi
 @include schemafw.interactions.txi
 @include schemafw.context-refs.txi
+@include schemafw.buttons.txi
 
 @bye
