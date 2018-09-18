@@ -8,6 +8,7 @@ a developer's creativity.
 @menu
 * Canned Buttons::
 * Custom Buttons::
+* Skippable Buttons::
 @end menu
 
 @node Canned Buttons
@@ -135,4 +136,74 @@ list
       url   : login.srm?change_password
 @end example
 
+
+@node Skippable Buttons
+@section Skippable Buttons
+
+Sometimes a button should be conditionally included in an
+interaction.  For example, on an import that may introduce
+duplicate records, it may make sense to ask the user if the
+duplicate records should be omitted from the import.  However,
+the question, in button form, should only be included on the
+interaction if duplicate records were detected.
+
+There are two parts to this button type.  First, the button
+must be defined with a @code{no_add} flag set.  Second, the
+application must include a template that matches the button
+and returns 1 to include the button and 0 to skip the button.
+
+In the following example, pay attention to the second button,
+which includes the @code{no_add} flag.
+
+@example
+import-review
+   type : import-review
+   procedure : App_Item_Import_Review
+   button
+      type  : jump
+      label : Accept
+      url   : ?accept
+   button
+      type   : jump
+      label  : Accept but Skip New Keywords
+      url    : ?accept_no_new
+      no_add : skip_dups
+   button
+      type   : jump
+      label  : Abandon
+      url    : abandon
+   result
+      name : import_item_review
+   result
+      name : keywords
+@end example
+
+The @code{no_add} instruction is a simple flag in that the framework
+will notice that the flag is set and initiate the omission test.
+
+Although any value for @code{no_add} prompts the test, the value of
+the flag can be used to help identify the button for the omission test.
+
+In order for skip to work, a template must match the button
+and return a value.  This code can be inserted directly into the
+@file{default.xsl} stylesheet, or included from another file
+with a @code{<xsl:include} instruction.
+
+@example
+<xsl:template match="button[@@no_add='skip_dups'][../import_item_review]" mode="skip_check">
+  <xsl:variable name="dup_count" select="count(../keywords/row[@@id_keyword])" />
+  <xsl:choose>
+     <xsl:when test="$dup_count=0">1</xsl:when>
+     <xsl:otherwise>0</xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+@end example
+
+Notice how the template matches on two facts, the @code{@@no_add} value
+and the existence of a named result element.  Once matched, the
+template determines if the button should be included.  In this example,
+the keyword elements of the import list include a @code{id_keyword}
+attribute if the keyword already exists in the database.  If there are
+no keyword elements with a @code{id_keyword} attribute, there are no
+duplicates, and thus, a button to exclude duplicates is not necessary.
 
