@@ -673,6 +673,19 @@ function init_SFW(callback)
 
          if (e.type=="keydown")
          {
+            var kcode=_keycode_from_event(e);
+            var key_y=89, key_u=85;
+            if (e.ctrlKey && e.altKey && (kcode==key_y || kcode==key_y))
+            {
+               if (e.shiftKey)
+                  _remove_string_pres();
+               else if (kcode==key_y)
+                     _show_string_in_pre(serialize(SFW.xsldoc));
+               else
+                     _show_string_in_pre(serialize(SFW.xmldoc));
+               return true;
+            }
+
             var host, obj;
             if ((host=_get_last_SFW_Host()) && (obj=_get_object_from_host(host)))
                return _process_host_keydown(e, host,obj);
