@@ -90,9 +90,6 @@ div.message p.type { text-align:center; text-weight:bold; font-size:larger; bord
 table.Schema { border-collapse:collapse; border-spacing:0; background-color: #FFFFFF;}
 table.Schema { margin:0 auto; padding:0; }
 
-table.Schema thead { padding:8px border:solid 4px yellow; }
-
-
 table.Schema td, table.Schema th
 {
     padding:4px;
@@ -213,7 +210,7 @@ fieldset.Schema label::after {content : ":"}
 fieldset.Schema p.buttons { display:block; text-align:center; margin-bottom:.25em; }
 fieldset.Schema input.Embedded { display:none; }
 fieldset.Schema p.form-row { display: block; text-align:left; }
-fieldset.Schema p.form-row * { display : block; text-align:left; }
+fieldset.Schema p.form-row label { display : block; text-align:left; }
 /* fieldset.Schema p.form-row { display: table-row; } */
 /* fieldset.Schema p.form-row * { display : table-cell; } */
 
