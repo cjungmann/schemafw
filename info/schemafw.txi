@@ -42,10 +42,12 @@ production.
 @contents
 @menu
 * Introduction::
+* Installation::       Install the framework, install to new sites
 * Forms::
 * Interactions::
 * Context References::
 * Buttons::
+* Debugging::
 @end menu
 
 @node Introduction
@@ -54,11 +56,28 @@ production.
 The Schema Framework is a client and consumer of the services
 provided by @code{schema.fcgi} server object.
 
+@node Installation
+@chapter Installation
 
+Clone the project onto the web server:
+@example
+$ git clone https://github.com/cjungmann/schemafw.git
+@end example
+
+For each site, change to the directory to which the Apache configuration
+file setting  @strong{DocumentRoot} refers, then make a copy of the
+@file{default.xsl} file and a symbolic link to the library of scripts:
+
+@example
+$ cd /var/www/MyWebApp/site
+$ sudo cp /usr/local/lib/schemafw/default.xsl .
+$ sudo ln -s /usr/local/lib/schemafw/web_includes includes
+@end example
 
 @include schemafw.forms.txi
 @include schemafw.interactions.txi
 @include schemafw.context-refs.txi
 @include schemafw.buttons.txi
+@include schemafw.debugging.txi
 
 @bye
