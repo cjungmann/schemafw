@@ -174,10 +174,15 @@
 
   <xsl:template name="build_sfw_class_attribute">
     <xsl:param name="schema" select="/.." />
+    <xsl:param name="sfw_class" />
+
     <xsl:attribute name="data-sfw-class">
       <xsl:choose>
+        <xsl:when test="$sfw_class">
+          <xsl:value-of select="$sfw_class" />
+        </xsl:when>
         <xsl:when test="$schema and $schema/@type">
-          <xsl:value-of select="@type" />
+          <xsl:value-of select="$schema/@type" />
         </xsl:when>
         <xsl:when test="$gview and $gview/@type">
           <xsl:value-of select="$gview/@type" />
@@ -194,14 +199,18 @@
   </xsl:template>
 
   <xsl:template match="schema" mode="add_sfw_class_attribute">
+    <xsl:param name="sfw_class" />
     <xsl:call-template name="build_sfw_class_attribute">
       <xsl:with-param name="schema" select="." />
+      <xsl:with-param name="sfw_class" select="$sfw_class" />
     </xsl:call-template>
   </xsl:template>
 
   <xsl:template match="*[@rndx]" mode="add_sfw_class_attribute">
+    <xsl:param name="sfw_class" />
     <xsl:call-template name="build_sfw_class_attribute">
       <xsl:with-param name="schema" select="@schema" />
+      <xsl:with-param name="sfw_class" select="$sfw_class" />
     </xsl:call-template>
   </xsl:template>
 
