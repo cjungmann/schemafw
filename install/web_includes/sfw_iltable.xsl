@@ -20,9 +20,6 @@
     <xsl:variable name="field" select="ancestor::schema/field[@name=local-name(current())]" />
     <xsl:variable name="result" select="/*/*[local-name()=$field/@result][@rndx]" />
 
-    <div>Field = <xsl:value-of select="$field/@name" /> </div>
-    <div>Field/@result = <xsl:value-of select="$field/@result" /> </div>
-
     <xsl:choose>
       <xsl:when test="not($result)">
         <div>Failed to find required result for itable instruction.</div>
@@ -42,43 +39,72 @@
        construct_form_input via
        construct_form
   -->
-  <xsl:template match="field[@type='iltable'][@result]" mode="construct_input">
+  <xsl:template match="schema/field[@type='iltable'][@result]" mode="construct_input">
     <xsl:param name="data" />
 
-    <xsl:variable name="value">
-      <xsl:apply-templates select="." mode="get_value">
-        <xsl:with-param name="data" select="$data" />
-      </xsl:apply-templates>
-    </xsl:variable>
-
     <xsl:variable name="jresult" select="/*/*[local-name()=current()/@result]" />
+    <xsl:variable name="schema" select="$jresult/schema" />
 
-    <xsl:element name="table">
-      <xsl:attribute name="class">iltable</xsl:attribute>
-      <xsl:attribute name="data-sfw-class">iltable</xsl:attribute>
-      <xsl:attribute name="data-sfw-input">input</xsl:attribute>
-      <xsl:attribute name="tabindex">0</xsl:attribute>
+    <div class="SFW_Host" style="position:static">
+      <xsl:element name="table">
+        <xsl:attribute name="class">Schema</xsl:attribute>
+        <xsl:apply-templates select="$schema" mode="add_result_attribute" />
+        <xsl:apply-templates select="$schema" mode="add_sfw_class_attribute">
+          <xsl:with-param name="sfw_class" select="'iltable'" />
+        </xsl:apply-templates>
+        <xsl:apply-templates select="$schema" mode="add_on_click_attributes" />
 
-      <tbody>
-        <xsl:call-template name="transform_associated_references">
-          <xsl:with-param name="result" select="/*/*[local-name()=$jresult/@result]" />
-          <xsl:with-param name="field" select="." />
-          <xsl:with-param name="str" select="$value" />
-        </xsl:call-template>
-      </tbody>
+        <thead>
+          <xsl:apply-templates select="." mode="make_add_button" />
+          <xsl:apply-templates select="$schema" mode="construct_thead_rows" />
+        </thead>
 
-      <tfoot><tr><td colspan="99">
-        <input type="hidden" name="{@name}" value="{$value}" />
-      </td></tr></tfoot>
-    </xsl:element>
+        <tbody>
+          <xsl:apply-templates select="$schema" mode="fill_tbody" />
+        </tbody>
+
+      </xsl:element>
+    </div>
+
+
+    <!-- <div class="SFW_Host" style="position:static"> -->
+    <!--   <xsl:apply-templates select="$jresult" mode="construct_table"> -->
+    <!--     <xsl:with-param name="sfw_class" select="'table'" /> -->
+    <!--   </xsl:apply-templates> -->
+    <!-- </div> -->
+
+    <!-- <xsl:element name="table"> -->
+    <!--   <xsl:attribute name="class">iltable</xsl:attribute> -->
+    <!--   <xsl:attribute name="data-sfw-class">iltable</xsl:attribute> -->
+    <!--   <xsl:attribute name="data-sfw-input">input</xsl:attribute> -->
+    <!--   <xsl:attribute name="tabindex">0</xsl:attribute> -->
+
+    <!--   <tbody> -->
+        
+    <!--     <xsl:call-template name="transform_associated_references"> -->
+    <!--       <xsl:with-param name="result" select="/*/*[local-name()=$jresult/@result]" /> -->
+    <!--       <xsl:with-param name="field" select="." /> -->
+    <!--       <xsl:with-param name="str" select="$value" /> -->
+    <!--     </xsl:call-template> -->
+    <!--   </tbody> -->
+
+    <!-- </xsl:element> -->
   </xsl:template>
 
-  <xsl:template match="field[@type='iltable']" mode="make_add_button">
+  <xsl:template match="schema/field[@type='iltable']" mode="make_add_button"></xsl:template>
+  <xsl:template match="schema/field[@type='iltable'][@on_add]" mode="make_add_button">
     <tr>
       <td colspan="99">
         <button type="button" name="add">+</button>
       </td>
     </tr>
+  </xsl:template>
+
+  <xsl:template match="schema/field[@type='iltable'][@result]" mode="display_value">
+    <xsl:param name="data" />
+    <xsl:apply-templates select="." mode="construct_input">
+      <xsl:with-param name="data" select="$data" />
+    </xsl:apply-templates>
   </xsl:template>
 
   <!--
