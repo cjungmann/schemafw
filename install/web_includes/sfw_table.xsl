@@ -47,6 +47,7 @@
   -->
   <xsl:template match="schema" mode="construct_table">
     <xsl:param name="static" />
+    <xsl:param name="sfw_class" />
 
     <xsl:variable name="class">
       <xsl:text>Schema</xsl:text>
@@ -58,7 +59,9 @@
     <xsl:element name="table">
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:apply-templates select="." mode="add_result_attribute" />
-      <xsl:apply-templates select="." mode="add_sfw_class_attribute" />
+      <xsl:apply-templates select="." mode="add_sfw_class_attribute">
+        <xsl:with-param name="sfw_class" select="$sfw_class" />
+      </xsl:apply-templates>
       <xsl:apply-templates select="." mode="add_on_click_attributes" />
 
       <thead>
@@ -80,9 +83,12 @@
       Pass-through template to provide a result-based entry to construct_table.
   -->
   <xsl:template match="*[@rndx]" mode="construct_table">
+    <xsl:param name="sfw_class" />
     <xsl:choose>
       <xsl:when test="schema">
-        <xsl:apply-templates select="schema" mode="construct_table" />
+        <xsl:apply-templates select="schema" mode="construct_table">
+          <xsl:with-param name="sfw_class" select="$sfw_class" />
+        </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>
         <div>Can't construct a table without a schema</div>
