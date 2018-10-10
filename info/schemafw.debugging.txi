@@ -1,0 +1,57 @@
+@node Debugging
+@chapter Debugging
+
+Depressingly, our programs too often fail to live up to our expectations.
+Detective work is in order for situations where a program is not behaving
+properly.  In other words, debugging.
+
+This chapter will collect debugging tools and techniques as they are used
+and developed.  In the beginning, it will be a short list.  We'll see if
+the list grows.
+
+@menu
+* Viewing Source Documents::  Reveal the underlying XML and XSL documents.
+@end menu
+
+@node Viewing Source Documents
+@section Viewing Source Documents
+
+Sometimes it's a mystery why a certain custom XSL template is not selected.
+In these cases, it can be helpful to confirm that the template is actually
+included in the reconciled stylesheet.
+
+The XSL stylesheet and/or the XML document can be written to the underlying
+page as a @code{<pre>} child element of the @code{<body>} element.  From
+there, the code can be copied to be pasted into a file for study.
+
+@table @strong
+@item Show XSL stylesheet
+Type @key{Control} + @key{Alt} + @key{y}
+@item Show XML document
+Type @key{Control} + @key{Alt} + @key{u}
+@item Remove XSL and/or XML document from body element
+Type @key{Control} + @key{Alt} + @key{Shift} + @key{y} or @key{u}
+@end table
+
+The code in the section is currently in @file{sfw_0.js}, but it occasionally
+disappears when I get worried about performance or code bloat.  It is found
+in a closure function that can be found by searching for @code{function f(ev)},
+then locating the @code{if (e.type=="keydown")} section.  This code should be
+at the top of the keydown section, and, if it's gone missing, it can be
+replaced with the code example below:
+
+@example
+var kcode=_keycode_from_event(e);
+var key_y=89, key_u=85;
+if (e.ctrlKey && e.altKey && (kcode==key_y || kcode==key_y))
+@{
+   if (e.shiftKey)
+      _remove_string_pres();
+   else if (kcode==key_y)
+      _show_string_in_pre(serialize(SFW.xsldoc));
+   else
+      _show_string_in_pre(serialize(SFW.xmldoc));
+
+   return true;
+@}
+@end example
