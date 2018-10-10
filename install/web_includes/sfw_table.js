@@ -126,6 +126,12 @@
       if (!result)
          result = this.result();
 
+      if (!result)
+      {
+         result = this.result();
+         console.error("Unable to find the table schema.");
+      }
+
       function f(el)
       {
          if (el.nodeType==1 && el.tagName.toLowerCase()=="tbody")
@@ -200,7 +206,7 @@
          return false;
 
       var click_info;
-      while (t && t!=table_el)
+      while (t && t.nodeType<4 && t!=table_el)
       {
          if (t.getAttribute("data-id"))
          {
