@@ -291,7 +291,7 @@
       <xsl:choose>
         <xsl:when test="$mode-type='form-view'">
           <div class="field_content">
-            <xsl:apply-templates select="." mode="get_value">
+            <xsl:apply-templates select="." mode="display_value">
               <xsl:with-param name="data" select="$data" />
             </xsl:apply-templates>
           </div>
@@ -338,12 +338,9 @@
 
   <xsl:template match="field" mode="display_value">
     <xsl:param name="data" />
-    <xsl:variable name="val">
-      <xsl:apply-templates select="." mode="get_value">
-        <xsl:with-param name="data" select="$data" />
-      </xsl:apply-templates>
-    </xsl:variable>
-    <xsl:value-of select="$val" />
+    <xsl:apply-templates select="." mode="get_value">
+      <xsl:with-param name="data" select="$data" />
+    </xsl:apply-templates>
   </xsl:template>
 
   <xsl:template match="field[@dtd]" mode="get_list_string">
@@ -564,6 +561,34 @@
     </xsl:element>
   </xsl:template>
 
+
+  <xsl:template match="field[@type='TEXT']" mode="construct_input">
+    <xsl:param name="data" />
+
+    <xsl:variable name="name">
+      <xsl:apply-templates select="." mode="get_name" />
+    </xsl:variable>
+
+    <xsl:variable name="readonly">
+      <xsl:apply-templates select="." mode="check_readonly" />
+    </xsl:variable>
+
+    <xsl:variable name="value">
+      <xsl:apply-templates select="." mode="get_value">
+        <xsl:with-param name="data" select="$data" />
+      </xsl:apply-templates>
+    </xsl:variable>
+
+    <xsl:variable name="rows" select="2" />
+    <xsl:variable name="cols" select="50" />
+
+    <xsl:element name="textarea">
+      <xsl:attribute name="name"><xsl:value-of select="$name" /></xsl:attribute>
+      <xsl:attribute name="rows"><xsl:value-of select="$rows" /></xsl:attribute>
+      <xsl:attribute name="cols"><xsl:value-of select="$cols" /></xsl:attribute>
+      <xsl:value-of select="$value" />
+    </xsl:element>
+  </xsl:template>
 
   <xsl:template match="field[@type='ENUM' or @enum]" mode="construct_input">
     <xsl:param name="data" />
