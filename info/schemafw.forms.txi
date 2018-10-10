@@ -9,13 +9,158 @@ the web server.
 The Schema Framework provides a simple foundation for implementing
 forms.  Developers should be aware that the built-in forms are
 just the start of what is possible.  There are a few specific form
-mode-types (@inforef{Mode Types, Mode Types, schemaserver} for more information),
-that have specific purposes, but beyond them, the developer is
-free to define custom interactions by using custom mode types and
-XSLT templates to interpret them.
+mode-types (@inforef{Mode Types, Mode Types, schemaserver} for more
+information), that have specific purposes, but beyond them, the
+developer is free to define custom interactions by using custom
+mode types and XSLT templates to interpret them.
 
-@ref{Form Interactions}
+@menu
+* Form Fundamentals::
+* Error Message Query::
+* Context Form::
+* Directive Form::
+@end menu
 
+@node Form Fundamentals
+@section Form Fundamentals
 
+In the Schema Framework, there are two basic types of forms,
 
+@table @strong
+@item Context Form
+A context form is a dialog display that is spawned from a data
+display to view or modify data.  The dialog can be an editing
+form for a table line or a subform to change part of a parent
+form.
 
+@item Directive Form
+The directive form is a broad category of forms that request
+and act on information from the user.  The most common examples
+of directive forms are user login and registration pages.
+@end table
+
+@node Error Message Query
+@section Error Message Query
+
+The established pattern for communicating the outcome of a
+procedure is through an @emph{error message query}.  In the
+SQL file, it takes the following form:
+
+@example
+SELECT 0 AS error, 'Success' AS msg;
+@end example
+
+There are two fields in the error message query,
+
+@table @strong
+@item error
+This is an integer indicating the outcome.  Typically, success
+is indicated with an error value of 0, and a failure is non-zero.
+While it may seem strange to indicate success with 0, which in
+other contexts means @code{false}, the main reason for this is
+that failure of a specific action is often the result of one or
+more other failures.  With 0 meaning no error, the non-zero
+@code{error} value can communicate the cause of the failure.
+
+@item msg
+This is a text field that will be presented to the user before
+any action is taken.  Use this field to communicate the nature
+of an error, if any.
+
+@end table
+
+@node Context Form
+@section Context Form
+
+Placeholder section for Context Form.
+
+@node Directive Form
+@section Directive Form
+
+@menu
+* Directive Form Example Login Procedure::
+* Directive Form Example Login Response Mode::
+* Directive Form Other Examples::
+@end menu
+
+The main characteristic of a directive form is that an action
+follows the submission of the form, and that there are usually
+multiple paths that can follow.
+
+An example is a login form.  The result of a login form depends
+on whether or not the credentials are accepted.  The default
+pattern for communicating these intentions is done with the
+@emph{error message query} that follows a main query.
+
+@node Directive Form Example Login Procedure
+@subsection Directive Form Example Login Procedure
+
+The most straighforward example of a directive form is
+a login form.  In most cases, the user should be sent to
+different pages according to whether or not the login
+credentials are accepted.
+
+Notice the @emph{error message queries} that follow the
+credential-checking query.
+
+@example
+CREATE PROCEDURE App_User_Login(handle VARCHAR(20)
+                                password VARCHAR(20)
+BEGIN
+   DECLARE userid INT UNSIGNED;
+
+   SELECT u.id INTO userid
+     FROM User u
+    WHERE u.handle = handle
+      AND u.password = App_Encrypt_Password(password);
+
+  IF userid IS NOT NULL THEN
+     App_Prepare_User_Login(userid);
+     SELECT 0 AS error, 'Success.', AS msg;
+  ELSE
+     SELECT 1 AS error, 'Login failed.' AS msg;
+  END IF;
+END $$
+@end example
+
+The next section will show how the various @emph{error}
+values are used.
+
+@node Directive Form Example Login Response Mode
+@subsection Directive Form Example Login Response Mode
+
+Notice the @emph{jumps} section of the following response
+mode.  The @emph{jump0} and @emph{jump1} correspond to
+the @emph{error} attribute of the result row that was set
+with the @emph{error message query} in the App_User_Login
+procedure.
+
+@example
+login_submit
+   type         : form-jump
+   session-type : establish
+   procedure    : App_User_Login
+   result
+      type : variable
+      jumps
+         jump0: main.srm
+         jump1: ?login
+@end example
+
+In this example, a successful attempt to login will match
+the @emph{jump0} instruction, taking the user to the main
+page.  A failure matches @emph{jump1} and returns to the
+login response mode of the current SRM file.
+
+@node Directive Form Other Examples
+@subsection Directive Form Other Examples
+
+There are other interactions where different inputs may
+dictate a variety of destinations.  For example, a registration
+form may fail because if an already-used handle or if the
+primary password field differs from the confirmation password
+field.  These two errors type suggest sending a different
+message for each error type.  In this case, there could be
+three @emph{error message queries}, one for success (error=0),
+another for a non-unique handle (error=1), and the last for
+mismatched passwords (error=2).
