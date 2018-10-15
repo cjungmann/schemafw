@@ -725,8 +725,28 @@ function get_xml_stylesheet(doc)
    return null;
 }
 
+function display_from_message(msg)
+{
+   var attrs = msg.attributes;
+   var dbody = document.getElementsByTagName("body")[0];
+   var ediv = dbody.appendChild(document.createElement("div"));
+   for (var i=0,stop=attrs.length; i<stop; ++i)
+   {
+      var attr = attrs[i];
+      var eattr = ediv.appendChild(document.createElement("div"));
+      eattr.appendChild(document.createTextNode(attr.name + ": \"" + attr.value + "\""));
+   }
+}
+
 function load_xml_doc(doc)
 {
+   var docel = doc.documentElement;
+   if (docel.localName=="message")
+   {
+      display_from_message(docel);
+      return;
+   }
+
    document.XMLDocument = doc;
 
    // var sspi = doc.selectSingleNode("/processing-instruction('xml-stylesheet')");
