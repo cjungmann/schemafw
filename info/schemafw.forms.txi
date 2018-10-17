@@ -15,10 +15,10 @@ developer is free to define custom interactions by using custom
 mode types and XSLT templates to interpret them.
 
 @menu
-* Form Fundamentals::
-* Error Message Query::
-* Context Form::
-* Directive Form::
+* Form Fundamentals::     Common elements of most forms
+* Error Message Query::   Signal action outcomes through queries
+* Context Form::          A view on a part of a set
+* Directive Form::        Jump to page based on query result
 @end menu
 
 @node Form Fundamentals
