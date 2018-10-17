@@ -2491,10 +2491,7 @@ function init_SFW(callback)
       else if ((view = _seek_current_view(doc)))
          return view.getAttribute("type");
       else
-      {
-         console.error("Missing mode-type attribute.");
          return null;
-      }
    }
 
    function _render_interaction(doc,host,caller,data)
