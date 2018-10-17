@@ -263,8 +263,8 @@
 
   <xsl:template match="message/@*" mode="construct_parts">
     <xsl:element name="p">
-      <xsl:attribute name="class"><xsl:value-of select="local-name()" /></xsl:attribute>
-      <xsl:value-of select="." />
+      <span name="type"><xsl:value-of select="local-name()" /></span>
+      <span name="val"><xsl:value-of select="." /></span>
     </xsl:element>
   </xsl:template>
 
