@@ -729,12 +729,24 @@ function display_from_message(msg)
 {
    var attrs = msg.attributes;
    var dbody = document.getElementsByTagName("body")[0];
-   var ediv = dbody.appendChild(document.createElement("div"));
+   
+   var ediv = addEl("div", dbody);
+   var attr, eattr, span;
+   ediv.className = "message";
    for (var i=0,stop=attrs.length; i<stop; ++i)
    {
-      var attr = attrs[i];
-      var eattr = ediv.appendChild(document.createElement("div"));
-      eattr.appendChild(document.createTextNode(attr.name + ": \"" + attr.value + "\""));
+      attr = attrs[i];
+      eattr = addEl("p", ediv);
+      eattr.className = attr.name;
+      if (attr.name=="type")
+         addText(attr.value, eattr);
+      else
+      {
+         span = addEl("span", eattr);
+         addText(attr.name, span);
+         span=addEl("span", eattr);
+         addText(attr.value, span);
+      }
    }
 }
 
