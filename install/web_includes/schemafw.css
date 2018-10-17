@@ -83,9 +83,18 @@ div.SFW_Host div.closer
 
 div.SFW_Host h2 { text-align: center; background-color:#9999FF; margin:0; }
 
-div.message { border: solid 1px black; width:600px; margin:0 auto; }
-div.message p { margin:0;}
-div.message p.type { text-align:center; text-weight:bold; font-size:larger; border-bottom:solid 1px black; }
+div.message
+{
+    border: solid 2px black;
+    width:600px;
+    margin:0 auto;
+    background-color:#FFFFFF;
+    z-index:101;
+}
+
+div.message p { margin:8px; display:table-row;}
+div.message p span { display:table-cell; padding:2px 16px; }
+div.message p.type { display:block; text-align:center; text-weight:bold; font-size:larger; border-bottom:solid 1px black; }
 
 table.Schema { border-collapse:collapse; border-spacing:0; background-color: #FFFFFF;}
 table.Schema { margin:0 auto; padding:0; }
