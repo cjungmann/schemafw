@@ -189,6 +189,41 @@
 
    _form.prototype.preview_result = _form.prototype.update_contents;
 
+   _form.prototype.use_process_submit = function _use_process_submit()
+   {
+      var form, sclass
+      if (this.caller())
+         return true;
+      else if ((form=this.top()) && (sclass=form.getAttribute("data-sfw-class")))
+      {
+         if (sclass="form-jump")
+            return true;
+      }
+      return false;
+   };
+
+   _form.prototype.process_form_jump = function _process_form_jump(doc)
+   {
+      var result, row, msg, error, jump, url;
+      if ((result = doc.selectSingleNode("*/*[@rndx][@type='variables'][1]"))
+          && (row=result.selectSingleNode(result.getAttribute("row-name"))))
+      {
+         if ((error=row.getAttribute("error")) || error=='0')
+            if ((jump=doc.selectSingleNode("*//jump"+error)))
+               url = jump.getAttribute("url");
+
+         msg = row.getAttribute("msg");
+         if (msg)
+            SFW.alert(msg);
+
+         if (url)
+            window.location = url;
+         else
+            this.sfw_unhide();
+
+      }
+   };
+
    _form.prototype.process_submit = function _process_submit()
    {
       var form = this.top();
@@ -203,17 +238,22 @@
       {
          if (SFW.check_for_preempt(doc))
          {
-            SFW.update_xmldoc(doc, ths, type);
-
-            var caller = ths.caller();
-            if (caller)
+            if (type=="form-jump")
+               ths.process_form_jump(doc);
+            else
             {
-               // caller.preview_result(doc, ths);
-               // caller.child_finished(ths);
+               SFW.update_xmldoc(doc, ths, type);
 
-               caller.cascade_updates(doc,type,ths);
-               caller.restart(ths);
-               ths.dismantle();
+               var caller = ths.caller();
+               if (caller)
+               {
+                  // caller.preview_result(doc, ths);
+                  // caller.child_finished(ths);
+
+                  caller.cascade_updates(doc,type,ths);
+                  caller.restart(ths);
+                  ths.dismantle();
+               }
             }
          }
       }
@@ -222,6 +262,8 @@
       {
          console.error(xhr.ResponseText);
       }
+
+      this.sfw_hide();
 
       xhr_post(url,arr.join("&"),
                cb_good, cb_bad, headers);
@@ -316,7 +358,7 @@
          if (!this.process_button(e,t))
             return false;
       case "submit":
-         if (this.caller())
+         if (this.use_process_submit())
          {
             this.process_submit();
             e.preventDefault();
@@ -331,6 +373,7 @@
    // With _form prototype complete, we can derive other classes from it:
    if(!SFW.derive(_form_new, "form-new", "form") ||
       !SFW.derive(_form_edit, "form-edit", "form") ||
+      !SFW.derive(_form_edit, "form-jump", "form") ||
       !SFW.derive(_form_edit, "form-page", "form"))
       return;
 })();
