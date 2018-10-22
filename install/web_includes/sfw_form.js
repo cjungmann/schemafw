@@ -204,13 +204,16 @@
 
    _form.prototype.process_form_jump = function _process_form_jump(doc)
    {
-      var result, row, msg, error, jump, url;
+      var result, row, error, attr, jumps, url, msg;
       if ((result = doc.selectSingleNode("*/*[@rndx][@type='variables'][1]"))
           && (row=result.selectSingleNode(result.getAttribute("row-name"))))
       {
          if ((error=row.getAttribute("error")) || error=='0')
-            if ((jump=doc.selectSingleNode("*//jump"+error)))
-               url = jump.getAttribute("url");
+         {
+            attr = "jump"+error;
+            if ((jumps=result.selectSingleNode("*[@" + attr + "]")))
+               url = jumps.getAttribute(attr);
+         }
 
          msg = row.getAttribute("msg");
          if (msg)
