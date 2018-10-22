@@ -15,10 +15,10 @@ developer is free to define custom interactions by using custom
 mode types and XSLT templates to interpret them.
 
 @menu
-* Form Fundamentals::     Common elements of most forms
-* Error Message Query::   Signal action outcomes through queries
-* Context Form::          A view on a part of a set
-* Directive Form::        Jump to page based on query result
+* Form Fundamentals::   Common elements of most forms
+* Error Message Query:: Signal action outcomes through queries
+* Context Form::        A view on a part of a set
+* Jumping Form::        Jump to page based on query result
 @end menu
 
 @node Form Fundamentals
@@ -33,10 +33,10 @@ display to view or modify data.  The dialog can be an editing
 form for a table line or a subform to change part of a parent
 form.
 
-@item Directive Form
-The directive form is a broad category of forms that request
+@item Jumping Form
+The jumping form is a broad category of forms that request
 and act on information from the user.  The most common examples
-of directive forms are user login and registration pages.
+of jumping forms are user login and registration pages.
 @end table
 
 @node Error Message Query
@@ -74,16 +74,16 @@ of an error, if any.
 
 Placeholder section for Context Form.
 
-@node Directive Form
-@section Directive Form
+@node Jumping Form
+@section Jumping Form
 
 @menu
-* Directive Form Example Login Procedure::
-* Directive Form Example Login Response Mode::
-* Directive Form Other Examples::
+* Jumping Form Example Login Procedure::
+* Jumping Form Example Login Response Mode::
+* Other Jumping Form Examples::
 @end menu
 
-The main characteristic of a directive form is that an action
+The main characteristic of a jumping form is that an action
 follows the submission of the form, and that there are usually
 multiple paths that can follow.
 
@@ -92,10 +92,10 @@ on whether or not the credentials are accepted.  The default
 pattern for communicating these intentions is done with the
 @emph{error message query} that follows a main query.
 
-@node Directive Form Example Login Procedure
-@subsection Directive Form Example Login Procedure
+@node Jumping Form Example Login Procedure
+@subsection Jumping Form Example Login Procedure
 
-The most straighforward example of a directive form is
+The most straighforward example of a jumping form is
 a login form.  In most cases, the user should be sent to
 different pages according to whether or not the login
 credentials are accepted.
@@ -126,8 +126,8 @@ END $$
 The next section will show how the various @emph{error}
 values are used.
 
-@node Directive Form Example Login Response Mode
-@subsection Directive Form Example Login Response Mode
+@node Jumping Form Example Login Response Mode
+@subsection Jumping Form Example Login Response Mode
 
 Notice the @emph{jumps} section of the following response
 mode.  The @emph{jump0} and @emph{jump1} correspond to
@@ -141,7 +141,7 @@ login_submit
    session-type : establish
    procedure    : App_User_Login
    result
-      type : variable
+      type : variables
       jumps
          jump0: main.srm
          jump1: ?login
@@ -152,8 +152,8 @@ the @emph{jump0} instruction, taking the user to the main
 page.  A failure matches @emph{jump1} and returns to the
 login response mode of the current SRM file.
 
-@node Directive Form Other Examples
-@subsection Directive Form Other Examples
+@node Other Jumping Form Examples
+@subsection Other Jumping Form Examples
 
 There are other interactions where different inputs may
 dictate a variety of destinations.  For example, a registration
