@@ -47,6 +47,7 @@ production.
 * Interactions::
 * Context References::
 * Buttons::
+* Customizing::        Extend the framework with your own components
 * Debugging::
 @end menu
 
@@ -78,6 +79,7 @@ $ sudo ln -s /usr/local/lib/schemafw/web_includes includes
 @include schemafw.interactions.txi
 @include schemafw.context-refs.txi
 @include schemafw.buttons.txi
+@include schemafw.customizing.txi
 @include schemafw.debugging.txi
 
 @bye
