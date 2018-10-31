@@ -15,11 +15,76 @@ are used by the Schema Framework.
 
 @menu
 * Introduction to Result Handling::
+* Adding Result Features::
+* Builtin Result Types::
 @end menu
 
 @node Introduction to Result Handling
 @section Introduction to Result Handling
 
 The minumum SchemaServer @emph{result} element contains an @emph{rndx}
-attribute and a @emph{row-name}.  
+attribute and a @emph{row-name}.  The following output example shows
+how a @emph{result} element looks when the response mode has no
+result instructions.
+
+@strong{Simplest response mode}
+@example
+page
+   procedure : App_Person_Show
+@end example
+
+@strong{Output of the simplest response mode}
+@example
+<resultset ... >
+   <result rndx="1" row-name="row" />
+</resultset>
+@end example
+
+@node Adding Result Features
+@section Adding Result Features
+
+Adding data to the response mode is the beginning of customizing
+the @emph{result} element which, in turn, is the beginning of creating
+useful pages.
+
+There are a few instructions that affect the output of the @emph{result}
+element
+
+@table @strong
+@item schema
+Including the @emph{schema} instruction will explicitely prompt the
+inclusion of a @emph{schema} element in the @emph{result}.  There are
+some builtin @emph{type} values (mainly variations of tables and forms)
+of the @emph{result} and resultset that also force output of a
+@emph{schema}.
+
+@item type
+The @emph{type} instructs the framework how the result should be
+considered.  With the exception of @emph{type} values @emph{variables}
+and @emph{update} (covered in the next section), the @emph{type} value
+must have a co-named framework object to which the contents of the
+@emph{result} are applied.
+@end table
+
+
+@node Builtin Result Types
+@section Builtin Result Types
+
+Before going into custom result types, we must discuss the builtin
+types.
+
+@table @strong
+@item update
+This result type is the return from an update or add transaction.  In
+the simplest implementation, it should contain a single XML element
+that will either replace or add an XML element to an element in another
+result.  As a row replacement or addition, it is important that the
+XML element in the @emph{update} result have the same tag name as the
+XML elements in the result to which it will be saved.
+
+@item variables
+This result type should contain a single XML element.  The attributes
+of a @emph{variables} result type can be accessed by name using the
+context notation, @emph{@{$name@}}.  @xref{Context References}
+@end table
 
