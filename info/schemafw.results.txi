@@ -1,0 +1,25 @@
+@node Result Elements
+@chapter Result Elements
+
+When SchemaServer processes a stored procedure, there will be a separate
+result element for each query that can return rows.  Queries performed
+during secondary procedure calls will be included in the resultset.
+
+The SchemaServer component allows extensive modification of the
+@emph{result} element of the XML document.  See
+@inforef{'Customizing the Result Element', 'Customizing Results', schemaserver}
+for a discussion.
+
+This chapter covers how certain changes in the @emph{result} element
+are used by the Schema Framework.
+
+@menu
+* Introduction to Result Handling::
+@end menu
+
+@node Introduction to Result Handling
+@section Introduction to Result Handling
+
+The minumum SchemaServer @emph{result} element contains an @emph{rndx}
+attribute and a @emph{row-name}.  
+

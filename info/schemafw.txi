@@ -44,9 +44,10 @@ production.
 * Introduction::
 * Installation::       Install the framework, install to new sites
 * Forms::
+* Result Elements::    Label and use query results in a resultset
 * Interactions::
 * Context References::
-* Buttons::
+* Buttons::            Button attributes recognized by the Framework
 * Customizing::        Extend the framework with your own components
 * Debugging::
 @end menu
@@ -76,6 +77,7 @@ $ sudo ln -s /usr/local/lib/schemafw/web_includes includes
 @end example
 
 @include schemafw.forms.txi
+@include schemafw.results.txi
 @include schemafw.interactions.txi
 @include schemafw.context-refs.txi
 @include schemafw.buttons.txi
