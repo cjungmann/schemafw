@@ -25,6 +25,7 @@
 
    // Adding useful local functions to global object
    SFW.get_form_data        = _get_form_data;
+   SFW.get_form_data_xml    = _get_form_data_xml;
    SFW.focus_on_first_field = _focus_on_first_field;
 
    function _find_first_editable_field(form)
@@ -92,6 +93,37 @@
          }
       }
       return arr;
+   }
+
+   /**
+    * This function can be used to populate an XML element
+    * with the fields of a form.  This can be used to
+    * add new rows for local construction of a collection of
+    * XML elements or for submission to a web services server.
+    */
+   function _get_form_data_xml(form, outel)
+   {
+      var el, els = form.elements;
+      var noninputs = 'submit reset button';
+      for (var i=0, stop=els.length; i<stop; i++)
+      {
+         el = els[i];
+         if (noninputs.search(el.type)==-1 && el.name.length)
+         {
+            if (el.type=="checkbox")
+            {
+               if (el.checked)
+                  outel.setAttribute(el.name, "1");
+            }
+            else if ('value' in el && el.value.length>0)
+            {
+               if ("multiple" in el && el.multiple)
+                  outel.setAttribute(el.name, _get_multiple_value(el));
+               else
+                  outel.setAttribute(el.name, encodeURIComponent(el.value));
+            }
+         }
+      }
    }
 
    _form.prototype.focus_on_first_field = function()
