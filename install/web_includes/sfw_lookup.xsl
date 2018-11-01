@@ -13,7 +13,9 @@
   <!-- no-mode entry point for reploting field.  Matches a row that cohabits
        with a schema including a linked field. -->
   <xsl:template match="*[@lookup-field-match=../schema/field/@name]">
-    <xsl:variable name="field" select="../schema/field[@name=current()/@lookup-field-match]" />
+    <xsl:variable name="fname" select="@lookup-field-match" />
+    <xsl:variable name="field" select="../schema/field[@name=$fname]" />
+
     <xsl:apply-templates select="$field" mode="host_linked_field">
       <xsl:with-param name="data" select="." />
     </xsl:apply-templates>
