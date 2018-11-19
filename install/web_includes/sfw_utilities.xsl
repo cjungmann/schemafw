@@ -28,6 +28,28 @@
       name="alt_vars"
       select="/*/*[@rndx][not(@type)][count(*[local-name()=../@row-name])=1]" />
 
+  <xsl:template match="field" mode="classify">
+    <xsl:choose>
+      <xsl:when test="@data-class"><xsl:value-of select="@data-class" /></xsl:when>
+      <xsl:when test="substring(@type,(string-length(@type)-3))='INT' or @type='INTEGER'">INT_CLASS</xsl:when>
+      <xsl:when test="@type='DECIMAL' or @type='NUMERIC'">DEC_CLASS</xsl:when>
+      <xsl:when test="contains(@type,'TIME') or contains(@type,'DATE')">TIME_CLASS</xsl:when>
+      <xsl:when test="@type='FLOAT' or @type='DOUBLE'">FLOAT_CLASS</xsl:when>
+      <xsl:otherwise>STRING_CLASS</xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="field" mode="def_css_class">
+    <xsl:variable name="class">
+      <xsl:apply-templates select="." mode="classify" />
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when
+          test="$class='INT_CLASS' or $class='DEC_CLASS' or $class='FLOAT_CLASS'">def_right</xsl:when>
+      <xsl:when test="$class='TIME_CLASS'">def_center</xsl:when>
+      <xsl:otherwise>def_left</xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
 
   <xsl:template match="*[@rndx]" mode="get_idname">
 
