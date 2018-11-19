@@ -92,6 +92,11 @@ div.message
     z-index:101;
 }
 
+.def_left   { text-align:right; }
+.def_right  { text-align:left; }
+.def_center { text-align:center; }
+
+
 div.message p { margin:8px; display:table-row;}
 div.message p span { display:table-cell; padding:2px 16px; }
 div.message p.type { display:block; text-align:center; text-weight:bold; font-size:larger; border-bottom:solid 1px black; }
