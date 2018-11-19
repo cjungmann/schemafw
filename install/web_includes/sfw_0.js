@@ -2183,6 +2183,27 @@ function init_SFW(callback)
       return rval;
    };
 
+   _base.prototype.process_open_button = function _process_open_button(b, cb)
+   {
+      var os = SFW.get_page_offset();  // Get offset before discarding contents
+      var host = this.host();
+      var url = b.getAttribute("data-task") || b.getAttribute("data-url");
+
+      if (url)
+      {
+         // this.empty_node(host);
+
+         SFW.open_interaction(SFW.stage,
+                              url,
+                              this,
+                              { os:os, host:host, button:b }
+                             );
+         return false;
+      }
+      
+      return true;
+   };
+
    _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
    {
       var caller;
@@ -2195,13 +2216,16 @@ function init_SFW(callback)
       var ths = this;
 
       if (cmsg && !SFW.confirm(cmsg))
-         funcForTimeout = function(){cb("cancel"); };
+         funcForTimeout = function(){cb("cancel");};
       else
       {
          switch(type)
          {
-            case "jump":
             case "open":
+               if (url)
+                  funcForTimeout = function(){ths.process_open_button(b,cb);}
+               break;
+            case "jump":
             case "import":
                if (url)
                   funcForTimeout = function(){window.location=url;};
