@@ -202,10 +202,12 @@
     <xsl:param name="result-schema" />
     <xsl:param name="view-mode" />
 
-    <xsl:apply-templates select="field[@hidden]" mode="construct_hidden_input">
+    <xsl:variable name="fields" select="field[not(@join)]" />
+
+    <xsl:apply-templates select="$fields[@hidden]" mode="construct_hidden_input">
       <xsl:with-param name="data" select="$data" />
     </xsl:apply-templates>
-    <xsl:apply-templates select="field[not(@hidden)]" mode="construct_form_input">
+    <xsl:apply-templates select="$fields[not(@hidden)]" mode="construct_form_input">
       <xsl:with-param name="data" select="$data" />
       <xsl:with-param name="result-schema" select="$result-schema" />
       <xsl:with-param name="view-mode" select="$view-mode" />
