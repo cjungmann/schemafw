@@ -96,6 +96,23 @@
    }
 
    /**
+    * This unusual function should collect all input-type elements
+    * under a given element in case the "form" is not really a form.
+    */
+   function _get_element_elements(el)
+   {
+      var formels = [];
+      function f(n)
+      {
+         if (n.nodeType==1 && "form" in n && "name" in n)
+            formels.push(n);
+      }
+      SFW.find_child_matches(el, f, false, true);
+
+      return formels;
+   }
+
+   /**
     * This function can be used to populate an XML element
     * with the fields of a form.  This can be used to
     * add new rows for local construction of a collection of
@@ -103,7 +120,7 @@
     */
    function _get_form_data_xml(form, outel)
    {
-      var el, els = form.elements;
+      var el, els = form.elements || _get_element_elements(form);
       var noninputs = 'submit reset button';
       for (var i=0, stop=els.length; i<stop; i++)
       {
