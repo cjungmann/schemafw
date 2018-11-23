@@ -220,7 +220,6 @@ fieldset.Schema label
 
 fieldset.Schema label button { margin-right: .25em; }
 
-fieldset.Schema label::after {content : ":"}
 fieldset.Schema p.buttons { display:block; text-align:center; margin-bottom:.25em; }
 fieldset.Schema input.Embedded { display:none; }
 fieldset.Schema p.form-row { display: block; text-align:left; }
