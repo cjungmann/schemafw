@@ -118,20 +118,23 @@
     * add new rows for local construction of a collection of
     * XML elements or for submission to a web services server.
     */
-   function _get_form_data_xml(form, outel)
+   function _get_form_data_xml(form, outel, save_skips)
    {
+      // Default value is true:
+      if (arguments.length<3)
+         save_skips = false;
+
       var el, els = form.elements || _get_element_elements(form);
+      var skip;
       var noninputs = 'submit reset button';
       for (var i=0, stop=els.length; i<stop; i++)
       {
          el = els[i];
-         if (noninputs.search(el.type)==-1 && el.name.length)
+         skip = !save_skips && el.getAttribute("data-xml-skip");
+         if (!skip && noninputs.search(el.type)==-1 && el.name.length)
          {
             if (el.type=="checkbox")
-            {
-               if (el.checked)
-                  outel.setAttribute(el.name, "1");
-            }
+               outel.setAttribute(el.name, (el.checked?"1":"0"));
             else if ('value' in el && el.value.length>0)
             {
                if ("multiple" in el && el.multiple)
