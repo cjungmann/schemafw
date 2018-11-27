@@ -137,6 +137,7 @@ function init_SFW(callback)
    SFW.document_object      = _document_object;
    SFW.add_event            = _add_event;
    SFW.setup_event_handling = _setup_event_handling;
+   SFW.cancel_event         = _cancel_event;
 
    // functions found in sfw_doc.js:
    // SFW.alert
@@ -707,6 +708,19 @@ function init_SFW(callback)
       window.onresize = f;
    }
 
+   function _cancel_event(e)
+   {
+      function common(e) { e.cancelBubble=true; e.returnValue=false; return false;}
+      if ("stopPropagation" in e)
+         _cancel_event = function(e) { e.stopPropagation(); return common(e); }
+      else if ("preventDefault" in e)
+         _cancel_event = function(e) { e.preventDefault(); return common(e); }
+      else
+         _cancel_event = common;
+
+      return _cancel_event(e);
+   }
+
    function _keycode_from_event(e)
    {
       if ("keyCode" in e)
@@ -723,6 +737,8 @@ function init_SFW(callback)
    {
       if ("key" in e)
          SFW.keychar_from_event = function(e) { return e.key; };
+      else if ("char" in e)
+         SFW.keychar_from_event = function(e) { return e.char; };
 
       return SFW.keychar_from_event(e);
    }
@@ -1398,8 +1414,6 @@ function init_SFW(callback)
                   form.update_context_row(newxrow);
             }
          }
-         else
-            console.error("update target result '" + result.name + "' has no target attribute.");
       }
    }
 
