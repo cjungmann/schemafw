@@ -547,6 +547,11 @@
         <xsl:with-param name="skip" select="' type name size readonly value '" />
       </xsl:apply-templates>
 
+      <xsl:if test="@custom_class">
+        <xsl:attribute name="data-sfw-class"><xsl:value-of select="@custom_class" /></xsl:attribute>
+        <xsl:attribute name="data-sfw-input">true</xsl:attribute>
+      </xsl:if>
+
       <xsl:if test="string-length($value)&gt;0">
         <xsl:choose>
           <xsl:when test="$type='checkbox'">
