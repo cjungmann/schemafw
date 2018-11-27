@@ -92,8 +92,8 @@ div.message
     z-index:101;
 }
 
-.def_left   { text-align:right; }
-.def_right  { text-align:left; }
+.def_left   { text-align:left; }
+.def_right  { text-align:right; }
 .def_center { text-align:center; }
 
 
