@@ -1,0 +1,116 @@
+@node Simple Custom Javascript Class
+@section Simple Custom Javascript Class
+
+The framework implements its classes using the conventions
+described in this section.  Although one can learn a lot
+about how to implement a custom class by looking at the 
+builtin framework functions, this section includes an example
+that has the minumum required elements to serve as a
+foundation for new custom controls.
+
+@menu
+* Derived Framework Class::
+* Derived Class Boilerplate Features::
+* Derived Class Boilerplate Code::
+@end menu
+
+@node Derived Framework Class
+@subsection Derived Framework Class
+In order for a new interactive javasript classes to be integrated
+into the Schema Framework, it must be derived from the framework
+class *iclass* or a *iclass* derived class.  While it would be
+possible to create a custom base class that provides the same
+methods is *iclass*, framework reserves the right to update the
+names or function of *iclass* methods.
+
+@node Derived Class Boilerplate Features
+@subsection Derived Class Boilerplate Features
+
+The framework uses the following template for implementing
+interactive classes.  It features the following behavior:
+
+@table @strong
+@item Auto-loading
+The code uses @url{https://en.wikipedia.org/wiki/Immediately_invoked_function_expression, Immediately-invoked Function Expression}, or IFFE,
+to load the class without having to tell the framework about it.
+
+This code deviates from a classic IFFE in that the main function
+is named, not anonymous, so that it can be scheduled for recall
+if certain required objects are not yet available.
+
+@item Limited Visibility
+The classes are implemented my assigning closure-hidden functions
+to the class prototypes.  This means that supporting functions can
+avoid overriding or being overridden by global functions with the
+same name.
+
+@item Priority Loading
+Two object must be available before creating the new class,
+the global **SFW** object and the immediate base class of the
+new object.
+
+If either of the two objects are missing, the closure-hidden
+initialization function will terminate after scheduling
+itself to be recalled after a short interval.
+
+@item Prototype Overriding
+By calling @code{SFW.derive()}, the framework constructs
+the new class by copying the prototype object properties of
+the base class to the new class prototype object.  When
+@code{SFW.derive()} returns, the base class and new class
+will be identical (except for their names).  After that,
+the initialization function can overwrite existing prototype
+properties or add new properties.
+
+@item Class Registration
+The function, @code{SFW.derive()}, also registers the
+class so that an object of its type can be instantiated.
+@end table
+
+@node Derived Class Boilerplate Code
+@subsection Derived Class Boilerplate Code
+
+This code fragment shows the recommended structure of a
+Schema Framework custom class script.  The code includes
+comments that identify the implementation of the features
+defined onn the previous page.
+
+@example
+// Auto-loading, Limited Visibility
+(function _init()
+ @{
+    var file_name = "positive_number";   // script name without .js extension
+    var class_name = "positive_number";  // name for invoking the custom class
+    var base_class_name = "iclass";
+
+    var constructor = _positive_number;
+
+    // Priority Loading
+    if ((!("SFW" in window) && setTimeout(_init,100))
+        || SFW.delay_init(file_name, _init, base_class_name))
+       return;
+
+    // Prototype Overriding, Class Registration
+    if (!SFW.derive(constructor, class_name, base_class_name))
+       return;
+
+    // Object constructor
+    function _positive_number(actors)
+    @{
+       SFW.base.call(this, actors);
+
+       // add custom initialization below
+    @}
+
+    // Most will want to implement at least this:
+    _positive_number.prototype.process = function(e,t)
+    @{
+       // e is the event object,
+       // t is the event target.
+    @};
+
+    // Additional functions and prototype settings
+
+ @})()
+@end example
+

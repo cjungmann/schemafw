@@ -1,0 +1,68 @@
+@node Simple Custom XSLT Template
+@section Simple Custom XSLT Template
+
+The Schema Framework page and page components are mostly
+rendered by XSLT templates.  In order to create a custom
+display, it is necessary to create a template that will be
+called when appropriate.  There are several factors to consider:
+
+@table @strong
+@item mode attribute
+The template should include a @code{mode} attribute that is called
+in the context where your custom control should be added.
+@item match attribute
+The match attribute of the template should include a predicate
+that uniquely recognizes the element from which the custom
+element will be rendered.
+@item template position
+Within the stylesheet, the custom template must come after any
+other templates that would otherwise be matched.  When looking for
+a matching template to apply, the XSLT processor uses the last
+template that matches the element that is applied.  Because of
+this, generic and fallback templates should come before more
+specific matches.
+@item data-sfw-class
+The main element (ie the table, input, etc) must include the
+@code{data-sfw-class} attribute set to the class name.  This
+attribute allows the framework to identify that this is an
+element with an operating class, and the object will not be
+invoked without this attribute.
+@item data-sfw-input
+This attribute must be included if the object is expected to
+be included within another framework object.  Normally, the
+framework scans ancestors of the target of an event until it
+finds the highest element with the @code{data-sfw-class} attribute,
+making the object defined by that element the controlling object.
+Identifying the element as a @code{data-sfw-input} element
+terminates the search, returning the object defined by the
+input element.
+@item tabindex
+This is optional, but recommended for input items.  Setting this
+attribute allows the user to access the element by tabbing to it
+from nearby elements.
+@end table
+
+Here is an example of a custom form control.  Notice how the
+template includes a very specific match attribute and the mode
+attribute @emph{construct_input}, which is called from a template
+with mode='construct_input_row' in the @file{sfw_form.xsl} file.
+
+@example
+<xsl:template match="field[@@type='fancy_show']" mode="construct_input">
+   <xsl:param name="data" />
+
+   <div
+      data-sfw-class="fancy_show"
+      data-sfw-input="true"
+      style="height:2em; width:20em; border:solid 1px black;"
+      tabindex="0">
+      Look at the fancy show!
+   </div>
+</xsl:template>
+@end example
+
+This very basic template can written directly in the @file{default.xsl}
+stylesheet, or written in its own stylesheet file.  In both cases the
+template must follow other templates that would otherwise match the
+element.
+
