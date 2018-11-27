@@ -128,8 +128,7 @@
                if (el)
                {
                   el.focus();
-                  e.preventDefault(); // e(vent), not el(ement)
-                  return false;
+                  return SFW.cancel_event(e);
                }
             }
             break;
@@ -182,10 +181,9 @@
       if (el)
       {
          this.select_option(el);
-         // Don't let ENTER submit the form when we're updating the options
-         e.preventDefault();
          this.stage_input_focus();
-         return true;
+         // Don't let ENTER submit the form when we're updating the options
+         SFW.cancel_event(e);
       }
       else
       {
@@ -202,8 +200,7 @@
                                       host:this.host(),
                                       prefill:val }
                                    );
-               e.preventDefault();
-               return true;
+               return SFW.cancel_event(e);
             }
          }
       }

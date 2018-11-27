@@ -416,8 +416,7 @@
          if (this.use_process_submit())
          {
             this.process_submit();
-            e.preventDefault();
-            return false;
+            SFW.cancel_event(e);
          }
          break;
       }
