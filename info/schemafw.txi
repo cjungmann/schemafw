@@ -46,7 +46,7 @@ production.
 * Forms::
 * Result Elements::    Label and use query results in a resultset
 * Interactions::
-* Context References::
+* Context References:: Apply document values to captions or fields
 * Buttons::            Button attributes recognized by the Framework
 * Customizing::        Extend the framework with your own components
 * Debugging::
