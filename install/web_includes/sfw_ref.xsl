@@ -10,27 +10,34 @@
     <xsl:param name="value" />
     <xsl:variable name="rname" select="@result" />
     <xsl:variable name="iname" select="@index" />
-    <xsl:variable name="vname" select="@value" />
+    <xsl:variable name="lname" select="@label" />
 
     <xsl:variable name="result" select="/*/*[@rndx][local-name()=$rname]" />
     <xsl:variable
         name="row"
         select="$result/*[local-name()=$result/@row-name][@*[local-name()=$iname]=$value]" />
 
-    <xsl:value-of select="$row/@*[local-name()=$vname]" />
+    <xsl:value-of select="$row/@*[local-name()=$lname]" />
   </xsl:template>
 
   <xsl:template match="*" mode="add_ref_option">
     <xsl:param name="ref" />
+    <xsl:param name="value" />
+
+    <xsl:variable name="opval" select="@*[local-name()=$ref/@index]" />
+
     <xsl:element name="option">
-      <xsl:attribute name="value"><xsl:value-of select="@*[local-name()=$ref/@index]" /></xsl:attribute>
-      <xsl:value-of select="@*[local-name()=$ref/@value]" />
+      <xsl:attribute name="value"><xsl:value-of select="$opval" /></xsl:attribute>
+      <xsl:if test="($opval) = ($value)">
+        <xsl:attribute name="selected">selected</xsl:attribute>
+      </xsl:if>
+      <xsl:value-of select="@*[local-name()=$ref/@label]" />
     </xsl:element>
   </xsl:template>
 
   <xsl:template match="field[ref]" mode="get_value">
     <xsl:param name="data" />
-    <xsl:apply-templates select="ref" mode="resolve_ref">
+    <xsl:apply-templates select="ref" mode="resolve_refs">
       <xsl:with-param name="value" select="$data/@*[local-name()=current()/@name]" />
     </xsl:apply-templates>
   </xsl:template>
@@ -44,6 +51,9 @@
       <xsl:attribute name="name"><xsl:value-of select="@name" /></xsl:attribute>
       <xsl:apply-templates select="$rows" mode="add_ref_option">
         <xsl:with-param name="ref" select="ref" />
+        <xsl:with-param name="value">
+          <xsl:apply-templates select="@value" mode="resolve_refs" />
+        </xsl:with-param>
       </xsl:apply-templates>
     </xsl:element>
 
