@@ -6,6 +6,101 @@ in an SRM instruction that will be replaced with the value of the
 target it names.  The XML document is the source for the references,
 not the HTML output.
 
+@menu
+* When to Use Context References::
+* Defining Context References::
+* Using Context References::
+@end menu
+
+@node When to Use Context References
+@section When to Use Context References
+
+A context reference can be included in nearly any instruction
+in an SRM file, the main exception is in mode names.  There are
+several situations where context references are particularly
+useful:
+
+@subheading Provide Dialog Context Information
+
+When editing a record, it helps the user to see some context
+information in the caption to provide confidence that the
+intended record is being edited.  The following  example
+improves the caption by including the name of the person whose
+record is being edited by using the @emph{form data reference}
+(@code{@@}).
+
+@example
+edit
+   type : form-edit
+   schema-proc : App_Person_Update
+   procedure   : App_Person_Read
+   title       : Update @{@@name@} Record
+@end example 
+
+@subheading Adding GET or POST Values
+
+Requiring multiple data elements of a record to be edited can
+hinder unauthorized or accidental access to data.  The framework
+automatically puts the primary key value in the URL for getting
+a record's data, but supporting fields must be explicitely
+added to a URL.
+
+The following example requests a person record by sending not only
+the unique record ID, but also the first and last names of the
+person.  We use the @emph{row data reference} (@code{!})
+token the request data from the XML record that is represented
+by the line from which the edit request originates.  The fields
+@code{id}, @code{fname}, and @code{lname} represent the record ID,
+the person's first name and person's last name, respectively.
+
+@example
+list
+   type : table
+   procedure : App_Person_List
+   on_line_click : ?read&id=@{!id@}&fname=@{!fname@}&lname=@{!lname@}
+@end example
+
+@subheading Adding Non-intrinsic Data
+
+In cases where some of a user's context is saved in session
+variables, the data may not be available in the user record
+or table line.  Defining a variables result and accessing data
+from there provides an alternate source of useful data.
+
+In this example, the current user login and handle are saved
+in session variables when the user logs into the web app.
+
+See the SchemaServer sessions reference: @inforef{Sessions, SchemaServer Sessions, schemaserver}.
+
+The SRM:
+@example
+list
+   type : table
+   procedure : App_Person_List
+   on_line_click : ?read
+   title         : @{$handle@} Editing Person Records
+   result : 1   # for the main table
+      schema
+   result: 2    # explicit variables result
+      type : variables
+@end example
+
+The Procedure:
+@example
+CREATE PROCEDURE App_Person_List(id INT UNSIGNED)
+BEGIN
+   -- result #1
+   SELECT * FROM Person;
+
+   -- result #2
+   SELECT @@login_name;
+END $$
+@end example
+
+
+@node Defining Context References
+@section Defining Context References
+
 @table @strong
 @item ! (row reference)
 Replaces the token with the value of the named attribute in
@@ -46,4 +141,30 @@ edit
    schema-proc : App_Person_List
    procedure   : App_Person_Value
    title : 
+@end example
+
+@node Using Context References
+@section Using Context References
+
+This section main pertains to custom templates that need to access
+the context references.
+
+In the builtin stylesheet named @file{sfw_utilities.xsl} contains
+templates that extract context references from the XML document.
+The main working template, the one that resolving templates ultimately
+use, is @code{<xsl:template name="resolve_refs">}.  This template is
+a very large recursive template that tries to replace all context
+references in a string with the target data.
+
+@example
+<xsl:call-template name="resolve_refs">
+   <xsl:with-param name="str" select="$string_to_interpret" />
+</xsl:call-template>
+@end example
+
+A companion template, @code{xsl:template match="@*" mode="resolve_refs">}
+calls the main *resolve_refs* template with the value of an attribute.
+
+@example
+<xsl:apply-templates select="@@value" mode="resolve_refs />
 @end example
