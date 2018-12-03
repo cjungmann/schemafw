@@ -70,6 +70,7 @@
      support fundamental Schema Framework operations.
   -->
   <xsl:template match="/*" mode="fill_head">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <xsl:call-template name="css_includes" />
     <xsl:apply-templates select="." mode="construct_scripts" />
 
