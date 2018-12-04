@@ -2,6 +2,16 @@
 
 TARGET=schemafw
 
+wi_uglify=$( which uglifyjs )
+if [ -n wi_uglify ]; then
+    uglifyjs web_includes/sfw_*.js --mangle --compress --output web_includes/sfw.min.js
+else
+    echo
+    echo "install uglify-js to minify the javascript library."
+    echo "sudo apt-get install uglify-js"
+    echo
+fi
+
 install -D --mode=644 web_includes/* -t /usr/local/lib/${TARGET}/web_includes/
 install --mode=644    default.xsl    /usr/local/lib/${TARGET}/
 
