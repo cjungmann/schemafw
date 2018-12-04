@@ -31,11 +31,14 @@
    function _find_first_editable_field(form)
    {
       var arr = SFW.collect_form_fields(form);
-      for (var i=0,stop=arr.length; i<stop; ++i)
+      if (arr)
       {
-         var el = arr[i];
-         if (!("type" in el) || el.type!="button")
-            return el;
+         for (var i=0,stop=arr.length; i<stop; ++i)
+         {
+            var el = arr[i];
+            if (!("type" in el) || el.type!="button")
+               return el;
+         }
       }
       return null;
    }
