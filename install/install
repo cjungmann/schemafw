@@ -2,12 +2,27 @@
 
 TARGET=schemafw
 
+wi_xsl-import=$( which xsl-import )
+if [ -n wi-xsl-import ]; then
+    cd web_includes
+    xsl-import -s sfw_debug.xsl > sfw_compiled.xsl
+    cd ..
+else
+    echo
+    echo "Install xsl-import to compile the stylesheets into a single stylesheet."
+    echo "cd /usr/local/lib"
+    echo "sudo git clone https://www.github.com/cjungmann/xsl-import"
+    echo "cd /usr/local/bin"
+    echo "sudo cp -s /usr/local/lib/xsl-import/xsl-import ."
+    echo
+fi
+
 wi_uglify=$( which uglifyjs )
 if [ -n wi_uglify ]; then
     uglifyjs web_includes/sfw_*.js --mangle --compress --output web_includes/sfw.min.js
 else
     echo
-    echo "install uglify-js to minify the javascript library."
+    echo "Install uglify-js to minify the javascript library."
     echo "sudo apt-get install uglify-js"
     echo
 fi
