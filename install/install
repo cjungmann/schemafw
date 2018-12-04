@@ -2,8 +2,8 @@
 
 TARGET=schemafw
 
-wi_xsl-import=$( which xsl-import )
-if [ -n wi-xsl-import ]; then
+wi_xsli=$( which xsl-import )
+if [ -n wi_xsli ]; then
     cd web_includes
     xsl-import -s sfw_debug.xsl > sfw_compiled.xsl
     cd ..
