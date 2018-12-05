@@ -1,5 +1,5 @@
 install/web_includes/sfw.js
-install/web_includes/sfw.min.js
+install/web_includes/*.min.js
 install/web_includes/sfw_compiled.xsl
 info/install-info
 zz_*
