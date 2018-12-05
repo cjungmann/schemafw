@@ -19,7 +19,18 @@ fi
 
 wi_uglify=$( which uglifyjs )
 if [ -n wi_uglify ]; then
-    uglifyjs web_includes/sfw_*.js --mangle --compress --output web_includes/sfw.min.js
+    scripts=(
+        sfw_*.js
+        classes.js
+        dpicker.js
+        Events.js
+        Dialog.js
+        Moveable.js
+        XML.js)
+
+    cd web_includes
+    uglifyjs ${scripts[@]} --mangle --compress --output sfw.min.js
+    cd ..
 else
     echo
     echo "Install uglify-js to minify the javascript library."

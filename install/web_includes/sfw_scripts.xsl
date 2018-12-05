@@ -13,35 +13,37 @@
   
   <xsl:variable name="jslist_sfw_brief">sfw</xsl:variable>
   <xsl:variable name="jslist_sfw_minified">sfw.min</xsl:variable>
-  <xsl:variable name="jslist_sfw_debug">sfw_0 sfw_doc sfw_tbase sfw_calendar sfw_debug sfw_dom sfw_form sfw_form_view sfw_ulselect sfw_mixed_view sfw_onload sfw_table sfw_assoc sfw_lookup sfw_iltable</xsl:variable>
-  
-  <!-- Set jslist_sfw to one of the above variables for the desired script-set. -->
-  <xsl:variable name="jslist_sfw" select="$jslist_sfw_debug" /> 
-
-  <xsl:variable name="jslist_utils">classes dpicker Events Dialog Moveable XML</xsl:variable>
+  <xsl:variable name="jslist_sfw_debug">classes dpicker Events Dialog Moveable XML sfw_0 sfw_doc sfw_tbase sfw_calendar sfw_debug sfw_dom sfw_form sfw_form_view sfw_ulselect sfw_mixed_view sfw_onload sfw_table sfw_assoc sfw_lookup sfw_iltable</xsl:variable>
 
   <!-- Main entry point to template in this stylesheet. -->
   <xsl:template match="/*" mode="construct_scripts">
+    <!-- Param to switch between javascript files to include:
+         the value 'debug' uses debug scripts, anything else
+         uses sfw.min.js -->
+    <xsl:param name="jscripts" />
+
     <xsl:variable name="doc_vars" select="@*" />
     <xsl:variable name="result_vars" select="*[@rndx][@type='variable']/@*" />
     <xsl:variable name="all_vars" select="$doc_vars | $result_vars" />
 
-    <xsl:call-template name="construct_sfw_scripts" />
+    <!-- The default behavior, modified by the jscripts param, is to use 'debug' scripts
+         because sfw.min.js requires that a minimizer/uglifier is installed and used to
+         generate sfw.min.js. -->
+    <xsl:call-template name="add_js">
+      <xsl:with-param name="list">
+        <xsl:choose>
+          <xsl:when test="$jscripts='debug'"><xsl:value-of select="$jslist_sfw_debug" /></xsl:when>
+          <xsl:otherwise>sfw.min</xsl:otherwise>
+        </xsl:choose>
+      </xsl:with-param>
+    </xsl:call-template>
+
     <xsl:if test="count($all_vars)">
       <script>
         <xsl:value-of select="concat('var ', $vars_obj, '={};', $nl)" />
         <xsl:apply-templates select="$all_vars" mode="construct_attribute_variable" />
       </script>
     </xsl:if>
-  </xsl:template>
-
-  <xsl:template name="construct_sfw_scripts">
-    <xsl:call-template name="add_js">
-      <xsl:with-param name="list" select="$jslist_sfw" />
-    </xsl:call-template>
-    <xsl:call-template name="add_js">
-      <xsl:with-param name="list" select="$jslist_utils" />
-    </xsl:call-template>
   </xsl:template>
 
   <xsl:template match="@*" mode="construct_attribute_variable">

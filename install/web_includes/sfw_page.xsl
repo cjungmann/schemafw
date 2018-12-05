@@ -70,9 +70,14 @@
      support fundamental Schema Framework operations.
   -->
   <xsl:template match="/*" mode="fill_head">
+    <!-- consult sfw_scripts.xsl, template :construct_scripts: -->
+    <xsl:param name="jscripts">debug</xsl:param>
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <xsl:call-template name="css_includes" />
-    <xsl:apply-templates select="." mode="construct_scripts" />
+    <xsl:apply-templates select="." mode="construct_scripts">
+      <xsl:with-param name="jscripts" select="$jscripts" />
+    </xsl:apply-templates>
 
     <xsl:choose>
     <xsl:when test="$err_condition=0">
