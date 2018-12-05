@@ -30,7 +30,12 @@
         <title>**Default SchemaFW Title**</title>
 
         <!-- SchemaFW includes -->
-        <xsl:apply-templates select="." mode="fill_head" />
+        <xsl:apply-templates select="." mode="fill_head">
+          <!-- Change jscripts variable value to 'min' (or anything other than default)
+               to use sfw.min.js.  Make sure that the scripts are minimized first.
+               Consult script 'install' to see how it's done with uglify-js. -->
+          <xsl:with-param name="jscripts">debug</xsl:with-param>
+        </xsl:apply-templates>
       </head>
       <body>
         <div id="SFW_Header">
