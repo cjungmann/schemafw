@@ -3,7 +3,7 @@
 TARGET=schemafw
 
 wi_xsli=$( which xsl-import )
-if [ -n wi_xsli ]; then
+if [ -n "${wi_xsli}" ]; then
     cd web_includes
     xsl-import -s sfw_debug.xsl > sfw_compiled.xsl
     cd ..
@@ -18,7 +18,7 @@ else
 fi
 
 wi_uglify=$( which uglifyjs )
-if [ -n wi_uglify ]; then
+if [ -n "${wi_uglify}" ]; then
     scripts=(
         sfw_*.js
         classes.js

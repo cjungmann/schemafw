@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mi_loc=$( which makeinfo )
-if [ -n $mi_loc ]; then
+if [ -n "${mi_loc}" ]; then
     makeinfo     ../info/schemafw.txi --paragraph-indent=0 -o  /usr/share/info
     gzip -f      /usr/share/info/schemafw.info
     install-info /usr/share/info/schemafw.info.gz /usr/share/info/dir
