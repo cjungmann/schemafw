@@ -653,8 +653,6 @@ function init_SFW(callback)
          }
       }
 
-      var msgcount=0;
-
       function f(ev)
       {
          var e=ev||window.event;
@@ -675,7 +673,7 @@ function init_SFW(callback)
          if (e.type=="keydown")
          {
             var kcode=_keycode_from_event(e);
-            var key_y=89, key_u=85;
+            var key_y=89;
             if (e.ctrlKey && e.altKey && (kcode==key_y || kcode==key_y))
             {
                if (e.shiftKey)
