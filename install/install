@@ -29,7 +29,8 @@ if [ -n wi_uglify ]; then
         XML.js)
 
     cd web_includes
-    uglifyjs ${scripts[@]} --mangle --compress --output sfw.min.js
+    # Skip --compress because it discards lambda functions among other necessities.
+    uglifyjs ${scripts[@]} --verbose --mangle --output sfw.min.js
     cd ..
 else
     echo
