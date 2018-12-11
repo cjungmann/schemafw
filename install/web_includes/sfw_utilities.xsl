@@ -664,5 +664,13 @@
     <xsl:param name="name" />
     <xsl:value-of select="current()/@*[local-name()=$name]" />
   </xsl:template>
+
+  <xsl:template match="*" mode="add_tag_attribute">
+    <xsl:variable name="tag" select="ancestor-or-self::*[@tag]" />
+    <xsl:attribute name="get_value_from_row">yes</xsl:attribute>
+    <xsl:if test="$tag and count($tag) &gt; 0">
+      <xsl:attribute name="data-tag"><xsl:value-of select="$tag[1]/@tag" /></xsl:attribute>
+    </xsl:if>
+  </xsl:template>
 </xsl:stylesheet>
 

@@ -64,6 +64,9 @@
       </xsl:apply-templates>
       <xsl:apply-templates select="." mode="add_on_click_attributes" />
 
+      <xsl:attribute name="data-confirm_template">yes</xsl:attribute>
+      <xsl:apply-templates select="." mode="add_tag_attribute" />
+
       <thead>
         <xsl:apply-templates select="." mode="construct_thead_rows" />
         <xsl:if test="not($static)">
