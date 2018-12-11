@@ -175,6 +175,8 @@ function init_SFW(callback)
    SFW.apply_row_context    = _apply_row_context;
    SFW.render_interaction   = _render_interaction;
    SFW.open_interaction     = _open_interaction;
+   SFW.get_result_to_replace= _get_result_to_replace;
+   SFW.run_task             = _run_task;
    SFW.get_director         = _get_director;
    SFW.update_location_arg  = _update_location_arg;
    SFW.base                 = _base;  // "base class" for _form, _table, etc.
@@ -1552,6 +1554,54 @@ function init_SFW(callback)
       }
 
       function fail(xhr) { console.error("_open_interaction() Failed to get " + url); }
+
+      xhr_get(url, got, fail);
+   }
+
+   function _get_result_to_replace(replacement_result)
+   {
+      var name = replacement_result.getAttribute("target") || replacement_result.localName;
+      var xpath = "/*/*[@rndx][local-name()='" + name + "']";
+      return SFW.xmldoc.selectSingleNode(xpath);
+   }
+
+   function _run_task(url, callback)
+   {
+      function fail(xhr)
+      {
+         console.error("_run_task() Failed to get " + url);
+         if (callback)
+            callback(null);
+      }
+
+      function process_replace(result)
+      {
+         var target = _get_result_to_replace(result);
+         if (target)
+            _update_result_from_result(target, result);
+         else
+            console.error("Unable to find result to replace.");
+      }
+     
+      function got(xdoc)
+      {
+         if (SFW.check_for_preempt(xdoc))
+         {
+            SFW.update_xsl_keys(xdoc);
+            var modetype = xdoc.documentElement.getAttribute("mode-type");
+            var type, target, result, results = xdoc.selectNodes("/*/*[@rndx]");
+            for (var i=0,stop=results.length; i<stop; ++i)
+            {
+               result = results[i];
+               type = result.getAttribute("type");
+               if (type=="replace")
+                  process_replace(result);
+            }
+
+            if (callback)
+               callback(xdoc);
+         }
+      }
 
       xhr_get(url, got, fail);
    }
