@@ -1574,6 +1574,16 @@ function init_SFW(callback)
             callback(null);
       }
 
+      /**
+       * This function will replace the contents of a result element in
+       * the source document with the contents of another result, which
+       * will typically be from a document returned from form data submission.
+       *
+       * I added this function because I couldn't remember or find the
+       * function cascade_updates(), which might have been a better fit.  I'm
+       * keeping this function, for now, because it doesn't rely on a caller
+       * argument.
+       */
       function process_replace(result)
       {
          var target = _get_result_to_replace(result);
@@ -2401,6 +2411,10 @@ function init_SFW(callback)
     * The *type* parameter is passed down to all spawned updates because it
     * shares the context of the server's response.  All levels of a cascade
     * need to know if the operation is an add, delete, or update operation.
+    *
+    * See also: closure function process_replace() in function _run_task().
+    *           It's likely that process_replace() could be replacedd with
+    *           cascade_updates().
     */
    _base.prototype.cascade_updates = function(newdoc, type, child)
    {
