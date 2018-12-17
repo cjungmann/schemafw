@@ -277,8 +277,10 @@
          if (url)
             window.location = url;
          else
+         {
+            SFW.alert("Missing jump target for error number " + error);
             this.sfw_unhide();
-
+         }
       }
    };
 
@@ -296,7 +298,9 @@
       {
          if (SFW.check_for_preempt(doc))
          {
-            if (type=="form-jump")
+            var dtype = doc.documentElement.getAttribute("mode-type");
+
+            if (type=="form-jump" || dtype=="form-jump")
                ths.process_form_jump(doc);
             else
             {
