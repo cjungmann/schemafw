@@ -106,6 +106,7 @@ END $$
 Replaces the token with the value of the named attribute in
 the currently-selected row.  This reference only makes sense
 in a selected line context like @command{on-line-click}.
+
 @item $ (variable reference)
 Replaces the token with the value of a variable with the same name.
 
@@ -124,10 +125,19 @@ to remove that result from consideration for a backup variable search.
 @item @@ (form data result)
 Replaces the token with an attribute value of a form
 data section. (Confirm how this is restricted or not).
+
 @item ? (current script)
 This context reference only applies for places where a
 URL is active, and it replaces the @strong{?} with the
 script name of the current page.
+
+@item & (query-string value)
+This context reference is unique in that it is applied by the Schema
+Server object, @file{schema.fcgi}.  This token will not be found in
+an XML document because the value is either replaced or omitted, but
+it is useful to be aware this token exists.
+
+@xref{Add QueryString Value as an Attribute,,, SchemaServer}
 @end table
 
 @example
