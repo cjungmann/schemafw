@@ -10,6 +10,7 @@ not the HTML output.
 * When to Use Context References::
 * Defining Context References::
 * Using Context References::
+* Query String Context::
 @end menu
 
 @node When to Use Context References
@@ -131,27 +132,7 @@ This context reference only applies for places where a
 URL is active, and it replaces the @strong{?} with the
 script name of the current page.
 
-@item & (query-string value)
-This context reference is unique in that it is applied by the Schema
-Server object, @file{schema.fcgi}.  This token will not be found in
-an XML document because the value is either replaced or omitted, but
-it is useful to be aware this token exists.
-
-@xref{Add QueryString Value as an Attribute,,, SchemaServer}
 @end table
-
-@example
-list
-   type : table
-   procedure : App_Person_List
-   on-line-click : ?edit&lname=@{!lname@}
-
-edit
-   type : form-edit
-   schema-proc : App_Person_List
-   procedure   : App_Person_Value
-   title : 
-@end example
 
 @node Using Context References
 @section Using Context References
@@ -178,3 +159,30 @@ calls the main *resolve_refs* template with the value of an attribute.
 @example
 <xsl:apply-templates select="@@value" mode="resolve_refs />
 @end example
+
+@node Query String Context
+@section Query String Context
+
+The URL query string parameters that are used to invoke a response mode
+are part of the context of a page, but are, by default, not captured or
+presented as part of the XML output.
+
+Response mode contexts in an SRM response can be accessed using the
+context reference protocol (@pxref{Defining Context References}).
+The contexts include form, variables, and line from which a response
+mode instruction, like @emph{title}, might pull information.
+
+However, one important context that is not normally available is the
+parameters of the query string portion of the URL that invoked the
+response mode.  This omission can be overcome with a special instruction:
+
+@code{qstring : reflect} (@pxref{Including Query-String Values as Variables,,,SchemaServer})
+
+The alternative to this is to add a query to a procedure to output
+some values into a new result which can be tagged as a @emph{variables}
+result type.  The problem is that it may require adding parameters
+to the stored procedure that are only used for display.  Using
+@code{qstring : reflect} saves MySQL the burden of reflecting values
+back as variables and helps separate the logic of a procedure from the
+needs of presentation.
+
