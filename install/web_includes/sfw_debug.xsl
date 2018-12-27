@@ -15,6 +15,7 @@
   <xsl:import href="sfw_lookup.xsl" />
   <xsl:import href="sfw_associate.xsl" />
   <xsl:import href="sfw_iltable.xsl" />
+  <xsl:import href="sfw_isotable.xsl" />
   <xsl:import href="sfw_calendar.xsl" />
   <xsl:import href="sfw_ulselect.xsl" />
   <xsl:import href="sfw_ref.xsl" />
