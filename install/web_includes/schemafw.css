@@ -96,6 +96,8 @@ div.message
 .def_right  { text-align:right; }
 .def_center { text-align:center; }
 
+.action     { cursor:pointer; }
+
 
 div.message p { margin:8px; display:table-row;}
 div.message p span { display:table-cell; padding:2px 16px; }
