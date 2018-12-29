@@ -32,7 +32,7 @@
              switch(action)
              {
                 case "add":
-                   this.add_row();
+                   this.add_row(t);
                    break;
 
                 case "remove":
@@ -62,6 +62,23 @@
       return this._result;
    };
 
+   _isotable.prototype.get_tbody = function()
+   {
+      return SFW.find_child_matches(this.widget(), "tbody", true, true);
+   };
+
+   _isotable.prototype.replot = function()
+   {
+      var result, tbody;
+      if ((tbody=this.get_tbody()) && (result=this.get_result()))
+      {
+         result.setAttribute("iso_replot","true");
+         SFW.xslobj.transformFill(tbody, result);
+         result.removeAttribute("iso_replot");
+      }
+   };
+   
+
    _isotable.prototype.get_linked_result = function()
    {
       var schema, field, result=null;
@@ -75,68 +92,70 @@
       return result;
    };
 
-   _isotable.prototype.get_matched_row = function(t)
+   function get_tagged_parent(node, tag)
    {
-      var rowid = t.getAttribute("data-id");
-      var schema, field, result, xpath;
-      var xd = this.xmldoc();
+      var p;
+      if (node.tagName.toLowerCase()==tag)
+         return node;
+      else if ((p=node.parentNode))
+         return get_tagged_parent(p,tag);
+      else
+         return null;
+   }
 
-      function get_field()  { return schema.selectSingleNode("field[@type='isotable']"); }
-      function get_result() { return xd.selectSingleNode("/*/"+field.getAttribute("result")+"[@rndx]"); }
+   _isotable.prototype.save_form_row = function(tr)
+   {
+      function makel(r){return r.ownerDocument.createElement(r.getAttribute("row-name"));}
 
-      function get_row_xpath()
+      var result, form, newel;
+      if ((result = this.get_result())
+          && (form = get_tagged_parent(tr,"form"))
+          && (newel = makel(result)))
       {
-         var pkey = schema.selectSingleNode("field[@primary-key]");
-         if (!pkey)
-            SFW.alert(serialize(schema));
-
-         var rowname = schema.getAttribute("row-name");
-         var fname = pkey.getAttribute("name");
-         return rowname + "[@" + fname + "='" + rowid + "']";
-
-         // return schema.getAttribute("row-name")
-         //    + "[@" +  pkey.getAttribute("name") + "='" + rowid + "']";
-      }
-
-      if ((schema=this.schema())
-          && (field=get_field())
-          && (result=get_result())
-          && (xpath=get_row_xpath()))
-      {
-         SFW.alert("xpath is '" + xpath + "'");
+         SFW.get_form_data_xml(form, newel);
+         result.appendChild(newel);
+         this.replot();
       }
    };
 
-   _isotable.prototype.add_row = function()
+   _isotable.prototype.add_row = function(t)
    {
+      var cname = "isotable_form";
+      var tr = get_tagged_parent(t,"tr");
+
+      if (class_includes(tr,cname))
+         class_remove(tr,cname);
+      else
+      {
+         if (this.save_form_row(tr))
+            this.replot();
+      }
       
+      // var result = this.get_result();
+      // if (result)
+      // {
+      // }
    };
 
-   _isotable.prototype.get_row = function(t)
+   _isotable.prototype.get_xml_row = function(t)
    {
-      var result = this.get_result();
-      if (result)
-      {
-         var schema = result.selectSingleNode("schema");
-         var keyfield = schema.selectSingleNode("field[@primary-key]");
-         if (keyfield)
-         {
-            var rxpath = result.getAttribute("row-name")
-                   + "[@" + keyfield.getAttribute("name")
-                   + "='" + t.getAttribute("data-id") + "']";
-
-            return result.selectSingleNode(rxpath);
-         }
-      }
+      var result, tr, pos, rname, xpath;
+      if ((result=this.get_result())
+          &&(tr=get_tagged_parent(t,"tr"))
+          && (pos=tr.getAttribute("data-pos")>=0)
+          && (rname=result.getAttribute("row-name"))
+          && (xpath=rname+"["+pos+"]"))
+         return result.selectSingleNode(xpath);
       return null;
    };
 
    _isotable.prototype.remove_row = function(t)
    {
-      var row = this.get_row(t);
+      var row = this.get_xml_row(t);
       if (row)
       {
-         SFW.alert("Found the row! '" + serialize(row) + "'");
+         row.parentNode.removeChild(row);
+         this.replot();
       }
    };
   
