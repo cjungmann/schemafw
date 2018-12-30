@@ -142,7 +142,7 @@
       var result, tr, pos, rname, xpath;
       if ((result=this.get_result())
           &&(tr=get_tagged_parent(t,"tr"))
-          && (pos=tr.getAttribute("data-pos")>=0)
+          && (pos=tr.getAttribute("data-pos"))>=0
           && (rname=result.getAttribute("row-name"))
           && (xpath=rname+"["+pos+"]"))
          return result.selectSingleNode(xpath);
