@@ -67,13 +67,33 @@
       return SFW.find_child_matches(this.widget(), "tbody", true, true);
    };
 
+   _isotable.prototype.get_input = function()
+   {
+      var form_row = this.widget().parentNode;
+      function f(n)
+      {
+         return n.nodeType==1 && n.tagName.toLowerCase()=="input" && n.getAttribute("type")=="hidden";
+      }
+      return SFW.find_child_matches(form_row, f, true, true);
+   };
+
    _isotable.prototype.replot = function()
    {
-      var result, tbody;
-      if ((tbody=this.get_tbody()) && (result=this.get_result()))
+      var result, input, tbody;
+      if ((tbody=this.get_tbody())
+          && (input=this.get_input())
+          && (result=this.get_result()))
       {
-         result.setAttribute("iso_replot","true");
+         // replot the table rows:
+         result.setAttribute("iso_replot","table");
          SFW.xslobj.transformFill(tbody, result);
+
+         // Calculate and replace the input value attribute:
+         result.setAttribute("iso_replot","value");
+         var str = SFW.xslobj.transformToString(result);
+         input.value = str;
+
+         // Restore result to original state:
          result.removeAttribute("iso_replot");
       }
    };
