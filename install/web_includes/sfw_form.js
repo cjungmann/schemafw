@@ -411,6 +411,12 @@
 
    _form.prototype.process = function _form_process_message(e,t)
    {
+      if (e.type=="focus")
+      {
+         SFW.ensure_element_visibility(t);
+         return true;
+      }
+
       if (e.type!="click")
          return true;
 

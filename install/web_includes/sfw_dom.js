@@ -10,6 +10,7 @@ function init_SFW_DOM()
    prepare_page_offset_funcs();
    SFW.get_doc_offset       = _get_doc_offset;
    SFW.get_relative_offset  = _get_relative_offset;
+   SFW.ensure_element_visibility = _ensure_element_visibility;
    
    SFW.el_name              = _el_name;
    SFW.find_child_matches   = _find_child_matches;
@@ -66,6 +67,26 @@ function init_SFW_DOM()
       ost.left -= osr.left;
       ost.top -= ost.top;
       return ost;
+   }
+
+   function _ensure_element_visibility(el)
+   {
+      if (!el) return;
+
+      var parent = el.parentNode;
+
+      var top_el = el.offsetTop;
+      var bottom_el = top_el + el.offsetHeight;
+
+      var bottom_parent = parent.offsetHeight;
+      var scroll_parent = parent.scrollTop;
+
+      var offset_move;
+
+      if ((offset_move=bottom_el-bottom_parent-scroll_parent)>0)
+         parent.scrollTop += offset_move;
+      else if ((offset_move=scroll_parent-top_el)>0)
+         parent.scrollTop -= offset_move;
    }
 
    function _el_name(el)

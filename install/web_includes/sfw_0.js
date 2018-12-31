@@ -895,9 +895,6 @@ function init_SFW(callback)
          return false;
       }
 
-      if (e.type!="focus")
-         1==1;
-
       var obj = _seek_event_object(t);
       if (obj)
          return obj.process(e,t);
