@@ -158,9 +158,12 @@
 
 
   <!-- Modeless match for replotting the table contents (tbody). -->
-  <xsl:template match="*[@rndx][@iso_replot]">
+  <xsl:template match="*[@rndx][@iso_replot='table']">
     <xsl:apply-templates select="." mode="isotable_fill_tbody" />
   </xsl:template>
 
+  <xsl:template match="*[@rndx][@iso_replot='value']">
+    <xsl:apply-templates select="." mode="serialize_isotable" />
+  </xsl:template>
 
 </xsl:stylesheet>
