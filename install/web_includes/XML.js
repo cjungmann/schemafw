@@ -900,9 +900,9 @@ function implement_XSL_methods()
             for (var i=0,stop=nl.length; i<stop; ++i)
                nl[i].removeAttribute("root_one");
       };
-      XSL.prototype.transformInsert = function(host,node,before)
+
+      XSL.prototype.transformCommon = function(node,host)
       {
-         var host_doc = (host.nodeType==9 ? host : host.ownerDocument);
          var source_doc, source_node;
          if (node.nodeType==9)
          {
@@ -920,24 +920,48 @@ function implement_XSL_methods()
          // protect node in case of error:
          try
          {
-            var ddf = this.get_processor().transformToFragment(source_doc, host_doc);
-            if (ddf)
-            {
-               if (before)
-                  host.insertBefore(ddf, before);
-               else
-                  host.appendChild(ddf);
-            }
-            else
-               console.error("Stylesheet failed to transform xml.");
+            var host_doc = source_doc;
+            if (host)
+               host_doc = (host.nodeType==9 ? host : host.ownerDocument);
+
+            return this.get_processor().transformToFragment(source_doc, host_doc);
          }
          catch(e) { alert("transformToFragment failed: " + e.message); }
+
+         return null;
       };
+
       XSL.prototype.transformFill = function(host,node)
       {
          empty_el(host);
          this.transformInsert(host,node);
       };
+
+      XSL.prototype.transformInsert = function(host,node,before)
+      {
+         var ddf = this.transformCommon(node, host);
+         if (ddf)
+         {
+            if (before)
+               host.insertBefore(ddf,before);
+            else
+               host.appendChild(ddf);
+         }
+         else
+            SFW.alert("Stylesheet failed to transform document.");
+      };
+
+      XSL.prototype.transformToString = function(node)
+      {
+         var ddf = this.transformCommon(node);
+         if (ddf)
+            return serialize(ddf);
+         else
+            SFW.alert("Stylesheet failed to transform document.");
+
+         return null;
+      };
+
    }
    else
    {
@@ -1061,6 +1085,10 @@ function implement_XSL_methods()
          {
             var str = node.transformNode(this.doc);
             ie_insert_node(container,str,before);
+         };
+         XSL.prototype.transformToString = function(node)
+         {
+            return node.transformNode(this.doc);
          };
       }
    }
