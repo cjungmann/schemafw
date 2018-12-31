@@ -1,8 +1,6 @@
 \html, body { margin:0; padding:0; }
-
-h1 { text-align: center; }
-h2 { text-align: center; margin:0; }
-h3 { text-align: center; margin:0; }
+h1, h2, h3
+{ text-align: center; margin:0; }
 
 #SFW_Content
 {
