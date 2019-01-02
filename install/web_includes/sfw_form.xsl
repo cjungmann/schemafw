@@ -588,8 +588,19 @@
       </xsl:apply-templates>
     </xsl:variable>
 
-    <xsl:variable name="rows" select="2" />
-    <xsl:variable name="cols" select="50" />
+    <xsl:variable name="rows">
+      <xsl:choose>
+        <xsl:when test="@rows"><xsl:value-of select="@rows" /></xsl:when>
+        <xsl:otherwise>2</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:variable name="cols">
+      <xsl:choose>
+        <xsl:when test="@cols"><xsl:value-of select="@cols" /></xsl:when>
+        <xsl:otherwise>30</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
 
     <xsl:element name="textarea">
       <xsl:attribute name="name"><xsl:value-of select="$name" /></xsl:attribute>
