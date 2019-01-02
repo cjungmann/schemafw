@@ -26,6 +26,7 @@
     <xsl:param name="method" select="'post'" />
     <xsl:param name="type" />
     <xsl:param name="primary" />
+    <xsl:param name="prow" select="/.." />
 
     <!--
         $data will be a single data element. Select with the following priority:
@@ -45,19 +46,20 @@
     <xsl:variable name="rowname" select="$sn|$rn" />
 
     <!--
+    pd (parameter data): data row explicitly included in parameters (top priority)
     sd (sibling data): data row is sibling of schema element
-    fd (form data): data row from explictly-named form-data element
+    fd (form data): data row from explicitly-named form-data element
     md (merged data) row from merged result
     ld (last-chance data): first element of first result
     -->
-    <xsl:variable name="sd" select="../*[local-name()=$rowname][1]" />
-    <xsl:variable name="fd" select="../form-data[not($sd)]/*[1]" />
+    <xsl:variable name="sd" select="../*[not($prow)][local-name()=$rowname][1]" />
+    <xsl:variable name="fd" select="../form-data[not($prow)][not($sd)]/*[1]" />
     <xsl:variable name="md"
-        select="../*[not($sd|$fd)][@merged][@rndx]/*[local-name()=../@row-name][1]" />
+        select="../*[not($prow|$sd|$fd)][@merged][@rndx]/*[local-name()=../@row-name][1]" />
     <xsl:variable name="ld"
-        select="../*[not(current()/@merged)][not($sd|$fd|$md)][@rndx='1']/*[local-name()=../@row-name][1]" />
+        select="../*[not(current()/@merged)][not($prow|$sd|$fd|$md)][@rndx='1']/*[local-name()=../@row-name][1]" />
 
-    <xsl:variable name="data" select="$sd|$fd|$md|$ld" />
+    <xsl:variable name="data" select="$prow|$sd|$fd|$md|$ld" />
 
     <xsl:variable name="sfw-class">
       <xsl:choose>
