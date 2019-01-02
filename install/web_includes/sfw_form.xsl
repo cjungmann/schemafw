@@ -598,7 +598,7 @@
     <xsl:variable name="cols">
       <xsl:choose>
         <xsl:when test="@cols"><xsl:value-of select="@cols" /></xsl:when>
-        <xsl:otherwise>2</xsl:otherwise>
+        <xsl:otherwise>30</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
 
