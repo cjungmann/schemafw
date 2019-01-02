@@ -246,12 +246,12 @@
 
    _form.prototype.use_process_submit = function _use_process_submit()
    {
-      var form, sclass
+      var form, sclass;
       if (this.caller())
          return true;
       else if ((form=this.top()) && (sclass=form.getAttribute("data-sfw-class")))
       {
-         if (sclass="form-jump")
+         if (sclass=="form-jump")
             return true;
       }
       return false;
