@@ -3,7 +3,8 @@
     var file_name="sfw_isotable", base_class_name="iclass", class_name="isotable";
     
     if ((!("SFW" in window) && setTimeout(_init,100))
-        || SFW.delay_init(file_name, _init, base_class_name))
+        || SFW.delay_init(file_name, _init, base_class_name)
+        || SFW.delay_init(file_name, _init, "form"))    // for _isotable_form at bottom
        return;
 
     var ctor = _isotable;
@@ -32,17 +33,19 @@
              switch(action)
              {
                 case "add":
-                   this.add_row(t);
+                   this.create_form();
                    break;
 
                 case "remove":
-                   this.remove_row(t);
+                   this.create_form(t);
                    break;
              }
           }
        }
        return true;
     };
+
+   function makel(r){return r.ownerDocument.createElement(r.getAttribute("row-name"));}
 
    _isotable.prototype.get_result = function()
    {
@@ -60,6 +63,11 @@
          }
       }
       return this._result;
+   };
+
+   _isotable.prototype.get_host_form = function()
+   {
+      return SFW.ancestor_by_tag(this.widget(), "form");
    };
 
    _isotable.prototype.get_tbody = function()
@@ -112,24 +120,37 @@
       return result;
    };
 
-   function get_tagged_parent(node, tag)
+   _isotable.prototype.create_form = function(t)
    {
-      var p;
-      if (node.tagName.toLowerCase()==tag)
-         return node;
-      else if ((p=node.parentNode))
-         return get_tagged_parent(p,tag);
-      else
-         return null;
-   }
+      var row, result;
+      if (!(t && (row=this.get_xml_row(t)) && (result=row.parentNode)))
+         result = this.get_result();
+
+      if (!result)
+      {
+         console.error("Failure to find a schema prevents building the form.");
+         return;
+      }
+
+      var uschema = row?row.selectSingleNode("../schema"):result.selectSingleNode("schema");
+
+      var hform = this.get_host_form();
+      // var fhost = SFW.make_sfw_host(SFW.stage, this.xmldoc());
+      var fhost = SFW.make_sfw_host(SFW.stage, this.xmldoc(), this);
+      SFW.size_to_cover(fhost, hform);
+
+      result.setAttribute("iso_replot","form");
+      SFW.xslobj.transformFill(fhost,(row?row:result));
+      result.removeAttribute("iso_replot");
+      SFW.arrange_in_host(fhost, SFW.seek_child_anchor(fhost));
+   };
 
    _isotable.prototype.save_form_row = function(tr)
    {
-      function makel(r){return r.ownerDocument.createElement(r.getAttribute("row-name"));}
 
       var result, form, newel;
       if ((result = this.get_result())
-          && (form = get_tagged_parent(tr,"form"))
+          && (form = SFW.ancestor_by_tag(tr,"form"))
           && (newel = makel(result)))
       {
          SFW.get_form_data_xml(form, newel);
@@ -138,30 +159,11 @@
       }
    };
 
-   _isotable.prototype.add_row = function(t)
-   {
-      var cname = "isotable_form";
-      var tr = get_tagged_parent(t,"tr");
-
-      if (class_includes(tr,cname))
-         class_remove(tr,cname);
-      else
-      {
-         if (this.save_form_row(tr))
-            this.replot();
-      }
-      
-      // var result = this.get_result();
-      // if (result)
-      // {
-      // }
-   };
-
    _isotable.prototype.get_xml_row = function(t)
    {
       var result, tr, pos, rname, xpath;
       if ((result=this.get_result())
-          &&(tr=get_tagged_parent(t,"tr"))
+          &&(tr=SFW.ancestor_by_tag(t,"tr"))
           && (pos=tr.getAttribute("data-pos"))>=0
           && (rname=result.getAttribute("row-name"))
           && (xpath=rname+"["+pos+"]"))
@@ -178,7 +180,31 @@
          this.replot();
       }
    };
-  
+
+   // Second class in closure
+   function _isotable_form(actors) { SFW.base.call(this,actors); }
+
+   _isotable_form.prototype.process_submit = function()
+   {
+      var form, caller, result, newel;
+      if ((form = this.top())
+          && (caller = this.caller())
+          && (result = caller.get_result())
+          && (newel = makel(result)))
+      {
+         SFW.get_form_data_xml(form, newel);
+         if (SFW.integrate_element(result, newel))
+         {
+            caller.replot();
+            this.dismantle();
+         }
+      }
+
+      return false;
+   };
+
+   if (!SFW.derive(_isotable_form, "isotable_form", "form"))
+      return;
  }
 )();
 
