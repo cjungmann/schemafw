@@ -21,6 +21,7 @@
    SFW.check_for_preempt = _check_for_preempt;
    SFW.update_xsl_keys   = _update_xsl_keys;
    SFW.remove_xsl_keys   = _remove_xsl_keys;
+   SFW.integreate_element= _integrate_element;
       
 
    function _alert(str)
@@ -258,4 +259,29 @@
          }
       }
    }
+
+   function _integrate_element(result, el)
+   {
+      var schema, field, fieldname, old;
+
+      if ((schema=result.selectSingleNode("schema"))
+          && (field=SFW.get_schema_idfield(schema))
+          && (fieldname=field.getAttribute("name")))
+      {
+         var id=el.getAttribute(fieldname);
+         var xpath="*[local-name()=../@row-name][@" + fieldname + "='" + id + "']";
+         old = result.selectSingleNode(xpath);
+
+         if (old)
+            result.replaceChild(el,old);
+         else
+            result.appendChild(el);
+
+         return true;
+      }
+
+      console.error("Function integrate_element failed to find a fieldname.");
+      return false;
+   }
+
 })();
