@@ -161,15 +161,17 @@ function init_SFW(callback)
    SFW.get_dup_node         = _get_dup_node;
    SFW.get_deleted_attribute= _get_deleted_attribute;
    SFW.remove_deleted_row   = _remove_deleted_row;
-   SFW.update_xmldoc        = _update_xmldoc
+   SFW.update_xmldoc        = _update_xmldoc;
 
    // The following commonly-used search function is found in sfw_dom.js:
    // SFW.find_child_matches(parent, function, first_only, recurse)
 
    SFW.setup_sfw_host        = _setup_sfw_host;
+   SFW.make_sfw_host         = _make_sfw_host;
    SFW.get_last_SFW_Host    = _get_last_SFW_Host;
    SFW.keep_top_merged_element = _seek_top_merged_element;
    SFW.arrange_in_host      = _arrange_in_host;
+   SFW.size_to_cover        = _size_to_cover;
    SFW.resize_page          = _resize_page;
    SFW.translate_url        = _translate_url;
    SFW.apply_row_context    = _apply_row_context;
@@ -1078,13 +1080,16 @@ function init_SFW(callback)
       var s = anchor.style;
       s.top = _px(os_host.top);
       s.left = _px(center_host - anchor.offsetWidth/2);
-      s.zIndex = 100;
+      // s.zIndex = 100;
    }
 
    function _size_to_cover(over, under)
    {
-      over.style.minHeight = SFW.px(under.offsetHeight);
+      var os_host = SFW.get_doc_offset(under);
+      var combined = os_host.top + under.offsetHeight;
+      over.style.height = SFW.px(combined);
    }
+
 
    function _setup_sfw_host(shost, xmldoc, caller, data)
    {
@@ -1525,7 +1530,7 @@ function init_SFW(callback)
                else
                   console.error(root+"jumps element.");
 
-               return;
+              return;
             }
 
             if (modetype=="merge")
