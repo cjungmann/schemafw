@@ -295,7 +295,7 @@
       var os = SFW.get_property(child,"host","data","os");
       if (os)
          SFW.set_page_offset(os);
-   }
+   };
 
    _tbase.prototype.get_sfw_attribute = function(aname)
    {
@@ -308,15 +308,15 @@
    _tbase.prototype.get_click_id_name = function(name)
    {
       return this.get_sfw_attribute(name+"_click_id") || "id";
-   }
+   };
 
-   _tbase.prototype.get_el_id = function(el)     { return el.getAttribute("data-id"); }
-   _tbase.prototype.get_data_name = function(el) { return el.getAttribute("data-name"); }
+   _tbase.prototype.get_el_id = function(el)     { return el.getAttribute("data-id"); };
+   _tbase.prototype.get_data_name = function(el) { return el.getAttribute("data-name"); };
 
    _tbase.prototype.get_click_action = function(name)
    {
       return this.get_data_value("on_" + name + "_click");
-   }
+   };
 
    /**
     * This is a generic get_click_info function that searches for element names
