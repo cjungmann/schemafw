@@ -50,16 +50,16 @@
     sd (sibling data): data row is sibling of schema element
     fd (form data): data row from explicitly-named form-data element
     md (merged data) row from merged result
-    ld (last-chance data): first element of first result
+
+    There was a last resort variable, but it's been removed in favor
+    of the $prow parameter.  If an application needs a last resort,
+    pass the last resort data in the $prow parameter.
     -->
     <xsl:variable name="sd" select="../*[not($prow)][local-name()=$rowname][1]" />
     <xsl:variable name="fd" select="../form-data[not($prow)][not($sd)]/*[1]" />
     <xsl:variable name="md"
         select="../*[not($prow|$sd|$fd)][@merged][@rndx]/*[local-name()=../@row-name][1]" />
-    <xsl:variable name="ld"
-        select="../*[not(current()/@merged)][not($prow|$sd|$fd|$md)][@rndx='1']/*[local-name()=../@row-name][1]" />
-
-    <xsl:variable name="data" select="$prow|$sd|$fd|$md|$ld" />
+    <xsl:variable name="data" select="$prow|$sd|$fd|$md" />
 
     <xsl:variable name="sfw-class">
       <xsl:choose>
@@ -94,12 +94,17 @@
     </xsl:variable>
 
     <xsl:element name="form">
+
       <xsl:if test="$mode-type='form-import'">
         <xsl:attribute name="enctype">multipart/form-data</xsl:attribute>
       </xsl:if>
-      <xsl:if test="$has_action">
-        <xsl:attribute name="action"><xsl:value-of select="$action" /></xsl:attribute>
-      </xsl:if>
+
+      <!-- Always include action, even if empty: -->
+      <xsl:attribute name="action">
+        <xsl:if test="not($action='^local')">
+          <xsl:value-of select="$action" />
+        </xsl:if>
+      </xsl:attribute>
 
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
       <xsl:attribute name="method"><xsl:value-of select="$method" /></xsl:attribute>
@@ -111,8 +116,9 @@
             name="data-path"><xsl:apply-templates select="$data" mode="gen_path" /></xsl:attribute>
       </xsl:if>
 
-      <xsl:attribute
-          name="data-schema-path"><xsl:apply-templates select="." mode="gen_path" /></xsl:attribute>
+      <xsl:attribute name="data-schema-path">
+        <xsl:apply-templates select="." mode="gen_path" />
+      </xsl:attribute>
 
       <fieldset class="Schema">
         <xsl:element name="legend">
