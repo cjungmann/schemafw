@@ -21,7 +21,7 @@
    SFW.check_for_preempt = _check_for_preempt;
    SFW.update_xsl_keys   = _update_xsl_keys;
    SFW.remove_xsl_keys   = _remove_xsl_keys;
-   SFW.integreate_element= _integrate_element;
+   SFW.integrate_element = _integrate_element;
       
 
    function _alert(str)
