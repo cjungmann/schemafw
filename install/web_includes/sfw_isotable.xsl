@@ -169,7 +169,7 @@
   <!-- TWO Modeless matches for creating a form -->
   <!-- matches a row, so type is not new -->
   <xsl:template match="*[parent::*[@rndx][@iso_replot='form'][schema]][local-name()=../@row-name]">
-    <xsl:apply-templates select="schema" mode="construct_form">
+    <xsl:apply-templates select="../schema" mode="construct_form">
       <xsl:with-param name="prow" select="." />
       <xsl:with-param name="type" select="'isotable_form'" />
     </xsl:apply-templates>
