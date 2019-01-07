@@ -2278,6 +2278,55 @@ function init_SFW(callback)
       return true;
    };
 
+   function _return_button_callback_func(call, b, cb)
+   {
+      var curname, curobj, tof, curctx;
+      var arr = call.split(".");
+
+      function unrec(name)
+      {
+         return function() { SFW.alert("Unrecognized type ("
+                                       + name
+                                       + ") while parsing call='"
+                                       + call
+                                       + "')");
+                           };
+      }
+
+      for (var i=0,stop=arr.length; i<stop; ++i)
+      {
+         curobj = null;
+         curname = arr[i];
+
+         if (!curctx)
+         {
+            if (curname in this)
+               curctx = this;
+            else if (curname in window)
+               curctx = window;
+         }
+
+         if (!curctx)
+            return unrec(curname);
+
+         if (curctx && curname in curctx)
+         {
+            curobj = curctx[curname];
+            switch(typeof(curobj))
+            {
+               case "object":
+                  curctx = curobj;
+                  break;
+               case "function":
+                  return function() { curobj.call(curctx,b,cb); };
+               default:
+                  return unrec(curname);
+            }
+         }
+      }
+      return null;
+   }
+
    _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
    {
       var caller;
@@ -2297,7 +2346,7 @@ function init_SFW(callback)
          {
             case "open":
                if (url)
-                  funcForTimeout = function(){ths.process_open_button(b,cb);}
+                  funcForTimeout = function(){ths.process_open_button(b,cb);};
                break;
             case "jump":
             case "import":
@@ -2306,17 +2355,7 @@ function init_SFW(callback)
                break;
             case "call":
                if (url)
-               {
-                  // var button = get_srm_button() or something similar
-                  // Use parameter sub-instructions to create an argument
-                  // array with which to use call() to invoke the function
-                  // SEE AddingButtons.md -> Button Type _call_ -> Future Features
-
-                  if (url in this)
-                     funcForTimeout = function(){ths[url](b,cb)};
-                  else if (url in window)
-                     funcForTimeout = function(){window[url](b,cb)};
-               }
+                  funcForTimeout = _return_button_callback_func(url, b, cb);
                else
                   funcForTimeout = function(){SFW.alert("Call button type without url or task."); };
                break;
@@ -2341,19 +2380,16 @@ function init_SFW(callback)
                   {
                      url = _translate_url(url, ths.xmldocel());
                      _open_interaction(SFW.stage, url, ths);
-                  }
+                  };
                }
                break;
          }
       }
 
       if (funcForTimeout)
-      {
          setTimeout(funcForTimeout);
-         return false;
-      }
-      else
-         return true;
+
+      return false;
    };
 
    /** Remove associated merged_data and remove merged_data value to prevent second attempt. */
