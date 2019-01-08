@@ -25,13 +25,6 @@
     <th><xsl:value-of select="$label" /></th>
   </xsl:template>
 
-  <xsl:template match="schema" mode="isotable_head">
-    <tr>
-      <th />
-      <xsl:apply-templates select="field[not(@hidden)]" mode="isotable_colhead" />
-    </tr>
-  </xsl:template>
-
   <xsl:template match="field" mode="isotable_cell">
     <xsl:param name="row" />
     <td>
@@ -48,23 +41,10 @@
     </td>
   </xsl:template>
 
-  <xsl:template match="*" mode="isotable_remove_button">
-    <xsl:param name="schema" />
-    <xsl:variable name="idattr" select="$schema/field[@primary-key]/@name" />
-    <xsl:variable name="rowid" select="position()" />
-    <xsl:if test="$idattr">
-      <xsl:variable name="idval" select="@*[local-name()=$idattr]" />
-      <img class="action" title="remove item" src="includes/remove-item.png" data-id="{$idval}" />
-    </xsl:if>
-  </xsl:template>
-
   <xsl:template match="*" mode="isotable_row">
     <xsl:param name="schema" />
     <xsl:variable name="pos" select="position()" />
     <tr data-pos="{$pos}">
-      <td>
-        <img class="action" title="remove item" src="includes/remove-item.png" />
-      </td>
       <xsl:apply-templates select="$schema/field[not(@hidden)]" mode="isotable_cell">
         <xsl:with-param name="row" select="." />
       </xsl:apply-templates>
@@ -73,21 +53,17 @@
 
   <xsl:template match="*[@rndx]" mode="isotable_fill_tbody">
     <xsl:variable name="rows" select="*[local-name()=../@row-name]" />
-
     <xsl:apply-templates select="$rows" mode="isotable_row">
       <xsl:with-param name="schema" select="schema" />
     </xsl:apply-templates>
-
-    <tr class="isotable_form">
-      <td><img class="action" title="add item" src="includes/add-item.png" /></td>
-      <xsl:apply-templates select="schema/field[not(@hidden)]" mode="isotable_field" />
-    </tr>
   </xsl:template>
 
   <xsl:template match="*[@rndx]" mode="construct_isotable">
     <table>
       <thead>
-        <xsl:apply-templates select="schema" mode="isotable_head" />
+        <tr>
+          <xsl:apply-templates select="field[not(@hidden)]" mode="isotable_colhead" />
+        </tr>
       </thead>
       <tbody>
         <xsl:apply-templates select="." mode="isotable_fill_tbody" />
