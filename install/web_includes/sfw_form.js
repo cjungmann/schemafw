@@ -24,9 +24,10 @@
    function _form_edit(base, doc, caller, data) { _form.apply(this, arguments); }
 
    // Adding useful local functions to global object
+   SFW.focus_on_first_field = _focus_on_first_field;
+   SFW.process_ebutton      = _process_ebutton;
    SFW.get_form_data        = _get_form_data;
    SFW.get_form_data_xml    = _get_form_data_xml;
-   SFW.focus_on_first_field = _focus_on_first_field;
 
    function _find_first_editable_field(form)
    {
@@ -43,6 +44,7 @@
       return null;
    }
    
+   // Global, SFW member function
    function _focus_on_first_field(dlg)
    {
       var el = _find_first_editable_field(dlg);
@@ -56,6 +58,48 @@
          }
       }
    }
+
+   // Global, SFW member function
+   function _process_ebutton(button, callback)
+   {
+      var calling_form, schema, label, fieldname;
+      if ((calling_form = SFW.seek_event_object(button))
+          && (schema = calling_form.schema())
+          && (label = button.parentNode)
+          && (fieldname = label.getAttribute("for"))
+         )
+      {
+         if (label.tagName.toLowerCase()!="label")
+            SFW.alert("Assumption that button is child of label is no longer valid.");
+
+         var xpath = "field[@name='" + fieldname + "']";
+         var field = schema.selectSingleNode(xpath);
+         var input = SFW.next_sibling_element(label);
+
+         // Note that properties of the following object must be
+         // independent of the Javascript objects that are created
+         // during an event.  "input" is an input field of the
+         // calling form.  It will not go out of scope while the
+         // subordinate form is displayed.
+         var data_bundle = {
+            input : input
+         };
+
+         // Setup source for transformation:
+         field.setAttribute("construct_field_form", "true");
+         var data_el = add_namespace_el("data", null, field);
+         data_el.setAttribute(fieldname, input.value);
+
+         SFW.create_interaction(field, calling_form, data_bundle);
+
+         // Unsetup source for transformation:
+         field.removeChild(data_el);
+         field.removeAttribute("construct_field_form");
+      }
+      else
+         SFW.alert("Couldn't find the label, schema, or form.");
+   };
+
 
    function _get_multiple_value(el)
    {
@@ -71,6 +115,7 @@
       return str;
    }
 
+   // Global, SFW member function
    function _get_form_data(form)
    {
       var el, els = form.elements;
@@ -121,6 +166,7 @@
     * add new rows for local construction of a collection of
     * XML elements or for submission to a web services server.
     */
+   // Global, SFW member function
    function _get_form_data_xml(form, outel, save_skips)
    {
       // Default value is true:
@@ -437,10 +483,35 @@
       return true;
    };
 
+   function _form_single(actors) { SFW.base.call(this, actors); }
+   _form_single.prototype.process_submit = function()
+   {
+      var form_data = _get_form_data(this.top());
+      if (form_data.length == 0)
+         return;
+
+      var farr = form_data[0].split('=');
+      var fname = farr[0];
+      var fval = decodeURIComponent(farr[1]);
+
+      var host_data, input, caller;
+      if ((host_data=this.data())
+          && (input=host_data.input)
+          && (input.name == fname)
+          && (caller=this.caller()))
+      {
+         input.value = fval;
+         this.dismantle();
+      }
+
+   };
+
    // With _form prototype complete, we can derive other classes from it:
-   if(!SFW.derive(_form_new, "form-new", "form") ||
-      !SFW.derive(_form_edit, "form-edit", "form") ||
-      !SFW.derive(_form_edit, "form-jump", "form") ||
-      !SFW.derive(_form_edit, "form-page", "form"))
+   if(!SFW.derive(_form_new, "form-new", "form")
+      || !SFW.derive(_form_edit, "form-edit", "form")
+      || !SFW.derive(_form_edit, "form-jump", "form")
+      || !SFW.derive(_form_edit, "form-page", "form")
+      || !SFW.derive(_form_single, "form-single", "form")
+     )
       return;
 })();
