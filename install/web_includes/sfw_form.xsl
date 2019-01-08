@@ -44,7 +44,6 @@
   </xsl:template>
 
   <xsl:template match="field[@construct_form_single][data]">
-    <div>Ha ha</div>
     <xsl:apply-templates select="." mode="construct_form_single">
       <xsl:with-param name="data" select="data" />
     </xsl:apply-templates>
