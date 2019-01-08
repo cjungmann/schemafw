@@ -86,7 +86,7 @@
          };
 
          // Setup source for transformation:
-         field.setAttribute("construct_field_form", "true");
+         field.setAttribute("construct_form_single", "true");
          var data_el = add_namespace_el("data", null, field);
          data_el.setAttribute(fieldname, input.value);
 
@@ -94,7 +94,7 @@
 
          // Unsetup source for transformation:
          field.removeChild(data_el);
-         field.removeAttribute("construct_field_form");
+         field.removeAttribute("construct_form_single");
       }
       else
          SFW.alert("Couldn't find the label, schema, or form.");
