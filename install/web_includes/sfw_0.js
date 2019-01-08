@@ -90,6 +90,7 @@ var SFW = { types     : {},
                   if (f)
                      return f();
                }
+               return false;
             },
             add_handler : function(h, first)
             {
@@ -156,6 +157,7 @@ function init_SFW(callback)
    SFW.set_view_renderer    = _set_view_renderer;
    SFW.update_selected_view = _update_selected_view;
    SFW.change_view          = _change_view;
+   SFW.return_callback_func = _return_callback_func;
    SFW.process_event        = _process_event;
    SFW.process_host_keydown = _process_host_keydown;
    SFW.get_dup_node         = _get_dup_node;
@@ -192,12 +194,12 @@ function init_SFW(callback)
 
    SFW.get_row_from_result_id = _get_row_from_result_id;
 
-   SFW.row_name_from_schema = _row_name_from_schema
+   SFW.row_name_from_schema = _row_name_from_schema;
 
    SFW.get_tasks_from_host  = _get_tasks_from_host;
    SFW.get_object_from_host = _get_object_from_host;
    SFW.get_cfobj_result     = _get_cfobj_result;
-   SFW.get_update_row       = _get_update_row
+   SFW.get_update_row       = _get_update_row;
    SFW.get_urow_from_cfobj  = function(o) {
       return ("update_row" in o)?o.update_row:null; };
 
@@ -431,7 +433,7 @@ function init_SFW(callback)
       var actors = _seek_event_actors(t);
       if (actors)
       {
-         var iclass=actors.iclass
+         var iclass=actors.iclass;
          if (iclass in SFW.types)
             return new SFW.types[iclass](actors);
          else
@@ -878,6 +880,55 @@ function init_SFW(callback)
       }
    }
 
+   function _return_callback_func(call, args_arr)
+   {
+      var curname, curobj, tof, curctx;
+      var arr = call.split(".");
+
+      function unrec(name)
+      {
+         return function() { SFW.alert("Unrecognized type ("
+                                       + name
+                                       + ") while parsing call='"
+                                       + call
+                                       + "')");
+                           };
+      }
+
+      for (var i=0,stop=arr.length; i<stop; ++i)
+      {
+         curobj = null;
+         curname = arr[i];
+
+         if (!curctx)
+         {
+            if (curname in this)
+               curctx = this;
+            else if (curname in window)
+               curctx = window;
+         }
+
+         if (!curctx)
+            return unrec(curname);
+
+         if (curctx && curname in curctx)
+         {
+            curobj = curctx[curname];
+            switch(typeof(curobj))
+            {
+               case "object":
+                  curctx = curobj;
+                  break;
+               case "function":
+                  return function() { curobj.apply(curctx,args_arr); };
+               default:
+                  return unrec(curname);
+            }
+         }
+      }
+      return null;
+   }
+
    function _process_event(e,t)
    {
       // Get parent if text or attribute node:
@@ -1074,12 +1125,14 @@ function init_SFW(callback)
 
    function _arrange_in_host(host, anchor)
    {
-      var os_host = SFW.get_doc_offset(host);
-      var center_host = host.offsetWidth / 2 + os_host.left;
-      
       var s = anchor.style;
+
+      var os_host = SFW.get_doc_offset(host);
+      var center_host = Math.round(host.offsetWidth / 2 + os_host.left);
+      var center_anchor = Math.round(center_host - anchor.offsetWidth/2);
+      
       s.top = _px(os_host.top);
-      s.left = _px(center_host - anchor.offsetWidth/2);
+      s.left = _px(center_anchor);
       // s.zIndex = 100;
    }
 
@@ -2278,55 +2331,6 @@ function init_SFW(callback)
       return true;
    };
 
-   function _return_button_callback_func(call, b, cb)
-   {
-      var curname, curobj, tof, curctx;
-      var arr = call.split(".");
-
-      function unrec(name)
-      {
-         return function() { SFW.alert("Unrecognized type ("
-                                       + name
-                                       + ") while parsing call='"
-                                       + call
-                                       + "')");
-                           };
-      }
-
-      for (var i=0,stop=arr.length; i<stop; ++i)
-      {
-         curobj = null;
-         curname = arr[i];
-
-         if (!curctx)
-         {
-            if (curname in this)
-               curctx = this;
-            else if (curname in window)
-               curctx = window;
-         }
-
-         if (!curctx)
-            return unrec(curname);
-
-         if (curctx && curname in curctx)
-         {
-            curobj = curctx[curname];
-            switch(typeof(curobj))
-            {
-               case "object":
-                  curctx = curobj;
-                  break;
-               case "function":
-                  return function() { curobj.call(curctx,b,cb); };
-               default:
-                  return unrec(curname);
-            }
-         }
-      }
-      return null;
-   }
-
    _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
    {
       var caller;
@@ -2355,7 +2359,7 @@ function init_SFW(callback)
                break;
             case "call":
                if (url)
-                  funcForTimeout = _return_button_callback_func(url, b, cb);
+                  funcForTimeout = _return_callback_func(url, [b, cb]);
                else
                   funcForTimeout = function(){SFW.alert("Call button type without url or task."); };
                break;
