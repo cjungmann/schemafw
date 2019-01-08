@@ -21,6 +21,35 @@
   <!-- <xsl:variable name="empty-list-value" select="'- - empty list - -'" /> -->
   <xsl:variable name="empty-list-value">-- empty list --</xsl:variable>
 
+  <xsl:template match="field" mode="construct_form_single">
+    <xsl:param name="data" />
+    <xsl:param name="legend" select="'legend'" />
+
+    <form method="post"
+          class="Moveable"
+          data-sfw-class="form-single"
+          onsubmit="return false;">
+      <fieldset class="Schema">
+        <legend><xsl:value-of select="$legend" /></legend>
+         <xsl:apply-templates select="." mode="construct_input_row">
+           <xsl:with-param name="data" select="$data" />
+           <xsl:with-param name="view-mode" select="'single'" />
+         </xsl:apply-templates>
+         <p class="buttons">
+           <input type="submit" value="Submit" />
+           <input type="button" value="Cancel" data-type="cancel" />
+         </p>
+      </fieldset>
+    </form>
+  </xsl:template>
+
+  <xsl:template match="field[@construct_form_single][data]">
+    <div>Ha ha</div>
+    <xsl:apply-templates select="." mode="construct_form_single">
+      <xsl:with-param name="data" select="data" />
+    </xsl:apply-templates>
+  </xsl:template>
+    
   <xsl:template match="schema" mode="construct_form">
     <xsl:param name="result-schema" />
     <xsl:param name="method" select="'post'" />
@@ -298,9 +327,23 @@
           </xsl:element>
         </xsl:if>
         <xsl:value-of select="$label" />
+        <xsl:if test="@ebutton and not($view-mode='single')">
+          <button type="button"
+                  data-type="call"
+                  data-task="SFW.process_ebutton"
+                  title="Edit Field" >
+            <img src="includes/edit.png" />
+          </button>
+        </xsl:if>
       </label>
 
       <xsl:choose>
+        <xsl:when test="$view-mode='single'">
+          <xsl:apply-templates select="." mode="construct_input">
+            <xsl:with-param name="data" select="$data" />
+            <xsl:with-param name="force-edit" select="1" />
+          </xsl:apply-templates>
+        </xsl:when>
         <xsl:when test="$mode-type='form-view'">
           <div class="field_content">
             <xsl:apply-templates select="." mode="display_value">
@@ -495,6 +538,7 @@
 
   <xsl:template match="field" mode="construct_input">
     <xsl:param name="data" />
+    <xsl:param name="force-edit" />
 
     <xsl:variable name="type">
       <xsl:choose>
@@ -527,7 +571,9 @@
     </xsl:variable>
 
     <xsl:variable name="readonly">
-      <xsl:apply-templates select="." mode="check_readonly" />
+      <xsl:if test="not($force-edit)">
+        <xsl:apply-templates select="." mode="check_readonly" />
+      </xsl:if>
     </xsl:variable>
 
     <xsl:variable name="value">
