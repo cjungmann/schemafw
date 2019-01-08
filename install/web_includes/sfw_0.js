@@ -177,6 +177,7 @@ function init_SFW(callback)
    SFW.resize_page          = _resize_page;
    SFW.translate_url        = _translate_url;
    SFW.apply_row_context    = _apply_row_context;
+   SFW.create_interaction   = _create_interaction;
    SFW.render_interaction   = _render_interaction;
    SFW.open_interaction     = _open_interaction;
    SFW.get_result_to_replace= _get_result_to_replace;
@@ -2642,6 +2643,26 @@ function init_SFW(callback)
          return view.getAttribute("type");
       else
          return null;
+   }
+
+   function _create_interaction(node, caller, data)
+   {
+      var newhost = SFW.make_sfw_host(SFW.stage, node.ownerDocument, caller, data);
+      SFW.size_to_cover(newhost, caller);
+
+      SFW.xslobj.transformFill(newhost, node);
+
+      var obj = SFW.get_object_from_host(newhost);
+      if (obj)
+      {
+         obj.initialize();
+         if (caller)
+            caller.child_ready(obj);
+      }
+
+      var anchor = SFW.seek_child_anchor(newhost);
+      if (anchor)
+         SFW.arrange_in_host(newhost, anchor);
    }
 
    function _render_interaction(doc,host,caller,data)
