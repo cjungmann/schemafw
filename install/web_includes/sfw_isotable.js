@@ -24,9 +24,9 @@
           return false;
 
        var tagname = t.tagName.toLowerCase();
-       if (e.type=="click")
+       if (tagname=="button")
        {
-          if (tagname=="img")
+          if (e.type=="mouseup")
           {
              var title = t.getAttribute("title");
              var action = title?title.split(' ')[0]:null;
@@ -42,7 +42,7 @@
              }
           }
        }
-       return true;
+       return false;
     };
 
    function makel(r){return r.ownerDocument.createElement(r.getAttribute("row-name"));}
@@ -147,7 +147,6 @@
 
    _isotable.prototype.save_form_row = function(tr)
    {
-
       var result, form, newel;
       if ((result = this.get_result())
           && (form = SFW.ancestor_by_tag(tr,"form"))
