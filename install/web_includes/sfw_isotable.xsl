@@ -68,6 +68,13 @@
       <tbody>
         <xsl:apply-templates select="." mode="isotable_fill_tbody" />
       </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="99">
+            <button type="button" class="add_record" title="add record" />
+          </td>
+        </tr>
+      </tfoot>
     </table>
   </xsl:template>
 

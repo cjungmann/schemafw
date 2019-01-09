@@ -328,10 +328,10 @@
         <xsl:value-of select="$label" />
         <xsl:if test="@ebutton and not($view-mode='single')">
           <button type="button"
+                  class="ebutton_edit"
                   data-type="call"
                   data-task="SFW.process_ebutton"
                   title="Edit Field" >
-            <img src="includes/edit.png" />
           </button>
         </xsl:if>
       </label>

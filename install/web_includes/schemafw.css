@@ -96,6 +96,24 @@ div.message
 .action     { cursor:pointer; }
 
 tr.isotable_form td.field { display:none; }
+button.ebutton_edit
+{
+    margin-left:0.5em;
+    background : url( 'pencil.png' );
+    background-size:14px 14px;
+    height: 14px;
+    width: 14px;
+    border:none;
+}
+
+button.add_record
+{
+    background : url( 'add-record.png' );
+    background-size:14px 14px;
+    height: 14px;
+    width: 14px;
+    border:none;
+}
 
 
 div.message p { margin:8px; display:table-row;}
