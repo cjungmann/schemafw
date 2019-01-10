@@ -2229,10 +2229,10 @@ function init_SFW(callback)
    _base.prototype.sfw_unhide = 
       _base.prototype.sfw_reveal = function _sfw_reveal()
    {
-      var v = this.host();
-      if (v)
-         v.style.display = "";
-   }
+         var v = this.host();
+         if (v)
+            v.style.display = "";
+   };
 
    function _child_close(child)
    {
