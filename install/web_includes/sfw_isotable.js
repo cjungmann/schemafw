@@ -24,6 +24,15 @@
           return false;
 
        var tagname = t.tagName.toLowerCase();
+
+       if (e.type=="click")
+       {
+          var tr, rpos;
+          if ((tr=((tagname=="tr") ? t : SFW.ancestor_by_tag(t, "tr")))
+              && (rpos=tr.getAttribute("data-pos")) > 0)
+             this.create_form(tr);
+       }
+
        if (tagname=="button")
        {
           if (e.type=="mouseup")
@@ -34,10 +43,6 @@
              {
                 case "add":
                    this.create_form();
-                   break;
-
-                case "remove":
-                   this.create_form(t);
                    break;
              }
           }
@@ -120,10 +125,10 @@
       return result;
    };
 
-   _isotable.prototype.create_form = function(t)
+   _isotable.prototype.create_form = function(tr)
    {
       var row, result;
-      if (!(t && (row=this.get_xml_row(t)) && (result=row.parentNode)))
+      if (!(tr && (row=this.get_xml_row(tr)) && (result=row.parentNode)))
          result = this.get_result();
 
       if (!result)
@@ -136,7 +141,7 @@
 
       var hform = this.get_host_form();
       // var fhost = SFW.make_sfw_host(SFW.stage, this.xmldoc());
-      var fhost = SFW.make_sfw_host(SFW.stage, this.xmldoc(), this);
+      var fhost = SFW.make_sfw_host(SFW.stage, this.xmldoc(), this, {row:row});
       SFW.size_to_cover(fhost, hform);
 
       result.setAttribute("iso_replot","form");
@@ -158,11 +163,10 @@
       }
    };
 
-   _isotable.prototype.get_xml_row = function(t)
+   _isotable.prototype.get_xml_row = function(tr)
    {
-      var result, tr, pos, rname, xpath;
+      var result, pos, rname, xpath;
       if ((result=this.get_result())
-          &&(tr=SFW.ancestor_by_tag(t,"tr"))
           && (pos=tr.getAttribute("data-pos"))>=0
           && (rname=result.getAttribute("row-name"))
           && (xpath=rname+"["+pos+"]"))
@@ -182,6 +186,20 @@
 
    // Second class in closure
    function _isotable_form(actors) { SFW.base.call(this,actors); }
+
+   _isotable_form.prototype.process_button_delete = function(t,cb)
+   {
+      var data, row;
+      if (this.has_data() && (data=this.data()))
+         row = data["row"];
+
+      if (row)
+      {
+         row.parentNode.removeChild(row);
+         this.caller().replot();
+         this.dismantle();
+      }
+   };
 
    _isotable_form.prototype.process_submit = function()
    {
