@@ -95,6 +95,8 @@ div.message
 
 .action     { cursor:pointer; }
 
+form.isotable tbody tr { cursor:pointer; }
+form.isotable tbody tr:hover { background-color:#FFFF66; }
 tr.isotable_form td.field { display:none; }
 button.ebutton_edit
 {
