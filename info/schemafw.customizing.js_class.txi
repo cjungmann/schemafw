@@ -8,6 +8,9 @@ builtin framework functions, this section includes an example
 that has the minumum required elements to serve as a
 foundation for new custom controls.
 
+(@pxref{Freeform Custom Button} for another example of a
+custom Javascript class)
+
 @menu
 * Derived Framework Class::
 * Derived Class Boilerplate Features::
