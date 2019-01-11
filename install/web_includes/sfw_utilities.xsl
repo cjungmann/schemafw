@@ -336,6 +336,60 @@
     </xsl:if>
   </xsl:template>
 
+  <!-- Recursive template to create button rows.
+       Print 1. parent, 2. self, 3. self/buttons -->
+  <xsl:template match="*" mode="construct_button_row">
+    <xsl:param name="class" />
+    <xsl:param name="host-type" select="'tr'" />
+
+    <xsl:if test="not(local-name()='buttons')">
+      <xsl:variable name="par" select="parent::*" />
+      <xsl:if test="$par">
+        <xsl:apply-templates select="$par" mode="construct_button_row">
+          <xsl:with-param name="class" select="$class" />
+          <xsl:with-param name="host-type" select="$host-type" />
+        </xsl:apply-templates>
+      </xsl:if>
+    </xsl:if>
+
+    <xsl:variable name="host_class">
+      <xsl:text>button_row</xsl:text>
+      <xsl:if test="$host-type='tr'">
+        <xsl:value-of select="concat(' headfix_', local-name(..),'_',local-name())" />
+      </xsl:if>
+      <xsl:value-of select="concat(' sfwid_', generate-id())" />
+      <xsl:if test="$class">
+        <xsl:value-of select="concat(' ', $class)" />
+      </xsl:if>
+    </xsl:variable>
+    
+    <xsl:variable name="buttons" select="button" />
+
+    <xsl:if test="count($buttons)&gt;0">
+      <xsl:choose>
+        <xsl:when test="$host-type='tr'">
+          <tr class="{$host_class}">
+            <td colspan="99" style="background-color #66FF66">
+              <xsl:apply-templates select="$buttons" mode="construct_button" />
+            </td>
+          </tr>
+        </xsl:when>
+        <xsl:otherwise>
+          <p class="{$host_class}">
+            <xsl:apply-templates select="$buttons" mode="construct_button" />
+          </p>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
+
+    <xsl:if test="not(local-name()='buttons')">
+      <xsl:apply-templates select="buttons" mode="construct_button_row">
+        <xsl:with-param name="class" select="$class" />
+        <xsl:with-param name="host-type" select="$host-type" />
+      </xsl:apply-templates>
+    </xsl:if>
+  </xsl:template>
+
   <xsl:template name="construct_title">
     <xsl:param name="str" />
     <h2>
