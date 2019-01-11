@@ -81,13 +81,15 @@ instructions in a response mode, there is no built-in context.
 * Custom Call Button::
 * Custom Jump Button::
 * Custom Open Button::
+* Freeform Custom Button::
 @end menu
 
 @node Custom Call Button
 @subsection Custom Call Button
 
-This button will trigger a call to a Javascript function.  Typically,
-the function be defined in the application's custom code.
+This button will trigger a call to a Javascript function.
+Typically, the function be defined in the application's
+custom code.
 
 @example
 list
@@ -98,6 +100,44 @@ list
       label : Initiate Chat Help
       task  : initiate_chat_help
 @end example
+
+Note that the function will be called with a single
+parameter, the button element that initiates the
+function call.
+
+In order for the framework to find the function, it
+must be globally-available.  That means the function must
+either be a property of the global @emph{window} object,
+or accessible through a global object variable.
+
+The following code fragments show an example of an
+obscure, but globally-available function.
+
+This button declaration:
+
+@example
+button
+   type : call
+   label : Close Children
+   task  : MyGlobal.Item.execute
+@end example
+
+@example
+function Item1(val) @{ this.val=val; @}
+Item1.prototype.execute = function() @{ do_something_1(this.val); @}
+
+function Item2(val) @{ this.val=fal; @}
+Item2.prototype.execute = function() @{ do_something_2(this.val); @}
+
+var MyGlobal = @{ Item : new Item1("foo") @};
+@end example
+
+The framework can follow the dot-notation of
+@code{MyGlobal.Item.execute} starting at the global
+variable @emph{MyGlobal}, to the member object @emph{Item},
+to find the function assigned to the prototype
+@emph{execute}.  
+
 
 
 @node Custom Jump Button
@@ -134,6 +174,103 @@ list
       type  : open
       label : Change the Password
       url   : login.srm?change_password
+@end example
+
+@node Freeform Custom Button
+@subsection Freeform Custom Button
+
+@xref{Simple Custom Javascript Class}
+
+Among the previously described custom buttons,
+@emph{call}, @emph{jump}, and @emph{open}, only the @emph{call}
+button type calls a globally-accessible Javascript function.
+
+For situations where the context of the button is significant,
+a freeform custom button can be called from with its hosting
+object.
+
+In short, if a button's type instruction is not one of the
+builtin button types, the framework will attempt to call
+an object method with a name that is a concatentation of
+@emph{process_button_} and the value of the @emph{type}
+instruction.  In the following example, using a button type
+of @emph{read_name} will result in a call to object prototype
+function @code{process_button_read_name}.
+
+In this example, the following response mode is included in an
+SRM file:
+
+@example
+consider
+   type        : form_consider
+   schema-proc : App_Item_Add
+   action      : ?add_submit
+   schema
+      button
+         type  : read_name
+         label : Read Name
+@end example
+
+The framework will try to create a @emph{form-consider} object
+into which the generated HTML content will be installed.  The
+HTML content will include a button of type @emph{read_name} that
+will, upon pressing, will call a member function of @emph{form-consider}:
+@code{form-consider::process_button_read_name}.
+
+The following code implements the minimum necessary to implement
+the object and method invoked by the response mode above.  Following
+conventions, the code is enclosed in a prerequisite-enforcing
+self-executing function.
+
+Note the @code{form_consider} constructor and the 
+@code{form_consider.prototype.process_button_read_name} function.
+
+
+@example
+// File name form_consider.js
+(function _init()
+ @{
+    // Applying names to values to document how they're used in
+    // the SFW.delay_init and SFW.derive functions.  The names can
+    // be directly included in their respective parameter lists.
+    var file_name="form_consider",
+        base_class_name="form",
+        class_name="form-consider";
+
+    if ((!("SFW" in window) && setTimeout(_init,100))
+         || SFW.delay_init(file_name, _init, base_class_name))
+       return;
+
+    // Constructor for object requested by "type : form_consider."
+    function form_consider(actors) @{ SFW.base.call(this,actors); @}
+
+    if (!SFW.derive(form_consider, class_name, base_class_name))
+       return;
+
+    form_consider.prototype.do_something = function() @{ alert("Doing it."); @};
+
+    // Function for button created with "type : read_name" instruction:
+    form_consider.prototype.process_button_read_name = function(button,callback)
+    @{
+       // Directly access another method of the object:
+       this.do_something();
+
+       // Access javascript data object attached to the host:
+       var data, row;
+       if ((data=this.data()) && "row" in data)
+          row = data.row;
+
+       // Access part of HTML content:
+       var form = SFW.ancestor_by_tag(button,"form");
+       if ((form=SFW.ancestor_by_tag(button,"form"))
+           && "lname" in form
+           && (field = form.lname))
+       @{
+          alert("'" + field.value + "' is the current last name value.");
+       @}
+    @};
+ @}
+)();
 @end example
 
 
