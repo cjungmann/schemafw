@@ -25,14 +25,19 @@
 
        var tagname = t.tagName.toLowerCase();
 
+       // Edit a member (delete or change name):
        if (e.type=="click")
        {
           var tr, rpos;
           if ((tr=((tagname=="tr") ? t : SFW.ancestor_by_tag(t, "tr")))
               && (rpos=tr.getAttribute("data-pos")) > 0)
+          {
              this.create_form(tr);
+             return false;
+          }
        }
 
+       // Add a member
        if (tagname=="button")
        {
           if (e.type=="mouseup")
@@ -43,11 +48,11 @@
              {
                 case "add":
                    this.create_form();
-                   break;
+                   return false;
              }
           }
        }
-       return false;
+       return true;
     };
 
    function makel(r){return r.ownerDocument.createElement(r.getAttribute("row-name"));}
@@ -128,25 +133,38 @@
    _isotable.prototype.create_form = function(tr)
    {
       var row, result;
-      if (!(tr && (row=this.get_xml_row(tr)) && (result=row.parentNode)))
+      if (!(tr
+            && (row=this.get_xml_row(tr))
+            && (result=row.parentNode)))
          result = this.get_result();
 
       if (!result)
       {
-         console.error("Failure to find a schema prevents building the form.");
+         console.error("No schema, no form.");
          return;
       }
 
-      var uschema = row?row.selectSingleNode("../schema"):result.selectSingleNode("schema");
-
       var hform = this.get_host_form();
-      // var fhost = SFW.make_sfw_host(SFW.stage, this.xmldoc());
-      var fhost = SFW.make_sfw_host(SFW.stage, this.xmldoc(), this, {row:row});
+      var fhost = SFW.make_sfw_host(SFW.stage,
+                                    this.xmldoc(),
+                                    this,
+                                    row?{row:row}:null);
+
       SFW.size_to_cover(fhost, hform);
 
       result.setAttribute("iso_replot","form");
-      SFW.xslobj.transformFill(fhost,(row?row:result));
+      // Attribute used for Delete button "skip_check":
+      result.setAttribute("iso_ftype", row?"edit":"add");
+
+      var source = row
+             ? row     // Create EDIT form
+             : result; // Create ADD form
+      
+      SFW.xslobj.transformFill(fhost, source);
+
+      result.removeAttribute("iso_ftype");
       result.removeAttribute("iso_replot");
+
       SFW.arrange_in_host(fhost, SFW.seek_child_anchor(fhost));
    };
 
