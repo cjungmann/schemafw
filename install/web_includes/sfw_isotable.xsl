@@ -153,8 +153,8 @@
   <!-- matches a row, so type is not new -->
   <xsl:template match="*[parent::*[@rndx][@iso_replot='form'][schema]][local-name()=../@row-name]">
     <xsl:apply-templates select="../schema" mode="construct_form">
-      <xsl:with-param name="prow" select="." />
       <xsl:with-param name="type" select="'isotable_form'" />
+      <xsl:with-param name="prow" select="." />
     </xsl:apply-templates>
   </xsl:template>
 
@@ -162,8 +162,13 @@
   <xsl:template match="*[@rndx][@iso_replot='form'][schema]">
     <xsl:apply-templates select="schema" mode="construct_form">
       <xsl:with-param name="type" select="'isotable_form'" />
+      <!-- The document object has no attributes, suitable for empty row. -->
       <xsl:with-param name="prow" select="/" />
     </xsl:apply-templates>
   </xsl:template>
+
+  <xsl:template
+      match="button[@type='delete'][ancestor::*[@rndx][@iso_ftype='add']]"
+      mode="skip_check">1</xsl:template>
 
 </xsl:stylesheet>
