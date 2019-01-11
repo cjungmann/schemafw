@@ -30,6 +30,7 @@
          because sfw.min.js requires that a minimizer/uglifier is installed and used to
          generate sfw.min.js. -->
     <xsl:call-template name="add_js">
+      <xsl:with-param name="path">includes/</xsl:with-param>
       <xsl:with-param name="list">
         <xsl:choose>
           <xsl:when test="$jscripts='debug'"><xsl:value-of select="$jslist_sfw_debug" /></xsl:when>
@@ -37,6 +38,13 @@
         </xsl:choose>
       </xsl:with-param>
     </xsl:call-template>
+
+    <xsl:if test="@javascript">
+      <xsl:call-template name="add_js">
+        <xsl:with-param name="list" select="@javascript" />
+      </xsl:call-template>
+    </xsl:if>
+    <xsl:value-of select="$nl" />
 
     <xsl:if test="count($all_vars)">
       <script>

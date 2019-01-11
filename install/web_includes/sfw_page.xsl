@@ -74,7 +74,18 @@
     <xsl:param name="jscripts">debug</xsl:param>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <xsl:call-template name="css_includes" />
+
+    <xsl:call-template name="add_css">
+      <xsl:with-param name="path">includes/</xsl:with-param>
+      <xsl:with-param name="list">schemafw dpicker</xsl:with-param>
+    </xsl:call-template>
+
+    <xsl:if test="@css">
+    <xsl:call-template name="add_css">
+      <xsl:with-param name="list" select="@css" />
+    </xsl:call-template>
+    </xsl:if>
+
     <xsl:apply-templates select="." mode="construct_scripts">
       <xsl:with-param name="jscripts" select="$jscripts" />
     </xsl:apply-templates>
@@ -180,6 +191,7 @@
   -->
   <xsl:template name="add_js">
     <xsl:param name="list" />
+    <xsl:param name="path" />
 
     <xsl:variable name="before" select="substring-before($list, ' ')" />
 
@@ -196,22 +208,47 @@
 
     <xsl:if test="string-length($file)&gt;0">
       <xsl:value-of select="$nl" />
-      <xsl:variable name="path" select="concat('includes/', $file, '.js')" />
-      <script type="text/javascript" src="{$path}"></script>
+      <xsl:variable name="fpath" select="concat($path, $file, '.js')" />
+      <script type="text/javascript" src="{$fpath}"></script>
     </xsl:if>
 
     <xsl:if test="string-length($before)">
       <xsl:call-template name="add_js">
         <xsl:with-param name="list" select="substring-after($list,' ')" />
+        <xsl:with-param name="path" select="$path" />
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
-  
-  <xsl:template name="css_includes">
-    <xsl:value-of select="$nl" />
-    <link rel="stylesheet" type="text/css" href="includes/schemafw.css" />
-    <xsl:value-of select="$nl" />
-    <link rel="stylesheet" type="text/css" href="includes/dpicker.css" />
+
+  <xsl:template name="add_css">
+    <xsl:param name="list" />
+    <xsl:param name="path" />
+
+    <xsl:variable name="before" select="substring-before($list, ' ')" />
+
+    <xsl:variable name="file">
+      <xsl:choose>
+        <xsl:when test="string-length($before)">
+          <xsl:value-of select="$before" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$list" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:if test="string-length($file)&gt;0">
+      <xsl:value-of select="$nl" />
+      <xsl:variable name="fpath" select="concat($path, $file, '.css')" />
+      <link rel="stylesheet" type="text/css" href="{$fpath}" />
+    </xsl:if>
+
+    <xsl:if test="string-length($before)">
+      <xsl:call-template name="add_css">
+        <xsl:with-param name="list" select="substring-after($list,' ')" />
+        <xsl:with-param name="path" select="$path" />
+      </xsl:call-template>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="navigation/target" mode="header">
