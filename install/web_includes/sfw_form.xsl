@@ -134,14 +134,20 @@
         </xsl:if>
       </xsl:attribute>
 
-      <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
-      <xsl:attribute name="method"><xsl:value-of select="$method" /></xsl:attribute>
-      <xsl:attribute
-          name="data-sfw-class"><xsl:value-of select="$sfw-class" /></xsl:attribute>
+      <xsl:attribute name="class">
+        <xsl:value-of select="$class" />
+      </xsl:attribute>
+      <xsl:attribute name="method">
+        <xsl:value-of select="$method" />
+      </xsl:attribute>
+      <xsl:attribute name="data-sfw-class">
+        <xsl:value-of select="$sfw-class" />
+      </xsl:attribute>
 
       <xsl:if test="$data">
-        <xsl:attribute
-            name="data-path"><xsl:apply-templates select="$data" mode="gen_path" /></xsl:attribute>
+        <xsl:attribute name="data-path">
+          <xsl:apply-templates select="$data" mode="gen_path" />
+        </xsl:attribute>
       </xsl:if>
 
       <xsl:attribute name="data-schema-path">
@@ -150,7 +156,9 @@
 
       <fieldset class="Schema">
         <xsl:element name="legend">
-          <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
+          <xsl:attribute name="class">
+            <xsl:value-of select="$class" />
+          </xsl:attribute>
           <xsl:value-of select="$legend" />
         </xsl:element>
 
@@ -172,9 +180,13 @@
           </p>
         </xsl:if>
         
-        <xsl:variable name="extra_fields"
-                      select="@*[substring(local-name(),1,11)='form-field-']" />
-        <xsl:apply-templates select="$extra_fields" mode="construct_extra_form_field" />
+        <xsl:variable
+            name="extra_fields"
+            select="@*[substring(local-name(),1,11)='form-field-']" />
+
+        <xsl:apply-templates
+            select="$extra_fields"
+            mode="construct_extra_form_field" />
 
         <xsl:apply-templates select="." mode="construct_form_inputs">
           <xsl:with-param name="data" select="$data" />
