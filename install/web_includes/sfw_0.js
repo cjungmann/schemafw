@@ -645,7 +645,7 @@ function init_SFW(callback)
          else
             handlerarr.push(handler);
          update_handler_count();
-      }
+      };
 
       SFW.remove_handler = function(handler)
       {
@@ -658,7 +658,7 @@ function init_SFW(callback)
                break;
             }
          }
-      }
+      };
 
       function f(ev)
       {
@@ -717,9 +717,9 @@ function init_SFW(callback)
    {
       function common(e) { e.cancelBubble=true; e.returnValue=false; return false;}
       if ("stopPropagation" in e)
-         _cancel_event = function(e) { e.stopPropagation(); return common(e); }
+         _cancel_event = function(e) { e.stopPropagation(); return common(e); };
       else if ("preventDefault" in e)
-         _cancel_event = function(e) { e.preventDefault(); return common(e); }
+         _cancel_event = function(e) { e.preventDefault(); return common(e); };
       else
          _cancel_event = common;
 
@@ -1078,9 +1078,9 @@ function init_SFW(callback)
                }
             }
          }
-         return true;
       }
-   }
+      return true;
+   };
 
    function _translate_url(url, xmldocel)
    {
@@ -1287,7 +1287,7 @@ function init_SFW(callback)
       if (result.getAttribute("type")=="association")
          result = docel.selectSingleNode(result.getAttribute("result"));
 
-      return result
+      return result;
    }
 
    function _put_row_into_target(target, row)
@@ -2496,7 +2496,7 @@ function init_SFW(callback)
             }
          }
       }
-   }
+   };
 
    _base.prototype.update_hosted_associations = function()
    {
@@ -2738,5 +2738,4 @@ function init_SFW(callback)
    SFW.add_preload(xdocs_preload);
 
    getXMLDocs(xmldocs_ready);
-
 }
