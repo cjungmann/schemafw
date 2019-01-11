@@ -8,6 +8,8 @@ steps of adding new items to the framework.
 
 @menu
 * Introduction to Customization::
+* Including Custom Javascript and CSS::
+* Including Custom XSL Stylesheets::
 * Simple Custom Javascript Class:: Customize responses to an HTML element
 * Simple Custom XSLT Template::    Custom data rendering
 @end menu
@@ -27,5 +29,65 @@ specific implementation will use one of both of them:
       should be rendered
 @end enumerate
 
+
+@node Including Custom Javascript and CSS
+@section Including Custom Javascript and CSS
+
+While it is easy enough to customize the @file{default.xsl}
+file in your site directory, Javascript and CSS files
+can be included in the HTML output with special response
+mode instructions.
+
+Adding file names (without the .js extension) to a
+@code{javascript} instruction will include the listed
+scripts along with the script elements that load the
+framework Javascript files.
+
+Likewise, additional CSS stylesheets can be added with
+a @code{css} instruction.
+
+The files are loaded from the home directory of the 
+web application.  If the files are to be loaded from
+elsewhere, please include a path with the name.
+
+The following example shows the syntax for using these
+two customization instructions:
+
+@example
+list
+   type       : table
+   procedure  : App_Person_List
+   javascript : custom_person custom_utilities
+   css        : myapp
+@end example
+
+The example will add @code{<script>} elements for
+@file{custom_person.js} and @file{custom_utilities.js}
+and a @code{link} element for @file{myapp.css}.  Note
+that for both the Javascript and CSS files, the
+extensions are not included.
+
+@node Including Custom XSL Stylesheets
+@section Including Custom XSL Stylesheets
+
+Custom XSL stylesheets must be hard-coded into whatever
+stylesheet is used to transform the @code{schema.fcgi}
+output.  Sample code and the code-generating utilities
+(@pxref{Top,,,gensfw}) include instructions to use
+@file{default.xsl}.  @file{default.xsl},
+is a boilerplate stylesheet found in the 
+Schema Framework library, and the site installation
+instructions include steps to copy this file to the
+web application home directory. @xref{Installation}
+
+Sadly, I haven't found a way to use a template to
+include custom XSL stylesheets into the @file{default.xsl}
+stylesheet.  I'm still looking for a pattern that allows
+this to happen because I would prefer that the
+@file{default.xsl} could remain unchanged
+
+
 @include schemafw.customizing.js_class.txi
 @include schemafw.customizing.xsl_template.txi
+
+
