@@ -8,7 +8,7 @@ a developer's creativity.
 @menu
 * Canned Buttons::
 * Custom Buttons::
-* Skippable Buttons::
+* Skipping Buttons with skip_check::
 @end menu
 
 @node Canned Buttons
@@ -274,8 +274,8 @@ Note the @code{form_consider} constructor and the
 @end example
 
 
-@node Skippable Buttons
-@section Skippable Buttons
+@node Skipping Buttons with skip_check
+@section Skipping Buttons with skip_check
 
 Sometimes a button should be conditionally included in an
 interaction.  For example, on an import that may introduce
@@ -284,13 +284,47 @@ duplicate records should be omitted from the import.  However,
 the question, in button form, should only be included on the
 interaction if duplicate records were detected.
 
-There are two parts to this button type.  First, the button
-must be defined with a @code{no_add} flag set.  Second, the
-application must include a template that matches the button
-and returns 1 to include the button and 0 to skip the button.
+Another example would be a @emph{delete} button in a schema
+that is shared between @emph{add} and @emph{edit} forms.  The
+@emph{delete} button should not be included in an @emph{add}
+form.
+
+@subheading Button Template with mode=''skip_check''
+
+Before writing out a button element in response to a button
+instruction, the framework checks if it should be skipped
+by invoking a template with @code{mode="skip_check"}.
+
+The @code{mode="skip_check"} parameter should return 0 if
+the button should be included and anything else if the 
+button should be skipped.  A default @code{mode="skip_check"}
+template returns 0 to include all buttons.  Custom
+@code{mode="skip_check"} templates will give custom
+directions to the framework concerning whether or not
+a specific button should be skipped.
+
+To prevent unexpected missing buttons elsewhere, the
+@emph{match} attribute of the @code{mode="skip_check"}
+template should be explicit enough that it will only match
+the appropriate button.  This often requires examining an
+attribute in an ancestor of the button element in the
+XML file response file send by the @code{schema.fcgi} server
+program.
+
+To prevent testing the ancestors of every button in your
+application, it is prudent to add an attribute instruction
+to the button definition that can be the first predicate
+in the @emph{match} attribute of the @code{mode="skip_check"}
+template.
+
+@subheading Skip_check Examples
+
+A working example of this construction can be found in the
+framework file @file{sfw_isotable.xsl} (search for ``skip_check''
+therein).  The isotable example uses the xpath axis @emph{ancestor}.
 
 In the following example, pay attention to the second button,
-which includes the @code{no_add} flag.
+which includes the extra @code{no_add} instruction.
 
 @example
 import-review
@@ -315,11 +349,13 @@ import-review
       name : keywords
 @end example
 
-The @code{no_add} instruction is a simple flag in that the framework
-will notice that the flag is set and initiate the omission test.
+The @code{no_add} instruction adds a @emph{no_add} attribute
+to the button element in the @code{schema.fcgi} XML output.
 
-Although any value for @code{no_add} prompts the test, the value of
-the flag can be used to help identify the button for the omission test.
+In the this example, it is the existence of the template's @emph{match}
+attribute that triggers the match; the value is not checked.
+Other implementations might use a different name or even consider
+the value of the triggering attribute.
 
 In order for skip to work, a template must match the button
 and return a value.  This code can be inserted directly into the
