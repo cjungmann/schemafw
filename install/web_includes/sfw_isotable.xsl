@@ -168,7 +168,7 @@
   </xsl:template>
 
   <xsl:template
-      match="button[@type='delete'][ancestor::*[@rndx][@iso_ftype='add']]"
+      match="button[@iso_del][ancestor::*[@rndx][@iso_ftype='add']]"
       mode="skip_check">1</xsl:template>
 
 </xsl:stylesheet>
