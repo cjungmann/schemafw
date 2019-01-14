@@ -19,6 +19,7 @@
   <xsl:import href="sfw_calendar.xsl" />
   <xsl:import href="sfw_ulselect.xsl" />
   <xsl:import href="sfw_ref.xsl" />
+  <xsl:import href="sfw_field_types.xsl" />
 
   <xsl:output method="xml"
          doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"

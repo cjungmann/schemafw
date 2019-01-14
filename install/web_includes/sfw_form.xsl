@@ -9,6 +9,7 @@
   <xsl:import href="sfw_generics.xsl" />
   <xsl:import href="sfw_utilities.xsl" />
   <xsl:import href="sfw_schema.xsl" />
+  <xsl:import href="sfw_field_types.xsl" />
 
   <xsl:output method="xml"
          doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -710,71 +711,6 @@
       </xsl:call-template>
     </xsl:element>
     
-  </xsl:template>
-
-  <xsl:template match="*[@rndx]" mode="select_result_options">
-    <xsl:param name="value" />
-    <xsl:param name="id_name" />
-    <xsl:param name="show_name" />
-
-    <xsl:variable name="rows" select="*[local-name()=../@row-name]" />
-    <div><xsl:value-of select="concat(count($rows), ' rows in the result.')" /></div>
-    
-    <xsl:for-each select="$rows">
-      <xsl:variable name="v" select="@*[local-name()=$id_name]" />
-      <xsl:element name="option">
-        <xsl:attribute name="value">
-          <xsl:value-of select="$v" />
-        </xsl:attribute>
-        <xsl:if test="$value=$v">
-          <xsl:attribute name="selected">selected</xsl:attribute>
-        </xsl:if>
-        <xsl:value-of select="@*[local-name()=$show_name]" />
-      </xsl:element>
-    </xsl:for-each>
-    
-    
-  </xsl:template>
-
-  <xsl:template match="field[@type='select_result'][@result]" mode="construct_input">
-    <xsl:param name="data" />
-    
-    <xsl:variable name="name">
-      <xsl:apply-templates select="." mode="get_name" />
-    </xsl:variable>
-
-    <xsl:variable name="value">
-      <xsl:apply-templates select="." mode="get_value">
-        <xsl:with-param name="data" select="$data" />
-      </xsl:apply-templates>
-    </xsl:variable>
-
-    <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/@result]" />
-
-    <xsl:variable name="id_name">
-      <xsl:apply-templates select="$result/schema" mode="get_id_field_name" />
-    </xsl:variable>
-
-    <xsl:variable name="show_name">
-      <xsl:choose>
-        <xsl:when test="@show"><xsl:value-of select="@show" /></xsl:when>
-        <xsl:when test="count($result/schema/field) &gt; 1">
-          <xsl:value-of select="$result/schema/field[local-name()!=$id_name][1]/@name" />
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="$id_name" />
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-
-    <select name="{$name}">
-      <xsl:apply-templates select="$result" mode="select_result_options">
-        <xsl:with-param name="value" select="$value" />
-        <xsl:with-param name="id_name" select="$id_name" />
-        <xsl:with-param name="show_name" select="$show_name" />
-      </xsl:apply-templates>
-    </select>
-
   </xsl:template>
 
   <!--
