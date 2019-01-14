@@ -680,8 +680,8 @@ function init_SFW(callback)
          if (e.type=="keydown")
          {
             var kcode=_keycode_from_event(e);
-            var key_y=89;
-            if (e.ctrlKey && e.altKey && (kcode==key_y || kcode==key_y))
+            var key_y=89, key_u=85;
+            if (e.ctrlKey && e.altKey && (kcode==key_y || kcode==key_u))
             {
                if (e.shiftKey)
                   _remove_string_pres();
