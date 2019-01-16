@@ -257,6 +257,10 @@ form.Moveable legend:hover { background-color:#CCCCCC; }
 
 form.Schema td { vertical-align:top; }
 
+ul.selectx { list-style:none; padding:0; min-width:16em; }
+ul.selectx li:hover { background-color:#33FF33; cursor:pointer; }
+ul.selectx li.on { background-color:#99FF33; }
+
 
 /* ul selection styles */
 ul.ulselect { list-style:none; padding:0; min-width:16em; }
