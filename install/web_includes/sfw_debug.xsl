@@ -20,6 +20,7 @@
   <xsl:import href="sfw_ulselect.xsl" />
   <xsl:import href="sfw_ref.xsl" />
   <xsl:import href="sfw_field_types.xsl" />
+  <xsl:import href="sfw_selectx.xsl" />
 
   <xsl:output method="xml"
          doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
