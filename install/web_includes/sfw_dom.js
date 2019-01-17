@@ -16,6 +16,7 @@ function init_SFW_DOM()
    SFW.find_child_matches   = _find_child_matches;
    SFW.first_child_element  = _first_child_element;
    SFW.next_sibling_element = _next_sibling_element;
+   SFW.self_or_ancestor_by_tag = _self_or_ancestor_by_tag;
    SFW.ancestor_by_tag      = _ancestor_by_tag;
 
    // Sets SFW.get_page_xoffset and SFW.get_page_yoffset
@@ -180,18 +181,21 @@ function init_SFW_DOM()
       return _next_sibling_element(el);
    }
 
+   function _self_or_ancestor_by_tag(node,tag)
+   {
+      var type = node.nodeType;
+
+      if (type>3)
+         return null;
+      else if (type==1 && node.tagName.toLowerCase()==tag)
+         return node;
+      else
+         return _self_or_ancestor_by_tag(node.parentNode,tag);
+   }
+
    function _ancestor_by_tag(node, tag)
    {
-      var p = node.parentNode;
-      if (p.nodeType==1)
-      {
-         if (p.tagName.toLowerCase()==tag)
-            return p;
-         else
-            return _ancestor_by_tag(p,tag);
-      }
-      else
-         return null;
+      return self_or_ancestor_by_tag(node.parentNode,tag);
    }
 
    
