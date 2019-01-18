@@ -257,10 +257,22 @@ form.Moveable legend:hover { background-color:#CCCCCC; }
 
 form.Schema td { vertical-align:top; }
 
-ul.selectx { list-style:none; padding:0; min-width:16em; }
-ul.selectx li.input { display:none; }
-ul.selectx li:hover { background-color:#33FF33; cursor:pointer; }
-ul.selectx li.on { background-color:#99FF33; }
+div.selectx ul
+{
+    display:none;
+    list-style:none;
+    padding:0;
+    margin:0;
+    min-width:16em;
+    max-height: 240px;
+    overflow-x : hidden;
+    overflow-y : auto;
+}
+
+div.selectx li.input { display:none; }
+div.selectx li:hover { background-color:#33FF33; cursor:pointer; }
+div.selectx li.on { background-color:#99FF33; }
+div.selectx li.target {background-color:#FFFF00; }
 
 
 /* ul selection styles */
