@@ -25,7 +25,7 @@ function classes_implement()
    }
 
    function c_re(name) { return new RegExp('(^|\\s)' + name + '(\\s|$)'); }
-   function spl(el) { return el?el.className.split(' '):[]; }
+   function spl(el) { return (el && el.className)?el.className.split(' '):[]; }
    
    function c_includes(el, name)
    {
