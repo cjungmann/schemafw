@@ -26,13 +26,6 @@
          ** Reminder ** XSL applys the last matching template found.
 -->
 
-  <xsl:template match="field[@type='select_result']" mode="get_value">
-    Type select_result/get_value missing result attribute
-  </xsl:template>
-  <xsl:template match="field[@type='select_result']" mode="construct_input">
-    Type select_result/get_value missing result attribute
-  </xsl:template>
-
   <xsl:template match="field[@type='select_result'][@result]" mode="get_value">
     <xsl:param name="data" />
 
@@ -99,6 +92,13 @@
         <xsl:with-param name="show_name" select="$show_name" />
       </xsl:apply-templates>
     </select>
+  </xsl:template>
+
+  <xsl:template match="field[@type='select_result'][not(@result)]" mode="get_value">
+    Type select_result/get_value missing result attribute
+  </xsl:template>
+  <xsl:template match="field[@type='select_result'][not(@result)]" mode="construct_input">
+    Type select_result/get_value missing result attribute
   </xsl:template>
 
   <xsl:template match="field[@type='select_result']" mode="get_display_field">
