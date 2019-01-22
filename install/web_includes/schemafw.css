@@ -257,6 +257,8 @@ form.Moveable legend:hover { background-color:#CCCCCC; }
 
 form.Schema td { vertical-align:top; }
 
+div.selectx div.display { background-color:#FFFFFF; border: solid 1px #AAAAAA; min-height:1.1em; } 
+div.selectx input.entry { display:none; }
 div.selectx ul
 {
     display:none;
@@ -269,10 +271,13 @@ div.selectx ul
     overflow-y : auto;
 }
 
-div.selectx li.input { display:none; }
+
+div.selectx.active input.entry { display:block; }
+div.selectx.active ul          { display:block; }
+
 div.selectx li:hover { background-color:#33FF33; cursor:pointer; }
 div.selectx li.on { background-color:#99FF33; }
-div.selectx li.target {background-color:#FFFF00; }
+div.selectx li.target { font-weight:bold; }
 
 
 /* ul selection styles */
