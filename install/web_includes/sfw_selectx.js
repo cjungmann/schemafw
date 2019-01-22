@@ -17,8 +17,8 @@
    {
       switch(e.type)
       {
-         case "focus":
-            return this.process_focus(e,t);
+         // case "focus":
+         //    return this.process_focus(e,t);
          case "blur":
             return this.process_blur(e,t);
          case "click":
@@ -45,44 +45,38 @@
       return obj;
    }
 
+
    // Event-processing methods:
    _selectx.prototype.process_focus = function(e,t)
    {
-      var ul = this.get_ul();
-      if (ul)
-         ul.style.display="block";
+      var t_display = this.get_display_div();
+      var t_input = this.get_masked_input();
+      if (!this.is_activated() && t==t_display)
+         this.activate();
+
       return false;
    };
 
    _selectx.prototype.process_blur = function(e,t)
    {
-      var ul = this.get_ul();
-      if (ul)
-      {
-         ul.style.display="none";
-         this.unfilter_options();
-      }
+      var is_active = this.is_activated();
+      var t_display = this.get_display_div();
+      var t_input = this.get_masked_input();
+
+      if (is_active && t==t_input)
+         this.deactivate();
+
       return false;
    };
-
+   
    _selectx.prototype.process_click = function(e,t)
    {
       var node = SFW.self_or_ancestor_by_tag(t,"li");
       if (node)
       {
          this.fire_target(node);
-
-
-         
       }
       return false;
-   };
-
-   _selectx.prototype.process_press_enter = function()
-   {
-      var sel = this.get_target_li();
-      if (sel)
-         this.fire_target(sel);
    };
 
    _selectx.prototype.process_keyup = function(e,t)
@@ -92,20 +86,37 @@
 
       var _enter=13, _left=37, _up=38, _right=39, _down=40;
       var keycode = SFW.keycode_from_event(e);
+      var is_active = this.is_activated();
       switch(keycode)
       {
          case _down:
-            this.move_target(1);
+            if (is_active)
+               this.move_target(1);
+            else
+               this.activate();
             return false;
          case _up:
-            this.move_target(-1);
+            if (is_active)
+               this.move_target(-1);
             return false;
          case _enter:
-            this.process_press_enter();
+            if (is_active)
+               this.process_enter_press();
+            else
+               this.activate();
             return false;
          default:
-            console.log("keycode is " + keycode);
-            this.filter_options(t.value);
+            if (keycode >= 20)
+            {
+               var masked_input = this.get_masked_input();
+               if (!is_active)
+               {
+                  this.activate();
+                  masked_input.value = SFW.keychar_from_event(e);
+               }
+               this.filter_options(masked_input.value);
+            }
+            
       }
       
       return true;
@@ -114,8 +125,7 @@
    // Component access methods
    _selectx.prototype.get_mask_form = function()
    {
-      var widget = this.widget();
-      return SFW.find_child_matches(widget,"form",true,false);
+      return SFW.find_child_matches(this.widget(),"form",true,false);
    };
 
    _selectx.prototype.get_ul = function()
@@ -136,32 +146,71 @@
 
    _selectx.prototype.get_post_input = function()
    {
-      var widget = this.widget();
-      return SFW.find_child_matches(widget,"input",true,false);
+      return SFW.find_child_matches(this.widget(),"input",true,false);
    };
 
    _selectx.prototype.get_display_div = function()
    {
-      var widget = this.widget();
       function f(n) { return n.nodeType==1 && class_includes(n,"display"); }
-      return SFW.find_child_matches(widget,f,true,false);
+      return SFW.find_child_matches(this.widget(),f,true,true);
+   };
+
+   _selectx.prototype.get_displayed_array = function()
+   {
+      var arr = [];
+      var div = this.get_display_div();
+      var spans = div.getElementsByTagName("span");
+      if (spans.length)
+      {
+         var nodes = spans[0].childNodes;
+         for (var i=0, stop=nodes.length; i<stop; ++i)
+         {
+            var n = nodes[i];
+            if (n.nodeType==3)
+               arr.push(n.data.toLowerCase());
+         }
+      }
+      return arr;
    };
 
    // XML document access method(s)
 
-   _selectx.prototype.get_schema_field = function()
+   _selectx.prototype.get_schema = function()
    {
-      var form, fhost, obj, schema, xpath;
+      var form, fhost, obj;
       if ((form = this.get_host_form())
           && (fhost = form.parentNode)
-          && (obj = SFW.get_object_from_host(fhost))
-          && (schema = obj.schema()))
+          && (obj = SFW.get_object_from_host(fhost)))
       {
-         var widget = this.widget();
-         xpath = "field[@name='" +  widget.getAttribute("name") + "']";
+         return obj.schema();
+      }
+      return null;
+   };
+
+   _selectx.prototype.get_schema_field = function()
+   {
+      var schema = this.get_schema();
+      if (schema)
+      {
+         var input = this.get_post_input();
+         var xpath = "field[@name='" +  input.getAttribute("name") + "']";
          return schema.selectSingleNode(xpath);
       }
       return null;
+   };
+
+   _selectx.prototype.get_show_by_id = function(id)
+   {
+      var field, id_name, show_name, xpath, xrow = null;
+      if ((field = this.get_schema_field()))
+      {
+         show_name = field.getAttribute("show");
+         xpath = "/*/" + field.getAttribute("result") + "[@rdnx]";
+         result = field.ownerDocument.selectSingleNode(xpath);
+      }
+
+      return xrow; 
+     
    };
 
    // Status access methods
@@ -188,36 +237,50 @@
       return sel;
    };
 
-   // Methods that change the user's view:
-
-   _selectx.prototype.replot = function(val)
+   _selectx.prototype.is_activated = function()
    {
-      var field, widget;
-      if ((field = this.get_schema_field())
-          && (widget = this.widget()))
-      {
-         field.setAttribute("selectx_replot", val);
-         SFW.xslobj.transformFill(widget, field);
-         field.removeAttribute("selectx_replot");
-      }
+      return class_includes(this.widget(),"active") ? true : false;
    };
 
-   _selectx.prototype.replot_display = function(val)
+   // Methods that change the user's view:
+
+   _selectx.prototype.activate = function(e,t)
    {
-      var field, display;
-      if ((field = this.get_schema_field())
-          && (display = this.get_display_div()))
+      class_add(this.widget(),"active");
+
+      var minput = this.get_masked_input();
+      minput.value = "";
+      minput.focus();
+      
+      this.get_masked_input().focus();
+      this.filter_options();
+
+      return false;
+   };
+
+   _selectx.prototype.deactivate = function(e,t)
+   {
+      this.unfilter_options();
+
+      var disp = this.get_display_div();
+      class_remove(this.widget(),"active");
+      if (disp)
+         disp.focus();
+
+      var ael = document.activeElement;
+      if (disp != ael)
       {
-         field.setAttribute("selectx_display", val);
-         SFW.xslobj.transformFill(display, field);
-         field.removeAttribute("selectx_display");
+         if (ael)
+            alert("Unexpectedly, the " + ael.tagName.toLowerCase() + " element is active.");
+         else
+            alert("Unexpectedly, there is no active element (item with focus)?");
       }
+
+      return false;
    };
 
    _selectx.prototype.fire_target = function(target)
    {
-      var ison = class_includes(target,"on");
-
       var sels = [];
 
       function toggle(n)
@@ -228,17 +291,32 @@
             class_add(n,"on");
       }
 
-      function does_match(n)
+      function li_is_on(n)
       {
          return n.nodeType==1
             && n.tagName.toLowerCase()=="li"
             && class_includes(n,"on");
       }
 
+      var li_target = null;
+      function set_target(n)
+      {
+         if (!li_target)
+         {
+            li_target = n;
+            class_add(n,"target");
+         }
+      }
+
       function multi(n)
       {
-         if (does_match(n))
+         class_remove(n,"target");
+
+         if (li_is_on(n))
+         {
+            set_target(n);
             sels.push(n);
+         }
 
          // Always return false to prevent exit on first_only
          return false;
@@ -246,7 +324,7 @@
 
       function single(n)
       {
-         if (does_match(n))
+         if (li_is_on(n))
          {
             class_remove(n,"on");
             // Trigger early-terminate because of first_only
@@ -261,6 +339,8 @@
          SFW.find_child_matches(ul, func, true, true);
       }
 
+      // Save initial setting of target element:
+      var ison = class_includes(target,"on");
       var ul = this.get_ul();
       if (ul)
       {
@@ -286,37 +366,14 @@
          }
 
          this.set_from_selections(sels);
-      }
-
-
-         var inp = this.set_input();
-         if (inp)
-         {
-            this.replot(inp.value);
-         }
-      
-   };
-
-   _selectx.prototype.set_display = function(arr)
-   {
-      if (this.get_style()=="multiple")
-      {
-         var disp = this.get_display_div();
-         for (var i=0, stop=arr.length; i<stop; ++i)
-         {
-            
-         }
-      }
-      else
-      {
+         this.deactivate();
       }
    };
-
 
    _selectx.prototype.set_from_selections = function(arr)
    {
-      var masked = this.get_masked_input();
-      var hidden = this.get_post_input();
+      var input_ = this.get_masked_input();
+      var input_for_post = this.get_post_input();
 
       var arrids = [];
       for (var i=0,stop=arr.length; i<stop; ++i)
@@ -324,19 +381,23 @@
 
       var idlist = arrids.join(',');
 
-      hidden.value = masked.value = idlist;
+      input_for_post.value = idlist;
 
-      if (this.get_style()=="multiple")
+      var field, display;
+      if ((field = this.get_schema_field())
+          && (display = this.get_display_div()))
       {
-         var field = this.get_schema_field();
-         if (field)
-         {
-            field.setAttribute("selectx_display", idlist);
-            
-         }
+         field.setAttribute("selectx_display", idlist);
+         SFW.xslobj.transformFill(display, field);
+         field.removeAttribute("selectx_display");
       }
-      
-      this.set_display(arr);
+   };
+
+   _selectx.prototype.process_enter_press = function()
+   {
+      var sel = this.get_target_li();
+      if (sel)
+         this.fire_target(sel);
    };
 
    _selectx.prototype.move_target = function(dir)
@@ -380,8 +441,54 @@
             if (pos_cur>=0)
                class_remove(visibles[pos_cur],"target");
             if (pos_new>=0)
+            {
                class_add(newel,"target");
+               this.ensure_target_visible(newel);
+            }
          }
+      }
+   };
+
+   _selectx.prototype.get_on_array = function()
+   {
+      function f(n)
+      {
+         return n.nodeType==1
+            && n.tagName.toLowerCase()=="li"
+            && class_includes(n,"on");
+      }
+
+      return SFW.find_child_matches(this.get_ul(),f,false,false);
+   };
+
+   _selectx.prototype.ensure_target_visible = function(li)
+   {
+      if (!li)
+      {
+         var nl = this.get_on_array();
+         if (nl.length)
+            li = nl[0];
+      }
+
+      if (li)
+      {
+         var top_li = li.offsetTop;
+
+         if (li.parentNode != li.offsetParent)
+            top_li -= li.parentNode.offsetTop;
+
+         var bottom_li = top_li + li.offsetHeight;
+
+         var parent = li.parentNode;
+         var bottom_parent = parent.offsetHeight;
+         var scroll_parent = parent.scrollTop;
+
+         var offset_move;
+
+         if ((offset_move=bottom_li-bottom_parent-scroll_parent)>0)
+            parent.scrollTop += offset_move;
+         else if ((offset_move=scroll_parent-top_li)>0)
+            parent.scrollTop -= offset_move;
       }
    };
 
@@ -400,51 +507,82 @@
          SFW.find_child_matches(ul,f,false,true);
    };
 
-   _selectx.prototype.filter_options = function(str)
+   // This method is called on two occasions, when the control
+   // is activated, or when the input text has changed.  In both
+   // cases, the list is filtered (elements are hidden or displayed
+   // according to partial matches of the typed string), and a
+   // target li should identified and marked with the "target"
+   // class name.
+   _selectx.prototype.filter_options = function(filter_str)
    {
+      // Conditionally resolve, only used by closure function enroll():
+      var is_match;
+      var arr_select = null;
+      if (!filter_str)
+      {
+         var arr = this.get_displayed_array();
+         // var arr = this.scan_for_targets();
+         if (arr)
+         {
+            var stop = arr.length;
+            is_match = function(text)
+            {
+               for(var i=0; i<stop; ++i)
+                  if (arr[i] == text)
+                     return true;
+               return false;
+            };
+         }
+         else
+            is_match = function() { return false; };
+      }
+
+      filter_str = filter_str?filter_str.toLowerCase():"";
+
+      var target = null;
+
+      function set_target(n)
+      {
+         if (!target)
+         {
+            class_add(n,"target");
+            target = n;
+         }
+      }
+
+      function filter(n)
+      {
+         var s = n.style;
+         var text = n.firstChild.data.toLowerCase();
+         if (text.search(filter_str)==-1)
+            s.display = "none";
+         else
+         {
+            set_target(n);
+            s.display = "block";
+         }
+      }
+
+      function enroll(n)
+      {
+         if (is_match(n.firstChild.data.toLowerCase()))
+            set_target(n);
+      }
+
+      var pfunc = filter_str ? filter : enroll;
+
       function f(n)
       {
          if (n.nodeType==1 && n.tagName.toLowerCase()=="li")
          {
-            var text = n.firstChild.data;
-            n.style.display = text.search(str)==-1 ? "none" : "block";
+            class_remove(n,"target");
+            pfunc(n);
          }
       };
 
-      var ul = this.get_ul();
-      if (ul)
-         SFW.find_child_matches(ul,f,false,true);
-   };
-
-   _selectx.prototype.set_input = function()
-   {
-      var widget = this.widget();
-      var selected=[];
-      var input = null;
-      function f(n)
-      {
-         if (n.nodeType==1)
-         {
-            switch(n.className)
-            {
-               case "input":
-                  input = n;
-                  break;
-               case "on":
-                  selected.push(n.getAttribute("data-value"));
-                  break;
-            }
-         }
-         return false;
-      }
-
-      // Only read first-generation children for li elements:
-      SFW.find_child_matches(widget,f,true,false);
-
-      if (input && (input=SFW.find_child_matches(input,"input")))
-         input.value = selected.join(',');
-
-      return input;
+      SFW.find_child_matches(this.get_ul(),f,false,true);
+      if (target)
+         this.ensure_target_visible(target);
    };
 
 

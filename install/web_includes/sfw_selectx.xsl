@@ -23,10 +23,8 @@
       <xsl:apply-templates select="." mode="missing_result" />
     </xsl:if>
 
-    <xsl:variable name="dval" select="$data/@*[local-name()=current()/@name]" />
-
     <xsl:apply-templates select="." mode="fill_selectx_display">
-      <xsl:with-param name="dval" select="$dval" />
+      <xsl:with-param name="dval" select="$data/@*[local-name()=current()/@name]" />
     </xsl:apply-templates>
   </xsl:template>
 
@@ -52,13 +50,15 @@
       </xsl:choose>
     </xsl:variable>
 
-    <div class="selectx" data-sfw-class="selectx" data-style="${style}" data-sfw-input="true">
+    <div class="selectx" data-sfw-class="selectx" data-style="{$style}" data-sfw-input="true">
       <input type="hidden" name="{$name}" value="{$dval}" />
       <form onsubmit="return false;">
-        <input type="text" name="entry" />
-        <xsl:if test="@style='multiple'">
-          <div class="display" />
-        </xsl:if>
+        <div class="display" tabindex="0">
+          <xsl:apply-templates select="." mode="fill_selectx_display">
+            <xsl:with-param name="dval" select="$dval" />
+          </xsl:apply-templates>
+        </div>
+        <input type="text" name="entry" class="entry" />
         <ul>
           <xsl:apply-templates select="." mode="fill_selectx_ul">
             <xsl:with-param name="dval" select="$dval" />
@@ -103,9 +103,9 @@
         <xsl:variable name="id" select="@*[local-name()=$id_name]" />
         <xsl:variable name="show" select="@*[local-name()=$show_name]" />
         <span data-id="{$id}">
-          <xsl:value-of select="concat('(id_name:', $id_name, ', show_name:', $show_name, ') ')" />
           <xsl:value-of select="$show" />
         </span>
+        <xsl:if test="position() != last()">, </xsl:if>
       </xsl:for-each>
 
     </xsl:template>
@@ -126,6 +126,8 @@
 
       <xsl:for-each select="$result/*[local-name()=../@row-name]">
         <xsl:variable name="idval" select="@*[local-name()=$id_name]" />
+        <xsl:variable name="idvalc" select="concat(',',$idval,',')" />
+
         <xsl:element name="li">
           <xsl:attribute name="data-value">
             <xsl:value-of select="$idval" />
@@ -136,41 +138,6 @@
           <xsl:value-of select="@*[local-name()=$show_name]" />
         </xsl:element>
       </xsl:for-each>
-
-
-      <!-- <xsl:variable name="name"> -->
-      <!--   <xsl:apply-templates select="." mode="get_name" /> -->
-      <!-- </xsl:variable> -->
-
-      <!-- <xsl:variable -->
-      <!--     name="on" -->
-      <!--     select="$result/*[local-name()=../@row-name][contains($ids,concat(',',@*[local-name()=$id_name],','))]" /> -->
-
-      <!-- <xsl:variable -->
-      <!--     name="off" -->
-      <!--     select="$result/*[local-name()=../@row-name][not(contains($ids,concat(',',@*[local-name()=$id_name],',')))]" /> -->
-
-      <!-- <xsl:for-each select="$on"> -->
-      <!--   <xsl:variable name="val" select="@*[local-name()=$id_name]" /> -->
-      <!--   <li data-value="{$val}" class="on"> -->
-      <!--     <xsl:value-of select="@*[local-name()=$show_name]" /> -->
-      <!--   </li> -->
-      <!-- </xsl:for-each> -->
-      <!-- <xsl:for-each select="$off"> -->
-      <!--   <xsl:variable name="val" select="@*[local-name()=$id_name]" /> -->
-      <!--   <li data-value="{$val}"> -->
-      <!--     <xsl:value-of select="@*[local-name()=$show_name]" /> -->
-      <!--   </li> -->
-      <!-- </xsl:for-each> -->
-
-    </xsl:template>
-
-
-    <!-- Modeless for replot -->
-    <xsl:template match="field[@type='selectx'][@selectx_replot]">
-      <xsl:apply-templates select="." mode="fill_selectx_ul">
-        <xsl:with-param name="dval" select="@selectx_replot" />
-      </xsl:apply-templates>
     </xsl:template>
 
     <xsl:template match="field[@type='selectx'][@selectx_display]">
@@ -179,11 +146,7 @@
       </xsl:apply-templates>
     </xsl:template>
 
-
-
     <!-- END OF selectx-specific templates -->
-
-
 
 
 
@@ -222,7 +185,7 @@
           <xsl:variable name="id_name">
             <xsl:apply-templates select="." mode="get_id_field" />
           </xsl:variable>
-          <xsl:variable name="non_id" select="$schema/field[local-name()!=$id_name][1]" />
+          <xsl:variable name="non_id" select="$schema/field[@name!=$id_name][1]/@name" />
           <xsl:choose>
             <xsl:when test="$non_id"><xsl:value-of select="$non_id" /></xsl:when>
             <xsl:otherwise><xsl:value-of select="$id_name" /></xsl:otherwise>
