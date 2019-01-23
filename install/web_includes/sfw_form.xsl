@@ -121,7 +121,7 @@
 
     <xsl:variable name="class">
       <xsl:choose>
-        <xsl:when test="$primary">Embedded</xsl:when>
+        <xsl:when test="string-length($primary)">Embedded</xsl:when>
         <xsl:otherwise>Moveable</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
