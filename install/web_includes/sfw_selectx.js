@@ -3,6 +3,8 @@
 
 (function _init()
 {
+   var _enter=13, _left=37, _up=38, _right=39, _down=40, _esc=27;
+
    var bclass="iclass";
    if ((!("SFW" in window) && setTimeout(_init,100))
        || SFW.delay_init("sfw_selectx", _init, bclass))
@@ -25,6 +27,12 @@
             return this.process_click(e,t);
          case "keyup":
             return this.process_keyup(e,t);
+         case "keydown":
+            // Confine ESC keypress to closing selectx, not closing the form.
+            // (Getting keycode cheaper than is_activated(), which must traverse the DOM tree.)
+            if (SFW.keycode_from_event(e)==_esc && this.is_activated())
+               return false;
+            break;
       };
 
       return true;
@@ -85,7 +93,6 @@
    // SFW.keycode_from_event   = _keycode_from_event;
    // SFW.keychar_from_event   = _keychar_from_event;
 
-      var _enter=13, _left=37, _up=38, _right=39, _down=40;
       var keycode = SFW.keycode_from_event(e);
       var is_active = this.is_activated();
       switch(keycode)
@@ -106,6 +113,10 @@
             else
                this.activate();
             return false;
+         case _esc:
+            if (is_active)
+               this.deactivate();
+            return true;
          default:
             if (keycode >= 20)
             {
