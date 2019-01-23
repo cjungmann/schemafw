@@ -204,6 +204,15 @@ form.Embedded
     visibility:visible;
 }
 
+@media (pointer:coarse) {
+    form.dialog,
+    form.Moveable,
+    form.Embedded
+        {
+            top:0; left:0; height:100%; width:100%;
+        }
+}
+
 fieldset.Schema
 {
     margin:0 .25em;
