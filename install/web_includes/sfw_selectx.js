@@ -21,7 +21,7 @@
          //    return this.process_focus(e,t);
          case "blur":
             return this.process_blur(e,t);
-         case "click":
+         case "mouseup":
             return this.process_click(e,t);
          case "keyup":
             return this.process_keyup(e,t);
@@ -63,7 +63,7 @@
       var t_display = this.get_display_div();
       var t_input = this.get_masked_input();
 
-      if (is_active && t==t_input)
+      if (is_active && t==t_input && !class_includes(t,"entry"))
          this.deactivate();
 
       return false;
@@ -71,11 +71,12 @@
    
    _selectx.prototype.process_click = function(e,t)
    {
-      var node = SFW.self_or_ancestor_by_tag(t,"li");
-      if (node)
-      {
+      var node;
+      if (!this.is_activated() && class_includes(t,"display"))
+         this.activate();
+      else if ((node = SFW.self_or_ancestor_by_tag(t,"li")))
          this.fire_target(node);
-      }
+         
       return false;
    };
 
