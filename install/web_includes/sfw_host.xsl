@@ -71,7 +71,8 @@
     <xsl:variable name="cprimary">
       <xsl:choose>
         <xsl:when test="$primary"><xsl:value-of select="$primary" /></xsl:when>
-        <xsl:when test="$mode-type='form-page'"><xsl:value-of select="true()" /></xsl:when>
+        <xsl:when test="($gschema|$gresult)/@merged"></xsl:when>
+        <xsl:when test="$mode-type='form-page'">yes</xsl:when>
       </xsl:choose>
     </xsl:variable>
 
