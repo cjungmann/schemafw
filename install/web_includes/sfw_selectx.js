@@ -3,7 +3,7 @@
 
 (function _init()
 {
-   var _enter=13, _left=37, _up=38, _right=39, _down=40, _esc=27;
+   var _bs=8, _enter=13, _left=37, _up=38, _right=39, _down=40, _esc=27;
 
    var bclass="iclass";
    if ((!("SFW" in window) && setTimeout(_init,100))
@@ -118,7 +118,7 @@
                this.deactivate();
             return true;
          default:
-            if (keycode >= 20)
+            if (keycode >= 32 || keycode==_bs)
             {
                var masked_input = this.get_masked_input();
                if (!is_active)
@@ -577,6 +577,7 @@
 
       function enroll(n)
       {
+         n.style.display = "block";
          if (is_match(n.firstChild.data.toLowerCase()))
             set_target(n);
       }
