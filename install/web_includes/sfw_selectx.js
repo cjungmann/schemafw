@@ -3,8 +3,6 @@
 
 (function _init()
 {
-   var _bs=8, _enter=13, _left=37, _up=38, _right=39, _down=40, _esc=27;
-
    var bclass="iclass";
    if ((!("SFW" in window) && setTimeout(_init,100))
        || SFW.delay_init("sfw_selectx", _init, bclass))
@@ -12,6 +10,8 @@
 
    if (!SFW.derive(_selectx, "selectx", bclass))
       return;
+
+   var _bs=8, _enter=13, _left=37, _up=38, _right=39, _down=40, _esc=27;
 
    function _selectx(actors) { SFW.base.call(this,actors); }
 
@@ -25,17 +25,52 @@
             return this.process_blur(e,t);
          case "mouseup":
             return this.process_click(e,t);
-         case "keyup":
-            return this.process_keyup(e,t);
          case "keydown":
             // Confine ESC keypress to closing selectx, not closing the form.
             // (Getting keycode cheaper than is_activated(), which must traverse the DOM tree.)
             if (SFW.keycode_from_event(e)==_esc && this.is_activated())
+            {
+               this.deactivate();
                return false;
-            break;
+            }
+            else
+               return this.process_key(e,t);
       };
 
       return true;
+   };
+
+   _selectx.prototype.update_contents = function(newdoc,type,child)
+   {
+      var crow = child.get_context_row();
+      var newrow = SFW.get_update_row(newdoc);
+      if (newrow && !crow)
+      {
+         var result = this.get_contents_result();
+         var idname = SFW.get_result_idname(result);
+         var rid = newrow.getAttribute(idname);
+         if (rid)
+         {
+            var tagname = result.getAttribute("row-name");
+            var copyrow = SFW.addXMLEl(tagname,result);
+            SFW.copy_attributes(copyrow, newrow);
+
+            // var input = this.get_post_input();
+            // input.value += (input.value.length?",":"") + rid;
+            this.update_li_options_from_value();
+
+            var masked = this.get_masked_input();
+            this.filter_options(masked.value);
+            masked.focus();
+         }
+      }
+   };
+
+   // Interrupt cascade, which is not appropriate here because
+   // the update is from adding a list element.
+   _selectx.prototype.cascade_updates = function(newdoc,type,child)
+   {
+      this.update_contents(newdoc,type,child);
    };
 
    function get_window_origin(el)
@@ -88,13 +123,11 @@
       return false;
    };
 
-   _selectx.prototype.process_keyup = function(e,t)
+   _selectx.prototype.process_key = function(e,t)
    {
-   // SFW.keycode_from_event   = _keycode_from_event;
-   // SFW.keychar_from_event   = _keychar_from_event;
-
       var keycode = SFW.keycode_from_event(e);
       var is_active = this.is_activated();
+      var ths = this;
       switch(keycode)
       {
          case _down:
@@ -109,7 +142,7 @@
             return false;
          case _enter:
             if (is_active)
-               this.process_enter_press();
+               this.process_enter_press(e);
             else
                this.activate();
             return false;
@@ -120,15 +153,15 @@
          default:
             if (keycode >= 32 || keycode==_bs)
             {
-               var masked_input = this.get_masked_input();
                if (!is_active)
-               {
                   this.activate();
-                  masked_input.value = SFW.keychar_from_event(e);
-               }
-               this.filter_options(masked_input.value);
+
+               var masked_input = this.get_masked_input();
+               function f() { ths.filter_options(masked_input.value); }
+               window.setTimeout(f, 50);
+               return false;
             }
-            
+            break;
       }
       
       return true;
@@ -211,18 +244,15 @@
       return null;
    };
 
-   _selectx.prototype.get_show_by_id = function(id)
+   _selectx.prototype.get_contents_result = function()
    {
-      var field, id_name, show_name, xpath, xrow = null;
-      if ((field = this.get_schema_field()))
+      var field, xpath;
+      if ((field=this.get_schema_field()))
       {
-         show_name = field.getAttribute("show");
-         xpath = "/*/" + field.getAttribute("result") + "[@rdnx]";
-         result = field.ownerDocument.selectSingleNode(xpath);
+         xpath = "/*/" + field.getAttribute("result") + "[@rndx]";
+         return field.ownerDocument.selectSingleNode(xpath);
       }
-
-      return xrow; 
-     
+      return null;
    };
 
    // Status access methods
@@ -283,7 +313,9 @@
       if (disp != ael)
       {
          if (ael)
-            alert("Unexpectedly, the " + ael.tagName.toLowerCase() + " element is active.");
+            alert("Unexpectedly, the "
+                  + ael.tagName.toLowerCase()
+                  + " element is active.");
          else
             alert("Unexpectedly, there is no active element (item with focus)?");
       }
@@ -382,9 +414,22 @@
       }
    };
 
+   _selectx.prototype.update_li_options_from_value = function()
+   {
+      var idlist = this.get_post_input().value;
+      
+      var field, ul;
+      if ((field = this.get_schema_field())
+          && (ul = this.get_ul()))
+      {
+         field.setAttribute("selectx_ul", idlist);
+         SFW.xslobj.transformFill(ul, field);
+         field.removeAttribute("selectx_ul");
+      }
+   };
+
    _selectx.prototype.set_from_selections = function(arr)
    {
-      var input_ = this.get_masked_input();
       var input_for_post = this.get_post_input();
 
       var arrids = [];
@@ -405,10 +450,38 @@
       }
    };
 
-   _selectx.prototype.process_enter_press = function()
+   _selectx.prototype.get_on_add_url = function()
    {
+      var result = this.get_contents_result();
+      if (result)
+      {
+         var url = result.selectSingleNode("@on_add|schema/@on_add");
+         if (url)
+            return url.nodeValue;
+      }
+      return null;
+   };
+
+   _selectx.prototype.process_enter_press = function(e)
+   {
+      var inpval = this.get_masked_input().value;
       var sel = this.get_target_li();
-      if (sel)
+
+      if (!sel && inpval.length > 0)
+      {
+         var url = this.get_on_add_url();
+         if (url)
+         {
+            SFW.open_interaction(SFW.stage,
+                                 url,
+                                 this,
+                                 { os:SFW.get_page_offset(),
+                                   this:this.host(),
+                                   preset_value:inpval }
+                                );
+         }
+      }
+      else if (sel)
          this.fire_target(sel);
    };
 
