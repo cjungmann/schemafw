@@ -140,14 +140,21 @@
       </xsl:for-each>
     </xsl:template>
 
+    <!-- Modeless templates to be called from Javascript -->
+
     <xsl:template match="field[@type='selectx'][@selectx_display]">
       <xsl:apply-templates select="." mode="fill_selectx_display">
         <xsl:with-param name="dval" select="@selectx_display" />
       </xsl:apply-templates>
     </xsl:template>
 
-    <!-- END OF selectx-specific templates -->
+    <xsl:template match="field[@type='selectx'][@selectx_ul]">
+      <xsl:apply-templates select="." mode="fill_selectx_ul">
+        <xsl:with-param name="dval" select="@selectx_ul" />
+      </xsl:apply-templates>
+    </xsl:template>
 
+    <!-- END OF selectx-specific templates -->
 
 
 
