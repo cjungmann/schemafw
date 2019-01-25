@@ -280,6 +280,9 @@ div.selectx ul
     overflow-y : auto;
 }
 
+div.selectx.active div.display span { background-color: #DDDDDD; }
+div.selectx.multiple div.display span:hover { background-color: #DD9999; cursor:pointer; }
+
 
 div.selectx.active input.entry { display:block; }
 div.selectx.active ul          { display:block; }
