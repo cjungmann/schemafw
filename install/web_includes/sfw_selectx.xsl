@@ -50,7 +50,14 @@
       </xsl:choose>
     </xsl:variable>
 
-    <div class="selectx" data-sfw-class="selectx" data-style="{$style}" data-sfw-input="true">
+    <xsl:variable name="class">
+      <xsl:text>selectx</xsl:text>
+      <xsl:if test="$style!='single'">
+         <xsl:value-of select="concat(' ',$style)" />
+      </xsl:if>
+    </xsl:variable>
+
+    <div class="{$class}" data-sfw-class="selectx" data-style="{$style}" data-sfw-input="true">
       <input type="hidden" name="{$name}" value="{$dval}" />
       <form onsubmit="return false;">
         <div class="display" tabindex="0">
@@ -84,6 +91,8 @@
     <xsl:template match="field[@type='selectx']" mode="fill_selectx_display">
       <xsl:param name="dval" />
 
+      <xsl:variable name="style" select="@style" />
+
       <xsl:variable name="ids" select="concat(',',$dval,',')" />
       <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/@result]" />
 
@@ -100,11 +109,15 @@
           select="$result/*[local-name()=../@row-name][contains($ids,concat(',',@*[local-name()=$id_name],','))]" />
 
       <xsl:for-each select="$on">
-        <xsl:variable name="id" select="@*[local-name()=$id_name]" />
-        <xsl:variable name="show" select="@*[local-name()=$show_name]" />
-        <span data-id="{$id}">
-          <xsl:value-of select="$show" />
-        </span>
+        <xsl:element name="span">
+          <xsl:if test="$style='multiple'">
+            <xsl:attribute name="data-id">
+              <xsl:value-of select="@*[local-name()=$id_name]" />
+            </xsl:attribute>
+            <xsl:attribute name="title">Click to remove</xsl:attribute>
+          </xsl:if>
+          <xsl:value-of select="@*[local-name()=$show_name]" />
+        </xsl:element>
         <xsl:if test="position() != last()">, </xsl:if>
       </xsl:for-each>
 
