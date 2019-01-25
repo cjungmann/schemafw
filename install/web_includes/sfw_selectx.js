@@ -40,6 +40,8 @@
       return true;
    };
 
+   function is_li(n) { return n.nodeType==1 && n.tagName.toLowerCase()=="li"; }
+
    _selectx.prototype.update_contents = function(newdoc,type,child)
    {
       var crow = child.get_context_row();
@@ -57,7 +59,7 @@
 
             // var input = this.get_post_input();
             // input.value += (input.value.length?",":"") + rid;
-            this.update_li_options_from_value();
+            this.refill_li_options_from_result();
 
             var masked = this.get_masked_input();
             this.filter_options(masked.value);
@@ -114,7 +116,16 @@
    
    _selectx.prototype.process_click = function(e,t)
    {
-      var node;
+      var node, id;
+      if ((node=SFW.self_or_ancestor_by_tag(t,"span"))
+          && (id=node.getAttribute("data-id")))
+      {
+         var li = this.get_li_by_id(id);
+         class_remove(li,"on");
+         this.remove_id(id);
+      }
+
+
       if (!this.is_activated() && class_includes(t,"display"))
          this.activate();
       else if ((node = SFW.self_or_ancestor_by_tag(t,"li")))
@@ -218,6 +229,12 @@
       return arr;
    };
 
+   _selectx.prototype.get_li_by_id = function(id)
+   {
+      function f(n) { return is_li(n) && n.getAttribute("data-value")==id; }
+      return SFW.find_child_matches(this.get_ul(), f, true, true);
+   };
+
    // XML document access method(s)
 
    _selectx.prototype.get_schema = function()
@@ -265,13 +282,7 @@
    _selectx.prototype.get_target_li = function()
    {
       var sel = null;
-      function f(n)
-      {
-         return (n.nodeType==1
-                 && n.tagName.toLowerCase()=="li"
-                 && class_includes(n,"target"));
-      }
-
+      function f(n) { return is_li(n) && class_includes(n,"target"); }
       var ul = this.get_ul();
       if (ul)
          sel = SFW.find_child_matches(ul,f,true,false);
@@ -282,6 +293,42 @@
    _selectx.prototype.is_activated = function()
    {
       return class_includes(this.widget(),"active") ? true : false;
+   };
+
+   _selectx.prototype.get_post_array = function()
+   {
+      var str = this.get_post_input().value;
+      if (str.length)
+         return str.split(",");
+      else
+         return [];
+   };
+
+   _selectx.prototype.remove_id = function(id)
+   {
+      var ids = this.get_post_array();
+      var pos = ids.indexOf(id);
+      if (pos!=-1)
+      {
+         ids.splice(pos,1);
+         this.get_post_input().value = ids.join(',');
+      }
+   };
+
+   _selectx.prototype.append_id = function(id)
+   {
+      var ids = this.get_post_array();
+      var pos = ids.indexOf(id);
+      if (pos==-1)
+      {
+         ids.push(id);
+         this.get_post_input().value = ids.join(',');
+      }
+   };
+
+   _selectx.prototype.set_id = function(id)
+   {
+      this.get_post_input().value = id;
    };
 
    // Methods that change the user's view:
@@ -325,6 +372,64 @@
 
    _selectx.prototype.fire_target = function(target)
    {
+      var id = target.getAttribute("data-value");
+      var is_style_single = this.get_style()=="single";
+
+      var sels=[];
+
+      function f(n)
+      {
+         if (is_li(n))
+         {
+            if (class_includes(n,"on"))
+                sels.push(n);
+            if (class_includes(n,"target"))
+               class_remove(n,"target");
+         }
+         return false;
+      }
+
+      // Scan options for "on" and "target" classes:
+      SFW.find_child_matches(this.get_ul(),f,false,false);
+
+      if (class_includes(target,"on"))
+      {
+         class_remove(target,"on");
+         this.remove_id(id);
+      }
+      else
+      {
+         if (is_style_single)
+         {
+            var dval;
+            if (sels && sels[0]!=target)
+            {
+               var dval = target.getAttribute("data-value");
+               class_remove(sels[0],"on");
+            }
+            this.set_id(dval);
+         }
+         else
+            this.append_id(id);
+
+         class_add(target,"on");
+      }
+
+      var masked = this.get_masked_input();
+      masked.value = "";
+      masked.focus();
+
+      this.filter_options("");
+      this.update_li_options_from_value();
+      this.update_display_from_value();
+      this.ensure_target_visible(target);
+
+      class_add(target,"target");
+
+   };
+
+   _selectx.prototype.old_fire_target = function(target)
+   {
       var sels = [];
 
       function toggle(n)
@@ -335,12 +440,7 @@
             class_add(n,"on");
       }
 
-      function li_is_on(n)
-      {
-         return n.nodeType==1
-            && n.tagName.toLowerCase()=="li"
-            && class_includes(n,"on");
-      }
+      function li_is_on(n) { return is_li(n) && class_includes(n,"on"); }
 
       var li_target = null;
       function set_target(n)
@@ -414,7 +514,9 @@
       }
    };
 
-   _selectx.prototype.update_li_options_from_value = function()
+   
+
+   _selectx.prototype.refill_li_options_from_result = function()
    {
       var idlist = this.get_post_input().value;
       
@@ -425,6 +527,42 @@
          field.setAttribute("selectx_ul", idlist);
          SFW.xslobj.transformFill(ul, field);
          field.removeAttribute("selectx_ul");
+      }
+   };
+
+   _selectx.prototype.update_li_options_from_value = function()
+   {
+      var idarr = this.get_post_input().value.split(',');
+      var val = this.get_masked_input().value;
+
+      function f(n)
+      {
+         if (is_li(n))
+         {
+            
+
+
+            class_remove(n,"on");
+            var id = n.getAttribute("data-value");
+            if (idarr.indexOf(id) != -1)
+               class_add(n,"on");
+         }
+         return false;
+      }
+      SFW.find_child_matches(this.get_ul(),f);
+   };
+   
+   _selectx.prototype.update_display_from_value = function()
+   {
+      var idlist = this.get_post_input().value;
+      
+      var field, display;
+      if ((field = this.get_schema_field())
+          && (display = this.get_display_div()))
+      {
+         field.setAttribute("selectx_display", idlist);
+         SFW.xslobj.transformFill(display, field);
+         field.removeAttribute("selectx_display");
       }
    };
 
@@ -491,7 +629,7 @@
       var pos_max, pos_cur=-1, pos_new=-1;
       function f(n)
       {
-         if (n.nodeType==1 && n.tagName.toLowerCase()=="li")
+         if (is_li(n))
          {
             if (n.style.display!="none")
             {
@@ -536,13 +674,7 @@
 
    _selectx.prototype.get_on_array = function()
    {
-      function f(n)
-      {
-         return n.nodeType==1
-            && n.tagName.toLowerCase()=="li"
-            && class_includes(n,"on");
-      }
-
+      function f(n) { return is_li(n) && class_includes(n,"on"); }
       return SFW.find_child_matches(this.get_ul(),f,false,false);
    };
 
@@ -583,7 +715,7 @@
    {
       function f(n)
       {
-         if (n.nodeType==1 && n.tagName.toLowerCase()=="li")
+         if (is_li(n))
             n.style.display = "block";
       };
 
@@ -659,7 +791,7 @@
 
       function f(n)
       {
-         if (n.nodeType==1 && n.tagName.toLowerCase()=="li")
+         if (is_li(n))
          {
             class_remove(n,"target");
             pfunc(n);
