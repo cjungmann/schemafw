@@ -57,42 +57,48 @@
     <xsl:param name="primary" />
     <xsl:param name="prow" select="/.." />
 
-    <!--
-        $data will be a single data element. Select with the following priority:
-        1. ($fd) if current() is first gen schema, look for first row of first result
-        2. ($sd) sibling of schema with proper name
-        3. ($dd) 1st row of data-result, or
-        4. ($rd) first child of first result (which might be a schema)
+    <!-- rowname will be the first matching between
+         sn (schema name) row name as defined by the schema
+         rn (row name) as defined by the result attribute @row-name
     -->
-    <!-- <xsl:variable name="fd" select="../*[current()=/*/schema[1]][@rndx='1']/*[1]"/> -->
-    <!-- <xsl:variable name="sd" select="../*[not($fd)][local-name()=current()/@name][1]"/> -->
-    <!-- <xsl:variable name="dd" select="../form-data[not($fd|$sd)]/*[1]"/> -->
-    <!-- <xsl:variable name="rd" select="../*[not($fd|$sd|$dd)][@rndx='1']/*[1]"/> -->
-    <!-- <xsl:variable name="data" select="$fd|$sd|$dd|$rd"/> -->
-
     <xsl:variable name="sn" select="@name" />
     <xsl:variable name="rn" select="parent::node[not($sn)]/@row-name" />
     <xsl:variable name="rowname" select="$sn|$rn" />
+
+    <xsl:variable name="mnum" select="@merged" />
 
     <!--
     pd (parameter data): data row explicitly included in parameters (top priority)
     sd (sibling data): data row is sibling of schema element
     fd (form data): data row from explicitly-named form-data element
     md (merged data) row from merged result
+    ld (last-restort data) the first row from the first result (rndx=1) where
+       the merge status matches the merge status of the schema.
 
-    There was a last resort variable, but it's been removed in favor
-    of the $prow parameter.  If an application needs a last resort,
-    pass the last resort data in the $prow parameter.
+    I alternately remove and restore the last resort data row ($ld) because
+    it's sometimes too permissive (making false matches) and other times
+    too restrictive (a form that needs data can't find it.
     -->
     <xsl:variable name="sd" select="../*[not($prow)][local-name()=$rowname][1]" />
     <xsl:variable name="fd" select="../form-data[not($prow|$sd)]/*[1]" />
     <xsl:variable
         name="md"
-        select="../*[not($prow|$sd|$fd)][@merged][@rndx]/*[local-name()=../@row-name][1]" />
+        select="../*[not($prow|$sd|$fd)][@merged=$mnum][@rndx]/*[local-name()=../@row-name][1]" />
     <xsl:variable
         name="ld"
-        select="/*/*[not($prow|$sd|$fd|$md)][@rndx=1]/*[local-name()=../@row-name][1]" />
+        select="/*/*[not($prow|$sd|$fd|$md)][@rndx=1]/*[local-name()=../@row-name][not(@merged) and not($mnum) or @merged=$mnum][1]" />
     <xsl:variable name="data" select="$prow|$sd|$fd|$md|$ld" />
+
+    <div>
+      <xsl:choose>
+        <xsl:when test="$sd">sd</xsl:when>
+        <xsl:when test="$fd">fd</xsl:when>
+        <xsl:when test="$md">md</xsl:when>
+        <xsl:when test="$ld">ld</xsl:when>
+        <xsl:otherwise>unknown</xsl:otherwise>
+      </xsl:choose>
+    </div>
+
 
     <xsl:variable name="sfw-class">
       <xsl:choose>
