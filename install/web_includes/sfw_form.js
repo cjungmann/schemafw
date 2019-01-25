@@ -115,16 +115,20 @@
       return str;
    }
 
+   var _dataless_els = 'submit reset button';
+   function _holds_data(el)
+   {
+      return (el.name.length || _dataless_els.search(el.type)==-1) ? el : null;
+   }
+
    // Global, SFW member function
    function _get_form_data(form)
    {
       var el, els = form.elements;
       var arr = [];
-      var noninputs = 'submit reset button';
       for (var i=0, stop=els.length; i<stop; i++)
       {
-         el = els[i];
-         if (noninputs.search(el.type)==-1 && el.name.length)
+         if ((el = _holds_data(els[i])))
          {
             if (el.type=="checkbox")
             {
@@ -173,14 +177,18 @@
       if (arguments.length<3)
          save_skips = false;
 
+      // For function fskip, 
+      // If save_skips is TRUE, always return false (don't skip)
+      // If save_skips is FALSE, return true if attribute
+      // data-xml-skip set, false otherwise.
+      var fskip = (save_skips
+                   ? (function()   { return false; })
+                   : (function(el) { return el.getAttribute("data-xml-skip")!=null; }));
+
       var el, els = form.elements || _get_element_elements(form);
-      var skip;
-      var noninputs = 'submit reset button';
       for (var i=0, stop=els.length; i<stop; i++)
       {
-         el = els[i];
-         skip = !save_skips && el.getAttribute("data-xml-skip");
-         if (!skip && noninputs.search(el.type)==-1 && el.name.length)
+         if ((el = _holds_data(els[i])) && !fskip(el))
          {
             if (el.type=="checkbox")
                outel.setAttribute(el.name, (el.checked?"1":"0"));
@@ -447,11 +455,34 @@
       return this.process_clicked_button(t, fdone);
    };
 
-   _form.prototype.initialize = 
-   _form.prototype.post_transform = function()
+   _form.prototype.post_transform = function() {return false;};
+   _form.prototype.initialize = function()
    {
+      this.set_preset_value();
       this.focus_on_first_field();
    };
+
+   // This is a sad downgrade from a more ambitious plan
+   // to allow setting several values at once.
+   //
+   // Consider adding another process by which a form's
+   // fields can be set from data left in the host element's
+   // data member.
+   _form.prototype.set_preset_value = function()
+   {
+      var schema = this.schema();
+      var data = this.data();
+      if ("preset_value" in data)
+      {
+         var fieldname, field, form, preset;
+         if ((preset = schema.selectSingleNode("field[@preset_target]"))
+             && (fieldname = preset.getAttribute("name"))
+             && (form = this.top())
+             && (field = form.elements[fieldname]))
+            field.value = data.preset_value;
+      }
+   };
+                                               
 
    _form.prototype.closeable = function() { return true; };
 
@@ -475,7 +506,7 @@
          if (this.use_process_submit())
          {
             this.process_submit();
-            SFW.cancel_event(e);
+            return SFW.cancel_event(e);
          }
          break;
       }
