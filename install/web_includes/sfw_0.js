@@ -190,6 +190,7 @@ function init_SFW(callback)
    SFW.show_string_in_pre   = _show_string_in_pre;
    SFW.remove_string_pres   = _remove_string_pres;
 
+   SFW.copy_attributes      = _copy_attributes;
    SFW.replace_results      = _replace_results;
    SFW.get_row_id_value     = _get_row_id_value;
 
@@ -1857,7 +1858,7 @@ function init_SFW(callback)
     * listing their names in the SRM.  I won't over-engineer this right now as I
     * don't recognize any cases where this would be useful.
     */
-   function _copy_result_attributes(target, source)
+   function _copy_attributes(target, source)
    {
       var s_attr, t_val, s_val;
       for (var i=0, stop=source.attributes.length; i<stop; ++i)
@@ -1889,7 +1890,7 @@ function init_SFW(callback)
             var xpath = n.tagName + "[@rndx]";
             if ((oldnode=olddocel.selectSingleNode(xpath)))
             {
-               _copy_result_attributes(n, oldnode);
+               _copy_attributes(n, oldnode);
                olddocel.insertBefore(n, oldnode);
                olddocel.removeChild(oldnode);
             }
