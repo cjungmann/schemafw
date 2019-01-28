@@ -107,16 +107,6 @@
 
          var t_related = SFW.self_or_ancestor_by_tag(t,"p");
 
-         function f(n) {
-            return n?n.getElementsByTagName("label")[0].getAttribute("for"):"na";
-         }
-
-         console.log("Comparing p,label='"
-                     + f(p_related)
-                     + "' to '"
-                     + f(t_related)
-                     + "'");
-
          if (p_related != t_related)
          {
             var ths = this;
@@ -135,7 +125,6 @@
          class_remove(li,"on");
          this.remove_id(id);
       }
-
 
       if (!this.is_activated() && class_includes(t,"display"))
          this.activate();
@@ -757,7 +746,8 @@
             is_match = function() { return false; };
       }
 
-      filter_str = filter_str?filter_str.toLowerCase():"";
+      filter_str = filter_str?filter_str.toLowerCase().replace(/\\/g,'\\\\'):"";
+      
 
       var target = null;
 
