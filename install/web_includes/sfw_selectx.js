@@ -26,20 +26,13 @@
          case "mouseup":
             return this.process_click(e,t);
          case "keydown":
-            // Confine ESC keypress to closing selectx, not closing the form.
-            // (Getting keycode cheaper than is_activated(), which must traverse the DOM tree.)
-            if (SFW.keycode_from_event(e)==_esc && this.is_activated())
-            {
-               this.deactivate();
-               return false;
-            }
-            else
                return this.process_key(e,t);
       };
 
       return true;
    };
 
+   // Frequently needed herein for SFW.find_child_matches():
    function is_li(n) { return n.nodeType==1 && n.tagName.toLowerCase()=="li"; }
 
    _selectx.prototype.update_contents = function(newdoc,type,child)
@@ -105,13 +98,31 @@
    _selectx.prototype.process_blur = function(e,t)
    {
       var is_active = this.is_activated();
-      var t_display = this.get_display_div();
-      var t_input = this.get_masked_input();
 
-      if (is_active && t==t_input && !class_includes(t,"entry"))
-         this.deactivate();
+      if (is_active)
+      {
+         var p_related = (e.relatedTarget
+                          ? SFW.self_or_ancestor_by_tag(e.relatedTarget,"p")
+                          : null);
 
-      return false;
+         var t_related = SFW.self_or_ancestor_by_tag(t,"p");
+
+         function f(n) {
+            return n?n.getElementsByTagName("label")[0].getAttribute("for"):"na";
+         }
+
+         console.log("Comparing p,label='"
+                     + f(p_related)
+                     + "' to '"
+                     + f(t_related)
+                     + "'");
+
+         if (p_related != t_related)
+         {
+            var ths = this;
+            window.setTimeout(function() { ths.deactivate(); }, 50);
+         }
+      }
    };
    
    _selectx.prototype.process_click = function(e,t)
@@ -159,8 +170,8 @@
             return false;
          case _esc:
             if (is_active)
-               this.deactivate();
-            return true;
+               this.deactivate(true);
+            return false;
          default:
             if (keycode >= 32 || keycode==_bs)
             {
@@ -347,24 +358,16 @@
       return false;
    };
 
-   _selectx.prototype.deactivate = function(e,t)
+   _selectx.prototype.deactivate = function(disp_focus)
    {
       this.unfilter_options();
 
-      var disp = this.get_display_div();
       class_remove(this.widget(),"active");
-      if (disp)
-         disp.focus();
-
-      var ael = document.activeElement;
-      if (disp != ael)
+      if (disp_focus)
       {
-         if (ael)
-            alert("Unexpectedly, the "
-                  + ael.tagName.toLowerCase()
-                  + " element is active.");
-         else
-            alert("Unexpectedly, there is no active element (item with focus)?");
+         var disp = this.get_display_div();
+         if (disp)
+            disp.focus();
       }
 
       return false;
@@ -510,7 +513,7 @@
          }
 
          this.set_from_selections(sels);
-         this.deactivate();
+         this.deactivate(true);
       }
    };
 
