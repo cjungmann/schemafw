@@ -89,17 +89,6 @@
         select="/*/*[not($prow|$sd|$fd|$md)][@rndx=1]/*[local-name()=../@row-name][not(@merged) and not($mnum) or @merged=$mnum][1]" />
     <xsl:variable name="data" select="$prow|$sd|$fd|$md|$ld" />
 
-    <div>
-      <xsl:choose>
-        <xsl:when test="$sd">sd</xsl:when>
-        <xsl:when test="$fd">fd</xsl:when>
-        <xsl:when test="$md">md</xsl:when>
-        <xsl:when test="$ld">ld</xsl:when>
-        <xsl:otherwise>unknown</xsl:otherwise>
-      </xsl:choose>
-    </div>
-
-
     <xsl:variable name="sfw-class">
       <xsl:choose>
         <xsl:when test="$mode-type='form-import'">import</xsl:when>
