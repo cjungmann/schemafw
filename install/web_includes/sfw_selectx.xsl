@@ -112,7 +112,7 @@
 
     </xsl:template>
 
-    <xsl:template match="field[@type='selectx'][@for-each]" mode="fill_selectx_display">
+    <xsl:template match="field[@type='selectx']" mode="fill_selectx_display">
       <xsl:param name="dval" />
 
       <xsl:variable name="style" select="@style" />
@@ -149,7 +149,7 @@
 
     </xsl:template>
 
-    <xsl:template match="field[@type='selectx']" mode="fill_selectx_display">
+    <xsl:template match="field[@type='selectx'][@ranked]" mode="fill_selectx_display">
       <xsl:param name="dval" />
 
       <xsl:variable name="id_name">
