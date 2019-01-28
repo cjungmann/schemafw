@@ -367,22 +367,22 @@
       var id = target.getAttribute("data-value");
       var is_style_single = this.get_style()=="single";
 
-      var sels=[];
-
-      function f(n)
-      {
-         if (is_li(n))
-         {
-            if (class_includes(n,"on"))
-                sels.push(n);
-            if (class_includes(n,"target"))
-               class_remove(n,"target");
-         }
-         return false;
-      }
-
+      // var sels=[];
+      // function f(n)
+      // {
+      //    if (is_li(n))
+      //    {
+      //       if (class_includes(n,"on"))
+      //           sels.push(n);
+      //       if (class_includes(n,"target"))
+      //          class_remove(n,"target");
+      //    }
+      //    return false;
+      // }
       // Scan options for "on" and "target" classes:
-      SFW.find_child_matches(this.get_ul(),f,false,false);
+      // SFW.find_child_matches(this.get_ul(),f,false,false);
+
+      var sels = this.get_post_input().value.split(',');
 
       if (class_includes(target,"on"))
       {
@@ -396,10 +396,10 @@
             var dval;
             if (sels && sels[0]!=target)
             {
-               var dval = target.getAttribute("data-value");
+               dval = target.getAttribute("data-value");
                class_remove(sels[0],"on");
+               this.set_id(dval);
             }
-            this.set_id(dval);
          }
          else
             this.append_id(id);
@@ -531,9 +531,6 @@
       {
          if (is_li(n))
          {
-            
-
-
             class_remove(n,"on");
             var id = n.getAttribute("data-value");
             if (idarr.indexOf(id) != -1)
@@ -747,7 +744,6 @@
       }
 
       filter_str = filter_str?filter_str.toLowerCase().replace(/\\/g,'\\\\'):"";
-      
 
       var target = null;
 
