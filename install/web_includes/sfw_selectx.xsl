@@ -88,7 +88,31 @@
 
     <!-- selectx-specific templates -->
 
-    <xsl:template match="field[@type='selectx']" mode="fill_selectx_display">
+    <xsl:template match="*" mode="build_selectx_span">
+      <xsl:param name="id_name" />
+      <xsl:param name="show_name" />
+
+      <!-- <span> -->
+      <!--   <xsl:text>|</xsl:text> -->
+      <!--   <xsl:value-of select="concat('id=',@*[local-name()=$id_name])" /> -->
+      <!--   <xsl:text> </xsl:text> -->
+      <!--   <xsl:value-of select="concat('value=',@*[local-name()=$show_name])" /> -->
+      <!--   <xsl:text>|</xsl:text> -->
+      <!-- </span> -->
+
+      <xsl:element name="span">
+        <xsl:if test="string-length($id_name)">
+          <xsl:attribute name="data-id">
+            <xsl:value-of select="@*[local-name()=$id_name]" />
+          </xsl:attribute>
+          <xsl:attribute name="title">Click to remove</xsl:attribute>
+        </xsl:if>
+        <xsl:value-of select="@*[local-name()=$show_name]" />
+      </xsl:element>
+
+    </xsl:template>
+
+    <xsl:template match="field[@type='selectx'][@for-each]" mode="fill_selectx_display">
       <xsl:param name="dval" />
 
       <xsl:variable name="style" select="@style" />
@@ -104,22 +128,66 @@
         <xsl:apply-templates select="." mode="get_show_field" />
       </xsl:variable>
 
+      <!-- Make node-list containing all rows whose id values are included in dval -->
       <xsl:variable
           name="on"
           select="$result/*[local-name()=../@row-name][contains($ids,concat(',',@*[local-name()=$id_name],','))]" />
 
       <xsl:for-each select="$on">
-        <xsl:element name="span">
-          <xsl:if test="$style='multiple'">
-            <xsl:attribute name="data-id">
-              <xsl:value-of select="@*[local-name()=$id_name]" />
-            </xsl:attribute>
-            <xsl:attribute name="title">Click to remove</xsl:attribute>
-          </xsl:if>
-          <xsl:value-of select="@*[local-name()=$show_name]" />
-        </xsl:element>
+        
+        <xsl:apply-templates select="." mode="build_selectx_span">
+          <xsl:with-param name="id_name">
+            <xsl:if test="@style='multiple'">
+              <xsl:value-of select="$id_name" />
+            </xsl:if>
+          </xsl:with-param>
+          <xsl:with-param name="show_name" select="$show_name" />
+        </xsl:apply-templates>
+        
         <xsl:if test="position() != last()">, </xsl:if>
       </xsl:for-each>
+
+    </xsl:template>
+
+    <xsl:template match="field[@type='selectx']" mode="fill_selectx_display">
+      <xsl:param name="dval" />
+
+      <xsl:variable name="id_name">
+        <xsl:apply-templates select="." mode="get_id_field" />
+      </xsl:variable>
+
+      <xsl:variable name="show_name">
+        <xsl:apply-templates select="." mode="get_show_field" />
+      </xsl:variable>
+
+      <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/@result]" />
+
+      <xsl:variable name="b_id" select="substring-before($dval,',')" />
+      <xsl:variable name="b_len" select="string-length($b_id)" />
+      <xsl:variable name="s_id"
+          select="substring($dval,1 div boolean($b_len=0))" />
+
+      <xsl:variable name="id" select="concat($b_id, $s_id)" />
+
+      <xsl:variable
+          name="row"
+          select="$result/*[local-name()=../@row-name][@*[local-name()=$id_name]=$id]" />
+
+      <xsl:apply-templates select="$row" mode="build_selectx_span">
+        <xsl:with-param name="id_name">
+          <xsl:if test="@style='multiple'">
+            <xsl:value-of select="$id_name" />
+          </xsl:if>
+        </xsl:with-param>
+        <xsl:with-param name="show_name" select="$show_name" />
+      </xsl:apply-templates>
+        
+      <xsl:if test="$b_len">
+        <xsl:text>, </xsl:text>
+        <xsl:apply-templates select="." mode="fill_selectx_display">
+          <xsl:with-param name="dval" select="substring($dval,($b_len+2))" />
+        </xsl:apply-templates>
+      </xsl:if>
 
     </xsl:template>
 
