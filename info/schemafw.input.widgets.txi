@@ -1,0 +1,8 @@
+@node Form Input Widgets
+@chapter Form Input Widgets
+
+@menu
+* SelectX Input Widget::
+@end menu
+
+@include schemafw.selectx.txi

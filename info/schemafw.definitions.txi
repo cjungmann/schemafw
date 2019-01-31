@@ -1,0 +1,128 @@
+@node Definitions
+@chapter Definitions
+
+@menu
+* def Branch::
+* def Global Mode::
+* def Mode::
+* def Response Mode::
+* def Shared Mode::
+* def SRM Acronym::
+* def SRM File::
+* def SRM-Set::
+* def SRM URL::
+@end menu
+
+
+@node def Branch
+@section Branch
+A branch is an instruction with subordinate tags.  Child tags are
+indented from their parents.  Sibling tags under a parent share the
+same indentation level.  In the following example, the @emph{parent}
+and @emph{child} lines are branches.  Henrietta and Delmont are
+co-children of Harriet.
+
+@example
+parent : Harriet
+  dob : 1970-06-06
+  child : Henrietta
+     dob : 1995-08-06
+     child : Thomas
+        dob : 2019-01-01
+  child : Delmont
+     dob : 1999-07-21
+@end example
+
+@node def Global Mode
+@section def Global Mode
+
+A global mode is a mode that begins with the dollar-sign symbol ($)
+that can be referenced globally.  Some global modes serve as default
+settings, like @emph{$database}, @emph{$xml-stylesheet}, and
+@emph{$default-mode}.  Shared modes @pxref{def Shared Mode} are also global modes.
+
+@node def Mode
+@section Mode
+A mode is an addressable branch in an SRM file.  A branch is addressable
+when it begins at the left-most column of the SRM text file.  There are
+three types of modes:
+
+@enumerate
+@item Response mode @pxref{def Response Mode}
+@item Shared mode @pxref{def Shared Mode}
+@item Global mode @pxref{def Global Mode}
+@end enumerate
+
+@node def Response Mode
+@section Response Mode
+Any mode can be a response mode if it is called through the URL
+@pxref{def SRM URL}.
+
+@node def Shared Mode
+@section Shared Mode
+
+The shared mode is a global mode @pxref{def Global Mode} that can be
+substitued into other branches.
+
+@node def SRM Acronym
+@section SRM Acronym
+SRM is an acronym for Schema Response Modes.  The letters, in lower-case
+are the default extension for the file type.  e.g. Items.srm
+
+@node def SRM File
+@section SRM File
+A Schema Framework plain text script file that contains instructions
+for interacting with MySQL stored procedures in order to create user
+interactions.
+
+@node def SRM-Set
+@section SRM-Set
+This refers to a set of interactions associated with a MySQL table.
+These are often grouped into a single SRM file.  A set typically
+includes a response mode view of a MySQL table with supporting response
+modes for making changes to the MySQL table.  The simple SRM-set
+includes:
+
+@itemize
+@item list
+@item add
+@item add_submit
+@item read
+@item edit
+@item edit_submit
+@item delete
+@end itemize
+
+Two interactions that are not included by default by @code{gensfw} are
+the @emph{import} and @emph{export} interactions.  @pxref{Top,,,gensfw}
+
+Enabling the @emph{export} interaction creates a single response mode,
+
+@itemize
+@item export
+@end itemize
+
+The @emph{import} interact is a relatively complicated affair and
+thus includes many response modes.  The generated set of response modes
+are listed below.  Note that the first response mode name includes the
+table name.
+
+@itemize
+@item import_Item
+@item import
+@item review
+@item accept
+@item abandon
+@end itemize
+
+@node def SRM URL
+@section SRM URL
+The Schema Framework URL structure is as follows:
+
+@example
+http://mysite.com/Item.srm?add&id=10&name=Delmont
+@end example
+
+Where @code{Item.srm} is the SRM file name, @code{add} is the requested
+response mode and @emph{id} and @emph{name} are request parameters.
+

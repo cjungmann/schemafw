@@ -1,0 +1,17 @@
+@node Merged Documents
+@chapter Merged Documents
+
+For data models that include logically-linked data, like keywords
+for items, having to send the entire list of eligible keywords with
+each @emph{add} or @emph{update} form is unnecessary network traffic.
+The Schema Framework allows the use of merged documents to preserve
+data that will be reused.
+
+@menu
+* Merged Documents Introduction::
+@end menu
+
+@node Merged Documents Introduction
+@section Merged Documents Introduction
+
+In any SRM-set @pxref{def SRM-Set}, 
