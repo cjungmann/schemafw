@@ -1,0 +1,93 @@
+@node SelectX SRM Changes Checklist
+@subsection SelectX SRM Changes Checklist
+
+As with the SQL changes in the previous section, the default SRM
+response modes need to be modified in smaller and more subtle ways.
+
+@menu
+* SelectX SRM Response Mode Example::
+* SelectX SRM Shared Modes ::
+* SelectX SRM Schema Field Changes ::
+* SelectX SRM List Response Mode Modifications ::
+@end menu
+
+@node SelectX SRM Response Mode Example
+@subsubsection SelectX SRM Response Mode Example
+
+Using a @emph{selectx} widget requires several modifications relative
+to a simple SRM file.  The interactions should be setup to use the merge
+
+
+@example
+add
+   type : merge               # required to be merged
+   schema-proc : App_Item_Add
+   form-action : ?add_submit
+   schema
+      merge-type : form-new   # merge mode types need schema merge-type
+      field : id
+         hidden : true
+         readOnly : true
+      field : name
+         label : Item Name
+      field : klist
+         label  : Keywords
+         type   : selectx     # selectx field type
+         result : keywords    # source result named
+@end example
+
+@node SelectX SRM Shared Modes
+@subsubsection SelectX SRM Shared Modes
+
+While not strictly necessary, it is a good practice to use the
+shared mode feature to define the @emph{selectx} field properties
+once for all uses.
+
+To change the @emph{klist} parameter to @emph{selectx}, we must define
+the field in a @emph{schema} declaration:
+
+@example
+$shared : keyword_field
+   field : klist
+      type   : selectx   # required
+      result : keywords  # required
+      style  : multiple  # optional
+      ranked : true      # optional
+      stacked : true     # optional
+@end example
+
+@xref{SelectX Settings}
+
+@node SelectX SRM Schema Field Changes
+@subsubsection SelectX SRM Schema Field Changes
+
+Every place where the field contents of the @emph{selectx} will be
+displayed will need to prepare the @emph{field} tag for the
+widget.  That typically includes the following response modes:
+
+@enumerate
+@item @strong{list} mode for the table cell
+@item @strong{add} mode for the input field
+@item @strong{update} mode for the input field
+@item @strong{read} mode for the display field
+@end enumerate
+
+Because of the several places it's needed, using the share SRM
+feature is recommended.  Using the shared mode looks like this:
+
+@node SelectX SRM List Response Mode Modifications
+@subsubsection SelectX SRM List Response Mode Modifications
+
+Using a @emph{selectx} in one place in an SRM set requires changes
+to most response modes.
+
+@enumerate
+@item 
+@end enumerate
+
+There are two main changes that must be made to the List response mode:
+
+@enumerate
+@item The @emph{klist} schema field type be identified as @emph{selectx}
+
+@end enumerate

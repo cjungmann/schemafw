@@ -1,0 +1,122 @@
+@node SelectX Input Widget
+@section SelectX Input Widget
+
+The @emph{selectx} input widget operates as a @emph{select} input
+with extra features.  It was born to solve user experience problems
+that occur when @emph{select} elements contain a large number of
+@emph{options} and when multiple selections can be made.
+
+The @emph{selectx} widget is implemented as an unordered list
+(@emph{ul}) whose list items (@emph{li}) are generated from the
+contents of a MySQL table, delivered to the client application as
+a result element in an SRM (XML) document.
+
+@menu
+* SelectX Features::
+* SelectX Settings::
+* SelectX Development Hints::
+* SelectX SQL Changes Checklist::
+* SelectX SRM Changes Checklist::
+* Learn by Example SFW_Patterns::
+@end menu
+
+
+@node SelectX Features
+@subsection SelectX Features
+
+The @emph{selectx} widget includes several enhancements over a
+standard HTML @emph{select} element:
+
+@table @strong
+@item Populated with Result Contents
+The definition of the @emph{selectx} field includes the name of a
+result element from which the options will be generated.  The
+result can be included in the response to a form request or
+resident in a document in which the form is merged.
+
+@item Filter Selection
+As the user types the entry, the @emph{selectx} widget, the
+list of options shrinks to include only the options that
+include the substring in the entry field.  The final
+selection can be made by continuing to type until a single
+option remains, click on an option, or use up or down arrow
+keys to identify the desired option from the list and select
+by pressing ENTER.
+
+@item Ranked or Unranked Order
+Normally, the selected options are shown in the order they
+are found in the result element.  However, for situations where
+the input order is important, using a @code{ranked : true}
+instruction will preserve the entry order of the user's
+selections.
+
+@item Just-in-Time Additions
+The @emph{selectx} widget can be configured to allow a user
+to add new options to a list while selecting options.  This
+entails adding records to the table from which the source
+result element is generated.
+
+@end table
+
+@node SelectX Settings
+@subsection SelectX Settings
+
+If a field @emph{type} instruction is set to @code{selectx}, there
+is one required additional field setting (@emph{result}) and two
+optional field settings, @emph{style} and @emph{ranked}.
+
+Here is a typical @emph{selectx} field:
+
+@example
+schema
+   field  : klist
+      type   : selectx
+      # selectx settings follow:
+      result : keywords
+      style  : multiple
+      ranked : true
+      stacked : true
+@end example
+
+The settings are:
+
+@table @strong
+@item result
+This required setting identifies the result to be used as the source
+of the @emph{selectx} options.
+
+@item style
+This optional setting can only be @code{multiple}, to indicate that
+more than one option can be selected at a time.  Omitting this setting,
+or using any value except @code{multiple} will produce @emph{selectx}
+that allows a single selection.
+
+@item ranked
+This optional setting only applies if @code{style : multiple}, and it
+will preserve the selection order of the options.   Otherwise, the
+options will be shown in the order they appear in the source result
+element.  The value of @emph{ranked} is not checked, any value will
+elicit the ranked behavior.
+
+@item stacked
+This option instructs the widget to display selected options on
+separate lines.  The default behavior is to run selected options
+together.  Like @emph{ranked}, including a @emph{stacked} tag,
+regardless of its value, will force stacked behavior.
+@end table
+
+
+@include schemafw.selectx.hints.txi
+@include schemafw.selectx.sql.checklist.txi
+@include schemafw.selectx.srm.checklist.txi
+
+
+
+@node Learn by Example SFW_Patterns
+@subsection Learn by Example SFW_Patterns
+
+In lieu of complete documentation of the @emph{selectx} widget,
+the @url{https://github.com/cjungmann/sfw_patterns, SFW_Patterns Project}
+implements several @emph{selectx} widgets and explains how to
+set them up and how they work.
+
