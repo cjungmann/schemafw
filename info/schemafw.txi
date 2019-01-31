@@ -44,12 +44,15 @@ production.
 * Introduction::
 * Installation::       Install the framework, install to new sites
 * Forms::
+* Form Input Widgets:: 
 * Result Elements::    Label and use query results in a resultset
+* Merged Documents::   Minimize network traffic by preserving data
 * Interactions::
 * Context References:: Apply document values to captions or fields
 * Buttons::            Button attributes recognized by the Framework
 * Customizing::        Extend the framework with your own components
 * Debugging::
+* Definitions::
 @end menu
 
 @node Introduction
@@ -77,11 +80,14 @@ $ sudo ln -s /usr/local/lib/schemafw/web_includes includes
 @end example
 
 @include schemafw.forms.txi
+@include schemafw.input.widgets.txi
 @include schemafw.results.txi
+@include schemafw.merged.txi
 @include schemafw.interactions.txi
 @include schemafw.context-refs.txi
 @include schemafw.buttons.txi
 @include schemafw.customizing.txi
 @include schemafw.debugging.txi
+@include schemafw.definitions.txi
 
 @bye
