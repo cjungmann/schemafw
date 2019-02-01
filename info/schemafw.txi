@@ -42,15 +42,15 @@ production.
 @contents
 @menu
 * Introduction::
-* Installation::       Install the framework, install to new sites
+* Installation::        Install the framework, install to new sites
 * Forms::
 * Form Input Widgets:: 
-* Result Elements::    Label and use query results in a resultset
-* Merged Documents::   Minimize network traffic by preserving data
+* Result Elements::     Label and use query results in a resultset
+* Merged Interactions:: Minimize network traffic by preserving data
 * Interactions::
-* Context References:: Apply document values to captions or fields
-* Buttons::            Button attributes recognized by the Framework
-* Customizing::        Extend the framework with your own components
+* Context References::  Apply document values to captions or fields
+* Buttons::             Button attributes recognized by the Framework
+* Customizing::         Extend the framework with your own components
 * Debugging::
 * Definitions::
 @end menu
