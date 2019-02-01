@@ -45,6 +45,7 @@
     <xsl:variable name="show_name">
       <xsl:apply-templates select="." mode="get_display_field">
         <xsl:with-param name="schema" select="$schema" />
+        <xsl:with-param name="id_name" select="$id_name" />
       </xsl:apply-templates>
     </xsl:variable>
 
@@ -82,6 +83,7 @@
     <xsl:variable name="show_name">
       <xsl:apply-templates select="." mode="get_display_field">
         <xsl:with-param name="schema" select="$schema" />
+        <xsl:with-param name="id_name" select="$id_name" />
       </xsl:apply-templates>
     </xsl:variable>
 
@@ -103,12 +105,13 @@
 
   <xsl:template match="field[@type='select_result']" mode="get_display_field">
     <xsl:param name="schema" />
+    <xsl:param name="id_name" />
     <xsl:choose>
       <xsl:when test="@show">
         <xsl:value-of select="@show" />
       </xsl:when>
-      <xsl:when test="count($result/schema/field) &gt; 1">
-        <xsl:value-of select="$result/schema/field[local-name()!=$id_name][1]/@name" />
+      <xsl:when test="count($schema/field) &gt; 1">
+        <xsl:value-of select="$schema/field[local-name()!=$id_name][1]/@name" />
       </xsl:when>
       <xsl:otherwise>
         <xsl:value-of select="$id_name" />
