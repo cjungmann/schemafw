@@ -211,6 +211,12 @@
       return SFW.find_child_matches(this.widget(),f,true,true);
    };
 
+   _selectx.prototype.get_tabtarget = function()
+   {
+      function f(n) { return n.nodeType==1 && class_includes(n,"tabtarget"); }
+      return SFW.find_child_matches(this.widget(),f,true,true);
+   };
+
    _selectx.prototype.get_displayed_array = function()
    {
       var arr = [];
@@ -354,9 +360,9 @@
       class_remove(this.widget(),"active");
       if (disp_focus)
       {
-         var disp = this.get_display_div();
-         if (disp)
-            disp.focus();
+         var target = this.get_tabtarget();
+         if (target)
+            target.focus();
       }
 
       return false;
