@@ -266,7 +266,20 @@ form.Moveable legend:hover { background-color:#CCCCCC; }
 
 form.Schema td { vertical-align:top; }
 
-div.selectx div.display { background-color:#FFFFFF; border: solid 1px #AAAAAA; min-height:1.1em; } 
+div.selectx div.display
+{
+    background-color:#FFFFFF;
+    border: solid 1px #AAAAAA;
+    min-height:1.1em;
+    position: relative;
+} 
+div.selectx .tabtarget
+{
+    position: absolute;
+    top:0; left:0; height:100%; width:100%;
+    border: dashed 1px purple;
+}
+
 div.selectx input.entry { display:none; }
 div.selectx ul
 {
@@ -284,6 +297,7 @@ div.selectx.active div.display span { background-color: #DDDDDD; }
 div.selectx.multiple div.display span:hover { background-color: #DD9999; cursor:pointer; }
 
 
+div.selectx.active .tabtarget  { display:none; }
 div.selectx.active input.entry { display:block; }
 div.selectx.active ul          { display:block; }
 
