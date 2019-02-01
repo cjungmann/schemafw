@@ -2,7 +2,10 @@
 @chapter Form Input Widgets
 
 @menu
+* Select_Result Input Widget::
 * SelectX Input Widget::
 @end menu
 
+
+@include schemafw.select_result.txi
 @include schemafw.selectx.txi
