@@ -134,8 +134,8 @@
           select="$result/*[local-name()=../@row-name][contains($ids,concat(',',@*[local-name()=$id_name],','))]" />
 
       <div class="tabtarget" tabindex="0" />
+
       <xsl:for-each select="$on">
-        
         <xsl:apply-templates select="." mode="build_selectx_span">
           <xsl:with-param name="id_name">
             <xsl:if test="@style='multiple'">
@@ -151,6 +151,16 @@
     </xsl:template>
 
     <xsl:template match="field[@type='selectx'][@ranked]" mode="fill_selectx_display">
+      <xsl:param name="dval" />
+
+      <div class="tabtarget" tabindex="0" />
+
+      <xsl:apply-templates select="." mode="fill_selectx_display_lis">
+        <xsl:with-param name="dval" select="$dval" />
+      </xsl:apply-templates>
+    </xsl:template>
+
+    <xsl:template match="field[@type='selectx'][@ranked]" mode="fill_selectx_display_lis">
       <xsl:param name="dval" />
 
       <xsl:variable name="id_name">
@@ -185,7 +195,7 @@
         
       <xsl:if test="$b_len">
         <xsl:text>, </xsl:text>
-        <xsl:apply-templates select="." mode="fill_selectx_display">
+        <xsl:apply-templates select="." mode="fill_selectx_display_lis">
           <xsl:with-param name="dval" select="substring($dval,($b_len+2))" />
         </xsl:apply-templates>
       </xsl:if>
