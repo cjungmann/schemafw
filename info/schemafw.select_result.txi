@@ -1,0 +1,134 @@
+@node Select_Result Input Widget
+@section Select_Result Input Widget
+
+The @emph{select_result} input widget uses the contents
+of a result element to populate a vanilla HTML @emph{select}
+element with @emph{option} elements, using the primary key
+field value for the @emph{option} value and an appropriate
+alternate field value for the label.
+
+@menu
+* Select_Result Code Samples::
+@end menu
+
+
+@node Select_Result Code Samples
+@subsection Select_Result Code Samples
+
+Using a result to populate the widget means the result must be
+available.  There are two ways to make the result available,
+integrated in the response document, or as a merged interaction
+@xref{Merged Interactions}.
+
+The two examples show an @emph{add} interaction with a drop-down
+@emph{state} select field.
+
+@menu
+* Select_Result Schema Field Example::
+* Select_Result Integrated Result Example::
+* Select_Result Merged Result Example::
+@end menu
+
+@node Select_Result Schema Field Example
+@subsubsection Select_Result Schema Field Example
+
+@example
+schema
+   field : state
+      type   : select_result
+      result : states
+      show   : name    # optional, but recommended
+@end example
+
+Notes:
+
+@itemize
+@item @code{type : select_result} requests the @emph{select_result}
+       widget
+
+@item @code{result : states} tells the framework which result should
+      be used to fill the widget's options.  Take care to ensure the
+      source result has a unique name with which it will be found,
+      and a schema to interpret the contents of the result.
+
+@item @code{show : name} is an optional instruction that identifies
+      the field that should be used to label each option.  If the
+      @emph{show} instruction is omitted, the framework will use
+      the first non primary-key field.  If there is only one field
+      in the result, the single field will be used for both value
+      and label.
+@end itemize
+
+@node Select_Result Integrated Result Example
+@subsubsection Select_Result Integrated Result Example
+
+@example
+add
+   type        : form-new
+   schema-proc : App_Item_Add
+   procedure   : App_States_Lookup
+   form-action : ?add_submit
+   schema
+      field : state
+         type   : select_result
+         result : states
+         show   : name    # optional, but recommended
+   result
+      name : states
+      schema
+@end example
+
+Notes
+
+Besides the field instructions described in @ref{Select_Result Schema Field Example},
+the notable lines in this example are:
+
+@itemize
+@item The procedure calls the stored procedure that generates
+      the result from which the state selection will be made.
+
+@item The @code{result} branch that names the result and calls for
+      including a schema.
+@end itemize
+
+
+@node Select_Result Merged Result Example
+@subsubsection Select_Result Merged Result Example
+
+See @xref{Merged Interactions} for information about how merge documents
+work and how they are prepared.
+
+@example
+add
+   type        : merge
+   schema-proc : App_Item_Add
+   form-action : ?add_submit
+   schema
+      merge-type : form-new
+      field : state
+         type   : select_result
+         result : states
+         show   : name
+@end example
+
+This example includes the following new instructions:
+
+@itemize
+@item The instruction @code{type : merge} signals the intention for the
+      interaction response document to be merged.
+
+@item The instruction @code{merge-type : form-new} provides the
+      rendering information.
+@end itemize
+
+This example is also distictive by what it @strong{omits} compared with
+the integrated example:
+
+@itemize
+@item There is no @code{procedure} instruction for including the
+      states result.
+
+@item There is no @code{result} instruction for shaping the
+      states result.
+@end itemize
+
