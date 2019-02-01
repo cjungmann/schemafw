@@ -60,12 +60,12 @@
     <div class="{$class}" data-sfw-class="selectx" data-style="{$style}" data-sfw-input="true">
       <input type="hidden" name="{$name}" value="{$dval}" />
       <form onsubmit="return false;">
-        <div class="display" tabindex="0">
+        <div class="display">
           <xsl:apply-templates select="." mode="fill_selectx_display">
             <xsl:with-param name="dval" select="$dval" />
           </xsl:apply-templates>
         </div>
-        <input type="text" name="entry" class="entry" />
+        <input type="text" name="entry" class="entry" tabindex="0" />
         <ul>
           <xsl:apply-templates select="." mode="fill_selectx_ul">
             <xsl:with-param name="dval" select="$dval" />
@@ -133,6 +133,7 @@
           name="on"
           select="$result/*[local-name()=../@row-name][contains($ids,concat(',',@*[local-name()=$id_name],','))]" />
 
+      <div class="tabtarget" tabindex="0" />
       <xsl:for-each select="$on">
         
         <xsl:apply-templates select="." mode="build_selectx_span">
