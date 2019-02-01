@@ -2,10 +2,11 @@
 @chapter Form Input Widgets
 
 @menu
+* ISOTable Widget::
 * Select_Result Input Widget::
 * SelectX Input Widget::
 @end menu
 
-
+@include schemafw.isotable.txi
 @include schemafw.select_result.txi
 @include schemafw.selectx.txi

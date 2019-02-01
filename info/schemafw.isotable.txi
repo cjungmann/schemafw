@@ -1,0 +1,54 @@
+@node ISOTable Widget
+@section ISOTable Widget
+
+This is an isolated table widget.  The user uses this widget to manage a
+set of items that are related to the parent item.  An example of this is
+a household and its members.  Using an @emph{isotable}, the household
+members would be managed as a group, with any changes to the members,
+including additions and deletions, would be held on the client and
+submitted to the Schema Server as a package.
+
+There is currently no formal documentation on the use of this widget.
+For now, you are directed to study the example found in the github
+project @url{https://github.com/cjungmann/sfw_household.git}.
+
+
+@menu
+* ISOTable External Example::
+* ISOTable Hints::
+@end menu
+
+@node ISOTable External Example
+@subsection ISOTable External Example
+
+The best way to learn about the @emph{isotable}, at least for now,
+is to download and install the @url{https://github.com/cjungmann/sfw_household.git}
+and look at the @file{HouseholdType2.sql} and @file{HouseholdType2.srm} files.
+These files highlight and explain the use of @emph{isotable}.
+
+@node ISOTable Hints
+@subsection ISOTable Hints
+
+In lieu of format documentation, the following table introduces
+@emph{isotable} requirements and where to find their solutions in
+the github example.
+
+@table @strong
+@item Parsing ISOTable Contents
+Investigate @file{custom/Person_ISOTable.sql}, procedure
+@code{App_Person_isoTable_Fill_Temp_Table} for ideas on how to parse
+an @emph{isotable} field.
+
+@item Declare field as @emph{isotable}
+Response modes @emph{add} and @emph{edit} in SRM file
+@file{custom/HouseholdType2.srm}  both use an @emph{isotable} field.
+
+@item Non-submitting @emph{isotable} member form
+Since the forms associated with managing the isotable work locally
+on the client, the forms must be prevented from submitting the data.
+At the writing of this document, the framework recognizes the
+@emph{form-action} URL setting of @code{^local} as a non-submitting form.
+Look at shared mode @emph{member_schema} in the SRM file
+@file{custom/HouseholdType2.srm} for an example.
+
+@end table
