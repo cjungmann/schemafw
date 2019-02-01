@@ -277,7 +277,7 @@ div.selectx .tabtarget
 {
     position: absolute;
     top:0; left:0; height:100%; width:100%;
-    border: dashed 1px purple;
+    border: solid 1px transparent;
 }
 
 div.selectx input.entry { display:none; }
