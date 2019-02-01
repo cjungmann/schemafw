@@ -1,17 +1,119 @@
-@node Merged Documents
-@chapter Merged Documents
+@node Merged Interactions
+@chapter Merged Interactions
 
-For data models that include logically-linked data, like keywords
-for items, having to send the entire list of eligible keywords with
-each @emph{add} or @emph{update} form is unnecessary network traffic.
-The Schema Framework allows the use of merged documents to preserve
-data that will be reused.
+A merged interaction is an interaction with an incomplete set of 
+data that is merged into an existing XML document to complete the
+interaction's data requirements.
 
 @menu
-* Merged Documents Introduction::
+* Merged Introduction::
+* Merged Mechanics::
+* Merged Code Example::
 @end menu
 
-@node Merged Documents Introduction
-@section Merged Documents Introduction
 
-In any SRM-set @pxref{def SRM-Set}, 
+@node Merged Introduction
+@section Merged Introduction
+
+In simple cases, the information needed to build a form or other
+interaction is completely contained in the XML document that the
+Schema Framework sends the client. 
+
+There are times, however, when large sets of data could be shared
+among different interactions.  For example, working with a table of
+addresses, a mapping of integer to state names could be used in the
+table, add, and update interactions.  In that case,  merge strategy
+would load the state names' list with the table, and used merged
+data for add and update interactions.
+
+@node Merged Mechanics
+@section Merged Mechanics
+
+When the Schema Framework receives a merge type document, the elements
+of the new document are tagged with a merge number and inserted into the
+origin XML document ahead of the existing schema and result elements.
+The expectation is that the origin XML document will contain information
+needed, but not included, in the newer merge interaction document.
+
+Multiple merge interactions are stacked, in reverse order, near the
+top of the initial document.  More recent merge documents can access
+named results of previous merge documents.
+
+As stacked interactions are terminated, the merge documents from which
+they were derived will be popped off of the stack.
+
+@node Merged Code Example
+@section Merged Code Example
+
+A merged document is initiated in the SRM file by a response mode
+with @code{type : merge}.  The interaction type is set in the schema
+with a @emph{merge-type} instruction.
+
+For a merge to work, the page interaction, usually a table type,
+into which the merge interaction will be merged must include the
+reference result element that the merge interaction expects to find.
+
+The page interaction must include the result from which the merged
+interaction will take data.  The procedure @emph{App_Item_List} must
+include a query, direct or CALLed, that creates the reference result.
+The reference result, @code{result : 2},  must then be @emph{named}
+and instructed to include the schema:
+
+@example
+list
+   type      : table
+   procedure : App_Item_List
+   result : 1
+      schema
+         button : add
+            type  : add
+            label : Add Item
+            url   : ?add
+         field : state
+            type   : select_result
+            result : states
+            show   : name
+   result : 2
+      name : states
+      schema
+@end example
+
+@itemize
+@item @code{procedure : App_Item_List}, in addition to the query or CALL
+      that generates the table data, must also include a query or CALL
+      that creates the reference result.
+
+@item @code{result : 2} includes the name, @emph{states}, and @code{schema}
+      instruction for the reference result
+
+@item Note that the table also uses the @emph{states} reference result
+      in its state field.
+@end itemize
+
+The framework will notice the @code{type : merge} document type and
+insert the contents of the document ahead of the existing schema and
+result elements.  It will then look to the @code{merge-type} line for
+instructions on how to render the interaction.
+
+@example
+add
+   type        : merge
+   schema-proc : App_Item_Add
+   form-action : ?add_submit
+   schema
+      merge-type : form-new
+      field : state
+         type   : select_result
+         result : state
+         show   : name
+@end example
+
+@itemize
+@item The instruction @code{type : merge} signals the intention to be
+      merged.
+
+@item @code{merge-type : form-new} provides the rendering instruction
+      to override the mode type of the origin XML document.  This
+      preserves the rendering instructions of the origin XML document
+      for when the merge stack is cleared.
+@end itemize
