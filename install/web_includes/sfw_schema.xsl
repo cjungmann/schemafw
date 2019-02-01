@@ -173,7 +173,13 @@
 
   <xsl:template match="schema/field" mode="get_value">
     <xsl:param name="data" />
-    <xsl:variable name="val" select="$data/@*[local-name()=current()/@name]" />
+
+    <xsl:variable name="val">
+      <xsl:if test="$data">
+        <xsl:value-of select="$data/@*[local-name()=current()/@name]" />
+      </xsl:if>
+    </xsl:variable>
+
     <xsl:variable name="lenval" select="string-length($val)" />
     <xsl:variable name="nt" select="@nodetype" />
 
@@ -190,7 +196,7 @@
         <xsl:when test="@map-value">
           <xsl:value-of select="$data/@*[local-name()=current()/@map-value]" />
         </xsl:when>
-        <xsl:when test="$data/text()">
+        <xsl:when test="$data and $data/text()">
           <xsl:value-of select="$data" />
         </xsl:when>
       </xsl:choose>
