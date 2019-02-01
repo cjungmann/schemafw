@@ -37,9 +37,11 @@
 
   <xsl:template match="field[ref]" mode="get_value">
     <xsl:param name="data" />
-    <xsl:apply-templates select="ref" mode="resolve_refs">
-      <xsl:with-param name="value" select="$data/@*[local-name()=current()/@name]" />
-    </xsl:apply-templates>
+    <xsl:if test="$data">
+      <xsl:apply-templates select="ref" mode="resolve_refs">
+        <xsl:with-param name="value" select="$data/@*[local-name()=current()/@name]" />
+      </xsl:apply-templates>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="field[ref]" mode="construct_input">
