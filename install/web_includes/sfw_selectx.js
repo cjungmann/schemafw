@@ -370,149 +370,89 @@
 
    _selectx.prototype.fire_target = function(target)
    {
+      if (!is_li(target))
+         return;
+
+      // preserve *this* value for closure functions
+      var ths = this;
+
       var id = target.getAttribute("data-value");
       var is_style_single = this.get_style()=="single";
+      var post_input = this.get_post_input();
 
-      // var sels=[];
-      // function f(n)
-      // {
-      //    if (is_li(n))
-      //    {
-      //       if (class_includes(n,"on"))
-      //           sels.push(n);
-      //       if (class_includes(n,"target"))
-      //          class_remove(n,"target");
-      //    }
-      //    return false;
-      // }
-      // Scan options for "on" and "target" classes:
-      // SFW.find_child_matches(this.get_ul(),f,false,false);
-
-      var sels = this.get_post_input().value.split(',');
-
-      if (class_includes(target,"on"))
-      {
-         class_remove(target,"on");
-         this.remove_id(id);
-      }
-      else
+      function update_post_value()
       {
          if (is_style_single)
+            post_input.value = id;
+         else
          {
-            var dval;
-            if (sels && sels[0]!=target)
+            var sels = post_input.value.split(',');
+            var old = sels.indexOf(id);
+            // Reset post value
+            if (old==-1)
+               sels.push(id);
+            else
+               sels.splice(old,1);
+            post_input.value = sels.join(',');
+         }
+
+         ths.update_display_from_value();
+      }
+
+      function update_option_classes()
+      {
+         function if_multiple(n)
+         {
+            if (n==target)
             {
-               dval = target.getAttribute("data-value");
-               class_remove(sels[0],"on");
-               this.set_id(dval);
-            }
-         }
-         else
-            this.append_id(id);
-
-         class_add(target,"on");
-      }
-
-      var masked = this.get_masked_input();
-      masked.value = "";
-      masked.focus();
-
-      this.filter_options("");
-      this.update_li_options_from_value();
-      this.update_display_from_value();
-      this.ensure_target_visible(target);
-
-      class_add(target,"target");
-
-   };
-
-   _selectx.prototype.old_fire_target = function(target)
-   {
-      var sels = [];
-
-      function toggle(n)
-      {
-         if (class_includes(n,"on"))
-            class_remove(n,"on");
-         else
-            class_add(n,"on");
-      }
-
-      function li_is_on(n) { return is_li(n) && class_includes(n,"on"); }
-
-      var li_target = null;
-      function set_target(n)
-      {
-         if (!li_target)
-         {
-            li_target = n;
-            class_add(n,"target");
-         }
-      }
-
-      function multi(n)
-      {
-         class_remove(n,"target");
-
-         if (li_is_on(n))
-         {
-            set_target(n);
-            sels.push(n);
-         }
-
-         // Always return false to prevent exit on first_only
-         return false;
-      }
-
-      function single(n)
-      {
-         if (li_is_on(n))
-         {
-            class_remove(n,"on");
-            // Trigger early-terminate because of first_only
-            return true;
-         }
-         return false;
-      }
-
-      // Using closure-global ul variable
-      function proc_li_els(func)
-      {
-         SFW.find_child_matches(ul, func, true, true);
-      }
-
-      // Save initial setting of target element:
-      var ison = class_includes(target,"on");
-      var ul = this.get_ul();
-      if (ul)
-      {
-         var f = null;
-         if (this.get_style() == "multiple")
-         {
-            // Toggle first, process next
-            // so process saves all selections;
-            toggle(target);
-            proc_li_els(multi);
-         }
-         else
-         {
-            // Process first, toggle next
-            // so all selections are cleared before
-            // selecting the target (if it was off).
-            proc_li_els(single);
-            if (!ison)
-            {
-               toggle(target);
-               sels.push(target);
+               if (class_includes(n,"on"))
+                  class_remove(n,"on");
+               else
+                  class_add(n,"on");
             }
          }
 
-         this.set_from_selections(sels);
+         function if_single(n)
+         {
+            var is_on = class_includes(n,"on");
+            if (n==target)
+            {
+               if (is_on)
+                  class_remove(n,"on");
+               else
+                  class_add(n,"on");
+            }
+            else if (is_on)
+               class_remove(n,"on");
+         }
+
+         // One if here, rather than in the loop:
+         var each_li = is_style_single ? if_single : if_multiple;
+
+         function f(n)
+         {
+            if (is_li(n))
+            {
+               // Ensure only the target is so classified:
+               if (n==target)
+                  class_add(n,"target");
+               else
+                  class_remove(n,"target");
+
+               each_li(n);
+            }
+         }
+         SFW.find_child_matches(ths.get_ul(), f);
+      }
+
+      update_post_value();
+      update_option_classes();
+
+      if (is_style_single)
          this.deactivate(true);
-      }
+      else
+         this.ensure_target_visible(target);
    };
-
-   
 
    _selectx.prototype.refill_li_options_from_result = function()
    {
