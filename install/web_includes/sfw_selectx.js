@@ -386,7 +386,10 @@
             post_input.value = id;
          else
          {
-            var sels = post_input.value.split(',');
+            var sels = post_input.value.length
+                   ? post_input.value.split(',')
+                   : [];
+
             var old = sels.indexOf(id);
             // Reset post value
             if (old==-1)
