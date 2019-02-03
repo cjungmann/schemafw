@@ -159,8 +159,11 @@
             return false;
          case _esc:
             if (is_active)
+            {
                this.deactivate(true);
-            return false;
+               return false;
+            }
+            break;
          default:
             if (keycode >= 32 || keycode==_bs)
             {
