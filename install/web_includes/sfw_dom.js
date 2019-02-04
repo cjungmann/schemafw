@@ -195,10 +195,8 @@ function init_SFW_DOM()
 
    function _ancestor_by_tag(node, tag)
    {
-      return self_or_ancestor_by_tag(node.parentNode,tag);
+      return _self_or_ancestor_by_tag(node.parentNode,tag);
    }
-
-   
 
    function set_missing_doc_props()
    {
