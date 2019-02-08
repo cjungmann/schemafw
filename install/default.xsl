@@ -51,20 +51,4 @@
     </html>
   </xsl:template>
 
-  <!-- The following two should not be here.  They should be
-       moved to sfwtemplates.xsl or removed entirely. They
-       remain only until I decide the best option. -->
-  <xsl:template match="row" mode="make_option">
-    <xsl:element name="option">
-      <xsl:attribute name="value">
-        <xsl:value-of select="@value" />
-      </xsl:attribute>
-      <xsl:value-of select="@label" />
-    </xsl:element>
-  </xsl:template>
-
-  <xsl:template match="*[@xsl_mode='lookup']">
-    <xsl:apply-templates select="row" mode="make_option" />
-  </xsl:template>
-
 </xsl:stylesheet>
