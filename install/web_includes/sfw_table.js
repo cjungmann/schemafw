@@ -222,7 +222,7 @@
                {
                   ths.set_sort_column(t);
                   ths.replot();
-               }
+               };
                setTimeout(f,0);
                return false;
             }
