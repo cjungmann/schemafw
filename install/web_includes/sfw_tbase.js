@@ -399,7 +399,7 @@
       // modified as appropriate according to what else is available:
       if ("task" in info)
       {
-         var url = info.task
+         var url = info.task;
          var jump = false;
 
          if (url[0]=='!')
