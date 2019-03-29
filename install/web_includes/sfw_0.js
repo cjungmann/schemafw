@@ -129,6 +129,7 @@ function init_SFW(callback)
    SFW.get_property         = _get_property;
    SFW.confirm_not_null     = _confirm_not_null;
    SFW.prepare_top_sfw_host = _prepare_top_sfw_host;
+   SFW.get_el_sfw_host      = _get_el_sfw_host;
    SFW.seek_top_sfw_host    = _seek_top_sfw_host;
    SFW.seek_page_anchor     = _seek_page_anchor;
    SFW.seek_child_anchor    = _seek_child_anchor;
@@ -177,6 +178,7 @@ function init_SFW(callback)
    SFW.resize_page          = _resize_page;
    SFW.translate_url        = _translate_url;
    SFW.apply_row_context    = _apply_row_context;
+   SFW.create_custom_form   = _create_custom_form;
    SFW.create_interaction   = _create_interaction;
    SFW.render_interaction   = _render_interaction;
    SFW.open_interaction     = _open_interaction;
@@ -340,6 +342,18 @@ function init_SFW(callback)
    {
       function f(node) { return node.nodeType==1 && node.className=="SFW_Host"; }
       return SFW.find_child_matches(document, f, true, true);
+   }
+
+   function _get_el_sfw_host(el)
+   {
+      var n = el.parentNode;
+      while (n.nodeType <= 3)
+      {
+         if (class_includes(n,"SFW_Host"))
+            return n;
+         n = n.parentNode;
+      }
+      return null;
    }
 
    function _prepare_top_sfw_host()
@@ -2644,6 +2658,36 @@ function init_SFW(callback)
          return view.getAttribute("type");
       else
          return null;
+   }
+
+   function _create_custom_form(node, caption, caller, data)
+   {
+      if (!caption)
+         caption = "Dialog";
+
+      var newhost = SFW.make_sfw_host(SFW.stage, node.ownerDocument, caller, data);
+      SFW.size_to_cover(newhost, caller);
+
+      // build form
+      var form = addEl("form", newhost);
+      form.setAttribute("class", "Moveable");
+      form.setAttribute("data-sfw-class", "form-view");
+      var fset = addEl("fieldset", form);
+      fset.setAttribute("class", "Moveable");
+      var legend = addEl("legend", fset);
+      addText(caption, legend);
+      var button = addEl("input", form);
+      button.setAttribute("type", "button");
+      button.setAttribute("data-type", "close");
+      button.setAttribute("value", "Close");
+
+      var target= addEl("div", fset);
+      SFW.xslobj.transformFill(target, node);
+
+      
+      var anchor = SFW.seek_child_anchor(newhost);
+      if (anchor)
+         SFW.arrange_in_host(newhost, anchor);
    }
 
    function _create_interaction(node, caller, data)
