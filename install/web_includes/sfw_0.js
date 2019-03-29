@@ -2673,17 +2673,19 @@ function init_SFW(callback)
       form.setAttribute("class", "Moveable");
       form.setAttribute("data-sfw-class", "form-view");
       var fset = addEl("fieldset", form);
-      fset.setAttribute("class", "Moveable");
+      fset.setAttribute("class", "Schema");
       var legend = addEl("legend", fset);
+      legend.setAttribute("class", "Moveable");
       addText(caption, legend);
-      var button = addEl("input", form);
+      var target= addEl("div", fset);
+      var b_row = addEl("p", fset);
+      b_row.setAttribute("class", "buttons");
+      var button = addEl("input", b_row);
       button.setAttribute("type", "button");
       button.setAttribute("data-type", "close");
       button.setAttribute("value", "Close");
 
-      var target= addEl("div", fset);
       SFW.xslobj.transformFill(target, node);
-
       
       var anchor = SFW.seek_child_anchor(newhost);
       if (anchor)
