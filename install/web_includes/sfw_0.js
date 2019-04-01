@@ -1369,7 +1369,7 @@ function init_SFW(callback)
             var row_to_remove;
             var del = dels[j];
             var is_del = del.getAttribute("deleted");
-            if (is_del==1)
+            if (is_del > 0)
             {
                if (i==0 && j==0 && !target && form)
                   row_to_remove = form.get_context_row();
