@@ -2176,7 +2176,7 @@ function init_SFW(callback)
    {
       var top = this.top();
       return top ? top.getAttribute("data-path") : null;
-   }
+   };
 
    _base.prototype.get_host_form = function() { return _get_host_form(this.top()); };
    
