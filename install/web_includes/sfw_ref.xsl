@@ -24,14 +24,25 @@
     <xsl:param name="ref" />
     <xsl:param name="value" />
 
-    <xsl:variable name="opval" select="@*[local-name()=$ref/@index]" />
+    <xsl:variable name="label" select="@*[local-name()=$ref/@label]" />
+
+    <xsl:variable name="opval">
+      <xsl:choose>
+        <xsl:when test="$ref/@index">
+          <xsl:value-of select="@*[local-name()=$ref/@index]" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$label" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
 
     <xsl:element name="option">
       <xsl:attribute name="value"><xsl:value-of select="$opval" /></xsl:attribute>
       <xsl:if test="($opval) = ($value)">
         <xsl:attribute name="selected">selected</xsl:attribute>
       </xsl:if>
-      <xsl:value-of select="@*[local-name()=$ref/@label]" />
+      <xsl:value-of select="$label" />
     </xsl:element>
   </xsl:template>
 
@@ -49,6 +60,7 @@
 
     <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/ref/@result]" />
     <xsl:variable name="rows"  select="$result/*[local-name()=../@row-name]" />
+
     <xsl:element name="select">
       <xsl:attribute name="name"><xsl:value-of select="@name" /></xsl:attribute>
       <xsl:apply-templates select="$rows" mode="add_ref_option">
