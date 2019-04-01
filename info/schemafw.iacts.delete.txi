@@ -1,0 +1,39 @@
+@node Delete Interactions
+@section Delete Interactions
+
+Of the four interactions supported by a @acronym{CRUD, Create, Read, Update, Delete},
+@emph{Create}, @emph{Update}, and @emph{Delete} are interactions that make changes
+to the database.  While successful execution of @emph{Create} and @emph{Update}
+interactions result in a row that is added or replaced in a local representation,
+@emph{Delete} can only indicate whether or not the delete was successful.  As a
+consequence of this difference, the @emph{Delete} interaction definition is different.
+It should @strong{not} have a @code{result} instruction because there can be no
+replacement item in the payload.
+
+Consider the following response modes:
+
+@example
+edit
+   type : form-edit
+   schema-proc : App_Person_Update
+   procedure   : App_Person_Value
+   form-action : ?edit_submit
+   etc.
+
+edit_submit
+   type : form-submit
+   procedure : App_Person_Update
+   result
+      type : update
+   
+
+delete
+   type      : delete
+   procedure : App_Person_Delete
+@end example
+
+Notice that the @emph{delete} interaction does not have the @emph{result} branch that
+is included in the @emph{edit_submit} interaction.  If the @emph{delete} interaction
+does include a @emph{result} branch, the framework will attempt to incorporate the
+contents of the result into the local table representation, resulting an an error
+message.

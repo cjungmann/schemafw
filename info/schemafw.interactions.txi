@@ -4,9 +4,11 @@
 @menu
 * Form Interactions::
 * Import Interactions::
+* Delete Interactions::
 @end menu
 
 
 @include schemafw.iacts.forms.txi
 @include schemafw.iacts.import.txi
+@include schemafw.iacts.delete.txi
 
