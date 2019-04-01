@@ -307,7 +307,26 @@
 
    _tbase.prototype.get_click_id_name = function(name)
    {
-      return this.get_sfw_attribute(name+"_click_id") || "id";
+      var idname = this.get_sfw_attribute(name+"_click_id");
+      if (!idname)
+      {
+         var schema, prikeys;
+         if ((schema=this.schema())
+             && (prikeys=schema.selectNodes("field[@primary-key]"))
+             && prikeys.length > 0)
+         {
+            idname = prikeys[0].getAttribute("name");
+         }
+      }
+
+      if (!idname)
+         console.error(
+            ["Unable to find an idname with which",
+             "to later identify the selected line",
+             "for updating with new values."].join(" ")
+         );
+
+      return idname;
    };
 
    _tbase.prototype.get_el_id = function(el)     { return el.getAttribute("data-id"); };
