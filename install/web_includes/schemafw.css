@@ -79,6 +79,7 @@ div.SFW_Host div.closer
 
 
 div.SFW_Host h2 { text-align: center; background-color:#9999FF; margin:0; }
+div.SFW_Host div.intro { max-width:30em; margin:0 auto; }
 
 div.message
 {

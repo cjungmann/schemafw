@@ -421,7 +421,9 @@
         <xsl:when test="$host-type='tr'">
           <tr class="{$host_class}">
             <td colspan="99">
+              <div class="intro">
               <xsl:value-of select="$intro" />
+              </div>
             </td>
           </tr>
         </xsl:when>
