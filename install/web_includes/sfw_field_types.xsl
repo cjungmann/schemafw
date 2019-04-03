@@ -125,7 +125,6 @@
     <xsl:param name="show_name" />
 
     <xsl:variable name="rows" select="*[local-name()=../@row-name]" />
-    <div><xsl:value-of select="concat(count($rows), ' rows in the result.')" /></div>
     
     <xsl:for-each select="$rows">
       <xsl:variable name="v" select="@*[local-name()=$id_name]" />
