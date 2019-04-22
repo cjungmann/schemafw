@@ -2379,6 +2379,10 @@ function init_SFW(callback)
                else
                   funcForTimeout = function(){SFW.alert("Call button type without url or task."); };
                break;
+            case "launch":
+               if (url)
+                  funcForTimeout = function(){window.open(url);};
+               break;
             case "cancel":
             case "close":
                if ((caller=this.caller()))
