@@ -79,8 +79,9 @@ instructions in a response mode, there is no built-in context.
 
 @menu
 * Custom Call Button::
-* Custom Jump Button::
 * Custom Open Button::
+* Custom Jump Button::
+* Custom Launch Button::
 * Freeform Custom Button::
 @end menu
 
@@ -138,23 +139,6 @@ variable @emph{MyGlobal}, to the member object @emph{Item},
 to find the function assigned to the prototype
 @emph{execute}.  
 
-
-
-@node Custom Jump Button
-@subsection Custom Jump Button
-
-This button initiates an immediate jump to a new page.
-
-@example
-list
-   type      : table
-   procedure : App_Item_List
-   button
-      type  : jump
-      label : Read the Latest Depressing News
-      url   : www.cnn.com
-@end example
-
 @node Custom Open Button
 @subsection Custom Open Button
 
@@ -176,6 +160,43 @@ list
       url   : login.srm?change_password
 @end example
 
+@node Custom Jump Button
+@subsection Custom Jump Button
+
+This button initiates an immediate jump to a new page.  This
+button is similar to the @emph{launch} button, except that the
+current context is lost as the @code{window.location} value is
+changed.
+
+@example
+list
+   type      : table
+   procedure : App_Item_List
+   button
+      type  : jump
+      label : Read the Latest Depressing News
+      url   : www.cnn.com
+@end example
+
+@node Custom Launch Button
+@subsection Custom Launch Button
+
+Access a new page in a new window or tab.  Similar to the
+@emph{jump} button, using this button preserves the context
+of the page calling @code{window.open(url)}.
+
+@example
+edit
+   type        : form-edit
+   schema-proc : App_Item_Update
+   procedure   : App_Item_Value
+   action      : ?edit_submit
+   button
+      type  : launch
+      label : Test Item Page
+      url   : item.srm?id=@{@@id@}
+@end example
+      
 @node Freeform Custom Button
 @subsection Freeform Custom Button
 
