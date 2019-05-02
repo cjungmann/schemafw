@@ -472,7 +472,7 @@
    {
       var schema = this.schema();
       var data = this.data();
-      if ("preset_value" in data)
+      if (data && "preset_value" in data)
       {
          var fieldname, field, form, preset;
          if ((preset = schema.selectSingleNode("field[@preset_target]"))
