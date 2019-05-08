@@ -43,6 +43,7 @@ production.
 @menu
 * Introduction::
 * Installation::        Install the framework, install to new sites
+* Tables::
 * Forms::
 * Form Input Widgets:: 
 * Result Elements::     Label and use query results in a resultset
@@ -79,6 +80,7 @@ $ sudo cp /usr/local/lib/schemafw/default.xsl .
 $ sudo ln -s /usr/local/lib/schemafw/web_includes includes
 @end example
 
+@include schemafw.tables.txi
 @include schemafw.forms.txi
 @include schemafw.input.widgets.txi
 @include schemafw.results.txi

@@ -1,0 +1,48 @@
+@node Tables
+@chapter Tables
+
+As I write this, this chapter largely serves as a place-holder in order
+to include documentation about rediscovered settings that affect tables.
+
+@menu
+* Table Hints:: 
+@end menu
+
+
+@node Table Hints
+@section Table Hints
+
+This section will list miscellaneous settings that affect tables.
+
+@menu
+* Table Cell Classes::
+@end menu
+
+@node Table Cell Classes
+@subsection Table Cell Classes
+
+If the default styling of a table cell does not suit the content, it
+is possible to add a field setting to add a class name to the table
+cells.
+
+To set a custom class for each cell under a field's column, add a
+@emph{cell-class} instruction to the field in the schema.  The @emph{cell-class}
+instruction becomes an attribute of the field element in the XML
+document.  The @emph{cell-class} field attribute is recognized by
+the XSL stylesheet that transforms the XML.  The value of the @emph{cell-class}
+instruction will be added in the class name list for the @emph{td}
+elements under the field's table column.
+
+In the following example, we have added a @emph{cell-class} instruction
+to the @emph{token} field.  It uses one of the builtin classes of the
+@file{schemafw.css} file, but it could refer to any CSS selector.
+
+@example
+table
+   procedure : App_Person_List
+   result
+      schema
+         field : token
+            label      : Token
+            cell-class : def_center
+@end example
