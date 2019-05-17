@@ -5,9 +5,61 @@ As I write this, this chapter largely serves as a place-holder in order
 to include documentation about rediscovered settings that affect tables.
 
 @menu
+* Customize TR and TD Attributes::
 * Table Hints:: 
 @end menu
 
+
+@node Customize TR and TD Attributes
+@section Customize TR and TD Attributes
+
+There are two optional templates that a developer can provide to
+add custom attributes to either @emph{tr} or @emph{td} elements.
+
+The new template modes are @emph{custom_tr_attributes} and
+@emph{custom_td_attributes}.
+
+The initial motivation for these new templates was to add an attribute
+to a @emph{tr} element that can be recognized by CSS for styling
+according to one or more attributes of the XML data row.  The
+differentiated styling was the inspiration to add the feature, but
+other uses will evolve as new needs arise.
+
+The following example contains fragments from the initial usage case:
+
+@example
+<xsl:template match="row[parent::demorecs]" mode="custom_tr_attributes">
+  <xsl:if test="@@Passed=1">
+    <xsl:attribute name="data-passed">true</xsl:attribute>
+  </xsl:if>
+</xsl:template>
+@end example
+
+Then CSS instructions color the lines:
+
+@example
+table.Schema tbody tr              @{ background-color:#FFCCCC; @}
+table.Schema tbody tr[data-passed] @{ background-color:#CCFFCC; @}
+@end example
+
+For the @emph{custom_tr_attributes} template, the selected element is
+a data row.  Use the templates @code{match} attribute to be sufficiently
+selective to avoid unintended side-effects.
+
+The the @emph{custom_td_attributes} template, the selected element is
+the @emph{field} element of the @emph{schema}.  The template will be
+called with the data row as the @emph{data} parameter.  The following
+example is an illustration.  All people from Minnesota are tagged as
+superior.
+
+@example
+<xsl:template match="field[@@name='fname'][parent::schema/parent::demorecs]" mode="custom_td_attributes">
+  <xsl:param name="data" />
+  <xsl:if test="$data/@@state='MN'">
+     <xsl:attribute name="superior">true</xsl:attribute>
+  </xsl:if>
+</xsl:template>
+@end example
 
 @node Table Hints
 @section Table Hints
