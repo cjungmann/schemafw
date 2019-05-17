@@ -287,16 +287,26 @@
         </xsl:attribute>
       </xsl:if>
 
+      <xsl:apply-templates select="." mode="custom_tr_attributes" />
+      <xsl:attribute name="bogus">ha</xsl:attribute>
+
       <xsl:apply-templates select="$schema/field" mode="construct_line_cell">
         <xsl:with-param name="data" select="." />
       </xsl:apply-templates>
     </xsl:element>
   </xsl:template>
 
+  <!-- Do nothing template for unmatched fields -->
+  <xsl:template match="*[local-name()=../@row-name]" mode="custom_tr_attributes"></xsl:template>
+
   <xsl:template match="field[not(@hidden or @ignore)]" mode="construct_line_cell">
     <xsl:param name="data" />
     <xsl:element name="td">
       
+      <xsl:apply-templates select="." mode="custom_td_attributes">
+        <xsl:with-param name="data" select="." />
+      </xsl:apply-templates>
+
       <xsl:if test="@cell-class">
         <xsl:attribute name="class">
           <xsl:value-of select="@cell-class" />
@@ -310,6 +320,9 @@
       </xsl:apply-templates>
     </xsl:element>
   </xsl:template>
+
+  <!-- Do nothing template for unmatched fields -->
+  <xsl:template match="field" mode="custom_td_attributes"></xsl:template>
 
   <xsl:template match="schema/field" mode="write_cell_content">
     <xsl:param name="data" />
