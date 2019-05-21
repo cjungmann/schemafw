@@ -247,6 +247,7 @@ fieldset.Schema label
     font-size:80%;
     text-align:right;
     margin-left:0;
+    margin-top:.5em;
     padding-right:.5em;
     vertical-align:top;
 }
@@ -257,7 +258,13 @@ fieldset.Schema p.buttons { display:block; text-align:center; margin-bottom:0.25
 fieldset.Schema input.Embedded { display:none; }
 fieldset.Schema p.form-row { display: block; margin:0 0.25em; }
 fieldset.Schema p.form-row label { display:block; text-align:left; }
-fieldset.Schema p.form-row div.field_content{ margin-left:.5em; display:block; background-color:#FFFFFF; }
+fieldset.Schema p.form-row div.field_content
+{
+    margin-left:.5em;
+    display:block;
+    background-color:#FFFFFF;
+    min-height:1em;
+}
 
 /* fieldset.Schema p.form-row { display: table-row; } */
 /* fieldset.Schema p.form-row * { display : table-cell; } */
