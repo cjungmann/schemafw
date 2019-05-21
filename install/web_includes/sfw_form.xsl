@@ -34,7 +34,7 @@
         <legend><xsl:value-of select="$legend" /></legend>
          <xsl:apply-templates select="." mode="construct_input_row">
            <xsl:with-param name="data" select="$data" />
-           <xsl:with-param name="view-mode" select="'single'" />
+           <xsl:with-param name="single-field" select="true()" />
          </xsl:apply-templates>
          <p class="buttons">
            <input type="submit" value="Submit" />
@@ -309,6 +309,7 @@
     <xsl:param name="data" />
     <xsl:param name="result-field" />
     <xsl:param name="view-mode" />
+    <xsl:param name="single-field" select="false()" />
 
     <xsl:variable name="name">
       <xsl:apply-templates select="." mode="get_name" />
@@ -338,7 +339,7 @@
           </xsl:element>
         </xsl:if>
         <xsl:value-of select="$label" />
-        <xsl:if test="@ebutton and not($view-mode='single')">
+        <xsl:if test="@ebutton and not($single-field)">
           <button type="button"
                   class="ebutton_edit"
                   data-type="call"
@@ -349,7 +350,7 @@
       </label>
 
       <xsl:choose>
-        <xsl:when test="$view-mode='single'">
+        <xsl:when test="$single-field">
           <xsl:apply-templates select="." mode="construct_input">
             <xsl:with-param name="data" select="$data" />
             <xsl:with-param name="force-edit" select="1" />
@@ -380,6 +381,7 @@
         </xsl:when>
 
         <xsl:when test="$view-mode and not(@active) and not(@type='linked')">
+
           <div class="field_content" name="{$name}">
             <xsl:apply-templates select="." mode="display_value">
               <xsl:with-param name="data" select="$data" />
