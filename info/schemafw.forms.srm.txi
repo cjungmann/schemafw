@@ -1,0 +1,52 @@
+@node Form SRM Instructions
+@section Form SRM Instructions
+
+There is a default form display has the following characteristics:
+- simple caption
+- every schema field included
+- every form input is labelled with the field name
+- appropriate buttons
+
+The form can be enhanced with several SRM instructions.  The
+following list of SRM instructions is **not exhaustive**, but
+does provide a subset of instructions that may be useful for
+development.
+
+Keep in mind that the philosphy of the framework is that
+everything can be customized, so new features should be easily
+added to the standards.
+
+@menu
+* title instruction::
+* intro instruction::
+@end menu
+
+
+@node title instruction
+@subsection title instruction
+
+The title instruction can be in the first level of the mode
+or child of the @emph{schema} branch.
+
+The contents of the title instruction will replace the default
+contents of the dialog caption bar.
+
+The contents of the title instruction will resolve as context
+references. (@pxref{Context References})
+
+@node intro instruction
+@subsection intro instruction
+
+As with a table type, the @emph{intro} instruction allows the
+developer to add a block of text between the caption and the
+form input fields.
+
+The @emph{intro} instruction can be a @emph{schema}, @emph{result},
+or @emph{resultset} instruction.  The lowest level take precedence,
+so an @emph{intro} instruction in the schema will take precedence
+to an @emph{intro} instruction in the @emph{result}, which, in turn,
+takes precendence over the instruction in the @emph{resultset}.
+
+The contents of the @emph{intro} instruction will resolve as 
+context references.  (@pxref{Context References}).
+

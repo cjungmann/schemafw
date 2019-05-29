@@ -16,6 +16,7 @@ mode types and XSLT templates to interpret them.
 
 @menu
 * Form Fundamentals::   Common elements of most forms
+* Form SRM Instructions:: 
 * Error Message Query:: Signal action outcomes through queries
 * Context Form::        A view on a part of a set
 * Jumping Form::        Jump to page based on query result
@@ -38,6 +39,8 @@ The jumping form is a broad category of forms that request
 and act on information from the user.  The most common examples
 of jumping forms are user login and registration pages.
 @end table
+
+@include schemafw.forms.srm.txi
 
 @node Error Message Query
 @section Error Message Query
