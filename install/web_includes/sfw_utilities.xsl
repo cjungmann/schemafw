@@ -716,6 +716,23 @@
     </xsl:choose>
   </xsl:template>
 
+  <!-- Returns value of the first matched attribute found during a walk
+       starting at the matched node and continuing through its ancestors. -->
+  <xsl:template match="*" mode="seek_attribute">
+    <xsl:param name="name" />
+    <xsl:variable name="attr" select="@*[local-name()=$name]" />
+    <xsl:choose>
+      <xsl:when test="$attr">
+        <xsl:value-of select="$attr" />
+      </xsl:when>
+      <xsl:when test="parent::*">
+        <xsl:apply-templates select="parent::*" mode="seek_attribute">
+          <xsl:with-param name="name" select="$name" />
+        </xsl:apply-templates>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+
   <xsl:template match="*" mode="get_value_from_row">
     <xsl:param name="name" />
     <xsl:value-of select="current()/@*[local-name()=$name]" />
