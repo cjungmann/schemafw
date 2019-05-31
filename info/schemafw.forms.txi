@@ -16,6 +16,7 @@ mode types and XSLT templates to interpret them.
 
 @menu
 * Form Fundamentals::   Common elements of most forms
+* Form Types::          An incomplete enumeration of form types
 * Form SRM Instructions:: 
 * Error Message Query:: Signal action outcomes through queries
 * Context Form::        A view on a part of a set
@@ -40,7 +41,72 @@ and act on information from the user.  The most common examples
 of jumping forms are user login and registration pages.
 @end table
 
+@node Form Types
+@section Form Types
+
+There are serveral built-in form types that have special attributes.
+
+@table @strong
+@item form-edit
+
+This form type will generate a form with fields populated from
+a query result.  Note the two procedure references, the @emph{schema-proc}
+reference is the procedure to which the form's contents will be
+submitted.  The @emph{procedure} reference is to a response mode
+whose query will populate the fields.
+
+@example
+person
+   type        : form-edit
+   schema-proc : App_Person_Update
+   procedure   : App_Person_Values
+   form-action : ?person_submit
+@end example
+
+@item form-new
+
+This form type, be default, generates an empty form.  It is possible
+to preset some fields, but that is done with context references
+(@pxref{Context References}).
+
+@example
+add
+   type        : form-new
+   schema-proc : App_Person_Add
+   form-action : ?add_submit
+@end example
+
+@item form-page
+
+This form type should present the form on the main page, not within
+a dialog.
+
+In most cases, this form type should be handled by a custom rendering
+template, but for development, it may be useful to simply render the
+data on the main page.  Unfortunately, as I write this info page,
+this feature is currently not quite working, and the form is being
+renderered into a dialog on top of the page.
+
+In light of this form type's purpose, it is normally not necessary to
+include a schema, so the @emph{schema} instruction is not automatically
+generated.  However, for development purposes, where the page serves
+as a placeholder for future work, the developer may want to show the
+data as a form.  In this case, the @emph{schema} instruction @strong{will}
+be necessary in order to let the framework know how to proceed.  The
+following example shows how a placehold page might look:
+
+@example
+home
+   type        : form-page
+   procedure   : App_Home_Page
+   schema
+@end example
+
+@end table
+
+
 @include schemafw.forms.srm.txi
+
 
 @node Error Message Query
 @section Error Message Query
