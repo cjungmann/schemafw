@@ -484,7 +484,7 @@
    };
                                                
 
-   _form.prototype.closeable = function() { return true; };
+   _form.prototype.closeable = function() { return this.caller() != null; };
 
    _form.prototype.process = function _form_process_message(e,t)
    {
