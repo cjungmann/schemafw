@@ -419,7 +419,7 @@ function init_SFW(callback)
                   rval["anchor"] = t;
                   fcount+=2;
 
-                  is_control=t.getAttribute("data-sfw-input");
+                  is_control=t.getAttribute("data-sfw-control");
                   if (is_control)
                   {
                      rval["widget"] = t;
@@ -1941,7 +1941,7 @@ function init_SFW(callback)
    {
       return n.nodeType==1 && 
          (
-            n.getAttribute("data-sfw-input") ||
+            n.getAttribute("data-sfw-control") ||
             (
                html_itypes.includes(n.tagName.toLowerCase())
                   && !n.getAttribute("disabled")

@@ -76,7 +76,7 @@
     <!-- <xsl:element name="table"> -->
     <!--   <xsl:attribute name="class">iltable</xsl:attribute> -->
     <!--   <xsl:attribute name="data-sfw-class">iltable</xsl:attribute> -->
-    <!--   <xsl:attribute name="data-sfw-input">input</xsl:attribute> -->
+    <!--   <xsl:attribute name="data-sfw-control">input</xsl:attribute> -->
     <!--   <xsl:attribute name="tabindex">0</xsl:attribute> -->
 
     <!--   <tbody> -->

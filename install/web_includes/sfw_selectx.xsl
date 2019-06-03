@@ -57,7 +57,7 @@
       </xsl:if>
     </xsl:variable>
 
-    <div class="{$class}" data-sfw-class="selectx" data-style="{$style}" data-sfw-input="true">
+    <div class="{$class}" data-sfw-class="selectx" data-style="{$style}" data-sfw-control="true">
       <input type="hidden" name="{$name}" value="{$dval}" />
       <form onsubmit="return false;">
         <div class="display">

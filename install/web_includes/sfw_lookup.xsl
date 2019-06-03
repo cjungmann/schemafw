@@ -64,7 +64,7 @@
     <xsl:element name="table">
       <xsl:attribute name="class">lookup</xsl:attribute>
       <xsl:attribute name="data-sfw-class">lookup</xsl:attribute>
-      <xsl:attribute name="data-sfw-input">input</xsl:attribute>
+      <xsl:attribute name="data-sfw-control">input</xsl:attribute>
       <xsl:attribute name="tabindex">0</xsl:attribute>
       <xsl:apply-templates select="display/@*" mode="add_on_click_attribute" />
       <xsl:attribute name="data-path">
@@ -323,7 +323,7 @@
   <!--     <xsl:element name="table"> -->
   <!--       <xsl:attribute name="class">Schema</xsl:attribute> -->
   <!--       <xsl:attribute name="data-sfw-class">lookup</xsl:attribute> -->
-  <!--       <xsl:attribute name="data-sfw-input">input</xsl:attribute> -->
+  <!--       <xsl:attribute name="data-sfw-control">input</xsl:attribute> -->
   <!--       <xsl:apply-templates select="display/@*" mode="add_on_click_attribute" /> -->
   <!--       <xsl:apply-templates select="ancestor::*[@rndx]" mode="add_result_attribute" /> -->
   <!--       <tbody> -->

@@ -128,7 +128,7 @@
     <xsl:apply-templates select="." mode="phantom_isotable_input" />
     <form class="isotable"
           data-sfw-class="isotable"
-          data-sfw-input="true"
+          data-sfw-control="true"
           name="{@name}">
       <xsl:apply-templates select="$result" mode="construct_isotable" />
     </form>

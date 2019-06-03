@@ -111,7 +111,7 @@
       <xsl:attribute name="class">ulselect</xsl:attribute>
       <xsl:attribute name="tabindex">0</xsl:attribute>
       <xsl:attribute name="data-sfw-class">ulselect</xsl:attribute>
-      <xsl:attribute name="data-sfw-input">input</xsl:attribute>
+      <xsl:attribute name="data-sfw-control">input</xsl:attribute>
       <xsl:if test="$field/@style='multiple'">
         <xsl:attribute name="data-multiple">yes</xsl:attribute>
       </xsl:if>
@@ -120,7 +120,7 @@
         <xsl:apply-templates select="$field/@on_add" mode="add_resolved_data_attribute" />
       </xsl:if>
       <!-- <ul name="{$field/@name}" class="ulselect" -->
-      <!--     data-sfw-class="ulselect" data-sfw-input="true"> -->
+      <!--     data-sfw-class="ulselect" data-sfw-control="true"> -->
 
       <li class="cluster" tabindex="0">
         <xsl:text>&#160;</xsl:text>

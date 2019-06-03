@@ -630,7 +630,7 @@
 
       <xsl:if test="@custom_class">
         <xsl:attribute name="data-sfw-class"><xsl:value-of select="@custom_class" /></xsl:attribute>
-        <xsl:attribute name="data-sfw-input">true</xsl:attribute>
+        <xsl:attribute name="data-sfw-control">true</xsl:attribute>
       </xsl:if>
 
       <xsl:if test="string-length($value)&gt;0">
@@ -654,7 +654,7 @@
       <img 
           class="pwtoggle"
           data-sfw-class="pwtoggle"
-          data-sfw-input="true"
+          data-sfw-control="true"
           src="includes/pwshow.png" />
     </xsl:if>
 

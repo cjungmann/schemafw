@@ -98,7 +98,7 @@
       <xsl:apply-templates select="." mode="add_class" />
       <xsl:if test="@active">
         <xsl:attribute name="data-sfw-class">assoc</xsl:attribute>
-        <xsl:attribute name="data-sfw-input">assoc</xsl:attribute>
+        <xsl:attribute name="data-sfw-control">assoc</xsl:attribute>
         <xsl:apply-templates select="." mode="add_assoc_attribute" />
         <xsl:apply-templates select="@*" mode="add_on_click_attribute" />
       </xsl:if>
@@ -122,7 +122,7 @@
       <xsl:apply-templates select="." mode="add_class" />
       <xsl:if test="@active">
         <xsl:attribute name="data-sfw-class">assoc</xsl:attribute>
-        <xsl:attribute name="data-sfw-input">input</xsl:attribute>
+        <xsl:attribute name="data-sfw-control">input</xsl:attribute>
         <xsl:apply-templates select="@*" mode="add_on_click_attribute" />
       </xsl:if>
       <xsl:element name="tbody">
