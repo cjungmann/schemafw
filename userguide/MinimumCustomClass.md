@@ -41,7 +41,7 @@ Example file *newtype.xsl*:
        <xsl:element name="div">
           <xsl:attribute name="class">newtype</xsl:attribute>
           <xsl:attribute name="data-sfw-class">newtype</xsl:attribute>
-          <xsl:attribute name="data-sfw-input">input</xsl:attribute>
+          <xsl:attribute name="data-sfw-control">input</xsl:attribute>
           <xsl:attribute name="tabindex">0</xsl:attribute>
           .
           .
@@ -71,7 +71,7 @@ of the class:
 - **data-sfw-class="newtype"** This attribute identifies the HTML element that defines
   it as the base of the custom class.  The value of the attribute is matched to the
   name of a class in the **SFW.types** array (see below).
-- **data-sfw-input="input"** flags the element as an input element that is likely to be
+- **data-sfw-control="input"** flags the element as an input element that is likely to be
   hosted by another *data-sfw-class* element.  This attribute is important to prevent
   the *data-sfw-class* attribute of the hosting element from overwriting the class
   name of the custom input class as the framework scans through its ancestors.

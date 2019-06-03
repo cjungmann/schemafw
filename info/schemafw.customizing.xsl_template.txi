@@ -27,13 +27,13 @@ The main element (ie the table, input, etc) must include the
 attribute allows the framework to identify that this is an
 element with an operating class, and the object will not be
 invoked without this attribute.
-@item data-sfw-input
+@item data-sfw-control
 This attribute must be included if the object is expected to
 be included within another framework object.  Normally, the
 framework scans ancestors of the target of an event until it
 finds the highest element with the @code{data-sfw-class} attribute,
 making the object defined by that element the controlling object.
-Identifying the element as a @code{data-sfw-input} element
+Identifying the element as a @code{data-sfw-control} element
 terminates the search, returning the object defined by the
 input element.
 @item tabindex
@@ -53,7 +53,7 @@ with mode='construct_input_row' in the @file{sfw_form.xsl} file.
 
    <div
       data-sfw-class="fancy_show"
-      data-sfw-input="true"
+      data-sfw-control="true"
       style="height:2em; width:20em; border:solid 1px black;"
       tabindex="0">
       Look at the fancy show!
