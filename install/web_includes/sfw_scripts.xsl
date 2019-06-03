@@ -13,7 +13,7 @@
   
   <xsl:variable name="jslist_sfw_brief">sfw</xsl:variable>
   <xsl:variable name="jslist_sfw_minified">sfw.min</xsl:variable>
-  <xsl:variable name="jslist_sfw_debug">classes dpicker Events Dialog Moveable XML sfw_0 sfw_doc sfw_tbase sfw_calendar sfw_debug sfw_dom sfw_form sfw_form_view sfw_ulselect sfw_mixed_view sfw_selectx sfw_onload sfw_table sfw_assoc sfw_lookup sfw_password sfw_isotable sfw_iltable</xsl:variable>
+  <xsl:variable name="jslist_sfw_debug">classes dpicker Events Dialog Moveable XML sfw_0 sfw_doc sfw_tbase sfw_calendar sfw_debug sfw_dom sfw_form sfw_form_view sfw_ulselect sfw_mixed_view sfw_selectx sfw_onload sfw_table sfw_assoc sfw_lookup sfw_pwtoggle sfw_isotable sfw_iltable</xsl:variable>
 
   <!-- Main entry point to template in this stylesheet. -->
   <xsl:template match="/*" mode="construct_scripts">

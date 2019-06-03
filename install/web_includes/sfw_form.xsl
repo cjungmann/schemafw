@@ -649,6 +649,15 @@
       </xsl:if>
 
     </xsl:element>
+
+    <xsl:if test="$type='password'">
+      <img 
+          class="pwtoggle"
+          data-sfw-class="pwtoggle"
+          data-sfw-input="true"
+          src="includes/pwshow.png" />
+    </xsl:if>
+
   </xsl:template>
 
 

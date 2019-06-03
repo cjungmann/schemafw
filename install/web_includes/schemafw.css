@@ -266,6 +266,8 @@ fieldset.Schema p.form-row div.field_content
     min-height:1em;
 }
 
+img.pwtoggle { height: 1.25em; vertical-align:middle; cursor:pointer; }
+
 /* fieldset.Schema p.form-row { display: table-row; } */
 /* fieldset.Schema p.form-row * { display : table-cell; } */
 
