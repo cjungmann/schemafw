@@ -651,11 +651,11 @@
     </xsl:element>
 
     <xsl:if test="$type='password'">
-      <img 
-          class="pwtoggle"
-          data-sfw-class="pwtoggle"
-          data-sfw-control="true"
-          src="includes/pwshow.png" />
+      <img class="pwtoggle"
+           data-sfw-class="pwtoggle"
+           data-sfw-control="true"
+           src="includes/pwshow.png"
+           alt="Toggle password legibility" />
     </xsl:if>
 
   </xsl:template>
