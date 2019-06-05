@@ -176,7 +176,7 @@ However, one important context that is not normally available is the
 parameters of the query string portion of the URL that invoked the
 response mode.  This omission can be overcome with a special instruction:
 
-@code{qstring : reflect} (@pxref{Including Query-String Values as Variables,,,SchemaServer})
+@code{qstring : reflect} (@pxref{Including Query-String Values as Variables,,,schemaserver})
 
 The alternative to this is to add a query to a procedure to output
 some values into a new result which can be tagged as a @emph{variables}
