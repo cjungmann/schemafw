@@ -77,6 +77,9 @@
     </xsl:variable>
 
     <xsl:choose>
+      <xsl:when test="/*[@custom-type]">
+        <xsl:apply-templates select="/*" mode="custom_fill_host" />
+      </xsl:when>
       <xsl:when test="$err_condition &gt; 0">
         <xsl:call-template name="display_error" />
         <xsl:apply-templates select="@meta-jump" mode="make_jump_link" />
