@@ -77,7 +77,7 @@
     </xsl:variable>
 
     <xsl:choose>
-      <xsl:when test="$err_condition&gt;0">
+      <xsl:when test="$err_condition &gt; 0">
         <xsl:call-template name="display_error" />
         <xsl:apply-templates select="@meta-jump" mode="make_jump_link" />
       </xsl:when>
