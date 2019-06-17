@@ -10,8 +10,9 @@ steps of adding new items to the framework.
 * Introduction to Customization::
 * Including Custom Javascript and CSS::
 * Including Custom XSL Stylesheets::
-* Simple Custom Javascript Class:: Customize responses to an HTML element
-* Simple Custom XSLT Template::    Custom data rendering
+* Define and Use Custom Type::          Build Completely Customized Page
+* Simple Custom Javascript Class::      Customize responses to an HTML element
+* Simple Custom XSLT Template::         Custom data rendering
 @end menu
 
 @node Introduction to Customization
@@ -87,6 +88,7 @@ this to happen because I would prefer that the
 @file{default.xsl} could remain unchanged
 
 
+@include schemafw.customizing.custom_type.txi
 @include schemafw.customizing.js_class.txi
 @include schemafw.customizing.xsl_template.txi
 

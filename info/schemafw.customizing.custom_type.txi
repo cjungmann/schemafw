@@ -1,0 +1,64 @@
+@node Define and Use Custom Type
+@section Define and Use Custom Type
+
+If the standard form and table page types are not sufficient
+for a project, it is possible to create entirely customized
+pages by use of a custom XSL stylesheet and a special SRM
+instruction/resultset attribute.
+
+@menu
+* Invoke Custom Page in SRM File::
+* Creating a Custom Stylesheet::
+@end menu
+
+@node Invoke Custom Page in SRM File
+@subsection Invoke Custom Page in SRM File
+
+The Schema Framework follows a set of rules in deciding how a
+page will be rendered.  In order to support custom rendering, the
+first rule checks if a mode type includes the instruction
+@emph{custom-type} and, if found, will pass the transformation
+to the matching template.
+
+The following example invokes the example template shown on
+the next page.
+
+@example
+home
+   procedure   : App_Home_Page
+   custom-type : my_custom_page
+   result
+      schema
+@end example
+
+Note the instruction @code{custom-type : my_custom_page}.  This
+instruction will override @code{type} instruction, even if
+if is also included in the response mode with the @code{custom-type}
+instruction.
+
+@node Creating a Custom Stylesheet
+@subsection Creating a Custom Stylesheet
+
+The template @code{fill_host} in file @file{sfw_host.xsl} is called
+when a page is being rendered.  This template includes a large
+@code{xsl:choose} element that considers what data resources are
+available in the XML document in deciding how to render a page.
+
+This @code{xsl:choose} element first checks if the document includes
+a @code{custom-type} attribute and, if found, will ignore every other
+consideration in preference of using the custom template.
+
+The custom template must include the attribute @code{mode="custom_fill_host"}
+and appropriately match the source of the contents of the page.  The
+template element for the example in the previous page should look
+like this:
+
+@example
+<xsl:template match="/*[@@custom-type='my_custom_page']" mode="custom_fill_host">
+   .
+   .
+   .
+</xsl:template
+@end example
+
+
