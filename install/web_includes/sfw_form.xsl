@@ -99,6 +99,8 @@
       </xsl:choose>
     </xsl:variable>
 
+    <xsl:variable name="render_as_page" select="$mode-type='form-page'" />
+
     <xsl:variable name="msg">
       <xsl:call-template name="get_var_value">
         <xsl:with-param name="name" select="'msg'" />
@@ -126,6 +128,10 @@
         <xsl:otherwise>Moveable</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
+
+    <xsl:if test="$render_as_page">
+      <h2><xsl:value-of select="$legend" /></h2>
+    </xsl:if>
 
     <xsl:element name="form">
 
@@ -161,12 +167,14 @@
       </xsl:attribute>
 
       <fieldset class="Schema">
-        <xsl:element name="legend">
-          <xsl:attribute name="class">
-            <xsl:value-of select="$class" />
-          </xsl:attribute>
-          <xsl:value-of select="$legend" />
-        </xsl:element>
+        <xsl:if test="not($render_as_page)">
+          <xsl:element name="legend">
+            <xsl:attribute name="class">
+              <xsl:value-of select="$class" />
+            </xsl:attribute>
+            <xsl:value-of select="$legend" />
+          </xsl:element>
+        </xsl:if>
 
         <xsl:apply-templates select="." mode="construct_button_row">
           <xsl:with-param name="host-type" select="'p'" />
