@@ -198,8 +198,8 @@ form.Moveable
 
 form.Embedded
 {
-    background-color:#EEEEEE;
-    border:solid 2px #CCCCCC;
+    /* background-color:#EEEEEE; */
+    /* border:solid 2px #CCCCCC; */
     display:table;
     margin:0 auto;
     visibility:visible;
