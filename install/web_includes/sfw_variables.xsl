@@ -75,7 +75,7 @@
       name="dschema" select="/*[$is_form][not($mrschema)]/schema" />
   <xsl:variable
       name="rschema"
-      select="/*[$is_form][not($mrschema|$dschema)]/*[@rndx=1]/schema" />
+      select="/*[$is_form][not($mrschema|$dschema)]/*[@rndx][schema][1]/schema" />
   <xsl:variable name="gschema" select="($mrschema|$dschema|$rschema)" />
 
   <!-- $gview, if available, will dictate which result to use. -->
@@ -88,17 +88,16 @@
   -->
   <xsl:variable
       name="m_res"
-      select="/*/*[@rndx][@merge-type]" />
+      select="/*/*[schema][@rndx][@merge-type]" />
   <xsl:variable
       name="b_res"
-      select="/*[not($m_res)]/*[local-name()=/*/@base_result]" />
-                
+      select="/*[not($m_res)]/*[schema][local-name()=/*/@base_result]" />
   <xsl:variable
       name="v_res"
-      select="/*[not($m_res|$b_res)][$gview]/*[@rndx][local-name()=$gview/@result]"/>
+      select="/*[not($m_res|$b_res)][$gview]/*[schema][@rndx][local-name()=$gview/@result]"/>
   <xsl:variable
       name="f_res"
-      select="/*[not($m_res|$b_res|$v_res)]/*[@rndx=1]" />
+      select="/*[not($m_res|$b_res|$v_res)]/*[schema][@rndx][1]" />
 
   <xsl:variable name="gresult" select="$m_res|$b_res|$v_res|$f_res" />
 
