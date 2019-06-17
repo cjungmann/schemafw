@@ -160,6 +160,7 @@ function init_SFW(callback)
    SFW.change_view          = _change_view;
    SFW.return_callback_func = _return_callback_func;
    SFW.process_event        = _process_event;
+   SFW.process_rogue_button = _process_rogue_button;
    SFW.process_host_keydown = _process_host_keydown;
    SFW.get_dup_node         = _get_dup_node;
    SFW.get_deleted_attribute= _get_deleted_attribute;
@@ -967,8 +968,56 @@ function init_SFW(callback)
       var obj = _seek_event_object(t);
       if (obj)
          return obj.process(e,t);
+      else if (t.tagName.toLowerCase()=="button")
+         return ! _process_rogue_button(t);
       else
          return true;
+   }
+
+   /**
+    * Process unaffiliated (not child of an object) buttons.
+    * Returns true if button will be handled (in future by timeout),
+    * and false if not handled.  Reverse value if called by event
+    * handler.
+    */
+   function _process_rogue_button(b, cb)
+   {
+      var type = b.getAttribute("data-type");
+      var url = b.getAttribute("data-task") || b.getAttribute("data-url");
+      var cmsg = b.getAttribute("data-confirm");
+
+      var cfunc = cmsg ? function(){return SFW.confirm(csmg);} : function() { return true; };
+
+      var delayed_func = null;
+
+      switch(type)
+      {
+         case "jump":
+         case "import":
+            if (url)
+               delayed_func = function(){ if (cfunc()) window.location=url; };
+            break;
+         case "call":
+            if (url)
+               delayed_func = function(){ if (cfunc()) _return_callback_func(url, [b,cb]); };
+            break;
+         case "launch":
+            if (url)
+               delayed_func = function(){ if (cfunc()) window.open(url); };
+            break;
+         default:
+            var pb_name = "process_button_" + type;
+            if (pb_name + type in window)
+               delayed_func = function() { if(cfunc()) window[pb_name](b,cb); };
+      }
+
+      if (delayed_func)
+      {
+         setTimeout(delayed_func);
+         return true;
+      }
+      else
+         return false;
    }
 
    // The first three characters of the keyname is unique enough to
@@ -2349,7 +2398,9 @@ function init_SFW(callback)
 
    _base.prototype.process_clicked_button = function _process_clicked_button(b, cb)
    {
-      var caller;
+      if (_process_rogue_button(b,cb))
+         return true;
+
       var type = b.getAttribute("data-type");
       var url = b.getAttribute("data-task") || b.getAttribute("data-url");
       var cmsg = b.getAttribute("data-confirm");
@@ -2362,26 +2413,13 @@ function init_SFW(callback)
          funcForTimeout = function(){cb("cancel");};
       else
       {
+         var caller;
+
          switch(type)
          {
             case "open":
                if (url)
                   funcForTimeout = function(){ths.process_open_button(b,cb);};
-               break;
-            case "jump":
-            case "import":
-               if (url)
-                  funcForTimeout = function(){window.location=url;};
-               break;
-            case "call":
-               if (url)
-                  funcForTimeout = _return_callback_func(url, [b, cb]);
-               else
-                  funcForTimeout = function(){SFW.alert("Call button type without url or task."); };
-               break;
-            case "launch":
-               if (url)
-                  funcForTimeout = function(){window.open(url);};
                break;
             case "cancel":
             case "close":
@@ -2391,6 +2429,22 @@ function init_SFW(callback)
                   funcForTimeout = function(){caller.child_finished(ths,true);};
                }
                break;
+            // The following have moved to _process_rogue_button:
+            // case "jump":
+            // case "import":
+            //    if (url)
+            //       funcForTimeout = function(){window.location=url;};
+            //    break;
+            // case "call":
+            //    if (url)
+            //       funcForTimeout = _return_callback_func(url, [b, cb]);
+            //    else
+            //       funcForTimeout = function(){SFW.alert("Call button type without url or task."); };
+            //    break;
+            // case "launch":
+            //    if (url)
+            //       funcForTimeout = function(){window.open(url);};
+            //    break;
 
             default:
                // Gotta detect delete-type buttons and process without _open_interaction!
@@ -2734,18 +2788,25 @@ function init_SFW(callback)
 
          SFW.xslobj.transformFill(lhost, doc.documentElement);
 
-         if (obj)
+         if (lhost.children.length==0)
          {
-            obj.post_transform();
-            obj.initialize();
-
-            if (caller)
-               caller.child_ready(obj);
+            host.removeChild(lhost);
          }
+         else
+         {
+            if (obj)
+            {
+               obj.post_transform();
+               obj.initialize();
 
-         var anchor = SFW.seek_child_anchor(lhost);
-         if (anchor)
-            _arrange_in_host(host, anchor);
+               if (caller)
+                  caller.child_ready(obj);
+            }
+
+            var anchor = SFW.seek_child_anchor(lhost);
+            if (anchor)
+               _arrange_in_host(host, anchor);
+         }
       }
    }
 
