@@ -80,9 +80,9 @@ database.
 
 First set the DBNAME variable for replacement later:
 
-@verbatim
+@example
 DBNAME=YourDatabaseName
-@end verbatim
+@end example
 
 After the DBNAME variable is set, select the following lines and
 copy with Control-Shift C, then paste into a BASH console with
@@ -91,11 +91,11 @@ console to create the boilerplate files.  The command list below
 will remove the unnecessary (for our purposes) SSYS_SESSION system
 files.
 
-@verbatim
-TABLES=( $( mysql ${DBNAME} -BN -e "show tables" ) )
-for TABLE in "${TABLES[@]}"; do gensfw -d $DBNAME -t $TABLE -c save; done
+@example
+TABLES=( $( mysql $@{DBNAME@} -BN -e "show tables" ) )
+for TABLE in "$@{TABLES[@@]@}"; do gensfw -d $DBNAME -t $TABLE -c save; done
 rm SSYS_SESSION*
-@end verbatim
+@end example
 
 Ultimately, the @emph{gsf} files will be abandoned because we will
 significantly customize the generated @emph{sql} and @emph{srm} files,
