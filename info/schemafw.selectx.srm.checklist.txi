@@ -17,6 +17,9 @@ response modes need to be modified in smaller and more subtle ways.
 Using a @emph{selectx} widget requires several modifications relative
 to a simple SRM file.  The interactions should be setup to use the merge
 
+To change the @emph{klist} parameter to @emph{selectx}, we must define
+the field in a @emph{schema} declaration, then set the field type to
+@emph{selectx}.
 
 @example
 add
@@ -43,8 +46,7 @@ While not strictly necessary, it is a good practice to use the
 shared mode feature to define the @emph{selectx} field properties
 once for all uses.
 
-To change the @emph{klist} parameter to @emph{selectx}, we must define
-the field in a @emph{schema} declaration:
+Create a shared element,
 
 @example
 $shared : keyword_field
@@ -56,7 +58,29 @@ $shared : keyword_field
       stacked : true     # optional
 @end example
 
+then insert the share in the field schema.  Notice the
+@emph{siblings} instruction following the @emph{name} field
+that replaces the @emph{siblings} instruction with the shared
+element defined above.
+
+@example
+add
+   type : merge               # required to be merged
+   schema-proc : App_Item_Add
+   form-action : ?add_submit
+   schema
+      merge-type : form-new   # merge mode types need schema merge-type
+      field : id
+         hidden : true
+         readOnly : true
+      field : name
+         label : Item Name
+      siblings : $keyword_field
+@end example
+
 @xref{SelectX Settings}
+@*
+@xref{Shared Elements,,,schemaserver}
 
 @node SelectX SRM Schema Field Changes
 @subsubsection SelectX SRM Schema Field Changes
