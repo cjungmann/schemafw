@@ -107,12 +107,6 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:variable name="intro">
-      <xsl:apply-templates select="." mode="seek_attribute">
-        <xsl:with-param name="name" select="'intro'" />
-      </xsl:apply-templates>
-    </xsl:variable>
-
     <xsl:variable name="action">
       <xsl:apply-templates select="." mode="get_form_action" />
     </xsl:variable>
@@ -187,13 +181,9 @@
           <hr />
         </xsl:if>
 
-        <xsl:if test="$intro">
-          <div class="intro">
-            <xsl:call-template name="resolve_refs">
-              <xsl:with-param name="str" select="$intro" />
-            </xsl:call-template>
-          </div>
-        </xsl:if>
+        <xsl:apply-templates select="." mode="show_intro">
+          <xsl:with-param name="host-type" select="''" />
+        </xsl:apply-templates>
 
         <xsl:if test="$mode-type='form-import'">
           <p>
