@@ -399,13 +399,32 @@
     </h2>
   </xsl:template>
 
+  <xsl:template match="*" mode="seek_attribute">
+    <xsl:param name="name" />
+    <xsl:variable name="attr" select="@*[local-name()=$name]" />
+    <xsl:choose>
+      <xsl:when test="$attr"><xsl:value-of select="$attr" /></xsl:when>
+      <xsl:when test="parent::*">
+        <xsl:apply-templates select="parent::*" mode="seek_attribute">
+          <xsl:with-param name="name" select="$name" />
+        </xsl:apply-templates>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+
   <xsl:template match="schema" mode="show_intro">
     <xsl:param name="class" />
     <xsl:param name="host-type" select="'tr'" />
 
-    <xsl:variable name="i_sch" select="intro" />
-    <xsl:variable name="i_doc" select="/*[not($i_sch)]/@intro" />
-    <xsl:variable name="intro" select="$i_sch|$i_doc" />
+    <xsl:variable name="intro">
+      <xsl:call-template name="resolve_refs">
+        <xsl:with-param name="str">
+          <xsl:apply-templates select="." mode="seek_attribute">
+            <xsl:with-param name="name" select="'intro'" />
+          </xsl:apply-templates>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:variable>
 
     <xsl:if test="string-length($intro)">
       <xsl:variable name="host_class">
@@ -422,7 +441,7 @@
           <tr class="{$host_class}">
             <td colspan="99">
               <div class="intro">
-              <xsl:value-of select="$intro" />
+                <xsl:value-of select="$intro" />
               </div>
             </td>
           </tr>
