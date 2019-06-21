@@ -26,8 +26,8 @@
     <xsl:apply-templates select="schema" mode="fill_tbody" />
   </xsl:template>
 
-  <xsl:template match="*[@rndx][schema][@sfw_refill_tbody][@filter]">
-    <xsl:variable name="lines" select="" />
+  <xsl:template match="*[@rndx][@filter][schema][@sfw_refill_tbody]">
+    <xsl:variable name="lines" select="*[local-name()=../@row-name]" />
     <xsl:apply-templates select="schema" mode="fill_tbody">
       <xsl:with-param name="lines" select="$lines" />
     </xsl:apply-templates>
@@ -314,9 +314,16 @@
         <xsl:with-param name="data" select="." />
       </xsl:apply-templates>
 
-      <xsl:if test="@cell-class">
-        <xsl:attribute name="class">
+      <xsl:variable name="cell-class">
+        <xsl:if test="@type='BOOL'">def_center </xsl:if>
+        <xsl:if test="@cell-class">
           <xsl:value-of select="@cell-class" />
+        </xsl:if>
+      </xsl:variable>
+
+      <xsl:if test="string-length($cell-class)">
+        <xsl:attribute name="class">
+          <xsl:value-of select="$cell-class" />
         </xsl:attribute>
       </xsl:if>
 
