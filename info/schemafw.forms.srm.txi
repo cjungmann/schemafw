@@ -17,22 +17,50 @@ everything can be customized, so new features should be easily
 added to the standards.
 
 @menu
+* Form Context References::
 * title instruction::
 * intro instruction::
 @end menu
 
+@node Form Context References
+@subsection Form Context References
+
+Most form instructions take advantage of context references,
+where data from the form contents can be inserted into other
+text values.
+
+Form data references use the @{@@name@} syntax.
+
+@example
+mode
+   type : form-view
+   procedure : App_User_View
+   result
+      title : @{@@name@} from @{@@company@}
+      intro : View of @{@@name@}
+      button
+         type : open
+         label : Edit @{@@name@}
+         url   : ?edit&id=@{@@id@}
+@end example
 
 @node title instruction
 @subsection title instruction
 
-The title instruction can be in the first level of the mode
-or child of the @emph{schema} branch.
+The title instruction can be in the first level of the mode,
+as a child of a @emph{result} or as a child of a @emph{schema}.
 
 The contents of the title instruction will replace the default
 contents of the dialog caption bar.
 
 The contents of the title instruction will resolve as context
 references. (@pxref{Context References})
+
+Pay attention when using a title in a merged document, where
+the framework may assign a different priority than expected.
+It is safest to define the @emph{title} instruction at the
+inner-most branch.  That is, define the title under a
+@emph{result} rather than under the mode.
 
 @node intro instruction
 @subsection intro instruction
