@@ -26,6 +26,13 @@
     <xsl:apply-templates select="schema" mode="fill_tbody" />
   </xsl:template>
 
+  <xsl:template match="*[@rndx][schema][@sfw_refill_tbody][@filter]">
+    <xsl:variable name="lines" select="" />
+    <xsl:apply-templates select="schema" mode="fill_tbody">
+      <xsl:with-param name="lines" select="$lines" />
+    </xsl:apply-templates>
+  </xsl:template>
+
   <xsl:template match="*[@sfw_replace_row_contents]">
     <xsl:variable name="schema" select="../schema" />
     <xsl:choose>
