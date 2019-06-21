@@ -15,12 +15,12 @@ developer is free to define custom interactions by using custom
 mode types and XSLT templates to interpret them.
 
 @menu
-* Form Fundamentals::   Common elements of most forms
-* Form Types::          An incomplete enumeration of form types
-* Form SRM Instructions:: 
-* Error Message Query:: Signal action outcomes through queries
-* Context Form::        A view on a part of a set
-* Jumping Form::        Jump to page based on query result
+* Form Fundamentals::     Common elements of most forms
+* Form Types::            An incomplete enumeration of form types
+* Form SRM Instructions:: @strong{title}, @strong{intro} instructions
+* Error Message Query::   Signal action outcomes through queries
+* Context Form::          A view on a part of a set
+* Jumping Form::          Jump to page based on query result
 @end menu
 
 @node Form Fundamentals
