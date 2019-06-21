@@ -9,15 +9,22 @@
   <!-- Getting values from schema and fields -->
 
   <xsl:template match="schema" mode="get_form_title">
-    <xsl:call-template name="resolve_refs">
-      <xsl:with-param name="str">
-        <xsl:choose>
-          <xsl:when test="@title"><xsl:value-of select="@title" /></xsl:when>
-          <xsl:when test="../@title"><xsl:value-of select="../@title" /></xsl:when>
-          <xsl:otherwise>Dialog</xsl:otherwise>
-        </xsl:choose>
-      </xsl:with-param>
-    </xsl:call-template>
+    <xsl:variable name="raw_title">
+      <xsl:call-template name="resolve_refs">
+        <xsl:with-param name="str">
+          <xsl:apply-templates select="." mode="seek_attribute">
+            <xsl:with-param name="name" select="'title'" />
+          </xsl:apply-templates>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:variable>
+
+    <xsl:choose>
+      <xsl:when test="string-length($raw_title)">
+        <xsl:value-of select="$raw_title" />
+      </xsl:when>
+      <xsl:otherwise>Dialog</xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <!-- prevent extra text printing for other add_on_click_attribute template. -->
