@@ -999,7 +999,10 @@ function init_SFW(callback)
             break;
          case "call":
             if (url)
-               delayed_func = function(){ if (cfunc()) _return_callback_func(url, [b,cb]); };
+            {
+               var dfunc = _return_callback_func(url, [b,cb]);
+               delayed_func = function(){ if (cfunc()) dfunc(); };
+            }
             break;
          case "launch":
             if (url)
