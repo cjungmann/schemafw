@@ -6,6 +6,7 @@ to include documentation about rediscovered settings that affect tables.
 
 @menu
 * Customize TR and TD Attributes::
+* Inplace Filtering::
 * Table Hints:: 
 @end menu
 
@@ -59,6 +60,101 @@ superior.
      <xsl:attribute name="superior">true</xsl:attribute>
   </xsl:if>
 </xsl:template>
+@end example
+
+@node Inplace Filtering
+@section Inplace Filtering
+
+This is a somewhat advanced techique because it requires understanding
+of xpath expressions in the context of the generated XML document.
+
+There will be times when it will be helpful for the end user to apply a
+filter to see a subset of a tables contents.  In simple terms, this
+requires two steps:
+
+@table @strong
+@item Set @emph{filter} attribute of source result
+Set the filter attribute to an xpath expression that selects the rows
+that should be included in the filtered table.
+@item Replot the table
+Get the table object and running the replot method.
+@end table
+
+Leave the filter attribute in place after the table replot so the filter
+is reapplied in case the end user uses the column heads to sort.
+
+In practice, there are additional required steps:
+
+@itemize
+@item Javascript file to host functions indicated by the buttons
+@item @code{javascript} instruction to load new javascript file
+@item Button(s) in SRM result branch to activate filters
+@end itemize
+
+In the following example, it is assumed that the table is the primary
+response mode that generates the page, in order to make it easier to
+find the table object for replotting.  If the table to be filtered is
+not in the first SFW host object, there will be more code involved to
+identify the appropriate host and object.
+
+Here is an example javascript file, @file{custom.js}
+
+@example
+function my_filter(val)
+@{
+   var result = SFW.xmldoc.selectSingleNode("/*/members");
+   if (result)
+   @{
+      // Get table object from intial response mode:
+      var host = SFW.seek_top_sfw_host();
+      var obj = host && SFW.get_object_from_host(host);
+      if (obj)
+      @{
+         if (val)
+         @{
+            var filter_array=[
+               "*[local-name()=../@@row-name]",  // generic, select all
+               "[@@" + val + "]"                 // specific filter
+            ];
+
+            result.setAttribute("filter", filter_array.join(''));
+         @}
+         else
+            result.removeAttribute("filter");
+
+         obj.replot();
+      @}
+   @}
+@}
+
+function filter_none()    @{ my_filter(); @}
+function filter_skaters() @{ my_filter("skater"); @}
+function filter_coaches() @{ my_filter("coach"); @}
+@end example
+
+The SRM file will add the @code{javascript} instruction and the
+buttons to the response mode that generates the table.
+
+@example
+list
+   type          : table
+   procedure     : App_Members_List
+   on_line_click : ?edit&id=@{!id@}
+   javascript    : custom          # leave off .js extension
+   result
+      name : members               # name for easier identification
+      button
+         type  : call
+         label : All
+         task  : filter_node
+      button
+         type  : call
+         label : Skaters
+         task  : filter_skaters
+      button
+         type  : call
+         label : Coaches
+         task  : filter_coaches
 @end example
 
 @node Table Hints
