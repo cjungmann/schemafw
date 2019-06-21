@@ -137,10 +137,32 @@
          if (el.nodeType==1 && el.tagName.toLowerCase()=="tbody")
          {
             ths.pre_transform();
+            var lines = null;
+            var filter_str = result.getAttribute("filter");
+
+            if (filter_str)
+            {
+               var xpatharr=[
+                  "/xsl:stylesheet",
+                  "/xsl:template",
+                  "[starts-with(@match,'*[@rndx][@filter]')]",
+                  "/xsl:variable"
+               ];
+
+               lines = SFW.xsldoc.selectSingleNode(xpatharr.join(''));
+               if (lines)
+                  lines.setAttribute("select", filter_str);
+               else
+                  lines = null;
+            }
 
             result.setAttribute("sfw_refill_tbody", "true");
             SFW.xslobj.transformFill(el, result);
             result.removeAttribute("sfw_refill_tbody");
+
+            // For safety, set "filter" to include all rows, just in case:
+            if (lines)
+               lines.setAttribute("select", "*[local-name()=../@row-name]");
             
             if (top)
                _fix_table_heads(top);
