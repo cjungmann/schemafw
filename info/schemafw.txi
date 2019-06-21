@@ -43,7 +43,7 @@ production.
 @menu
 * Introduction::
 * Installation::        Install the framework, install to new sites
-* Tables::
+* Tables::              Basic use, customization, hints
 * Forms::
 * Form Input Widgets:: 
 * Result Elements::     Label and use query results in a resultset
