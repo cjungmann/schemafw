@@ -711,8 +711,8 @@
       function filter(n)
       {
          var s = n.style;
-         var text = n.firstChild.data.toLowerCase();
-         if (text.search(filter_str)==-1)
+         var text = SFW.get_property(n,'firstChild','data','toLowerCase');
+         if (!text || text.search(filter_str)==-1)
             s.display = "none";
          else
          {
@@ -724,7 +724,7 @@
       function enroll(n)
       {
          n.style.display = "block";
-         if (is_match(n.firstChild.data.toLowerCase()))
+         if (is_match(SFW.get_property(n,'firstChild','data','toLowerCase')))
             set_target(n);
       }
 
