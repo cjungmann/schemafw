@@ -73,9 +73,7 @@
         </ul>
       </form>
     </div>
-
     </xsl:template>
-
 
     <!-- Error message templates for unqualified field matches -->
     <xsl:template match="field[@type='selectx'][not(@result)]" mode="get_value">
@@ -260,37 +258,74 @@
     </xsl:template>
 
     <xsl:template match="field[@result]" mode="get_id_field">
-      <xsl:variable name="schema"
-                    select="/*/*[@rndx][local-name()=current()/@result]/schema" />
-
-      <xsl:if test="not($schema)">
-        <xsl:apply-templates select="." mode="missing_schema" />
+      <xsl:variable name="result" select="/*/*[local-name()=current()/@result]" />
+      <xsl:if test="$result">
+        <xsl:choose>
+          <xsl:when test="@id_field"><xsl:value-of select="@id_field" /></xsl:when>
+          <xsl:when test="$result/@id_field"><xsl:value-of select="$result/@id_field" /></xsl:when>
+          <xsl:when test="$result/@lookup"><xsl:value-of select="$result/@lookup" /></xsl:when>
+          <xsl:when test="$result/schema">
+            <xsl:variable name="fcount" select="count($result/schema/field)" />
+            <xsl:choose>
+              <xsl:when test="$result/schema/field[@primary-key][1]">
+                <xsl:value-of select="$result/schema/field[@primary-key][1]/@name" />
+              </xsl:when>
+              <xsl:otherwise>
+              <xsl:value-of select="$result/schema/field[1]/@name" />
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:variable
+                name="row1"
+                select="/*/*[local-name()=current()/@result][@rndx]/*[local-name()=../@row-name]" />
+            <xsl:if test="$row1">
+              <xsl:value-of select="local-name($row1/@*[1])" />
+            </xsl:if>
+          </xsl:otherwise>
+        </xsl:choose>
       </xsl:if>
-
-      <xsl:value-of select="$schema/field[@primary-key][1]/@name" />
-      
     </xsl:template>
 
     <xsl:template match="field[@result]" mode="get_show_field">
-      <xsl:variable name="schema"
-                    select="/*/*[@rndx][local-name()=current()/@result]/schema" />
-      <xsl:if test="not($schema)">
-        <xsl:apply-templates select="." mode="missing_schema" />
+      <xsl:variable name="result" select="/*/*[local-name()=current()/@result][@rndx]" />
+      <xsl:if test="$result">
+        <xsl:choose>
+          <xsl:when test="@show"><xsl:value-of select="@show" /></xsl:when>
+          <xsl:when test="$result/@show"><xsl:value-of select="$result/@show" /></xsl:when>
+          <xsl:otherwise>
+            <xsl:variable name="schema" select="$result/schema" />
+            <xsl:variable name="row1" select="$result/*[local-name()=../@row-name][1]" />
+            <xsl:choose>
+              <xsl:when test="$schema">
+                <xsl:variable name="fcount" select="count($schema/field)" />
+                <xsl:choose>
+                  <xsl:when test="$fcount = 1">
+                    <xsl:value-of select="$schema/field[1]/@name" />
+                  </xsl:when>
+                  <xsl:otherwise>
+                    <xsl:variable name="id_field">
+                      <xsl:apply-templates select="." mode="get_id_field" />
+                    </xsl:variable>
+                    <xsl:value-of select="$schema/field[not(@name=$id_field)]/@name" />
+                  </xsl:otherwise>
+                </xsl:choose>
+              </xsl:when>
+              <xsl:when test="$row1">
+                <xsl:variable name="rac" select="count($row1/@*)" />
+                <xsl:choose>
+                  <xsl:when test="$rac &gt; 1">
+                    <xsl:value-of select="local-name($row1/@*[2])" />
+                  </xsl:when>
+                  <xsl:otherwise>
+                    <xsl:value-of select="local-name($row1/@*[1])" />
+                  </xsl:otherwise>
+                </xsl:choose>
+              </xsl:when>
+            </xsl:choose>
+          </xsl:otherwise>
+        </xsl:choose>
       </xsl:if>
-
-      <xsl:choose>
-        <xsl:when test="@show"><xsl:value-of select="@show" /></xsl:when>
-        <xsl:otherwise>
-          <xsl:variable name="id_name">
-            <xsl:apply-templates select="." mode="get_id_field" />
-          </xsl:variable>
-          <xsl:variable name="non_id" select="$schema/field[@name!=$id_name][1]/@name" />
-          <xsl:choose>
-            <xsl:when test="$non_id"><xsl:value-of select="$non_id" /></xsl:when>
-            <xsl:otherwise><xsl:value-of select="$id_name" /></xsl:otherwise>
-          </xsl:choose>
-        </xsl:otherwise>
-      </xsl:choose>
     </xsl:template>
 
     <xsl:template match="field" mode="get_indicies_from_data">
