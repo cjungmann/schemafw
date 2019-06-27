@@ -21,6 +21,32 @@
     </xsl:apply-templates>
   </xsl:template>
 
+  <xsl:template match="field[@type='lookup']" mode="write_cell_content">
+    <xsl:param name="data" />
+
+    <xsl:variable name="result" select="/*/*[local-name()=current()/@result][@rndx]" />
+
+    <xsl:if test="$result">
+      <xsl:variable name="id_field">
+        <xsl:apply-templates select="." mode="get_id_field" />
+      </xsl:variable>
+
+      <xsl:if test="$id_field">
+        <xsl:variable name="row"
+                      select="$result/*[local-name()=../@row-name][@*[local-name()=$id_field]]" />
+
+        <xsl:if test="$row">
+          <xsl:variable name="show_field">
+            <xsl:apply-templates select="." mode="get_show_field" />
+          </xsl:variable>
+
+          <xsl:variable name="raw_value" select="$data/@*[local-name()=current()/@name]" />
+          <xsl:value-of select="$row/@*[local-name()=$show_field]" />
+        </xsl:if>
+      </xsl:if>
+    </xsl:if>
+  </xsl:template>
+
   <!-- Override basic mode="write_cell_content" as entry point for table cells -->
   <xsl:template match="schema/field[@type='linked']" mode="write_cell_content">
     <xsl:param name="data" />
