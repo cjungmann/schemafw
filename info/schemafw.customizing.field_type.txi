@@ -1,0 +1,64 @@
+@node XSL for Custom Field Types
+@section XSL for Custom Field Types
+
+As you may be aware, presenting custom data types is best done in the
+XSL code.  Conversion from the XML document to the HTML displayed in the
+users' browsers is done before any Javascript code can intervene.
+
+The framework renders data in tables in forms by applying templates with
+a few specific modes.
+
+@table @strong
+@item mode=''get_value''
+This mode is, by default, used for rendering both tables and forms.  It
+is called by the default table-rendering template mode
+@emph{write_cell_content} and by many form-rendering template modes like
+@emph{display_value} and @emph{construct_input}.  Create a new template
+for this mode unless there is some reason that the form handles the index
+value while the table displays the reconciled value.
+
+@item mode=''construct_input''
+For the unusual custom data type for which a simple input element will
+not suffice, this template mode can be defined to create an HTML element
+that is more appropriate for the data that is being edited.
+
+@item mode=''display_value''
+When @emph{form-view} type form or a form without an @emph{form-action}
+instruction is being rendered, the @emph{display_value} mode template
+will be called to display the value as a string instead of inside of an
+input element.  
+
+@item mode=''write_cell_content''
+This is a table-specific template mode.  If this template mode is
+implemented, the @emph{get_value} template mode need not be called when
+rendering a table.  
+@end table
+
+Mark a field as a unique field type in the schema, as demonstrated in the
+following incomplete response mode:
+
+@example
+list
+   type : table
+   procedure : App_Person_List
+   schema
+      field : phones
+         type : phone_list
+@end example
+
+Prepare a @emph{get_value} mode template to be added to
+@file{default.xsl} that explicitly matches the new field type.  The
+following example punts the actual work to the @emph{render_phone_list}
+template in order to demonstrate the fundamentals:
+
+@example
+<xsl:template match="field[@@type='phone_list']" mode="get_value">
+   <xsl:param name="data" />
+
+   <xsl:variable name="raw" select="$data/@@*[local-name()=current()/@@name]" />
+
+   <xsl:call-template name="render_phone_list">
+      <xsl:with-param name="str" select="$raw" />
+   </xsl:call-template>
+</xsl:template>
+@end example

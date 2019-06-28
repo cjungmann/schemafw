@@ -1,0 +1,75 @@
+@node Field Types
+@chapter Field Types
+
+@menu
+* Field Types Intro::
+* Field Type lookup::
+* Field Type selectx::
+@end menu
+
+@node Field Types Intro
+@section Field Types Intro
+
+When the Schema Server calls a MySQL procedure, the queries
+executed therein may generate a schema in which the fields of
+the output are defined.  By default, the field definitions in
+a schema include the MySQL data type.  The field type value is
+consulted when rendering the data in a form or table.
+
+If the developer can override the default field type by
+including a @emph{type} instruction in the schema.  In the
+following example, the @emph{profession} field is given a
+unique field type, presumably to differentiate look of the
+profession field for some purpose.
+
+@example
+list
+   type : table
+   procedure : App_Person_List
+   schema
+      field : profession
+         type : profession
+@end example
+
+@node Field Type lookup
+@section Field Type lookup
+
+This field type will change the column data from an index
+value to a user-readable value in a table using extra data
+results in the XML document.
+
+@example
+list
+   type : table
+   procedure : App_Performance_List
+   result
+      schema
+         field : event
+            type : lookup
+            result : events
+   result
+      name : event
+      id_field : id
+      show_field : name
+@end example
+
+There are two main items that deserve attention.
+
+The first is the definition of the field @strong{event}.  It
+needs to include the @emph{type} instruction and a
+@emph{result} instruction to tell the framework which result
+will provide the translations.  The result must be named to
+avoid likely problems with result indexing.
+
+The second item is the second result.  The minimum requirement
+is to name the result.  The other two instructions,
+@emph{id_field} and @emph{show_field} can be omitted.
+@xref{Lookup Values}
+
+@node Field Type selectx
+@section Field Type selectx
+
+This is a powerful but a little finicky
+
+         
+

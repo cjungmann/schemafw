@@ -1,0 +1,160 @@
+@node Lookup Values
+@chapter Lookup Values
+
+For large volumes of data with duplicate values, especially
+from normalized tables, it is often more efficient to join
+data at the client.  That way, the server doesn't have to
+perform the join query, and the amount of data sent to the
+client can be minimized.
+
+Field types @emph{lookup} and @emph{selectx} two examples
+of fields that perform data joins on the client.  They share
+some joining rules found in this chapter.
+
+@menu
+* Lookup Values Introduction::
+* Lookup Values Order of Evaluation::
+* Lookup Values Suggestions::
+@end menu
+
+@node Lookup Values Introduction
+@section Lookup Values Introduction
+
+When referring to data in a result, it is necessary to at
+least be able to specify a row.  This is done by determining
+the index field name and providing a value against which each
+row's index field will be compared.
+
+It is usually also necessary to specify which column contains
+the target information.
+
+The framework includes two templates to return an index field
+name and a value field name, with @code{mode="get_id_field"}
+and @code{mode="get_show_field"} respectively.  These
+templates search for @emph{nominating} instructions
+@strong{id_field} and @strong{show_field} to get the appropriate
+field name in the target result branch, falling back to other
+methods if these are not specified.
+
+There is a long list of places where each item is searched.
+In general, the most specific instruction is honored.  In
+practice this means that instructions in a child branch take
+precedence over instructions in its parent.
+
+@node Lookup Values Order of Evaluation
+@section Lookup Values Order of Evaluation
+
+Here is the order.  The explicit nominations are first, 
+followed by improvisations.  You can ignore the nominations
+and rely on improvisations, adding nominations when they're
+needed.
+
+Explicit Nominations
+
+@enumerate
+@item
+   @strong{id_field} and @strong{show_field} instructions in a
+   field instruction are the highest priority.
+@item
+   Failing to find a nominating instruction in the field, the
+   framework will look for the missing nominating instruction
+   at the target result.
+@end enumerate
+
+Deductions
+
+@enumerate
+@item
+   If a schema is included in the target result, the framework
+   will use a primary key field for the @strong{id_field}.
+   The first field that is not a primary key field becomes the
+   @strong{show_field}.
+@item
+   With no schema and multiple attributes, the first row
+   dictates the interpretation.  The first attribute becomes
+   the @strong{id_field} and the second attribute becomes the
+   @strong{show_field}.
+@item
+   No schema and only one attribute, the @strong{id_field} and
+   @strong{show_field} will be the same.
+@end enumerate
+
+@node Lookup Values Suggestions
+@section Lookup Values Suggestions
+
+@menu
+* Easiest Lookup::
+* Multipurpose Lookup::
+@end menu
+
+@node Easiest Lookup
+@subsection Easiest Lookup
+
+The easiest and most performant method is to run a query
+with two fields, the id field and the show field.  No
+nominating instructions will be needed.
+
+@example
+CREATE PROCEDURE App_Level_List()
+BEGIN
+   SELECT id, name
+     FROM Level;
+END $$
+@end example
+
+@node Multipurpose Lookup
+@subsection Multipurpose Lookup
+
+It is possible to have one result serve two separate lookups.
+In that case, @strong{id_field} could be defined at the target
+result and the @strong{show_field} could have different values
+at the fields that need them.
+
+In this example, we make a result with states' full names and
+two-letter abbreviations.  The full name might be used in a
+form view, while the abbreviation would shown in a table view.
+
+A three field query to create the lookup result:
+
+@example
+CREATE PROCEDURE App_State_List()
+BEGIN
+   SELECT id, name, abbreviation
+     FROM State;
+END $$
+@end example
+
+Using merge types to share the @emph{states} lookup result
+with the initial table and the subordinate form.
+
+Note that the following examples are only meant to illustrate
+how to use lookup.  They are not complete examples of normal
+interactions.
+
+@example
+list
+   type : table
+   procedure : App_House_List
+   on_line_click : ?edit?id=@{!id@}
+   result
+      schema
+         field : state
+            type : lookup
+            result : states
+            show_field : abbreviation
+   result
+      name : states
+      id_field : id
+
+edit
+   type : merge
+   schema-proc : App_House_Update
+   procedure : App_House_Value
+   form-action ? edit_submit
+   schema
+      merge-type : form-edit
+      field : state
+         type : selectx
+         result : states
+         show_field : name
+@end example 
