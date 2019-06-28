@@ -45,6 +45,7 @@ production.
 * Installation::        Install the framework, install to new sites
 * Tables::              Basic use, customization, hints
 * Forms::
+* Field Types::         Field types for different types of data
 * Form Input Widgets:: 
 * Result Elements::     Label and use query results in a resultset
 * Merged Interactions:: Minimize network traffic by preserving data
@@ -52,6 +53,7 @@ production.
 * Context References::  Apply document values to captions or fields
 * Buttons::             Button attributes recognized by the Framework
 * Customizing::         Extend the framework with your own components
+* Lookup Values::       Order of evaluation for inter-result searches
 * Debugging::
 * Definitions::
 @end menu
@@ -82,6 +84,7 @@ $ sudo ln -s /usr/local/lib/schemafw/web_includes includes
 
 @include schemafw.tables.txi
 @include schemafw.forms.txi
+@include schemafw.field_types.txi
 @include schemafw.input.widgets.txi
 @include schemafw.results.txi
 @include schemafw.merged.txi
@@ -89,6 +92,7 @@ $ sudo ln -s /usr/local/lib/schemafw/web_includes includes
 @include schemafw.context-refs.txi
 @include schemafw.buttons.txi
 @include schemafw.customizing.txi
+@include schemafw.lookup_values.txi
 @include schemafw.debugging.txi
 @include schemafw.definitions.txi
 
