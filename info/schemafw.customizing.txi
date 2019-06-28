@@ -8,6 +8,7 @@ steps of adding new items to the framework.
 
 @menu
 * Introduction to Customization::
+* XSL for Custom Field Types::          XSL considerations for custom field types
 * Including Custom Javascript and CSS::
 * Including Custom XSL Stylesheets::
 * Define and Use Custom Type::          Build Completely Customized Page
@@ -30,6 +31,7 @@ specific implementation will use one of both of them:
       should be rendered
 @end enumerate
 
+@include schemafw.customizing.field_type.txi
 
 @node Including Custom Javascript and CSS
 @section Including Custom Javascript and CSS
