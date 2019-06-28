@@ -23,11 +23,6 @@
   <xsl:import href="sfw_variables.xsl" />
   <xsl:import href="sfw_resolver.xsl" />
 
-  <xsl:variable name="vars" select="/*/*[@rndx][@type='variables']" />
-  <xsl:variable
-      name="alt_vars"
-      select="/*/*[@rndx][not(@type)][count(*[local-name()=../@row-name])=1]" />
-
   <xsl:template match="field" mode="classify">
     <xsl:choose>
       <xsl:when test="@data-class"><xsl:value-of select="@data-class" /></xsl:when>
@@ -285,14 +280,6 @@
           </xsl:call-template>
         </xsl:otherwise>
       </xsl:choose>
-      <!-- <xsl:call-template name="resolve_refs"> -->
-      <!--   <xsl:with-param name="str"> -->
-      <!--     <xsl:if test="local-name()='task'"> -->
-      <!--       <xsl:apply-templates select="." mode="fix_srm_selfref"/> -->
-      <!--     </xsl:if> -->
-      <!--     <xsl:value-of select="." /> -->
-      <!--   </xsl:with-param> -->
-      <!-- </xsl:call-template> -->
     </xsl:attribute>
   </xsl:template>
 
@@ -522,91 +509,6 @@
   </xsl:template>
 
 
-  <!-- <xsl:template match="*" mode="get_value_from_row"> -->
-  <!--   <xsl:param name="name" /> -->
-  <!--   <xsl:value-of select="current()/@*[local-name()=$name]" /> -->
-  <!-- </xsl:template> -->
-
-  <!-- <xsl:template name="get_var_value"> -->
-  <!--   <xsl:param name="name" /> -->
-
-  <!--   <xsl:variable name="prime"> -->
-  <!--     <xsl:apply-templates select="$vars" mode="get_var_value"> -->
-  <!--       <xsl:with-param name="name" select="$name" /> -->
-  <!--     </xsl:apply-templates> -->
-  <!--   </xsl:variable> -->
-
-  <!--   <xsl:choose> -->
-  <!--     <xsl:when test="string-length($prime)"> -->
-  <!--       <xsl:value-of select="$prime" /> -->
-  <!--     </xsl:when> -->
-  <!--     <xsl:when test="count($alt_vars) &gt; 0"> -->
-  <!--       <xsl:apply-templates select="$alt_vars" mode="get_var_value"> -->
-  <!--         <xsl:with-param name="name" select="$name" /> -->
-  <!--       </xsl:apply-templates> -->
-  <!--     </xsl:when> -->
-  <!--   </xsl:choose> -->
-  <!-- </xsl:template> -->
-
-  <!-- <xsl:template name="get_data_value"> -->
-  <!--   <xsl:param name="name" /> -->
-  <!--   <xsl:variable name="results" select="/*/*[@rndx and not(@type='variables')]" /> -->
-
-  <!--   <xsl:variable name="formrs"  -->
-  <!--                 select="$results[count(*[local-name()=../@row-name])=1]" /> -->
-  <!--   <xsl:variable name="rows" select="$formrs/*[local-name()=../@row-name]" /> -->
-  <!--   <xsl:variable name="attrs" select="$rows/@*[local-name()=$name]" /> -->
-
-  <!--   <xsl:if test="count($attrs)"> -->
-  <!--     <xsl:value-of select="$attrs[1]" /> -->
-  <!--   </xsl:if> -->
-  <!-- </xsl:template> -->
-
-  <!-- <xsl:template match="*[@rndx]" mode="get_var_value"> -->
-  <!--   <xsl:param name="name" /> -->
-  <!--   <xsl:variable name="row" select="*[local-name()=current()/@row-name]" /> -->
-  <!--   <xsl:if test="$row"> -->
-  <!--     <xsl:variable name="val" select="$row[1]/@*[local-name()=$name]" /> -->
-  <!--     <xsl:if test="$val"> -->
-  <!--       <xsl:value-of select="$val" /> -->
-  <!--     </xsl:if> -->
-  <!--   </xsl:if> -->
-  <!-- </xsl:template> -->
-
-  <!-- <xsl:template name="add_enclose_attributes"> -->
-  <!--   <xsl:param name="hints" /> -->
-  <!--   <xsl:variable name="c_hint" select="substring-before($hints,'|')" /> -->
-  <!--   <xsl:variable name="s_hint" select="substring($hints,1 div boolean(string-length($c_hint)=0))" /> -->
-  <!--   <xsl:variable name="hint" select="concat($c_hint,$s_hint)" /> -->
-
-  <!--   <xsl:variable name="name" select="normalize-space(substring-before($hint,'='))" /> -->
-  <!--   <xsl:variable name="val" select="substring-after($hint,'=')" /> -->
-
-  <!--   <xsl:attribute name="{$name}"> -->
-  <!--     <xsl:value-of select="$val" /> -->
-  <!--   </xsl:attribute> -->
-
-  <!--   <xsl:if test="string-length($c_hint)&gt;0"> -->
-  <!--     <xsl:call-template name="add_enclose_attributes"> -->
-  <!--       <xsl:with-param name="hints" select="substring-after($hints,'|')" /> -->
-  <!--     </xsl:call-template> -->
-  <!--   </xsl:if> -->
-  <!-- </xsl:template> -->
-
-  <!-- <xsl:template name="enclose_val"> -->
-  <!--   <xsl:param name="str" /> -->
-  <!--   <xsl:param name="tag" /> -->
-  <!--   <xsl:param name="hints" /> -->
-
-  <!--   <xsl:element name="{$tag}"> -->
-  <!--     <xsl:if test="string-length($hints)&gt;0"> -->
-  <!--       <xsl:call-template name="add_enclose_attributes"> -->
-  <!--         <xsl:with-param name="hints" select="$hints" /> -->
-  <!--       </xsl:call-template> -->
-  <!--     </xsl:if> -->
-  <!--     <xsl:value-of select="$str" /> -->
-  <!--   </xsl:element> -->
-  <!-- </xsl:template> -->
 
 </xsl:stylesheet>
 

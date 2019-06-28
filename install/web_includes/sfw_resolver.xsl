@@ -164,35 +164,26 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="*[@rndx]" mode="get_var_value">
-    <xsl:param name="name" />
-    <xsl:variable name="row" select="*[local-name()=current()/@row-name]" />
-    <xsl:if test="$row">
-      <xsl:variable name="val" select="$row[1]/@*[local-name()=$name]" />
-      <xsl:if test="$val">
-        <xsl:value-of select="$val" />
-      </xsl:if>
-    </xsl:if>
-  </xsl:template>
-
   <xsl:template name="get_var_value">
     <xsl:param name="name" />
 
     <xsl:variable name="prime">
-      <xsl:apply-templates select="$vars" mode="get_var_value">
-        <xsl:with-param name="name" select="$name" />
-      </xsl:apply-templates>
+      <xsl:variable
+          name="vrows"
+          select="/*/*[@rndx][@type='variables']/*[local-name()=../@row-name]" />
+      <xsl:value-of select="$vrows/@*[local-name()=$name][1]" />
     </xsl:variable>
 
     <xsl:choose>
       <xsl:when test="string-length($prime)">
         <xsl:value-of select="$prime" />
       </xsl:when>
-      <xsl:when test="count($alt_vars) &gt; 0">
-        <xsl:apply-templates select="$alt_vars" mode="get_var_value">
-          <xsl:with-param name="name" select="$name" />
-        </xsl:apply-templates>
-      </xsl:when>
+      <xsl:otherwise>
+        <xsl:variable
+            name="vrows"
+            select="/*/*[@rndx][not(@type)][1=count(*[local-name()=../@row-name])]/*[local-name()=../@row-name]" />
+        <xsl:value-of select="$vrows/@*[local-name()=$name][1]" />
+      </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
 
