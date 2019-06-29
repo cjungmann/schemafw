@@ -56,6 +56,8 @@ production.
 * Lookup Values::       Order of evaluation for inter-result searches
 * Debugging::
 * Definitions::
+* Schema Server::       Some topics that are found in Schema Server
+                        documentation
 @end menu
 
 @node Introduction
@@ -95,5 +97,6 @@ $ sudo ln -s /usr/local/lib/schemafw/web_includes includes
 @include schemafw.lookup_values.txi
 @include schemafw.debugging.txi
 @include schemafw.definitions.txi
+@include schemafw.server.txi
 
 @bye

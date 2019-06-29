@@ -1,0 +1,14 @@
+@node Schema Server
+@chapter Schema Server
+
+This chapter will redirect the reader to @inforef{Top,,schemaserver}
+for topics that are sought here yet handled there.
+
+This chapter will start very small, but grow as time goes on.
+
+@table @strong
+@item shared items
+@xref{Shared Elements,,,schemaserver}
+
+@end table
+
