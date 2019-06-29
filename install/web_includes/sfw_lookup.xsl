@@ -27,20 +27,23 @@
     <xsl:variable name="result" select="/*/*[local-name()=current()/@result][@rndx]" />
 
     <xsl:if test="$result">
+      <xsl:variable name="fname" select="@name" />
+
       <xsl:variable name="id_field">
         <xsl:apply-templates select="." mode="get_id_field" />
       </xsl:variable>
 
       <xsl:if test="$id_field">
+        <xsl:variable name="id_val" select="$data/@*[local-name()=$fname]" />
         <xsl:variable name="row"
-                      select="$result/*[local-name()=../@row-name][@*[local-name()=$id_field]]" />
+                      select="$result/*[local-name()=../@row-name][@*[local-name()=$id_field]=$id_val]" />
 
         <xsl:if test="$row">
           <xsl:variable name="show_field">
             <xsl:apply-templates select="." mode="get_show_field" />
           </xsl:variable>
 
-          <xsl:variable name="raw_value" select="$data/@*[local-name()=current()/@name]" />
+          <xsl:variable name="raw_value" select="$data/@*[local-name()=$fname]" />
           <xsl:value-of select="$row/@*[local-name()=$show_field]" />
         </xsl:if>
       </xsl:if>
