@@ -1551,7 +1551,14 @@ function init_SFW(callback)
     */
    function _update_xmldoc(doc, form, type)
    {
-      var pagedocel = SFW.xmldoc.documentElement;
+      var pagedocel, caller;
+
+      if ((caller=form.caller()))
+         pagedocel = _get_property(form, "caller","xmldoc","documentElement");
+
+      if (!pagedocel)
+         pagedocel = SFW.xmldoc.documentElement;
+
       var newdocel = doc.documentElement;
 
       _process_updates(pagedocel, newdocel, form, type);
@@ -2069,7 +2076,7 @@ function init_SFW(callback)
 
    _base.prototype.host     = function() { return this._host_el||null; };
    _base.prototype.xmldoc   = function() {
-      var r=this.host(); return (r && (r=r.xmldoc))?r:SFW.xmldoc;
+      var r=this.host(); return (r && r.xmldoc) ? r.xmldoc : SFW.xmldoc;
    };
 
    _base.prototype.xmldocel = function() {
