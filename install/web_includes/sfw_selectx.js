@@ -11,7 +11,7 @@
    if (!SFW.derive(_selectx, "selectx", bclass))
       return;
 
-   var _bs=8, _enter=13, _left=37, _up=38, _right=39, _down=40, _esc=27;
+   var _bs=8, _tab=9, _enter=13, _left=37, _up=38, _right=39, _down=40, _esc=27;
 
    function _selectx(actors) { SFW.base.call(this,actors); }
 
@@ -26,7 +26,9 @@
          case "mouseup":
             return this.process_click(e,t);
          case "keydown":
-               return this.process_key(e,t);
+               return this.process_keydown(e,t);
+         case "keyup":
+               return this.process_keyup(e,t);
       };
 
       return true;
@@ -134,50 +136,56 @@
       return false;
    };
 
-   _selectx.prototype.process_key = function(e,t)
+   _selectx.prototype.delay_filter = function()
+   {
+      // Populate closure and timer from which to access it.
+      var ths = this;
+      var val = this.get_masked_input().value;
+      function f() { ths.filter_options(val); }
+      window.setTimeout(f,50);
+   };
+
+   _selectx.prototype.process_keydown = function(e,t)
    {
       var keycode = SFW.keycode_from_event(e);
-      var is_active = this.is_activated();
-      var ths = this;
-      switch(keycode)
+      if (!this.is_activated() && keycode!=_esc && keycode!=_tab)
       {
-         case _down:
-            if (is_active)
-               this.move_target(1);
-            else
-               this.activate();
-            return false;
-         case _up:
-            if (is_active)
-               this.move_target(-1);
-            return false;
-         case _enter:
-            if (is_active)
-               this.process_enter_press(e);
-            else
-               this.activate();
-            return false;
-         case _esc:
-            if (is_active)
-            {
-               this.deactivate(true);
-               return false;
-            }
-            break;
-         default:
-            if (keycode >= 32 || keycode==_bs)
-            {
-               if (!is_active)
-                  this.activate();
-
-               var masked_input = this.get_masked_input();
-               function f() { ths.filter_options(masked_input.value); }
-               window.setTimeout(f, 50);
-               return false;
-            }
-            break;
+         this.activate();
       }
-      
+
+      if (keycode==_up)
+      {
+         this.move_target(-1);
+         return false;
+      }
+      else if (keycode==_down)
+      {
+         this.move_target(1);
+         return false;
+      }
+      else if (keycode==_esc && this.is_activated())
+      {
+         this.deactivate(true);
+         return false;
+      }
+
+      return true;
+   };
+
+   _selectx.prototype.process_keyup = function(e,t)
+   {
+      var keycode = SFW.keycode_from_event(e);
+      if (keycode==_enter)
+      {
+         this.process_enter_press(e);
+         return false;
+      }
+      else if (keycode!=_up && keycode!=_down)
+      {
+         this.delay_filter();
+         return false;
+      }
+
       return true;
    };
 
@@ -585,6 +593,7 @@
       if (ul)
       {
          SFW.find_child_matches(ul,f,false,true);
+
          pos_max = visibles.length-1;
          if (pos_cur==-1)
             pos_new=0;
@@ -711,7 +720,7 @@
       function filter(n)
       {
          var s = n.style;
-         var text = SFW.get_property(n,'firstChild','data','toLowerCase');
+         var text = SFW.get_property(n,'firstChild','data','toLowerCase', null);
          if (!text || text.search(filter_str)==-1)
             s.display = "none";
          else
@@ -724,7 +733,7 @@
       function enroll(n)
       {
          n.style.display = "block";
-         if (is_match(SFW.get_property(n,'firstChild','data','toLowerCase')))
+         if (is_match(SFW.get_property(n,'firstChild','data','toLowerCase',null)))
             set_target(n);
       }
 
