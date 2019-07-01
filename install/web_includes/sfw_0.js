@@ -286,6 +286,9 @@ function init_SFW(callback)
     * If the function is the last property requested, it will be returned as a
     * function object, otherwise it will be evaluated before extracting the next
     * property in the list.
+    *
+    * Add a null value after a method name if you want to return the result of the
+    * method rather than a function reference.
     */
    function _get_property(obj)
    {
@@ -302,17 +305,20 @@ function init_SFW(callback)
 
             var name = arguments[i];
 
-            if (typeof(rval)!="object" || !(name in rval))
-               return null;
-
-            if (typeof(rval[name])=="function")
+            // Don't allow 0 to bypass the evaluation
+            if (name==0 || name)
             {
-               var o = rval;
-               var f = rval[name];
-               rval = function() { return f.call(o); };
+               if (typeof(rval[name])=="function")
+               {
+                  var o = rval;
+                  var f = rval[name];
+                  rval = function() { return f.call(o); };
+               }
+               else if (typeof(rval)!="object" || !(name in rval))
+                  return null;
+               else
+                  rval = rval[name];
             }
-            else
-               rval = rval[name];
          }
       }
       return rval;
