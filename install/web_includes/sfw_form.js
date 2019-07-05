@@ -543,6 +543,7 @@
       || !SFW.derive(_form_edit, "form-jump", "form")
       || !SFW.derive(_form_edit, "form-page", "form")
       || !SFW.derive(_form_single, "form-single", "form")
+      || !SFW.derive(_form_single, "form-import", "form")
      )
       return;
 })();

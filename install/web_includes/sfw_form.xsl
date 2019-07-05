@@ -91,7 +91,6 @@
 
     <xsl:variable name="sfw-class">
       <xsl:choose>
-        <xsl:when test="$mode-type='form-import'">import</xsl:when>
         <xsl:when test="$type"><xsl:value-of select="$type" /></xsl:when>
         <xsl:when test="@merge-type"><xsl:value-of select="@merge-type" /></xsl:when>
         <xsl:when test="@type"><xsl:value-of select="@type" /></xsl:when>
