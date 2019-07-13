@@ -96,9 +96,12 @@
       name="v_res"
       select="/*[not($m_res|$b_res)][$gview]/*[schema][@rndx][local-name()=$gview/@result]"/>
   <xsl:variable
+      name="n_res"
+      select="/*[not($m_res|$b_res|$v_res)]/*[local-name()=../@mode-type][@rndx]" />
+  <xsl:variable
       name="f_res"
-      select="/*[not($m_res|$b_res|$v_res)]/*[schema][@rndx][1]" />
+      select="/*[not($m_res|$b_res|$v_res|$n_res)]/*[schema][@rndx][1]" />
 
-  <xsl:variable name="gresult" select="$m_res|$b_res|$v_res|$f_res" />
+  <xsl:variable name="gresult" select="$m_res|$b_res|$v_res|$n_res|$f_res" />
 
 </xsl:stylesheet>
