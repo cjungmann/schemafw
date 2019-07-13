@@ -477,11 +477,6 @@
       <xsl:when test="local-name()='value'">
         <xsl:value-of select="." />
       </xsl:when>
-      <xsl:when test="local-name()='ref-value'">
-        <xsl:apply-templates select="$vars" mode="get_value">
-          <xsl:with-param name="name" select="." />
-        </xsl:apply-templates>
-      </xsl:when>
     </xsl:choose>
   </xsl:template>
 

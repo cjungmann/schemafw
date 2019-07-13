@@ -60,14 +60,4 @@
         select="concat($vars_obj, '.', $n, ' = &quot;', ., '&quot;;', $nl)" />
   </xsl:template>
 
-  <!-- Add variables from set in the main stylesheet. -->
-  <xsl:template match="/*" mode="add_document_vars">
-    <xsl:if test="count($vars)">
-      <script>var <xsl:value-of select="$vars_obj" />={};</script>
-      <xsl:value-of select="$nl" />
-      <xsl:apply-templates select="." mode="add_document_variables" />
-    </xsl:if>
-  </xsl:template>
-
-
 </xsl:stylesheet>

@@ -195,11 +195,6 @@
         <xsl:when test="$lenval&gt;0 and (not(@nt) or @nt='attribute' or @nt='child')">
           <xsl:value-of select="$val" />
         </xsl:when>
-        <xsl:when test="@ref-value">
-          <xsl:apply-templates select="$vars" mode="get_value">
-            <xsl:with-param name="name" select="@ref-value" />
-          </xsl:apply-templates>
-        </xsl:when>
         <xsl:when test="@map-value">
           <xsl:value-of select="$data/@*[local-name()=current()/@map-value]" />
         </xsl:when>
