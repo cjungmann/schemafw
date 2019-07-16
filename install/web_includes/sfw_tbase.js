@@ -305,7 +305,7 @@
       return name;
    };
 
-   _tbase.prototype.get_click_id_name = function(name)
+   _tbase.prototype.get_click_id_name_raw = function(name)
    {
       var idname = this.get_sfw_attribute(name+"_click_id");
       if (!idname)
@@ -319,13 +319,18 @@
          }
       }
 
+      return idname;
+   };
+
+   _tbase.prototype.get_click_id_name = function(name)
+   {
+      var idname = this.get_click_id_name_raw(nae);
       if (!idname)
          console.error(
             ["Unable to find an idname with which",
              "to later identify the selected line",
              "for updating with new values."].join(" ")
          );
-
       return idname;
    };
 
