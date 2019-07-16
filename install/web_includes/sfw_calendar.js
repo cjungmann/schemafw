@@ -157,27 +157,30 @@
       var did;
       if (dayel)
       {
-         rval.task = this.get_on_click_value("day",el.tagName.toLowerCase());
-         rval.idname = this.get_click_id_name("td");
-         rval.dname = dayel.getAttribute("data-name");
-         if (rval.idname=="id")
-            rval.idname = this.get_click_id_name("day");
-
-         function f(n)
+         if ((rval.task = this.get_on_click_value("day",el.tagName.toLowerCase())))
          {
-            if (n.nodeType==1 && class_includes(n,"day_content"))
-            {
-               rval.target = n;
-               if ((did=n.getAttribute("data-id")))
-                  rval.did = did;
-               return true;
-            }
-         }
+            rval.idname = this.get_click_id_name("td");
+            rval.dname = dayel.getAttribute("data-name");
+            if (rval.idname=="id")
+               rval.idname = this.get_click_id_name("day");
 
-         SFW.find_child_matches(dayel,f,true,false);
+            function f(n)
+            {
+               if (n.nodeType==1 && class_includes(n,"day_content"))
+               {
+                  rval.target = n;
+                  if ((did=n.getAttribute("data-id")))
+                     rval.did = did;
+                  return true;
+               }
+               return false;
+            }
+
+            SFW.find_child_matches(dayel,f,true,false);
+         }
       }
       return rval;
-   }
+   };
 
    _calendar.prototype.process = function (e,t)
    {
