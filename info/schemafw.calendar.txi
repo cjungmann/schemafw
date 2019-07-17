@@ -1,0 +1,114 @@
+@node Calendars
+@chapter Calendars
+
+The framework includes a calendar stylesheet and javascript module for
+basic calendars.  
+
+@menu
+* Calendar Introduction::
+* Calendar XSL Code::
+* Calendar SRM Settings::
+* Calendar SQL Code::
+* Calendar Day SQL Code::
+@end menu
+
+@node Calendar Introduction
+@section Calendar Introduction
+
+The template, on its own, will generate an empty calendar with
+buttons to move forward or backward by either a month or a year
+per click.
+
+A developer can override a template to fill the calendar days.
+Overriding the template provides for considerable customization.
+
+@node Calendar XSL Code
+@section Calendar XSL Code
+
+Create a template named @emph{build_day_content} in which the
+developer will write out the days' contents.  In the following
+example, the override template simply invokes another template
+with a set of elements that match the @emph{date} parameter value:
+
+@example
+<template name="build_day_content">
+   <xsl:param name="date" />
+   <xsl:apply-templates select="/*/events/event[@@date=$date]" mode="daily_event" />
+</template>
+@end example
+
+The @emph{date} parameter is in the form @emph{YYYY-MM-DD}.
+
+@node Calendar SRM Settings
+@section Calendar SRM Settings
+
+Using the built-in calendar, use the @emph{calendar} mode type
+that matches up with a result with the same name (@emph{calendar}).
+
+The following example responds to a day click.  Presumably, the
+day view will show a day's contents from which the constituent 
+events could be individually edited.
+
+@example
+list
+   type : calendar
+   procedure : App_Events_List
+   on_day_click : ?view
+   result : 1
+      name : calendar
+@end example
+
+
+@node Calendar SQL Code
+@section Calendar SQL Code
+
+Given the @emph{YYYY-MM-DD} date format, the developer should ensure
+that a compatible date is included in the elements that are to be
+matched by the template.  The following query is an illustration of
+how to accomplish this:
+
+@example
+CREATE PROCEDURE App_Events_List(id INT UNSIGNED, month CHAR(7))
+BEGIN
+   DECLARE start_date DATE;
+   DECLARE end_date DATE;
+
+   SET start_date = DATE_ADD(CONCAT(month,'-01'), INTERVAL 0 DAY);
+   SET end_date = DATE_ADD(start_date, INTERVAL 1 MONTH);
+
+   SELECT id,
+          DATE_FORMAT(edate, '%Y-%m-%d') AS date,
+          description
+     FROM Event
+    WHERE edate >= start_date AND edate < end_date;
+END $$
+@end example
+
+Note that the format string, @code{%Y-%m-%d}, will generate the
+date with a four-digit year, followed by a month substring from
+01-12 and a day substring from 01-31.
+
+@node Calendar Day SQL Code
+@section Calendar Day SQL Code
+
+For an SRM that includes a @code{on_day_click} instruction as with
+the example on earlier SRM page, the framework will construct a URL
+that includes the day name as the single parameter.  That is, the
+URL in the earlier example would look something like
+@code{calendar.srm?view=2019-07-17}.
+
+The SQL procedure would thus also have a single parameter, a date
+data-type of any name..  The name of the parameter is not important
+because the framework takes advantage of SchemaServer applying an
+unnamed value to the first parameter of a stored procedure.
+
+@example
+CREATE PROCEDURE App_Events_Day_View(ddate DATE)
+BEGIN
+   SELECT COUNT(*) AS event_count
+     FROM Events
+    WHERE edate = ddate;
+END $$
+@end example
+
+
