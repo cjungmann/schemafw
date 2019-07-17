@@ -324,7 +324,7 @@
 
    _tbase.prototype.get_click_id_name = function(name)
    {
-      var idname = this.get_click_id_name_raw(nae);
+      var idname = this.get_click_id_name_raw(name);
       if (!idname)
          console.error(
             ["Unable to find an idname with which",
