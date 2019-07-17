@@ -37,15 +37,19 @@
       return rval;
    };
 
-   _calendar.prototype.process_day_click = function(t, did)
+   _calendar.prototype.process_day_click = function(t)
    {
-      var url = this.get_data_value("on_day_click");
-      if (url)
+      var dayid, url = this.get_data_value("on_day_click");
+      if (url
+          && class_includes(t,"cal_day")
+          && (dayid = t.getAttribute("data-name")))
       {
-         url += "=" + did;
-         empty_el(this.host());
-         SFW.open_interaction(SFW.stage, url, this, {caldoc:this.xmldoc(),did:did});
+         url += "=" + dayid;
+         // empty_el(this.host());
+         SFW.open_interaction(SFW.stage, url, this, {caldoc:this.xmldoc(),did:dayid});
+         return false;
       }
+      return true;
    };
 
    _calendar.prototype.process_month_jump = function(month)
@@ -131,57 +135,6 @@
       return el;
    }
 
-   // _calendar.prototype.get_el_click_info = function(el)
-   // {
-   //    var did, dname, task, rval=null;
-   //    if ((did=el.getAttribute("data-id")) && class_includes(el,"day_content")
-   //        || (dname=el.getAttribute("data-name")) && class_includes(el,"cal_day"))
-   //    {
-   //       rval = { target : el,
-   //                task   : this.get_on_click_value("day", el.tagName.toLowerCase()),
-   //                idname : this.get_click_id_name("td") || this.get_click_id_name("day")
-   //              };
-
-   //       if (did)
-   //          rval.did = did;
-   //       else if (dname)
-   //          rval.dname = dname;
-   //    }
-   //    return rval;
-   // };
-
-   _calendar.prototype.get_el_click_info = function(el)
-   {
-      var rval = { target : el };
-      var dayel = _day_from_click(el);
-      var did;
-      if (dayel)
-      {
-         if ((rval.task = this.get_on_click_value("day",el.tagName.toLowerCase())))
-         {
-            rval.idname = this.get_click_id_name("td");
-            rval.dname = dayel.getAttribute("data-name");
-            if (rval.idname=="id")
-               rval.idname = this.get_click_id_name("day");
-
-            function f(n)
-            {
-               if (n.nodeType==1 && class_includes(n,"day_content"))
-               {
-                  rval.target = n;
-                  if ((did=n.getAttribute("data-id")))
-                     rval.did = did;
-                  return true;
-               }
-               return false;
-            }
-
-            SFW.find_child_matches(dayel,f,true,false);
-         }
-      }
-      return rval;
-   };
-
    _calendar.prototype.process = function (e,t)
    {
       var clickinfo, tag, mon, top = this.top();
@@ -193,11 +146,15 @@
       var tel = t;
       while (tel && tel!=top)
       {
+         if (!this.process_day_click(tel))
+            return false;
+
          if ((tag=tel.tagName.toLowerCase())=="button" &&
              (mon=tel.getAttribute("data-jump")))
             return this.process_month_jump(mon);
-         if ((click_info = this.get_el_click_info(tel)))
-            return this.process_click_info(click_info);
+
+         if ((clickinfo = this.get_el_click_info(tel)))
+            return this.process_click_info(clickinfo);
 
          tel = tel.parentNode;
       }
