@@ -2115,7 +2115,8 @@ function init_SFW(callback)
       if (data)
          e.data = data;
    };
-   _base.prototype.closeable = function() { return false; };
+   // _base.prototype.closeable = function() { return false; };
+   _base.prototype.closeable = function() { return this.caller() != null; };
    _base.prototype.selfclose = function()
    {
       var c;
