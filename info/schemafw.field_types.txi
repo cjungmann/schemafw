@@ -69,7 +69,8 @@ is to name the result.  The other two instructions,
 @node Field Type selectx
 @section Field Type selectx
 
-This is a powerful but a little finicky
-
+This powerful but finicky field type is covered in the
+chapter @ref{Form Input Widgets}, specifically in section
+@ref{SelectX Input Widget}.
          
 
