@@ -28,6 +28,28 @@
     </xsl:apply-templates>
   </xsl:template>
 
+  <!-- should match row "*[..[@rndx]][local-name()=../@row-name]",
+       but counting on appropriate use of mode selectx_option_label
+       to make an explicit match unnecessary. -->
+
+  <xsl:template match="*" mode="selectx_option_label">
+    <xsl:param name="field" />
+    <xsl:param name="show_name" select="/.." />
+
+    <xsl:choose>
+      <xsl:when test="$field/@display">
+        <xsl:call-template name="resolve_refs">
+          <xsl:with-param name="str" select="$field/@display" />
+          <xsl:with-param name="row" select="." />
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="@*[local-name()=$show_name]" />
+      </xsl:otherwise>
+    </xsl:choose>
+  
+  </xsl:template>
+
 
   <xsl:template match="field[@type='selectx']" mode="construct_input">
     <xsl:param name="data" />
@@ -88,15 +110,8 @@
 
     <xsl:template match="*" mode="build_selectx_span">
       <xsl:param name="id_name" />
+      <xsl:param name="field" />
       <xsl:param name="show_name" />
-
-      <!-- <span> -->
-      <!--   <xsl:text>|</xsl:text> -->
-      <!--   <xsl:value-of select="concat('id=',@*[local-name()=$id_name])" /> -->
-      <!--   <xsl:text> </xsl:text> -->
-      <!--   <xsl:value-of select="concat('value=',@*[local-name()=$show_name])" /> -->
-      <!--   <xsl:text>|</xsl:text> -->
-      <!-- </span> -->
 
       <xsl:element name="span">
         <xsl:if test="string-length($id_name)">
@@ -105,7 +120,10 @@
           </xsl:attribute>
           <xsl:attribute name="title">Click to remove</xsl:attribute>
         </xsl:if>
-        <xsl:value-of select="@*[local-name()=$show_name]" />
+        <xsl:apply-templates select="." mode="selectx_option_label">
+          <xsl:with-param name="field" select="$field" />
+          <xsl:with-param name="show_name" select="$show_name" />
+        </xsl:apply-templates>
       </xsl:element>
 
     </xsl:template>
@@ -117,13 +135,14 @@
 
       <xsl:variable name="ids" select="concat(',',$dval,',')" />
       <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/@result]" />
+      <xsl:variable name="field" select="." />
 
       <xsl:variable name="id_name">
         <xsl:apply-templates select="." mode="get_id_field" />
       </xsl:variable>
 
       <xsl:variable name="show_name">
-        <xsl:apply-templates select="." mode="get_show_field" />
+        <xsl:apply-templates select="self[not(@display)]" mode="get_show_field" />
       </xsl:variable>
 
       <!-- Make node-list containing all rows whose id values are included in dval -->
@@ -140,6 +159,7 @@
               <xsl:value-of select="$id_name" />
             </xsl:if>
           </xsl:with-param>
+          <xsl:with-param name="field" select="$field" />
           <xsl:with-param name="show_name" select="$show_name" />
         </xsl:apply-templates>
         
@@ -166,10 +186,11 @@
       </xsl:variable>
 
       <xsl:variable name="show_name">
-        <xsl:apply-templates select="." mode="get_show_field" />
+        <xsl:apply-templates select="self[not(@display)]" mode="get_show_field" />
       </xsl:variable>
 
       <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/@result]" />
+      <xsl:variable name="field" select="." />
 
       <xsl:variable name="b_id" select="substring-before($dval,',')" />
       <xsl:variable name="b_len" select="string-length($b_id)" />
@@ -188,6 +209,7 @@
             <xsl:value-of select="$id_name" />
           </xsl:if>
         </xsl:with-param>
+        <xsl:with-param name="field" select="$field" />
         <xsl:with-param name="show_name" select="$show_name" />
       </xsl:apply-templates>
         
@@ -205,13 +227,14 @@
 
       <xsl:variable name="ids" select="concat(',',$dval,',')" />
       <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/@result]" />
+      <xsl:variable name="field" select="." />
 
       <xsl:variable name="id_name">
         <xsl:apply-templates select="." mode="get_id_field" />
       </xsl:variable>
 
       <xsl:variable name="show_name">
-        <xsl:apply-templates select="." mode="get_show_field" />
+        <xsl:apply-templates select="self[not(@display)]" mode="get_show_field" />
       </xsl:variable>
 
       <xsl:for-each select="$result/*[local-name()=../@row-name]">
@@ -225,7 +248,10 @@
           <xsl:if test="contains($ids,concat(',',$idval,','))">
             <xsl:attribute name="class">on</xsl:attribute>
           </xsl:if>
-          <xsl:value-of select="@*[local-name()=$show_name]" />
+          <xsl:apply-templates select="." mode="selectx_option_label">
+            <xsl:with-param name="field" select="$field" />
+            <xsl:with-param name="show_name" select="$show_name" />
+          </xsl:apply-templates>
         </xsl:element>
       </xsl:for-each>
     </xsl:template>
