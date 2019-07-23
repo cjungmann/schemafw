@@ -74,6 +74,7 @@ schema
       # selectx settings follow:
       result : keywords
       style  : multiple
+      display : @{!value@} (@{!id@})
       ranked : true
       stacked : true
 @end example
@@ -84,6 +85,21 @@ The settings are:
 @item result
 This required setting identifies the result to be used as the source
 of the @emph{selectx} options.
+
+@item id_field
+An optional instruction that indicates the name of the field to use for
+the option value attribute.  Use this instruction to override the
+selection made by the framework.  (@code{id_field} can be specified in
+the result: @pxref{Lookup Values Introduction})
+
+@item show
+An optional instruction that indicates the name of the field to use for
+the option label.  Use this instruction to override the selection made
+by the framework.  (@code{show_field} can be specified in the result: @pxref{Lookup Values Introduction})
+
+@item display
+An optional instruction that specifies a string from which the label
+will be build using typical context references (@pxref{Defining Context References}).
 
 @item style
 This optional setting can only be @code{multiple}, to indicate that
