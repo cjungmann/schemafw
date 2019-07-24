@@ -28,29 +28,6 @@
     </xsl:apply-templates>
   </xsl:template>
 
-  <!-- should match row "*[..[@rndx]][local-name()=../@row-name]",
-       but counting on appropriate use of mode selectx_option_label
-       to make an explicit match unnecessary. -->
-
-  <xsl:template match="*" mode="selectx_option_label">
-    <xsl:param name="field" />
-    <xsl:param name="show_name" select="/.." />
-
-    <xsl:choose>
-      <xsl:when test="$field/@display">
-        <xsl:call-template name="resolve_refs">
-          <xsl:with-param name="str" select="$field/@display" />
-          <xsl:with-param name="row" select="." />
-        </xsl:call-template>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="@*[local-name()=$show_name]" />
-      </xsl:otherwise>
-    </xsl:choose>
-  
-  </xsl:template>
-
-
   <xsl:template match="field[@type='selectx']" mode="construct_input">
     <xsl:param name="data" />
 
@@ -120,8 +97,8 @@
           </xsl:attribute>
           <xsl:attribute name="title">Click to remove</xsl:attribute>
         </xsl:if>
-        <xsl:apply-templates select="." mode="selectx_option_label">
-          <xsl:with-param name="field" select="$field" />
+        <xsl:apply-templates select="$field" mode="generate_field_value">
+          <xsl:with-param name="row" select="." />
           <xsl:with-param name="show_name" select="$show_name" />
         </xsl:apply-templates>
       </xsl:element>
@@ -248,8 +225,8 @@
           <xsl:if test="contains($ids,concat(',',$idval,','))">
             <xsl:attribute name="class">on</xsl:attribute>
           </xsl:if>
-          <xsl:apply-templates select="." mode="selectx_option_label">
-            <xsl:with-param name="field" select="$field" />
+          <xsl:apply-templates select="$field" mode="generate_field_value">
+            <xsl:with-param name="row" select="." />
             <xsl:with-param name="show_name" select="$show_name" />
           </xsl:apply-templates>
         </xsl:element>

@@ -218,5 +218,29 @@
   </xsl:template>
 
 
+  <xsl:template match="schema/field" mode="generate_field_value">
+    <xsl:param name="row" select="/.." />
+    <xsl:param name="show_name" />
+
+    <xsl:choose>
+      <xsl:when test="@display">
+        <xsl:call-template name="resolve_refs">
+          <xsl:with-param name="str" select="@display" />
+          <xsl:with-param name="row" select="$row" />
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:when test="$show_name">
+        <xsl:value-of select="$row/@*[local-name()=$show_name]" />
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:variable name="altfield" select="$field/../field[not(@primary_key)][1]" />
+        <xsl:if test="$altfield">
+          <xsl:value-of select="$row/@*[local-name()=$altfield/@name]" />
+        </xsl:if>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+    
+
 
 </xsl:stylesheet>
