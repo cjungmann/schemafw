@@ -43,8 +43,10 @@
             <xsl:apply-templates select="." mode="get_show_field" />
           </xsl:variable>
 
-          <xsl:variable name="raw_value" select="$data/@*[local-name()=$fname]" />
-          <xsl:value-of select="$row/@*[local-name()=$show_field]" />
+          <xsl:apply-templates select="." mode="generate_field_value">
+            <xsl:with-param name="row" select="$row" />
+            <xsl:with-param name="show_name" select="$show_field" />
+          </xsl:apply-templates>
         </xsl:if>
       </xsl:if>
     </xsl:if>
