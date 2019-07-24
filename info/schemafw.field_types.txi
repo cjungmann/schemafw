@@ -4,6 +4,7 @@
 @menu
 * Field Types Intro::
 * Field Type lookup::
+* Field Type checkbox::
 * Field Type selectx::
 @end menu
 
@@ -65,6 +66,88 @@ The second item is the second result.  The minimum requirement
 is to name the result.  The other two instructions,
 @emph{id_field} and @emph{show_field} can be omitted.
 @xref{Lookup Values}
+
+@node Field Type checkbox
+@section Field Type checkbox
+
+The framework handles checkboxes in two ways.  The standard
+abstraction for a checkbox is to represent a boolean, yes-or-no
+field.  The Schema Framework offers an additional checkbox
+model that mimics a multi-selection @emph{select} element.
+
+@subheading Multi-select Checkbox
+
+Taking a cue from @emph{radio} input elements, the framework
+can process a set of same-named @emph{checkbox} input elements
+as a single form value, returning a comma-separated list of
+integers representing each selected checkbox.
+
+@subheading Trigger Multi-select Checkbox Handling
+
+In order to the control to work, each checkbox must include
+an additional attribute, @code{data-id}.  The inclusion of the
+@code{data-id} attribute will trigger the consolidated value.
+
+@subheading MySQL Handling Multi-select Checkbox Value
+
+Interpret a multi-select checkbox using the @emph{selectx}
+control in the broad subsection @ref{SelectX SQL Changes Checklist},
+specifically @ref{SelectX SQL CSV Integer Parsing Procedure}.
+
+@example
+CREATE PROCEDURE App_Attributes_Add(item_id INT UNSIGNED, attribute_list TEXT)
+BEGIN
+   IF attribute_list IS NOT NULL AND LENGTH(attribute_list) > 0 THEN
+      CALL ssys_make_SFW_IntTable_from_list(attribute_list);
+      INSERT INTO Attribute(id_item, id_attribute)
+           SELECT (item_id, val)
+             FROM SFW_IntTable;
+
+      DROP TABLE SFW_IntTable;
+   END IF;
+END $$
+@end example
+
+@subheading Preparing Checkboxes for Multi-select
+
+As stated earlier, the trigger for handling same-named checkboxes
+is the @emph{data-id} attribute.  The following example labels
+the checkboxes under a column-heading in a table-formatted form
+field.
+
+@example
+<table>
+   <tr>
+      <th>Service</th>
+      <th>Purchase</th>
+   </tr>
+   <tr>
+      <td>Simple Wash</td>
+      <td><input type="checkbox" name="purchase" data-id="1" />
+   </tr>
+   <tr>
+      <td>Undercarriage Wash</td>
+      <td><input type="checkbox" name="purchase" data-id="2" />
+   </tr>
+   <tr>
+      <td>Bees Wax</td>
+      <td><input type="checkbox" name="purchase" data-id="3" />
+   </tr>
+</table>
+@end example
+
+The output must be generated through a custom field type that
+triggers the use of a matching template with @code{mode="construct_input"}.
+Generally, the set of same-named checkboxes will be rendered
+from the contents of a @emph{result} in a merged document.
+
+There is no way, currently, for the @emph{data-id} attribute
+to be applied through framework form generation.  Among the
+problems with automatic generation is that input elements
+can't be grouped with the @emph{label} element.  The individual
+checkboxes must be identified for the end user in ways that
+are difficult to anticipate in a general way.
+
 
 @node Field Type selectx
 @section Field Type selectx
