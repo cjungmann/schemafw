@@ -115,6 +115,31 @@
       return str;
    }
 
+   function _get_checkbox_value(el)
+   {
+      var name = el.name;
+      var form = el.form;
+      var tel, dataid;
+      var arr = [];
+
+      for (var i=0, stop=form.length; i<stop; ++i)
+      {
+         tel = form.elements[i];
+         if (tel.tagName.toLowerCase()=="input"
+             && tel.type == "checkbox"
+             && tel.name == name
+             && tel.checked)
+         {
+            if ((dataid = tel.getAttribute("data-id")))
+               arr.push(dataid);
+            else
+               arr.push(1);
+         }
+      }
+
+      return arr.length>0 ? arr.join(',') : "0";
+   }
+
    var _dataless_els = 'submit reset button';
    function _holds_data(el)
    {
@@ -124,16 +149,24 @@
    // Global, SFW member function
    function _get_form_data(form)
    {
+      // Log checkbox names processed so each name processed only once
+      var arr_checkboxes = [];
+
       var el, els = form.elements;
       var arr = [];
+
       for (var i=0, stop=els.length; i<stop; i++)
       {
          if ((el = _holds_data(els[i])))
          {
             if (el.type=="checkbox")
             {
-               if (el.checked)
-                  arr.push(el.name + "=1");
+               // Only get checkbox value the first time we encounter the name
+               if (arr_checkboxes.indexOf(el.name)==-1)
+               {
+                  arr_checkboxes.push(el.name);
+                  arr.push(el.name + "=" + _get_checkbox_value(el));
+               }
             }
             else if ('value' in el && el.value.length>0)
             {
@@ -173,6 +206,9 @@
    // Global, SFW member function
    function _get_form_data_xml(form, outel, save_skips)
    {
+      // Log checkbox names processed so each name processed only once
+      var arr_checkboxes = [];
+
       // Default value is true:
       if (arguments.length<3)
          save_skips = false;
@@ -191,7 +227,13 @@
          if ((el = _holds_data(els[i])) && !fskip(el))
          {
             if (el.type=="checkbox")
-               outel.setAttribute(el.name, (el.checked?"1":"0"));
+            {
+               if (arr_checkboxes.indexOf(el.name)==-1)
+               {
+                  arr_checkboxes.push(el.name);
+                  outel.setAttribute(el.name, _get_checkbox_value(el));
+               }
+            }
             else if ('value' in el && el.value.length>0)
             {
                if ("multiple" in el && el.multiple)
