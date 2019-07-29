@@ -256,9 +256,15 @@
         <xsl:apply-templates select="@url" mode="resolve_url" />
       </xsl:variable>
 
-      <a href="{$url}">
+      <xsl:element name="a">
+        <xsl:attribute name="href"><xsl:value-of select="$url" /></xsl:attribute>
+        <xsl:if test="@tag">
+          <xsl:attribute name="tag">
+            <xsl:value-of select="@tag" />
+          </xsl:attribute>
+        </xsl:if>
         <xsl:apply-templates select="@label" mode="resolve_refs" />
-      </a>
+      </xsl:element>
   </xsl:template>
 
   <xsl:template match="/*/navigation" mode="header">
