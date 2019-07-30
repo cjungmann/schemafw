@@ -508,6 +508,72 @@
     </xsl:if>
   </xsl:template>
 
+  <xsl:template name="time_24_2_12">
+    <xsl:param name="str" />
+    <!-- could be hours, minutes, seconds.  Only first letter is significant" -->
+    <xsl:param name="lsv" select="'minutes'" />
+
+    <!-- interpret date -->
+
+    <xsl:variable name="lsvd" select="substring($lsv,1,1)" />
+
+    <xsl:variable name="hours" select="number(substring($str,1,2))" />
+    <xsl:variable name="minutes" select="number(substring($str,4,2))" />
+    <xsl:variable name="seconds" select="number(substring($str,7,2))" />
+                  
+    <xsl:variable name="lhours" select="$hours - 12" />
+
+    <xsl:variable name="dhours">
+      <xsl:choose>
+        <xsl:when test="$hours=0">12</xsl:when>
+        <xsl:when test="$hours=12">12</xsl:when>
+        <xsl:when test="$lhours &lt; 0"><xsl:value-of select="$hours" /></xsl:when>
+        <xsl:otherwise><xsl:value-of select="$lhours" /></xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:variable name="pval">
+      <xsl:choose>
+        <xsl:when test="$lhours &lt; 0">AM</xsl:when>
+        <xsl:otherwise>PM</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <!-- show conclusion -->
+
+    <xsl:value-of select="$dhours" />
+
+    <xsl:if test="$lsvd='m' or $lsvd='s'">
+      <xsl:value-of select="concat(':', substring(($minutes+100),2))" />
+    </xsl:if>
+
+    <xsl:if test="$lsvd='s'">
+      <xsl:value-of select="concat(':', substring(($seconds+100),2))" />
+    </xsl:if>
+
+    <xsl:value-of select="$pval" />
+
+  </xsl:template>
+
+  <!-- Three xtime convenience templates matching an attribute -->
+  <xsl:template match="@*" mode="xtime">
+    <xsl:call-template name="time_24_2_12">
+      <xsl:with-param name="str" select="." />
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="@*[contains(.,'T')]" mode="xtime">
+    <xsl:call-template name="time_24_2_12">
+      <xsl:with-param name="str" select="substring-after(.,'T')" />
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="@*[contains(.,' ')]" mode="xtime">
+    <xsl:call-template name="time_24_2_12">
+      <xsl:with-param name="str" select="substring-after(.,' ')" />
+    </xsl:call-template>
+  </xsl:template>
+
 
 
 </xsl:stylesheet>
