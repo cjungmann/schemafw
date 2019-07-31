@@ -1502,17 +1502,28 @@ function init_SFW(callback)
    function _process_updates(pagedocel, newdocel, form)
    {
       var caller, xpath, xrow, xresult;
-      if ((xrow=form.get_context_row()))
+
+      // xrow and xpath will be undefined if form is undefined:
+      if (form && (xrow=form.get_context_row()))
          xresult = xrow.parentNode;
-      if (!xresult)
+      if (form && !xresult)
          if ((caller=form.caller()) && (xpath=caller.get_result_path_from_top()))
             xresult = pagedocel.selectSingleNode(xpath);
 
       var updates = newdocel.selectNodes("*[@rndx][@type='update']");
       for (var i=0, stop=updates.length; i<stop; ++i)
       {
-         var target, result = updates[i];
-         var rowname = result.getAttribute("row-name");
+         var result = updates[i];
+         var updater_name = result.getAttribute("updater");
+         var updater_func = (updater_name in window) ? window[updater_name] : null;
+
+         if (updater_func)
+         {
+            updater_func(pagedocel, result);
+            continue;
+         }
+
+         var target, rowname = result.getAttribute("row-name");
 
          var tname = result.getAttribute("target");
          if (tname)
@@ -1525,22 +1536,32 @@ function init_SFW(callback)
 
          if (target)
          {
-            var xrow_path;
-            if (xrow)
+            if (updater_name)
             {
-               var idname = SFW.get_result_idname(target);
-               var idval = xrow.getAttribute(idname);
-               xrow_path = SFW.get_result_xpath(target);
-               xrow_path += "/*[local-name()=../@row-name][@"+idname+"='"+idval+"']";
+               SFW.alert("Going to use '" + updater_name + "' to update the data.");
             }
-
-            _update_result_from_result(target, result);
-
-            if (xrow_path)
+            else
             {
-               var newxrow = target.selectSingleNode(xrow_path);
-               if (newxrow)
-                  form.update_context_row(newxrow);
+               var xrow_path;
+               // If form is undefined, xrow is undefined, the condition fails
+               if (xrow)
+               {
+                  var idname = SFW.get_result_idname(target);
+                  var idval = xrow.getAttribute(idname);
+                  xrow_path = SFW.get_result_xpath(target);
+                  xrow_path += "/*[local-name()=../@row-name][@"+idname+"='"+idval+"']";
+               }
+
+               _update_result_from_result(target, result);
+
+               // If form is undefined, xrow_path is undefined because it wasn't set
+               // in condition above for xrow:
+               if (xrow_path)
+               {
+                  var newxrow = target.selectSingleNode(xrow_path);
+                  if (newxrow)
+                     form.update_context_row(newxrow);
+               }
             }
          }
       }
@@ -1639,6 +1660,11 @@ function init_SFW(callback)
          var merge, pagedoc, node_to_remove;
          if (SFW.check_for_preempt(xdoc))
          {
+            // Allow for updates from a new interaction.  In particular, this
+            // is an opportunity to refresh data that may be new since the
+            // page was rendered.
+            _process_updates(SFW.xmldoc.documentElement, xdoc.documentElement);
+
             SFW.update_xsl_keys(xdoc);
             var modetype = xdoc.documentElement.getAttribute("mode-type");
 
