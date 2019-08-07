@@ -89,7 +89,7 @@
           <xsl:with-param name="primary" select="$primary" />
         </xsl:apply-templates>
       </xsl:when>
-      <xsl:when test="$gschema">
+      <xsl:when test="$gschema[not(.. = $gresult)]">
         <xsl:apply-templates select="$gschema" mode="construct_form">
           <xsl:with-param name="primary" select="$cprimary" />
         </xsl:apply-templates>
