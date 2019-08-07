@@ -337,28 +337,30 @@
     </xsl:variable>
 
     <p class="form-row">
-      <label for="{$name}">
-        <xsl:if test="$view-mode and @on_field_click">
-          <xsl:element name="button">
-            <xsl:attribute name="type">button</xsl:attribute>
-            <xsl:attribute name="data-url">
-              <xsl:apply-templates select="@on_field_click" mode="resolve_refs">
-                <xsl:with-param name="escape" select="1" />
-              </xsl:apply-templates>
-            </xsl:attribute>
-            <xsl:text>Edit</xsl:text>
-          </xsl:element>
-        </xsl:if>
-        <xsl:value-of select="$label" />
-        <xsl:if test="@ebutton and not($single-field)">
-          <button type="button"
-                  class="ebutton_edit"
-                  data-type="call"
-                  data-task="SFW.process_ebutton"
-                  title="Edit Field" >
-          </button>
-        </xsl:if>
-      </label>
+      <xsl:if test="string-length($label)">
+        <label for="{$name}">
+          <xsl:if test="$view-mode and @on_field_click">
+            <xsl:element name="button">
+              <xsl:attribute name="type">button</xsl:attribute>
+              <xsl:attribute name="data-url">
+                <xsl:apply-templates select="@on_field_click" mode="resolve_refs">
+                  <xsl:with-param name="escape" select="1" />
+                </xsl:apply-templates>
+              </xsl:attribute>
+              <xsl:text>Edit</xsl:text>
+            </xsl:element>
+          </xsl:if>
+          <xsl:value-of select="$label" />
+          <xsl:if test="@ebutton and not($single-field)">
+            <button type="button"
+                    class="ebutton_edit"
+                    data-type="call"
+                    data-task="SFW.process_ebutton"
+                    title="Edit Field" >
+            </button>
+          </xsl:if>
+        </label>
+      </xsl:if>
 
       <xsl:choose>
         <xsl:when test="$single-field">

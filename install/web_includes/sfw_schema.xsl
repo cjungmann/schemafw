@@ -114,14 +114,16 @@
   </xsl:template>
 
   <xsl:template match="schema/field" mode="get_label">
-    <xsl:choose>
-      <xsl:when test="@label">
-        <xsl:apply-templates select="@label" mode="resolve_refs" />
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="translate(@name,'_',' ')" />
-      </xsl:otherwise>
-    </xsl:choose>
+    <xsl:if test="not(@nolabel)">
+      <xsl:choose>
+        <xsl:when test="@label">
+          <xsl:apply-templates select="@label" mode="resolve_refs" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="translate(@name,'_',' ')" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="schema/field" mode="get_size">
