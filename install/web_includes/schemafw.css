@@ -168,7 +168,7 @@ table.Schema thead th
 /* approximate tr row spacing for p */
 p.button_row                   { margin: .25em 0; }
 /* tr.floater.button_row td       { display;block; } */
-tr.button_row td, p.button_row { text-align:center; }
+tr.button_row td, p.button_row { text-align:center; white-space:nowrap; }
 tr.button_row button           { margin: .25em; }
 
 table.Schema tbody tr { cursor:pointer; }
