@@ -24,6 +24,11 @@ other fields that are needed for the page but not needed for the
 form or table, like a date value that might be unchangable, but
 needed as a context reference for the title @xref{Defining Context References}.
 
+@item readOnly : true
+
+If the field is not @code{hidden}, the @code{readOnly} instruction
+will prevent the end user from changing the field value.
+
 @item label : [field label]
 
 By default, the field name is used for a table's column head or a
