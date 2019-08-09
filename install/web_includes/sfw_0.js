@@ -1547,9 +1547,10 @@ function init_SFW(callback)
                if (xrow)
                {
                   var idname = SFW.get_result_idname(target);
+                  var xrowname = xrow.parentNode.getAttribute("row-name");
                   var idval = xrow.getAttribute(idname);
                   xrow_path = SFW.get_result_xpath(target);
-                  xrow_path += "/*[local-name()=../@row-name][@"+idname+"='"+idval+"']";
+                  xrow_path += "/" + xrowname + "[@" + idname + "='" + idval + "']";
                }
 
                _update_result_from_result(target, result);
