@@ -92,18 +92,20 @@
 
    function _get_result_xpath(result)
    {
-      if (result.getAttribute("merged"))
-         throw "Can't key on merged results.";
-
       var xpath = "/*/";
       var rname = result.localName;
 
       if (rname=="result")
-         xpath += "*[@rndx=" + result.getAttribute("rndx") + "]";
+      {
+         if (result.getAttribute("merged"))
+            throw "Can't key on anonymous merged results.";
+
+         xpath += "*[@rndx=" + result.getAttribute("rndx") + "][not(@merged)]";
+      }
       else
          xpath += rname;
 
-      return xpath + "[not(@merged)]";
+      return xpath;
    }
 
    function _check_for_preempt(doc)
@@ -131,7 +133,7 @@
             {
                if (n.getAttribute("rndx"))
                   errnode = n.selectSingleNode("message");
-               else if (tname=n.tagName.toLowerCase()=="message")
+               else if ((tname=n.tagName.toLowerCase()=="message"))
                   errnode = n;
 
                if (errnode)
