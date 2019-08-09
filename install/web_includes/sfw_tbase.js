@@ -406,8 +406,9 @@
          }
          else if ((id=info.data_id))
          {
+            var idname = info.id_name || "id";
             var result = ("result" in info) ? info.result : this.result();
-            function f(n) { return n.nodeType==1 && n.getAttribute(info.id_name)==id; }
+            function f(n) { return n.nodeType==1 && n.getAttribute(idname)==id; }
             xrow = SFW.find_child_matches(result, f, true);
          }
       }
