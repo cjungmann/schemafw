@@ -101,6 +101,10 @@ by the framework.  (@code{show_field} can be specified in the result: @pxref{Loo
 An optional instruction that specifies a string from which the label
 will be build using typical context references (@pxref{Defining Context References}).
 
+For this instruction, use the row-selecting context reference
+@code{@{!..@}} to access the field values of the row matched in
+the target result.
+
 @item style
 This optional setting can only be @code{multiple}, to indicate that
 more than one option can be selected at a time.  Omitting this setting,
