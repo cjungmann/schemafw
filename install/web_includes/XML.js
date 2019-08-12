@@ -260,24 +260,29 @@ function prepare_xhr_functions()
 
          function f()
          {
-            var doc = xhr.responseXML;
-            if (doc)
+            if (xhr.status==200)
             {
-               if (callback)
-                  callback(doc);
+               var doc = xhr.responseXML;
+               if (doc)
+               {
+                  if (callback)
+                     callback(doc);
+               }
+               else
+               {
+                  if (xhr.responseText.substring(0,5)=="<?xml")
+                  {
+                     console.error("Invalid XML document.");
+                     report_responseText(xhr);
+                  }
+                  else if (cb_failed)
+                     cb_failed(xhr);
+                  else
+                     report_responseText(xhr);
+               }
             }
             else
-            {
-               if (xhr.responseText.substring(0,5)=="<?xml")
-               {
-                  console.error("Invalid XML document.");
-                  report_responseText(xhr);
-               }
-               else if (cb_failed)
-                  cb_failed(xhr);
-               else
-                  report_responseText(xhr);
-            }
+               console.error("check_xhr response error (code=" + xhr.status + "): " + xhr.statusText);
          }
          
          setTimeout(f);
