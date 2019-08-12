@@ -119,7 +119,7 @@
       </xsl:variable>
 
       <xsl:variable name="show_name">
-        <xsl:apply-templates select="self[not(@display)]" mode="get_show_field" />
+        <xsl:apply-templates select="self::*[not(@display)]" mode="get_show_field" />
       </xsl:variable>
 
       <!-- Make node-list containing all rows whose id values are included in dval -->
@@ -163,7 +163,7 @@
       </xsl:variable>
 
       <xsl:variable name="show_name">
-        <xsl:apply-templates select="self[not(@display)]" mode="get_show_field" />
+        <xsl:apply-templates select="self::*[not(@display)]" mode="get_show_field" />
       </xsl:variable>
 
       <xsl:variable name="result" select="/*/*[@rndx][local-name()=current()/@result]" />
@@ -211,7 +211,7 @@
       </xsl:variable>
 
       <xsl:variable name="show_name">
-        <xsl:apply-templates select="self[not(@display)]" mode="get_show_field" />
+        <xsl:apply-templates select="self::*[not(@display)]" mode="get_show_field" />
       </xsl:variable>
 
       <xsl:for-each select="$result/*[local-name()=../@row-name]">
