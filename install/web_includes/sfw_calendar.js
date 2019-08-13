@@ -16,6 +16,19 @@
       SFW.types["table"].call(this,base,doc,caller,data);
    }
 
+   
+   // This function overrides the default version to search
+   // for the redirected source of a calendar's contents.
+   _calendar.prototype.result = function()
+   {
+      var r, retval = this.call_super_event("tbase", "result");
+
+      if (retval && (r=retval.getAttribute("result")))
+         retval = retval.parentNode.selectSingleNode(r);
+
+      return retval;
+   };
+
    _calendar.prototype.process_cell_click = function(td)
    {
       var rval = null;
