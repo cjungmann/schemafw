@@ -233,11 +233,14 @@ function init_SFW(callback)
          debugger;
    }
 
-   function _show_string_in_pre(str)
+   function _show_string_in_pre(str, code)
    {
       var pre = addEl("pre", document.body);
       pre.className = "root_pre";
-      pre.appendChild(document.createTextNode(str));
+
+      var host = code ? addEl("code",pre) : pre;
+
+      host.appendChild(document.createTextNode(str));
       return pre;
    }
 
@@ -652,6 +655,12 @@ function init_SFW(callback)
       _resize_table_heads();
    }
 
+   function _highlight_result_tags(str)
+   {
+      function f(match) { return "\n" + match; }
+      return str.replace(/<.* rndx=.*>/g, f);
+   }
+
    function _setup_event_handling()
    {
       // Standard process handlers, in order of precedence:
@@ -708,9 +717,9 @@ function init_SFW(callback)
                if (e.shiftKey)
                   _remove_string_pres();
                else if (kcode==key_y)
-                     _show_string_in_pre(serialize(SFW.xsldoc));
+                  _show_string_in_pre(serialize(SFW.xsldoc));
                else
-                     _show_string_in_pre(serialize(SFW.xmldoc));
+                  _show_string_in_pre(_highlight_result_tags(serialize(SFW.xmldoc)));
                return true;
             }
 
