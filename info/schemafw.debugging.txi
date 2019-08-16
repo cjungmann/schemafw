@@ -22,16 +22,61 @@ included in the reconciled stylesheet.
 
 The XSL stylesheet and/or the XML document can be written to the underlying
 page as a @code{<pre>} child element of the @code{<body>} element.  From
-there, the code can be copied to be pasted into a file for study.
+there, the code can be copied to be pasted into files for study.
+
+For example, displaying and extracting both the XML and XSL documents
+allows a developer to apply the reconciled stylesheet to the momentary XML
+document using @code{xsltproc} or an XSL debugging program to isolate
+a rendering problem.
+
+@menu
+* Invoke Document View::          Keypress to display XSL or current XML document
+* Document View Hints::           Suggestions for how to best use the document view
+* Restore Document View Feature:: Code for document view feature, in case it goes away
+@end menu
+
+@node Invoke Document View
+@subsection Invoke Document View
+
+A simple keypress combination will add a @code{pre} element to the
+underlying @code{body} element and fill it with either the reconciled
+XSL document or the current XML document.
+
+Multiple invocations will stack.  In order to make it easier to
+scan for the beginning of a document view, each @code{pre} element
+is rendered with a red bar highlighting the beginning of each new
+view.
 
 @table @strong
 @item Show XSL stylesheet
 Type @key{Control} + @key{Alt} + @key{y}
+
 @item Show XML document
 Type @key{Control} + @key{Alt} + @key{u}
+
 @item Remove XSL and/or XML document from body element
 Type @key{Control} + @key{Alt} + @key{Shift} + @key{y} or @key{u}
 @end table
+
+@node Document View Hints
+@subsection Document View Hints
+
+Note that the @emph{current XML document} means the XML output will
+include any merged or form XML fragments that are in the document
+when the view is invoked.
+
+The document view is added below any other content on the page.
+Once helpful practice is to click @key{Control} + @key{alt} + @key{u}
+twice (or more) to ensure the top of the XML document emerges
+below the table, form, or other framework display element.  The XSL
+document is very long, so it is usually better to display the XML
+document to clear the framework display content.
+
+The red line helps the debugger quickly find the beginning of
+the document.
+
+@node Restore Document View Feature
+@subsection Restore Document View Feature
 
 The code in the section is currently in @file{sfw_0.js}, but it occasionally
 disappears when I get worried about performance or code bloat.  It is found
