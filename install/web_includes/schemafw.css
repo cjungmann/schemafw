@@ -1,4 +1,4 @@
-\html, body { margin:0; padding:0; }
+html, body { margin:0; padding:0; }
 h1, h2, h3  { text-align: center; margin:0; font-family:Arial, Helvetica, sans-serif; }
 
 #SFW_Content
@@ -24,6 +24,8 @@ h1, h2, h3  { text-align: center; margin:0; font-family:Arial, Helvetica, sans-s
 #SFW_Header nav { text-align:center; }
 #SFW_Header nav a { padding:.5em; }
 #SFW_Header nav a.here { background-color:#999999; }
+
+pre.root_pre { border-top: 2px solid red; padding-top:2em; }
 
 nav.views { text-align: center; }
 nav.views div
