@@ -128,9 +128,8 @@ function prepare_helper_functions()
       return map;
    };
 
-   function escape_xml(str)
+   escape_xml = function(str)
    {
-
       function cb(str)
       {
          switch(str)
@@ -148,7 +147,7 @@ function prepare_helper_functions()
       
       escape_xml = function(str) { return str.replace(re_xml, cb); };
       return escape_xml(str);
-   }
+   };
 
    empty_el = function(el)
    {
