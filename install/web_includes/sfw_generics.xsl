@@ -13,12 +13,14 @@
   <xsl:variable name="nl"><xsl:text>
 </xsl:text></xsl:variable>
 
-  <!-- simple apostrophe -->
-  <xsl:variable name="apos"><xsl:text>&apos;</xsl:text></xsl:variable>
+
+  <xsl:variable name="quot">"</xsl:variable>
+  <xsl:variable name="apos">'</xsl:variable>
+
   <!-- apostrophe,comma,apostrophe -->
-  <xsl:variable name="aposcomapos">&apos;,&apos;</xsl:variable>
+  <xsl:variable name="aposcomapos">','</xsl:variable>
   <!-- apostrophe, apostrophe -->
-  <xsl:variable name="apospair">&apos;&apos;</xsl:variable>
+  <xsl:variable name="apospair">''</xsl:variable>
   <!-- apostrophe AKA: alias for apostrophe for later replacement -->
   <xsl:variable name="aposaka">&#xfffd;</xsl:variable>
 
