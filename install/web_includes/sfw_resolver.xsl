@@ -23,7 +23,7 @@
          indicates how the following work is interpreted. -->
     <xsl:variable name="delim">
       <xsl:variable name="after" select="substring(substring-after($str,'{'),1,1)" />
-      <xsl:if test="$after and contains('@$!', $after)">
+      <xsl:if test="$after and contains('@$!^', $after)">
         <xsl:value-of select="concat('{',$after)" />
       </xsl:if>
     </xsl:variable>
@@ -66,6 +66,11 @@
             <xsl:when test="$type='{@'">
               <xsl:call-template name="get_data_value">
                 <xsl:with-param name="name" select="$ref" />
+              </xsl:call-template>
+            </xsl:when>
+            <xsl:when test="$type='{^'">
+              <xsl:call-template name="get_lookup_value">
+                <xsl:with-param name="name_val" select="$ref" />
               </xsl:call-template>
             </xsl:when>
             <xsl:when test="$type='{!'">
@@ -162,6 +167,15 @@
     <xsl:if test="count($attrs)">
       <xsl:value-of select="$attrs[1]" />
     </xsl:if>
+  </xsl:template>
+
+  <xsl:template name="get_lookup_value">
+    <xsl:param name="name_val" />
+    <xsl:variable name="name" select="substring-before($name_val,':')" />
+    <xsl:variable name="val" select="substring-after($name_val,':')" />
+    <xsl:apply-templates
+        select="/*/vresult/vrow[@*[local-name()=$name] = $val]"
+        mode="lookup_value" />
   </xsl:template>
 
   <xsl:template name="get_var_value">

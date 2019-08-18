@@ -11,6 +11,7 @@ not the HTML output.
 * Defining Context References::
 * Using Context References::
 * Query String Context::
+* Lookup Context Reference::
 @end menu
 
 @node When to Use Context References
@@ -106,7 +107,9 @@ END $$
 @item ! (row reference)
 Replaces the token with the value of the named attribute in
 the currently-selected row.  This reference only makes sense
-in a selected line context like @command{on-line-click}.
+in a selected line context like @command{on-line-click}, and
+this context-reference is the only one resolved in Javscript
+rather than in XSL.
 
 @item $ (variable reference)
 Replaces the token with the value of a variable with the same name.
@@ -126,6 +129,17 @@ to remove that result from consideration for a backup variable search.
 @item @@ (form data result)
 Replaces the token with an attribute value of a form
 data section. (Confirm how this is restricted or not).
+
+@item ^ (lookup text)
+This unusual reference provides a opportunity to generate
+text for instructions that have no basis in the XML data,
+like titles, button legends, intro text, etc.
+
+This reference requires two steps, one to create a
+prescribed element, and the other is to refer to the
+element. This complicated context reference is explained
+below.  @xref{Lookup Context Reference}.
+
 
 @item ? (current script)
 This context reference only applies for places where a
@@ -185,4 +199,87 @@ to the stored procedure that are only used for display.  Using
 @code{qstring : reflect} saves MySQL the burden of reflecting values
 back as variables and helps separate the logic of a procedure from the
 needs of presentation.
+
+@node Lookup Context Reference
+@section Lookup Context Reference
+
+This context reference provides an avenue to customize text
+for instructions that do not reference the current form or
+line element.  This context reference is particularly useful for
+merged documents containing lookup results.
+
+Examples of such instructions include, but are not limited to,
+@code{title}, @code{button}, and @code{intro}.
+
+This context reference is invoked with @code{@{^ ..@}}, the contents
+of which refer to a signature element.  The developer creates a
+signature element using adhoc methods, and also creates an XSL
+template that matches the signature element and in which the text
+can be generated.
+
+@menu
+* Lookup Context SRM::    Setup the SRM to use lookup
+* Lookup Context XSL::    Add custom XSL template
+@end menu
+
+@node Lookup Context SRM
+@subsection Lookup Context SRM
+
+The signature element must be a @code{vrow} element in a @code{vresult}
+result.  The @code{vresult} branch will be treated like a regular
+result, with unique @code{merged} plus @code{rndx} values.
+(Using hard-coded names makes it easier for the XSL translator to
+find the elements.)
+
+Here is an SRM example that includes both the adhoc signature element
+and the invocation in a @code{title} instruction.
+
+@example
+edit
+   type        : merge
+   procedure   : App_Item_Value
+   schema-proc : App_Item_Update
+   form-action : ?edit_submit
+   vresult
+      vrow
+         rowtype : item_name
+   result
+      title : @{^rowtype:item_name@}
+@end example
+
+Please note that the @code{vrow} element will contain a single
+attribute, @code{rowtype}, with the value @code{item_name}, and
+the invocation specifies @code{rowtype:item_name}.  There is no
+set pattern for naming; it is up to the developer to design
+sufficiently unique names to prevent ambiguous references.
+
+@node Lookup Context XSL
+@subsection Lookup Context XSL
+
+A context reference type depends on a custom stylesheet,
+most likely incorporated into @file{default.xsl} using an
+@code{include} instruction.
+
+Using the example on the previous subsection, we'll create
+a template that matches an element that looks like this:
+@code{<vrow rowtype="item_name" />}.  The framework will select
+the element using the invocation instruction and use an
+@code{xsl:apply-templates} instruction to retrieve the text.
+
+The developer should create a template similar to this:
+
+@example
+<xsl:template match="vresult/vrow[@@rowtype='item_name']" mode="lookup_value">
+   <xsl:variable name="merged" select="../@@merged" />
+   <xsl:variable name="id_item" select="/*/cur_item[@@merged=$merged]/row/@@id" />
+   <xsl:variable name="item" select="/*/items/item[@@id=$id_item]" />
+
+   <xsl:value-of select="concat('Item (', $id_item, ') ', $item/@@name)" />
+</xsl:template>
+@end example
+
+Please note that this example is highly customized, as is the
+purpose of this context reference type.  Do not expect to use
+the contents of this example in other applications without
+modification.
 
