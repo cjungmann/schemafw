@@ -322,6 +322,9 @@ will contain the YYYY-MM-DD date.
       <xsl:if test="$table_class">
         <xsl:value-of select="concat(' ',$table_class)" />
       </xsl:if>
+      <xsl:if test="../@table_class">
+        <xsl:value-of select="concat(' ',../@table_class)" />
+      </xsl:if>
     </xsl:variable>
 
     <xsl:element name="table">
