@@ -131,10 +131,25 @@
          {
             if (n.nodeType==1)
             {
-               if (n.getAttribute("rndx"))
-                  errnode = n.selectSingleNode("message");
-               else if ((tname=n.tagName.toLowerCase()=="message"))
+               if ((tname=n.tagName.toLowerCase()=="message"))
                   errnode = n;
+               else if (n.getAttribute("rndx"))
+               {
+                  errnode = n.selectSingleNode("message");
+                  if (!errnode)
+                  {
+                     errnode = n.selectSingleNode("*[local-name()=../@row-name][@error][@msg]");
+                     if (errnode)
+                     {
+                        SFW.alert("Error "
+                                  + errnode.getAttribute("error")
+                                  + ", "
+                                  + errnode.getAttribute("msg"));
+
+                        return false;
+                     }
+                  }
+               }
 
                if (errnode)
                {
