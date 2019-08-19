@@ -57,6 +57,7 @@ production.
 * Buttons::             Button attributes recognized by the Framework
 * Customizing::         Extend the framework with your own components
 * Lookup Values::       Order of evaluation for inter-result searches
+* Utilities::           Special-purpose functions, templates, etc.
 * Debugging::
 * Definitions::
 * Schema Server::       Some topics that are found in Schema Server
@@ -101,6 +102,7 @@ $ sudo ln -s /usr/local/lib/schemafw/web_includes includes
 @include schemafw.buttons.txi
 @include schemafw.customizing.txi
 @include schemafw.lookup_values.txi
+@include schemafw.utilities.txi
 @include schemafw.debugging.txi
 @include schemafw.definitions.txi
 @include schemafw.server.txi

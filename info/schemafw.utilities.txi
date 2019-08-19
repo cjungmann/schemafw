@@ -1,0 +1,46 @@
+@node Utilities
+@chapter Utilities
+
+The framework includes many functions and templates that help the
+framework execute its responsibilites.  Several of these functions
+and utilities can serve more general uses.  This chapter will
+call attention to some of the useful utilities and explain how to
+use them.
+
+This chapter begins with very few examples, but the number should
+grow now that there is a place to host the utilities documentation.
+
+@menu
+* XSL Template Utilities::
+* Useful Javascript Functions::
+@end menu
+
+
+@node XSL Template Utilities
+@section XSL Template Utilities
+
+The framework has defined many templates for converting XML
+data into useful user pages.  Here are some templates that may
+serve a wider purpose.
+
+@menu
+* XSL Time Conversion::
+@end menu
+
+@node XSL Time Conversion
+@subsection XSL Time Conversion
+
+There is one main time conversion template, named @code{time_24_2_12}
+for converting 24 hour time to 12 hour time.  There are also a few
+convenience templates with @code{mode='xtime'} that apply the main
+template to an attribute.
+
+These templates are in sfw_utilities.xsl
+
+
+
+
+
+@node Useful Javascript Functions
+@section Useful Javascript Functions
+
