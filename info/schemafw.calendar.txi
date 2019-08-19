@@ -45,6 +45,7 @@ The @emph{date} parameter is in the form @emph{YYYY-MM-DD}.
 Using the built-in calendar, use the @emph{calendar} mode type
 that matches up with a result with the same name (@emph{calendar}).
 
+
 The following example responds to a day click.  Presumably, the
 day view will show a day's contents from which the constituent 
 events could be individually edited.
@@ -56,7 +57,53 @@ list
    on_day_click : ?view
    result : 1
       name : calendar
+      table_class : custom_calendar
 @end example
+
+@table @strong
+
+@item on_day_click
+Specify a URL to use for opening an interaction to edit a day's
+contents.
+
+Each day @code{td} element includes a @code{class} attribute
+value of @emph{cal_day} and a @code{data-name} attribute value
+of the day's date in YYYY-MM-DD format.  If these attributes are
+detected on a clicked area, the interaction will be opened.
+
+@item on_div_click
+Not shown.  Specify a URL to use for opening an interaction to
+edit a div.
+
+When building up the day content, the developer can include a
+@code{data-id} attribute.  This attribute corresponds to the
+same @code{data-id} attribute in other contexts, and likewise
+opens an interaction using the URL value of the attribute.
+
+Note, a developer could put @code{span} elements in the day
+content, and using an @code{on_span_click} would have the same
+effect if the span elements included a @code{data-id} attribute.
+
+@item table_class
+
+This instruction, which currently must reside in the result
+that prompts the calendar, will add the @code{table_class}
+attributes value to the @code{class} attribute of the table
+that forms the calendar.
+
+This allows the developer to specify CSS styles that will apply
+only to the calendar with the @code{table_class} instruction,
+making it possible to create a custom look without interfering
+with other tables or calendars.
+
+Given the above example, the following CSS will use a smaller font
+size for crowded day content of the calendar:
+
+@example
+table.custom_calendar div.day_content @{ font-size:75%; @}
+@end example
+
+@end table
 
 
 @node Calendar SQL Code
