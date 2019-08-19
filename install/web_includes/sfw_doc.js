@@ -138,15 +138,17 @@
                   errnode = n.selectSingleNode("message");
                   if (!errnode)
                   {
-                     errnode = n.selectSingleNode("*[local-name()=../@row-name][@error][@msg]");
-                     if (errnode)
+                     var msgnode = n.selectSingleNode("*[local-name()=../@row-name][@error][@msg]");
+                     if (msgnode)
                      {
-                        SFW.alert("Error "
-                                  + errnode.getAttribute("error")
-                                  + ", "
-                                  + errnode.getAttribute("msg"));
+                        var errval = msgnode.getAttribute("error");
+                        if (errval != 0)
+                        {
+                           SFW.alert("Error (" + errval + "), "
+                                     + msgnode.getAttribute("msg"));
 
-                        return false;
+                           return false;
+                        }
                      }
                   }
                }
