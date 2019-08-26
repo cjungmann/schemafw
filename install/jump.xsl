@@ -20,10 +20,15 @@
   <xsl:variable name="apos">'</xsl:variable>
 
   <xsl:variable name="payload" select="/*/*[@rndx][@type='jumps']/*[local-name()=../@row-name]" />
-  <xsl:variable name="error_code" select="$payload/@error" />
+
   <xsl:variable name="msg" select="$payload/@msg" />
+
+  <xsl:variable name="jval" select="$payload/@jump" />
+  <xsl:variable name="eval" select="substring($payload/@error,1 div boolean(0=string-length($jval)))" />
+  <xsl:variable name="jump_code" select="concat($jval,$eval)" />
+
   <xsl:variable name="jumps" select="$payload/../jumps" />
-  <xsl:variable name="raw_dest" select="$jumps/@*[local-name()=concat('jump',$error_code)]" />
+  <xsl:variable name="raw_dest" select="$jumps/@*[local-name()=concat('jump',$jump_code)]" />
 
   <xsl:variable name="dest">
     <xsl:call-template name="resolve_refs">
