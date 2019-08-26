@@ -140,7 +140,13 @@
 
   <xsl:template match="*[@rndx=1]" mode="fill_head">
     <xsl:variable name="row" select="*[local-name()=../@row-name][1]" />
-    <xsl:variable name="tname" select="concat('jump',$row/@error)" />
+
+    <!-- Only one of the next two will have a value. -->
+    <xsl:variable name="jval" select="$row/@jump" />
+    <xsl:variable name="eval" select="substring($row/@error,1 div boolean(0=string-length($jval)))" />
+
+    <xsl:variable name="tname" select="concat('jump',$jval,$eval)" />
+
     <xsl:variable name="target" select="jumps/@*[local-name()=$tname]" />
     <xsl:if test="$target">
       <xsl:call-template name="meta-jump">
