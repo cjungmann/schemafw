@@ -243,15 +243,36 @@ edit
    vresult
       vrow
          rowtype : item_name
+      vrow
+         vattr : value
    result
       title : @{^rowtype:item_name@}
 @end example
 
-Please note that the @code{vrow} element will contain a single
-attribute, @code{rowtype}, with the value @code{item_name}, and
-the invocation specifies @code{rowtype:item_name}.  There is no
-set pattern for naming; it is up to the developer to design
-sufficiently unique names to prevent ambiguous references.
+When creating @code{vrow} elements, keep the following in mind:
+
+@itemize
+
+@item
+For the Framework to find the lookup elements, they must be
+@code{vrow} branches in a @code{vresut} branch that is added
+to the resultset as a virtual result.
+
+@item
+The child elements of the @code{vresult} element must be
+unique enough to allow an XPATH match.  In practice, this
+means that the @code{vrow} should include instructions
+that result in @code{vrow} attributes.
+
+@item
+The attribute names and values are not pre-defined, use
+whatever makes most sense for the application.
+
+@item
+Hint: Use a different @code{vresult} child element for each
+unique lookup item.
+
+@end itemize
 
 @node Lookup Context XSL
 @subsection Lookup Context XSL
