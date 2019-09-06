@@ -23,7 +23,14 @@ should be deleted.
 These canned buttons are provided because they perform multiple steps
 with their action.
 
-@subsubheading Add Button
+@menu
+* Canned Button Add ::
+* Canned Button Delete ::
+* Canned Button Close ::
+@end menu
+
+@node Canned Button Add
+@subsection Canned Button Add
 
 This button is special because it preserves the current interaction
 context, displaying a dialog for entering information about a new
@@ -42,7 +49,8 @@ list
          url   : ?add
 @end example
 
-@subsubheading Delete Button
+@node Canned Button Delete
+@subsection Canned Button Delete
 
 Like the @code{add} button, The @code{delete} button is a multiple-step
 button.  It optionally presents the user with a confirmation dialog prior
@@ -68,6 +76,31 @@ edit
          label   : Delete @{@@name@}?
          confirm : Confirm delete @{@@name@}.
          url     : ?delete&id=@{@@id@}&name=@{@@name@}
+@end example
+
+@node Canned Button Close
+@subsection Canned Button Close
+
+This button duplicates the @emph{Cancel} or @emph{Close} button
+that is usually found at the bottom of a form.  The primary use of
+this button is to create a @emph{Close} button at top of an
+interaction, especially for merged table displays that must be
+closeable but where it is not possible to put buttons after the
+table.
+
+The interaction must be a child and closeable.
+
+The button can include and will honor a confirm message.
+
+@example
+show
+   type      : merge
+   procedure : App_Show_Connections
+   result
+      merge-type : table
+      button
+         label : Close
+         type  : close
 @end example
 
 @node Custom Buttons
