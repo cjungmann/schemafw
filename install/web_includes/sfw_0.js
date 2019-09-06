@@ -173,6 +173,7 @@ function init_SFW(callback)
    SFW.setup_sfw_host        = _setup_sfw_host;
    SFW.make_sfw_host         = _make_sfw_host;
    SFW.get_last_SFW_Host    = _get_last_SFW_Host;
+   SFW.get_last_object      = _get_last_object;
    SFW.keep_top_merged_element = _seek_top_merged_element;
    SFW.arrange_in_host      = _arrange_in_host;
    SFW.size_to_cover        = _size_to_cover;
@@ -580,6 +581,14 @@ function init_SFW(callback)
       }
       return null;
    }
+
+   function _get_last_object()
+   {
+      var host = _get_last_SFW_Host();
+      if (host)
+         return _get_object_from_host(host);
+      return null;
+   }
  
    function _seek_top_merged_element(doc)
    {
@@ -725,7 +734,7 @@ function init_SFW(callback)
 
             var host, obj;
             if ((host=_get_last_SFW_Host()) && (obj=_get_object_from_host(host)))
-               return _process_host_keydown(e, host,obj);
+               return _process_host_keydown(e,host,obj);
          }
 
          return true;
@@ -1022,6 +1031,11 @@ function init_SFW(callback)
          case "launch":
             if (url)
                delayed_func = function(){ if (cfunc()) window.open(url); };
+            break;
+         case "close":
+            var obj = _get_last_object();
+            if (obj && obj.closeable())
+               delayed_func = function() { if (cfunc()) obj.selfclose(); };
             break;
          default:
             var pb_name = "process_button_" + type;
