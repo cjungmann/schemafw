@@ -1,6 +1,13 @@
 html, body { margin:0; padding:0; }
 h1, h2, h3  { text-align: center; margin:0; font-family:Arial, Helvetica, sans-serif; }
 
+@media (hover:none), (pointer:coarse)
+{
+    body { width:100%; font-size:3vw; margin:0; }
+    hi   { font-size:7vw; }
+    nav  { font-size:4vw; }
+}
+
 #SFW_Content
 {
     position:relative;
@@ -22,8 +29,8 @@ h1, h2, h3  { text-align: center; margin:0; font-family:Arial, Helvetica, sans-s
 
 
 #SFW_Header nav { text-align:center; }
-#SFW_Header nav a { padding:.5em; }
-#SFW_Header nav a.here { background-color:#999999; }
+/* #SFW_Header nav a { padding:.5em; } */
+/* #SFW_Header nav a.here { background-color:#999999; } */
 
 pre.root_pre { border-top: 2px solid red; padding-top:2em; }
 
@@ -46,6 +53,32 @@ nav.views div.selected
     background-color: #DDDDDD;
     
 }
+
+/* Start of ul.menu styles */
+
+nav ul       { padding:0; margin:0; list-style-type:none; }
+nav li       { text-align:left; display:inline-block; cursor:pointer; white-space:nowrap; }
+nav a        { text-decoration:none; color: #000000;}
+
+nav ul.menu                         { background-color:#EEEEEE; }
+
+nav ul.menu li:hover                { background-color:#FFFF66; }
+
+nav ul.menu li *                    { display:block; }
+nav ul.menu li a,
+nav ul.menu li div                  { padding:.1em .75em; }
+
+/* drop-down part */
+
+nav ul.menu li.topic                { position:relative; }
+nav ul.menu li.topic       .menu    { display:none; position:absolute; left:0; }
+nav ul.menu li.topic:hover .menu    { display:block; }
+
+/* drop-down drop shadow */
+nav ul.menu li.topic .menu li.mitem { border-right :8px solid #AAAAAA; }    
+nav ul.menu li.topic .menu          { border-bottom:8px solid #AAAAAA; }
+
+
 
 .SFW_Ghost
 {
