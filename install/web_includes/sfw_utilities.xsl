@@ -379,7 +379,7 @@
 
   <xsl:template name="construct_title">
     <xsl:param name="str" />
-    <h2>
+    <h2 class="sfw_title">
       <xsl:call-template name="resolve_refs">
         <xsl:with-param name="str" select="$str" />
       </xsl:call-template>

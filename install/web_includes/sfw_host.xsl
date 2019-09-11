@@ -179,7 +179,7 @@
   <xsl:template match="views" mode="build">
     <xsl:param name="view" />
     <nav class="views">
-      <h2><xsl:value-of select="$view/@title" /></h2>
+      <h2 class="sfw_title"><xsl:value-of select="$view/@title" /></h2>
       <xsl:if test="$view/@subtitle">
         <h3><xsl:apply-templates select="$view/@subtitle" mode="resolve_refs" /></h3>
       </xsl:if>
