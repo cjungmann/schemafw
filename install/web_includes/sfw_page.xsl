@@ -257,25 +257,40 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="navigation/target" mode="header">
+  <xsl:template match="topic" mode="nav_header">
+    <li class="topic">
+      <div><xsl:value-of select="@label" /></div>
+      <ul class="menu">
+        <xsl:apply-templates select="*" mode="nav_header" />
+      </ul>
+    </li>
+  </xsl:template>
+
+  <xsl:template match="target" mode="nav_header">
       <xsl:variable name="url">
         <xsl:apply-templates select="@url" mode="resolve_url" />
       </xsl:variable>
 
-      <xsl:element name="a">
-        <xsl:attribute name="href"><xsl:value-of select="$url" /></xsl:attribute>
-        <xsl:if test="@tag">
-          <xsl:attribute name="tag">
-            <xsl:value-of select="@tag" />
-          </xsl:attribute>
-        </xsl:if>
-        <xsl:apply-templates select="@label" mode="resolve_refs" />
-      </xsl:element>
+      <li class="mitem">
+        <xsl:element name="a">
+          <xsl:attribute name="href"><xsl:value-of select="$url" /></xsl:attribute>
+          <xsl:if test="@tag">
+            <xsl:attribute name="tag">
+              <xsl:value-of select="@tag" />
+            </xsl:attribute>
+          </xsl:if>
+          <xsl:apply-templates select="@label" mode="resolve_refs" />
+        </xsl:element>
+      </li>
   </xsl:template>
 
   <xsl:template match="/*/navigation" mode="header">
     <xsl:if test="count(target)">
-      <nav><xsl:apply-templates select="target" mode="header" /></nav>
+      <nav>
+        <ul class="menu">
+          <xsl:apply-templates select="*" mode="nav_header" />
+        </ul>
+      </nav>
     </xsl:if>
   </xsl:template>
 
