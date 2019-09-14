@@ -235,7 +235,7 @@
         <xsl:value-of select="$row/@*[local-name()=$show_name]" />
       </xsl:when>
       <xsl:otherwise>
-        <xsl:variable name="altfield" select="$field/../field[not(@primary_key)][1]" />
+        <xsl:variable name="altfield" select="../field[not(@primary_key)][1]" />
         <xsl:if test="$altfield">
           <xsl:value-of select="$row/@*[local-name()=$altfield/@name]" />
         </xsl:if>
