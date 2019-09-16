@@ -21,7 +21,7 @@
   deferring to $gsview by including the predicate expression [not($gsview)].
   -->
 
-  <xsl:variable name="merge_num" select="/*/*[@merged][1]/@merged" />
+  <xsl:variable name="merge_num" select="number(/*/*[@merged][1]/@merged)" />
 
   <!--
   Save a global $mode-type value from merged types or root mode-type value.
@@ -62,7 +62,7 @@
 
   <!-- Merged results trump resultset mode-type settings -->
   <xsl:variable name="mer_schema" select="/*/schema[@merged=$merge_num]" />
-  <xsl:variable name="mrs_schema" select="/*/*[@rndx][@merged=$merge_num]/schema" />
+  <xsl:variable name="mrs_schema" select="/*/*[@rndx][@merged=$merge_num][schema][1]/schema" />
   <xsl:variable name="mrschema" select="$mer_schema|$mrs_schema" />
 
   <xsl:variable name="is_merge_form"
