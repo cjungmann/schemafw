@@ -104,9 +104,39 @@
 
   <xsl:template match="*[@rndx]" mode="construct_host_top">
     <xsl:apply-templates select="." mode="construct_host_title" />
+    <xsl:apply-templates select="." mode="show_intro" />
+    
     <xsl:if test="/*/views">
       <xsl:apply-templates select="/*/views" mode="construct_view_set" />
     </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="*" mode="show_intro">
+    <xsl:param name="class" />
+
+    <xsl:variable
+        name="intro_str"
+        select="string(ancestor-or-self::*[@intro][last()]/@intro)" />
+
+    <xsl:if test="string-length($intro_str)">
+      <xsl:variable name="classname">
+        <xsl:text>fixed_head opaque</xsl:text>
+        <xsl:if test="$class">
+          <xsl:value-of select="concat(' ',$class)" />
+        </xsl:if>
+      </xsl:variable>
+
+      <div class="{$classname}">
+        <div class="intro">
+          <xsl:call-template name="resolve_refs">
+            <xsl:with-param name="str" select="$intro_str" />
+          </xsl:call-template>
+        </div>
+      </div>
+
+      <div class="{$classname} ghost" />
+    </xsl:if>
+    
   </xsl:template>
 
   <!--
