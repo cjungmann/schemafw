@@ -379,7 +379,7 @@
 
   <xsl:template name="construct_title">
     <xsl:param name="str" />
-    <h2 class="sfw_title">
+    <h2 class="fixed_head">
       <xsl:call-template name="resolve_refs">
         <xsl:with-param name="str" select="$str" />
       </xsl:call-template>
@@ -397,50 +397,6 @@
         </xsl:apply-templates>
       </xsl:when>
     </xsl:choose>
-  </xsl:template>
-
-  <xsl:template match="schema" mode="show_intro">
-    <xsl:param name="class" />
-    <xsl:param name="host-type" select="'tr'" />
-
-    <xsl:variable name="intro">
-      <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str">
-          <xsl:apply-templates select="." mode="seek_attribute">
-            <xsl:with-param name="name" select="'intro'" />
-          </xsl:apply-templates>
-        </xsl:with-param>
-      </xsl:call-template>
-    </xsl:variable>
-
-    <xsl:if test="string-length($intro)">
-      <xsl:variable name="host_class">
-        <xsl:if test="$host-type='tr'">
-          <xsl:value-of select="concat(' headfix_', local-name(..),'_',local-name())" />
-        </xsl:if>
-        <xsl:if test="$class">
-          <xsl:value-of select="concat(' ', $class)" />
-        </xsl:if>
-      </xsl:variable>
-
-      <xsl:choose>
-        <xsl:when test="$host-type='tr'">
-          <tr class="{$host_class}">
-            <td colspan="99">
-              <div class="intro">
-                <xsl:value-of select="$intro" />
-              </div>
-            </td>
-          </tr>
-        </xsl:when>
-        <xsl:otherwise>
-          <div class="{$host_class}">
-            <xsl:value-of select="$intro" />
-          </div>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:if>
-
   </xsl:template>
 
   <!-- Recursive template to create button lines.
