@@ -600,7 +600,7 @@ function init_SFW(callback)
    function _resize_host_titles()
    {
       function f(n) {
-         if (n.nodeType==1 && class_includes(n,"sfw_title"))
+         if (n.nodeType==1 && class_includes(n,"fixed_head"))
             _manage_content_spacer(n);
       }
 
