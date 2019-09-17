@@ -169,6 +169,8 @@
           </xsl:element>
         </xsl:if>
 
+        <xsl:apply-templates select="." mode="show_intro" />
+
         <xsl:apply-templates select="." mode="construct_button_row">
           <xsl:with-param name="host-type" select="'p'" />
         </xsl:apply-templates>
@@ -179,10 +181,6 @@
           </div>
           <hr />
         </xsl:if>
-
-        <xsl:apply-templates select="." mode="show_intro">
-          <xsl:with-param name="host-type" select="''" />
-        </xsl:apply-templates>
 
         <xsl:if test="$mode-type='form-import'">
           <p>
