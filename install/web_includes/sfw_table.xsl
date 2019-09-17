@@ -114,10 +114,6 @@
   <xsl:template match="schema" mode="construct_thead_rows">
     <xsl:param name="class" />
 
-    <xsl:apply-templates select="." mode="show_intro">
-      <xsl:with-param name="class" select="$class" />
-    </xsl:apply-templates>
-
     <xsl:apply-templates select="." mode="construct_button_row">
       <xsl:with-param name="class" select="$class" />
     </xsl:apply-templates>
