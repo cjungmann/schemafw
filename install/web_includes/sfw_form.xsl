@@ -188,21 +188,15 @@
             <input type="file" name="upfile" />
           </p>
         </xsl:if>
-        
-        <xsl:variable
-            name="extra_fields"
-            select="@*[substring(local-name(),1,11)='form-field-']" />
 
-        <xsl:apply-templates
-            select="$extra_fields"
-            mode="construct_extra_form_field" />
-
-        <xsl:apply-templates select="." mode="construct_form_inputs">
+        <xsl:apply-templates select="." mode="add_form_fields">
           <xsl:with-param name="data" select="$data" />
           <xsl:with-param name="result-schema" select="$result-schema" />
           <xsl:with-param name="view-mode" select="not($has_action)" />
         </xsl:apply-templates>
+
         <hr />
+
         <p class="buttons">
           <xsl:if test="$has_action">
               <input type="submit" value="Submit" />
@@ -226,6 +220,26 @@
         </p>
       </fieldset>
     </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="schema" mode="add_form_fields">
+    <xsl:param name="data" select="/.." />
+    <xsl:param name="result-schema" />
+    <xsl:param name="view-mode" select="false()" />
+
+    <xsl:variable
+        name="extra_fields"
+        select="@*[substring(local-name(),1,11)='form-field-']" />
+
+    <xsl:apply-templates
+        select="$extra_fields"
+        mode="construct_extra_form_field" />
+
+      <xsl:apply-templates select="." mode="construct_form_inputs">
+        <xsl:with-param name="data" select="$data" />
+        <xsl:with-param name="result-schema" select="$result-schema" />
+        <xsl:with-param name="view-mode" select="$view-mode" />
+      </xsl:apply-templates>
   </xsl:template>
 
   <xsl:template name="display_error">
