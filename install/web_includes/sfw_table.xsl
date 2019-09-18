@@ -49,6 +49,39 @@
     </xsl:choose>
   </xsl:template>
 
+
+  <!-- no-op template for schema without a pane. -->
+  <xsl:template match="schema" mode="build_table_pane"></xsl:template>
+
+  <xsl:template match="schema[ancestor-or-self::*[pane]]" mode="build_table_pane">
+    <xsl:variable name="pane" select="ancestor-or-self::*[pane][1]/pane" />
+    <xsl:variable name="result" select="/*/*[@rndx][local-name()=$pane/@result]" />
+
+    <xsl:if test="$result and $result/schema">
+      <xsl:variable name="itype" select="$pane/@type" />
+      <xsl:variable name="rtype" select="$result[not($itype)]/@type|@merge-type" />
+      <xsl:variable name="type" select="$itype|$rtype" />
+
+      <div class="fixed_head opaque">
+        <xsl:choose>
+          <xsl:when test="starts-with($type,'form-')">
+            <xsl:variable name="data" select="$result/*[local-name()=../@row-name][1]" />
+            <fieldset class="table_pane">
+              <xsl:apply-templates select="$result/schema" mode="add_form_fields">
+                <xsl:with-param name="data" select="$data" />
+              </xsl:apply-templates>
+            </fieldset>
+          </xsl:when>
+          <xsl:otherwise>
+            <div>Unsupported pane type '<xsl:value-of select="$type" />'</div>
+          </xsl:otherwise>
+        </xsl:choose>
+      </div>
+
+      <div class="fixed_head ghost"></div>
+    </xsl:if>
+  </xsl:template>
+
   <!--
   Creates a table element and fills it according to the instructions contained
   in the schema element.
@@ -66,6 +99,8 @@
           <xsl:value-of select="concat(' ',@table_class)" />
         </xsl:if>
     </xsl:variable>
+
+    <xsl:apply-templates select="." mode="build_table_pane" />
 
     <xsl:element name="table">
       <xsl:attribute name="class"><xsl:value-of select="$class" /></xsl:attribute>
