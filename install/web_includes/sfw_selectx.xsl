@@ -57,7 +57,17 @@
     </xsl:variable>
 
     <div class="{$class}" data-sfw-class="selectx" data-style="{$style}" data-sfw-control="true">
-      <input type="hidden" name="{$name}" value="{$dval}" />
+      <xsl:element name="input">
+        <xsl:attribute name="type">hidden</xsl:attribute>
+        <xsl:attribute name="name"><xsl:value-of select="$name" /></xsl:attribute>
+
+        <xsl:apply-templates select="." mode="add_input_attributes" />
+
+        <xsl:if test="string-length($dval)">
+          <xsl:attribute name="value"><xsl:value-of select="$dval" /></xsl:attribute>
+        </xsl:if>
+      </xsl:element>
+
       <form onsubmit="return false;">
         <div class="display">
           <xsl:apply-templates select="." mode="fill_selectx_display">
