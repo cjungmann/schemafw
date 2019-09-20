@@ -1,4 +1,3 @@
-
 // sfw_0.js
 
 if ("SFW" in window)
@@ -2126,11 +2125,14 @@ function init_SFW(callback)
    function _base(actors)
    {
       this._host_el = actors.host;
+      if ("anchor" in actors)
+         this._anchor = actors.anchor;
       if ("widget" in actors)
          this._widget = actors.widget;
    };
 
    _base.prototype.host     = function() { return this._host_el||null; };
+   _base.prototype.anchor   = function() { return this._anchor||null; };
    _base.prototype.xmldoc   = function() {
       var r=this.host(); return (r && r.xmldoc) ? r.xmldoc : SFW.xmldoc;
    };
@@ -2142,7 +2144,7 @@ function init_SFW(callback)
    _base.prototype.data     = function() { var r=this.host(); return r?r.data:null; };
 
    _base.prototype.class_name = "iclass";
-   _base.prototype.top       = function() { return _find_anchor(this.host()); };
+   _base.prototype.top       = function() { return this.anchor() || _find_anchor(this.host()); };
    _base.prototype.schema    = function() { return _find_schema(this.xmldoc(), this.merge_number()); };
    _base.prototype.baseproto = function() { return this._baseproto; };
    _base.prototype.button_processors = {};
