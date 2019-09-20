@@ -285,6 +285,16 @@
     </xsl:apply-templates>
   </xsl:template>
 
+  <xsl:template match="field" mode="add_input_attributes">
+    <xsl:variable name="list" select="@*[starts-with(local-name(),'input_')]" />
+    <xsl:for-each select="$list">
+      <xsl:variable name="name" select="concat('data-', substring(local-name(),7))" />
+      <xsl:attribute name="{$name}">
+        <xsl:value-of select="." />
+      </xsl:attribute>
+    </xsl:for-each>
+  </xsl:template>
+
   <xsl:template match="field" mode="construct_hidden_input">
     <xsl:param name="data" />
     <xsl:variable name="name">
@@ -638,6 +648,8 @@
         <xsl:attribute name="data-sfw-class"><xsl:value-of select="@custom_class" /></xsl:attribute>
         <xsl:attribute name="data-sfw-control">true</xsl:attribute>
       </xsl:if>
+
+      <xsl:apply-templates select="." mode="add_input_attributes" />
 
       <xsl:if test="string-length($value)&gt;0">
         <xsl:choose>
