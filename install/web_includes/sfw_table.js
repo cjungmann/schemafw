@@ -13,7 +13,7 @@
    
    function _table(actors)
    {
-      SFW.base.call(this, actors);
+      SFW.types["tbase"].call(this,actors);
    }
 
    // Adding useful local functions to global object
