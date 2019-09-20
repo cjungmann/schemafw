@@ -263,6 +263,12 @@
       {
          return obj.schema();
       }
+      else
+      {
+         var node = SFW.ancestor_by_attribute(this.widget(), "data-schema_path");
+         if (node)
+            return SFW.xmldoc.selectSingleNode(node.getAttribute("data-schema_path"));
+      }
       return null;
    };
 
@@ -409,6 +415,8 @@
                sels.splice(old,1);
             post_input.value = sels.join(',');
          }
+
+         SFW.trigger_event(post_input, "change");
 
          ths.update_display_from_value();
       }
