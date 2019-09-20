@@ -10,9 +10,9 @@
    if (!SFW.derive(_form_view, "form-view", "form-edit"))
       return;
 
-   function _form_view(base,doc,caller,data)
+   function _form_view(actors)
    {
-      SFW.types["form-edit"].call(this,base,doc,caller,data);
+      SFW.types["form-edit"].call(actors);
    }
 
    function _get_field_parts(b)
