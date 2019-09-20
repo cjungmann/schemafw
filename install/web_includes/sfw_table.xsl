@@ -56,13 +56,19 @@
   <xsl:template match="schema[ancestor-or-self::*[pane]]" mode="build_table_pane">
     <xsl:variable name="pane" select="ancestor-or-self::*[pane][1]/pane" />
     <xsl:variable name="result" select="/*/*[@rndx][local-name()=$pane/@result]" />
+    <xsl:variable name="schema" select="$result/schema" />
 
-    <xsl:if test="$result and $result/schema">
+    <xsl:if test="$schema">
       <xsl:variable name="itype" select="$pane/@type" />
       <xsl:variable name="rtype" select="$result[not($itype)]/@type|@merge-type" />
       <xsl:variable name="type" select="$itype|$rtype" />
 
-      <div class="fixed_head opaque">
+      <xsl:element name="div">
+        <xsl:attribute name="class">fixed_head opaque</xsl:attribute>
+        <xsl:attribute name="data-schema_path">
+          <xsl:apply-templates select="$schema" mode="gen_path" />
+        </xsl:attribute>
+
         <xsl:choose>
           <xsl:when test="starts-with($type,'form-')">
             <xsl:variable name="data" select="$result/*[local-name()=../@row-name][1]" />
@@ -76,7 +82,7 @@
             <div>Unsupported pane type '<xsl:value-of select="$type" />'</div>
           </xsl:otherwise>
         </xsl:choose>
-      </div>
+      </xsl:element>
 
       <div class="fixed_head ghost"></div>
     </xsl:if>
