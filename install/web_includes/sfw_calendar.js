@@ -11,9 +11,9 @@
       return;
 
 
-   function _calendar(base, doc, caller, data)
+   function _calendar(actors)
    {
-      SFW.types["table"].call(this,base,doc,caller,data);
+      SFW.types["table"].call(this, actors);
    }
 
    
