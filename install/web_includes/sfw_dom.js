@@ -18,6 +18,8 @@ function init_SFW_DOM()
    SFW.next_sibling_element = _next_sibling_element;
    SFW.self_or_ancestor_by_tag = _self_or_ancestor_by_tag;
    SFW.ancestor_by_tag      = _ancestor_by_tag;
+   SFW.self_or_ancestor_by_attribute = _self_or_ancestor_by_attribute;
+   SFW.ancestor_by_attribute      = _ancestor_by_attribute;
 
    // Sets SFW.get_page_xoffset and SFW.get_page_yoffset
    function prepare_page_offset_funcs()
@@ -189,13 +191,34 @@ function init_SFW_DOM()
          return null;
       else if (type==1 && node.tagName.toLowerCase()==tag)
          return node;
-      else
-         return _self_or_ancestor_by_tag(node.parentNode,tag);
+
+      return _self_or_ancestor_by_tag(node.parentNode,tag);
    }
 
    function _ancestor_by_tag(node, tag)
    {
       return _self_or_ancestor_by_tag(node.parentNode,tag);
+   }
+
+   function _self_or_ancestor_by_attribute(node, attribute_name, value)
+   {
+      var type = node.nodeType;
+      var text;
+
+      if (type>3)
+         return null;
+      else if (type==1 && (text=node.getAttribute(attribute_name)))
+      {
+         if (text && (!value || value==text))
+            return node;
+      }
+
+      return _self_or_ancestor_by_attribute(node.parentNode, attribute_name, value);
+   }
+
+   function _ancestor_by_attribute(node, attribute_name, value)
+   {
+      return _self_or_ancestor_by_attribute(node.parentNode,attribute_name,value);
    }
 
    function set_missing_doc_props()
