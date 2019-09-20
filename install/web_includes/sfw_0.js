@@ -132,6 +132,7 @@ function init_SFW(callback)
    SFW.seek_top_sfw_host    = _seek_top_sfw_host;
    SFW.seek_page_anchor     = _seek_page_anchor;
    SFW.seek_child_anchor    = _seek_child_anchor;
+   SFW.trigger_event        = _trigger_event;
    SFW.seek_event_actors    = _seek_event_actors;
    SFW.seek_event_object    = _seek_event_object;
    SFW.derive               = _derive;
@@ -473,6 +474,44 @@ function init_SFW(callback)
       return null;
    }
 
+   function _trigger_event(t, name)
+   {
+      if ("Event" in window)
+      {
+         alert("using 'new' to create an event.");
+         _trigger_event = function(t,name)
+         {
+            var e = new Event(name);
+            t.dispatchEvent(e);
+         };
+      }
+      else if ("createEvent" in document)
+      {
+         alert("using 'createEvent'method to create an event.");
+         _trigger_event = function(t,name)
+         {
+            var e = document.createEvent(name);
+            e.initEvent(name,true,true);  // bubbles=true, cancelable=rue
+            t.dispatchEvent(e);
+         };
+      }
+      else
+      {
+         alert("using fallback attempt using 'fireEvent'.");
+         _trigger_event = function(t,name)
+         {
+            var ename = "On" + name.substring(0,1).upper() + name.substring(1);
+            t.fireEvent(ename);
+         };
+      }
+
+      var args = Array.prototype.slice.call(arguments);
+      _trigger_event.apply(null,args);
+
+      SFW.trigger_event = _trigger_event;
+         
+   }
+
    function _seek_child_anchor(t)
    {
       return SFW.find_child_matches(t, _is_anchor, true);
@@ -716,6 +755,15 @@ function init_SFW(callback)
                return false;
          }
 
+         if (e.type=="change")
+         {
+            var url, value;
+            if ((url = t.getAttribute("data-update_action")) && ("value" in t))
+            {
+               SFW.alert("We should be calling " + url);
+            }
+         }
+
          if (e.type=="keydown")
          {
             var kcode=_keycode_from_event(e);
@@ -748,6 +796,7 @@ function init_SFW(callback)
       Events.add_event("keypress",f);
       Events.add_event("focus",f);
       Events.add_event("blur",f);
+      Events.add_event("change",f);
 
       window.onresize = f;
    }
