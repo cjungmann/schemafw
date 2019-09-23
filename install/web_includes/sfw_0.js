@@ -478,7 +478,7 @@ function init_SFW(callback)
    {
       if ("Event" in window)
       {
-         alert("using 'new' to create an event.");
+         alert("using 'new Event' to trigger events.");
          _trigger_event = function(t,name)
          {
             var e = new Event(name);
@@ -487,7 +487,7 @@ function init_SFW(callback)
       }
       else if ("createEvent" in document)
       {
-         alert("using 'createEvent'method to create an event.");
+         alert("using 'createEvent' method to trigger events.");
          _trigger_event = function(t,name)
          {
             var e = document.createEvent(name);
@@ -497,7 +497,7 @@ function init_SFW(callback)
       }
       else
       {
-         alert("using fallback attempt using 'fireEvent'.");
+         alert("using fallback 'fireEvent' to trigger events.");
          _trigger_event = function(t,name)
          {
             var ename = "On" + name.substring(0,1).upper() + name.substring(1);
@@ -758,7 +758,7 @@ function init_SFW(callback)
          if (e.type=="change")
          {
             var url, value;
-            if ((url = t.getAttribute("data-update_action")) && ("value" in t))
+            if ((url = t.getAttribute("data-action_changed")) && ("value" in t))
             {
                SFW.alert("We should be calling " + url);
             }
