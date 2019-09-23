@@ -287,10 +287,11 @@
 
   <xsl:template match="field" mode="add_input_attributes">
     <xsl:variable name="list" select="@*[starts-with(local-name(),'input_')]" />
+
     <xsl:for-each select="$list">
       <xsl:variable name="name" select="concat('data-', substring(local-name(),7))" />
       <xsl:attribute name="{$name}">
-        <xsl:value-of select="." />
+        <xsl:apply-templates select="." mode="resolve_url" />
       </xsl:attribute>
     </xsl:for-each>
   </xsl:template>
