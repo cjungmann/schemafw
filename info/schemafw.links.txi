@@ -1,0 +1,164 @@
+@node Links
+@chapter Links
+
+The internet is called a web because internet pages often contain
+links to other pages, the lines between which may resemble a spider
+web.
+
+The links on a web page, and the containers of the links, may take
+several forms.  Buttons and anchor links are individual links that
+may appear alone or in groups.  Javascript may also activate a non-link
+element to jump to another page upon activation.
+
+This chapter covers some of the methods developers can use to create
+links in their applications.
+
+@menu
+* Button Links::     Jump out with a button
+* Navigation::       Links organized info page-top element
+* Triggered Links::  Involuntary links triggered by procedure result
+@end menu
+
+@node Button Links
+@section Button Links
+
+Buttons can serve many purposes.  Among the variety of purposes is
+for a button to serve as link by being a trigger to jump to another
+page.
+
+@ref{Buttons}
+
+@node Navigation
+@section Navigation
+
+A @emph{navigation} element will render a grouped set of links on
+a page.  The default representation is a horizontal bar consisting
+of links and drop-down lists of links.
+
+The @emph{navigation} element may be constructed entirely from
+response mode instructions, or it can be generated from a MySQL
+query.
+
+@menu
+* SRM Navigation Element::
+* MySQL Navigation Element::
+* Rendered Navigation::
+@end menu
+
+@node SRM Navigation Element
+@subsection SRM Navigation Element
+
+A navigation element contain @emph{target}s (each consisting of a
+@emph{label} and a @emph{url}) and @emph{topics}, which are
+subgroups of @emph{target}s.
+
+Navigation elements are typically consistent among a group of
+pages, and are thus suited to be defined as shared items.
+
+@example
+$shared : autoload_page
+   navigation
+      target
+         label : home
+         url   : Home.srm
+      topic
+         label : Options
+         target
+            label : Edit Profile
+            url   : Home.srm?profile
+         target
+            label : Create Message
+            url   : Message.srm?new
+         target
+            label : Post Request
+            url   : Request.srm?post
+      target
+         label : Logout
+         url   : Login.srm?logout
+@end example
+
+@node MySQL Navigation Element
+@subsection MySQL Navigation Element
+
+Navigation elements can be generated with a MySQL query.  The
+benefit of this is that users can be given unique navigation
+options depending on their access level.
+
+
+@node Rendered Navigation
+@subsection Rendered Navigation
+
+By default, the Schema Framework creates the semantic HTML @code{<nav>}
+immediately after the @code{<h1>} element.
+
+The Framework-generated @code{<nav>} element contains an @code{<ul>}
+structure that is styled and activated by CSS code.
+
+This is a typical rendered navigation element:
+
+@example
+<h1>Sample Title</h1>
+<nav>
+   <ul class="menu">
+      <li class="mitem">
+         <a href="User.srm?profile">Profile</a>
+      </li>
+      <li class="topic">
+         <div>Administration</div>
+         <ul class="menu">
+            <li class="mitem">
+               <a href="User.srm?option1">Option 1</a>
+            </li>
+            <li class="mitem">
+               <a href="User.srm?option2">Option 2</a>
+            </li>
+         </ul>
+      </li>
+      <li class="mitem">
+         <a href="User.srm?logout">Logout</a>
+      </li>
+   </ul>
+</nav>
+@end example
+
+Navigation can be customized through several different tools:
+
+@table @strong
+@item Customized HTML Elements
+
+If a developer needs the navigation to be configured differently
+from the default, XSL templates can be used.  The default
+navigation-building starts thus:
+
+@code{<xsl:template match="/*/navigation" mode="header">}
+
+Construct a unique navigation by adding an attribute to the
+navigation XML element and a matching selection predicate to the
+@code{match} attribute of the template element.
+
+@item Customized CSS View
+
+The Framework provides a standard look-and-feel for the standard
+navigation.  Colors, fonts, sizes, etc, can be changed or
+overridden using custom CSS instructions or files incorporated
+into your page.
+
+@item Customized Javascript
+
+While using CSS and @code{<a>} anchor tags are usually recommended
+because they work even when CSS and Javascript are unavailable
+for some reason, some projects will require more direct control.
+Anyone with skills necessary to implement javascript navigation
+will be able to implement it.
+@end table
+
+
+@node Triggered Links
+@section Triggered Links
+
+Some links are invisible to the user and are activated by structured
+procedure results.
+
+These triggered links are implemented in @emph{Jumping Form}
+
+@xref{Jumping Form}
