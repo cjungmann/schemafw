@@ -197,6 +197,10 @@
 
         <hr />
 
+        <xsl:apply-templates select="." mode="construct_button_row">
+          <xsl:with-param name="position" select="'bottom'" />
+        </xsl:apply-templates>
+
         <p class="buttons">
           <xsl:if test="$has_action">
               <input type="submit" value="Submit" />
