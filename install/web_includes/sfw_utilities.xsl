@@ -328,6 +328,7 @@
   <xsl:template match="*" mode="construct_button_row">
     <xsl:param name="class" />
     <xsl:param name="host-type" select="'tr'" />
+    <xsl:param name="position" />
 
     <xsl:if test="not(local-name()='buttons')">
       <xsl:variable name="par" select="parent::*" />
@@ -335,6 +336,7 @@
         <xsl:apply-templates select="$par" mode="construct_button_row">
           <xsl:with-param name="class" select="$class" />
           <xsl:with-param name="host-type" select="$host-type" />
+          <xsl:with-param name="position" select="$position" />
         </xsl:apply-templates>
       </xsl:if>
     </xsl:if>
@@ -350,29 +352,32 @@
       </xsl:if>
     </xsl:variable>
     
-    <xsl:variable name="buttons" select="button" />
+    <xsl:if test="(not($position) and not(@position)) or $position = @position">
+      <xsl:variable name="buttons" select="button" />
 
-    <xsl:if test="count($buttons)&gt;0">
-      <xsl:choose>
-        <xsl:when test="$host-type='tr'">
-          <tr class="{$host_class}">
-            <td colspan="99" style="background-color #66FF66">
+      <xsl:if test="count($buttons)&gt;0">
+        <xsl:choose>
+          <xsl:when test="$host-type='tr'">
+            <tr class="{$host_class}">
+              <td colspan="99" style="background-color #66FF66">
+                <xsl:apply-templates select="$buttons" mode="construct_button" />
+              </td>
+            </tr>
+          </xsl:when>
+          <xsl:otherwise>
+            <p class="{$host_class}">
               <xsl:apply-templates select="$buttons" mode="construct_button" />
-            </td>
-          </tr>
-        </xsl:when>
-        <xsl:otherwise>
-          <p class="{$host_class}">
-            <xsl:apply-templates select="$buttons" mode="construct_button" />
-          </p>
-        </xsl:otherwise>
-      </xsl:choose>
+            </p>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:if>
     </xsl:if>
 
     <xsl:if test="not(local-name()='buttons')">
       <xsl:apply-templates select="buttons" mode="construct_button_row">
         <xsl:with-param name="class" select="$class" />
         <xsl:with-param name="host-type" select="$host-type" />
+        <xsl:with-param name="position" select="$position" />
       </xsl:apply-templates>
     </xsl:if>
   </xsl:template>
