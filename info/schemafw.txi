@@ -49,12 +49,13 @@ production.
 * Field Types::         Field types for different types of data
 * Field Instructions::  Enhance schema field elements
 * Form Input Widgets:: 
+* Links::               Buttons, navigation, anchors
+* Buttons::
 * Calendars::           Specialized table for customization
 * Result Elements::     Label and use query results in a resultset
 * Merged Interactions:: Minimize network traffic by preserving data
 * Interactions::
 * Context References::  Apply document values to captions or fields
-* Buttons::             Button attributes recognized by the Framework
 * Customizing::         Extend the framework with your own components
 * Lookup Values::       Order of evaluation for inter-result searches
 * Utilities::           Special-purpose functions, templates, etc.
@@ -94,12 +95,13 @@ $ sudo ln -s /usr/local/lib/schemafw/web_includes includes
 @include schemafw.field_types.txi
 @include schemafw.field_instructions.txi
 @include schemafw.input.widgets.txi
+@include schemafw.links.txi
+@include schemafw.buttons.txi
 @include schemafw.calendar.txi
 @include schemafw.results.txi
 @include schemafw.merged.txi
 @include schemafw.interactions.txi
 @include schemafw.context-refs.txi
-@include schemafw.buttons.txi
 @include schemafw.customizing.txi
 @include schemafw.lookup_values.txi
 @include schemafw.utilities.txi
