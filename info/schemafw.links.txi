@@ -35,14 +35,21 @@ A @emph{navigation} element will render a grouped set of links on
 a page.  The default representation is a horizontal bar consisting
 of links and drop-down lists of links.
 
+By default, the Schema Framework creates the semantic HTML @code{<nav>}
+immediately after the @code{<h1>} element.
+
+The Framework-generated @code{<nav>} element contains an @code{<ul>}
+structure that is styled and activated by CSS code.
+
 The @emph{navigation} element may be constructed entirely from
 response mode instructions, or it can be generated from a MySQL
 query.
 
 @menu
-* SRM Navigation Element::
-* MySQL Navigation Element::
-* Rendered Navigation::
+* SRM Navigation Element::   Introduction to terms and format
+* HTML Navigation Output::   Navigation Generated HTML Code
+* SQL-Generated Navigation:: Conditional Navigation Targets
+* Customized Navigation::    Bend Navigation to your Will
 @end menu
 
 @node SRM Navigation Element
@@ -55,46 +62,37 @@ subgroups of @emph{target}s.
 Navigation elements are typically consistent among a group of
 pages, and are thus suited to be defined as shared items.
 
+Navigation targets can be nested one level deep.  Using a @code{topic}
+with targets will create a drop-down submenu in a navigation bar.
+
 @example
-$shared : autoload_page
+$shared : mynav
    navigation
       target
-         label : home
-         url   : Home.srm
+         label : Profile
+         url   : User.srm?profile
       topic
          label : Options
          target
-            label : Edit Profile
-            url   : Home.srm?profile
+            label : Option 1
+            url   : User.srm?option1
          target
-            label : Create Message
-            url   : Message.srm?new
-         target
-            label : Post Request
-            url   : Request.srm?post
+            label : Option 2
+            url   : User.srm?option2
       target
          label : Logout
-         url   : Login.srm?logout
+         url   : User.srm?logout
 @end example
 
-@node MySQL Navigation Element
-@subsection MySQL Navigation Element
 
-Navigation elements can be generated with a MySQL query.  The
-benefit of this is that users can be given unique navigation
-options depending on their access level.
+@node HTML Navigation Output
+@subsection HTML Navigation Output
 
-
-@node Rendered Navigation
-@subsection Rendered Navigation
-
-By default, the Schema Framework creates the semantic HTML @code{<nav>}
-immediately after the @code{<h1>} element.
-
-The Framework-generated @code{<nav>} element contains an @code{<ul>}
-structure that is styled and activated by CSS code.
-
-This is a typical rendered navigation element:
+This is a typical rendered navigation element.  Ignoring the
+@code{<h1>} element that is included to show its position
+relative to the navigation, the contents of the @code{<nav>}
+element show what would be output given the SRM instructions
+in the previous subsection.
 
 @example
 <h1>Sample Title</h1>
@@ -120,6 +118,117 @@ This is a typical rendered navigation element:
    </ul>
 </nav>
 @end example
+
+@node SQL-Generated Navigation
+@subsection SQL-Generated Navigation
+
+Many web applications limit access to certain pages depending
+on the privlege level of the user.  The Framework allows for
+including conditional targets in navigation through query
+results.
+
+Adding conditional targets is a two-part process.  The first
+step is to create a table with target labels and urls, and
+a procedure to return the targets.  The second step is to
+create the SRM elements that will utilize the generated
+targets.
+
+@menu
+* Conditional Navigation SQL Code::
+* Conditional Navigation SRM Code::
+@end menu
+
+
+@node Conditional Navigation SQL Code
+@subsubsection Conditional Navigation SQL Code
+
+@example
+CREATE TABLE Target
+(
+   id       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+   id_level INT UNSIGNED,
+   label    VARCHAR(80),
+   url      VARCHAR(128),
+   INDEX(id_level)
+);
+
+DELIMITER $$
+
+CREATE PROCEDURE App_User_Target()
+BEGIN
+   SELECT t.label, t.url
+     FROM Target t
+          INNER JOIN User u ON t.id_level = u.level
+    WHERE User.id = @@session_confirmed_id;
+    -- Use your imagination to improve the condition.
+END $$
+
+CREATE PROCEDURE App_User_Page()
+BEGIN
+   SELECT fname, lname, email
+     FROM User
+    WHERE id = @@session_confirmed_id;
+
+   CALL App_User_Target();
+END $$
+
+DELIMITER ;
+@end example
+
+Note the the procedure that builds the user page includes a query
+(embedded, in this case, in another procedure) that returns the
+allowed targets.  See below how that content is used.
+
+@node Conditional Navigation SRM Code
+@subsubsection Conditional Navigation SRM Code
+
+An example SRM file, using the conditional targets, might look
+like this:
+
+@example
+$shared : mynav
+   navigation
+      target
+         label : Profile
+         url   : User.srm?profile
+      topic
+         label : Administrator
+         result : admin_targets
+      target
+         label : Logout
+         url   : User.srm?logout
+
+page
+   type      : form-view
+   procedure : App_User_Page
+   siblings  : $mynav
+   result : 1
+      name : profile
+   result : 2
+      name : admin_targets
+      row-name : target
+@end example
+
+There are a few things to note in the above SRM example:
+
+@enumerate
+@item The navigation branch includes a @emph{topic} instruction
+      into which the conditional targets will be loaded.  The
+      topic branch includes a @code{result} instruction that
+      names the result where the targets will be found.
+
+@item The targets result must be named to match the @code{topic}
+      and the elements must be named @code{target}.
+
+@item The topic will be included only if there are targets
+      to populate it.  A zero-length target list will result
+      in the topic being ignored.
+@end enumerate
+
+
+
+@node Customized Navigation
+@subsection Customized Navigation
 
 Navigation can be customized through several different tools:
 
