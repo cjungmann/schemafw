@@ -257,30 +257,30 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="topic" mode="build_topic">
+  <xsl:template match="topic" mode="nav_topic">
     <xsl:param name="targets" select="target" />
     <li class="topic">
       <div><xsl:value-of select="@label" /></div>
       <ul class="menu">
-        <xsl:apply-templates select="$targets" mode="nav_header" />
+        <xsl:apply-templates select="$targets" mode="nav_item" />
       </ul>
     </li>
   </xsl:template>
 
-  <xsl:template match="topic" mode="nav_header">
-    <xsl:apply-templates select="." mode="build_topic" />
+  <xsl:template match="topic" mode="nav_item">
+    <xsl:apply-templates select="." mode="nav_topic" />
   </xsl:template>
 
-  <xsl:template match="topic[@result]" mode="nav_header">
+  <xsl:template match="topic[@result]" mode="nav_item">
     <xsl:variable name="targets" select="/*/*[local-name()=current()/@result]/target" />
     <xsl:if test="count($targets)">
-      <xsl:apply-templates select="." mode="build_topic">
+      <xsl:apply-templates select="." mode="nav_topic">
         <xsl:with-param name="targets" select="$targets" />
       </xsl:apply-templates>
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="target" mode="nav_header">
+  <xsl:template match="target" mode="nav_item">
       <xsl:variable name="url">
         <xsl:apply-templates select="@url" mode="resolve_url" />
       </xsl:variable>
@@ -302,7 +302,7 @@
     <xsl:if test="count(target)">
       <nav>
         <ul class="menu">
-          <xsl:apply-templates select="*" mode="nav_header" />
+          <xsl:apply-templates select="*" mode="nav_item" />
         </ul>
       </nav>
     </xsl:if>
