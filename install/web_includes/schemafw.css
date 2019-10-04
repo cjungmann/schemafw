@@ -56,9 +56,16 @@ nav.views div.selected
 
 /* Start of ul.menu styles */
 
-nav ul       { padding:0; margin:0; list-style-type:none; }
-nav li       { text-align:left; display:inline-block; cursor:pointer; white-space:nowrap; }
-nav a        { text-decoration:none; color: #000000;}
+nav ul { padding:0; margin:0; list-style-type:none; }
+nav a  { text-decoration:none; color: #000000;}
+nav li
+{
+    text-align:left;
+    display:inline-block;
+    cursor:pointer;
+    white-space:nowrap;
+    background-color:#DDDDDD;
+}
 
 nav ul.menu                         { background-color:#EEEEEE; }
 
