@@ -99,8 +99,13 @@
           <xsl:with-param name="primary" select="$cprimary" />
         </xsl:apply-templates>
       </xsl:when>
+      <xsl:otherwise>
+        <div>"fill_host" template cannot deduce source of host contents.  Including a schema may help.</div>
+      </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+
+  <xsl:template match="*[@rndx]"><div>Unidentifiable modeless result template</div></xsl:template>
 
   <xsl:template match="*[@rndx]" mode="construct_host_top">
     <xsl:apply-templates select="." mode="construct_host_title" />
