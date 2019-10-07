@@ -22,6 +22,17 @@
   <!-- <xsl:variable name="empty-list-value" select="'- - empty list - -'" /> -->
   <xsl:variable name="empty-list-value">-- empty list --</xsl:variable>
 
+  <xsl:template match="*[@rndx][schema][not(@merged)]['form-'=substring(/*/@mode-type,1,5)]">
+    <xsl:apply-templates select="schema" mode="construct_form" />
+  </xsl:template>
+
+  <xsl:template match="*[@rndx][schema][@merged][1]['form-'=substring(@merge-type,1,5)]">
+    <div>
+      Matched merged result with schema and merge-type starts with form-
+      (ie <xsl:value-of select="@merge-type" />)
+    </div>
+  </xsl:template>
+  
   <xsl:template match="field" mode="construct_form_single">
     <xsl:param name="data" />
     <xsl:param name="legend" select="'legend'" />
@@ -117,14 +128,15 @@
 
     <xsl:variable name="class">
       <xsl:choose>
+        <xsl:when test="$render_as_page">Embedded</xsl:when>
         <xsl:when test="string-length($primary)">Embedded</xsl:when>
         <xsl:otherwise>Moveable</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:if test="$render_as_page">
-      <h2><xsl:value-of select="$legend" /></h2>
-    </xsl:if>
+    <!-- <xsl:if test="$render_as_page"> -->
+    <!--   <h2><xsl:value-of select="$legend" /></h2> -->
+    <!-- </xsl:if> -->
 
     <xsl:element name="form">
 
