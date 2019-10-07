@@ -617,9 +617,29 @@ function prepare_getDocument_functions()
             prep_namespaces(doc);
          }
       }
+
+      // First try to get XMLDocument from document copy in script element:
+      var xmlscript = document.getElementById("XMLDocument");
+      if (xmlscript)
+      {
+         if (!("XMLDocument" in document))
+         {
+            var tdoc = parseXML("");
+            if ("adoptNode" in tdoc)
+               tdoc.adoptNode(xmlscript.firstChild);
+            else
+               tdoc = parseXML(serialize(xmlscript.firstChild));
+
+            document.XMLDocument = tdoc;
+         }
+
+         // Remove new redundant node to save memory:
+         xmlscript.parentNode.removeChild(xmlscript);
+      }
       
       if ("XMLDocument" in document)
       {
+
          prep_for_ie(document.XMLDocument);
          if ("XSLDocument" in document)
             prep_for_ie(document.XSLDocument);
@@ -627,7 +647,10 @@ function prepare_getDocument_functions()
          call_callback();
       }
       else
+      {
+         alert("Unable to get XML from original submitted document.");
          xhr_get(window.location.href,have_xml,get_error,null,"text/xml");
+      }
    };
 }
 
