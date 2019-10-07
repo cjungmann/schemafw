@@ -2968,4 +2968,4 @@ function init_SFW(callback)
    SFW.add_preload(xdocs_preload);
 
    getXMLDocs(xmldocs_ready);
-}
+} // end of init_SFW
