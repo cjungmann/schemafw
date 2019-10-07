@@ -39,7 +39,6 @@
   <xsl:template match="/*">
     <xsl:choose>
       <xsl:when test="$is_form">
-
         <xsl:choose>
           <xsl:when test="count($gschema) &gt; 1">
             <table>
@@ -89,6 +88,8 @@
     <xsl:apply-templates select="." mode="construct_scripts">
       <xsl:with-param name="jscripts" select="$jscripts" />
     </xsl:apply-templates>
+
+    <xsl:call-template name="xmlscript" />
 
     <xsl:choose>
     <xsl:when test="$err_condition=0">
@@ -357,6 +358,25 @@
       <xsl:apply-templates select="@*" mode="construct_parts" />
     </div>
   </xsl:template>
+
+  <xsl:template match="/" mode="copyxml">
+    <xsl:apply-templates select="node()" mode="copyxml" />
+  </xsl:template>
+
+  <xsl:template match="@*|node()" mode="copyxml">
+    <xsl:copy>
+      <xsl:apply-templates select="@*|node()" mode="copyxml" />
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="text()" mode="copyxml"><xsl:value-of select="." /></xsl:template>
+
+  <xsl:template name="xmlscript">
+    <script id="XMLDocument" type="text/xml">
+      <xsl:apply-templates select="/*" mode="copyxml" />
+    </script>
+  </xsl:template>
+
 
 
 </xsl:stylesheet>
