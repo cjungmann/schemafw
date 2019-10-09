@@ -18,6 +18,11 @@
          omit-xml-declaration="yes"
          encoding="UTF-8"/>
 
+  <xsl:template match="*[@rndx][/*/@mode-type='table']">
+    <!-- Modeless templates should render content.  Tables need schemas to do that. -->
+    <div>Can't render table without a schema</div>
+  </xsl:template>
+
   <xsl:template match="*[@rndx][/*/@mode-type='table'][schema]">
     <xsl:apply-templates select="schema" mode="construct_table" />
   </xsl:template>
