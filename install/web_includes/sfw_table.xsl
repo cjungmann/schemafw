@@ -18,24 +18,24 @@
          omit-xml-declaration="yes"
          encoding="UTF-8"/>
 
-  <xsl:template match="*[@rndx][/*/@mode-type='table']">
+  <xsl:template match="*[@rndx][not(schema)][/*/@mode-type='table' or @merge-type='table']">
     <!-- Modeless templates should render content.  Tables need schemas to do that. -->
     <div>Can't render table without a schema</div>
   </xsl:template>
 
-  <xsl:template match="*[@rndx][/*/@mode-type='table'][schema]">
+  <xsl:template match="*[@rndx][schema][/*/@mode-type='table' or @merge-type='table']">
     <xsl:apply-templates select="schema" mode="construct_table" />
   </xsl:template>
 
-  <xsl:template match="*[@rndx][@merge-type='table'][schema]">
-    <xsl:apply-templates select="schema" mode="construct_table" />
-  </xsl:template>
+  <!-- <xsl:template match="*[@rndx][@merge-type='table'][schema]"> -->
+  <!--   <xsl:apply-templates select="schema" mode="construct_table" /> -->
+  <!-- </xsl:template> -->
 
   <xsl:template match="*[@rndx][schema][@sfw_refill_tbody]">
     <xsl:apply-templates select="schema" mode="fill_tbody" />
   </xsl:template>
 
-  <xsl:template match="*[@rndx][@filter][schema][@sfw_refill_tbody]">
+  <xsl:template match="*[@rndx][schema][@filter][@sfw_refill_tbody]">
     <xsl:variable name="lines" select="*[local-name()=../@row-name]" />
     <xsl:apply-templates select="schema" mode="fill_tbody">
       <xsl:with-param name="lines" select="$lines" />
