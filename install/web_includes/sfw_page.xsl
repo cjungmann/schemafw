@@ -359,19 +359,21 @@
     </div>
   </xsl:template>
 
-  <xsl:template match="/" mode="copyxml">
-    <xsl:apply-templates select="node()" mode="copyxml" />
-  </xsl:template>
-
   <xsl:template match="@*|node()" mode="copyxml">
     <xsl:copy>
       <xsl:apply-templates select="@*|node()" mode="copyxml" />
     </xsl:copy>
   </xsl:template>
 
+  <xsl:template match="processing-instruction('xml-stylesheet')" mode="copyxml">
+    <xsl:processing-instruction name="{local-name()}">
+      <xsl:value-of select="." />
+    </xsl:processing-instruction>
+  </xsl:template>
+
   <xsl:template name="xmlscript">
     <script id="XMLDocument" type="text/xml">
-      <xsl:apply-templates select="/*" mode="copyxml" />
+      <xsl:apply-templates select="/" mode="copyxml" />
     </script>
   </xsl:template>
 
