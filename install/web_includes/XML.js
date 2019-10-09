@@ -572,7 +572,7 @@ function prepare_getDocument_functions()
          return null;
    };
 
-   getXMLDocs = function _getXMLDocs(callback)
+   getXMLDocs = function _getXMLDocs(callback, xml_island)
    {
       function call_callback()
       {
@@ -618,37 +618,44 @@ function prepare_getDocument_functions()
          }
       }
 
-      // First try to get XMLDocument from document copy in script element:
-      var xmlscript = document.getElementById("XMLDocument");
-      if (xmlscript)
+      function get_innerhtml(xmlel)
       {
-         if (!("XMLDocument" in document))
+         if ("innerHTML" in xmlel)
+            return xmlel.innerHTML;
+         else
          {
-            var tdoc = parseXML("");
-            if ("adoptNode" in tdoc)
-               tdoc.adoptNode(xmlscript.firstChild);
-            else
-               tdoc = parseXML(serialize(xmlscript.firstChild));
+            var els=[];
+            var curel = xmlel.firstChild;
+            while (curel)
+            {
+               els.push(serialize(curel));
+               curel = curel.nextSibling();
+            }
 
-            document.XMLDocument = tdoc;
+            return els.join();
          }
-
-         // Remove new redundant node to save memory:
-         xmlscript.parentNode.removeChild(xmlscript);
       }
-      
+
+      // First try to get XMLDocument from document copy in script element:
       if ("XMLDocument" in document)
       {
-
          prep_for_ie(document.XMLDocument);
          if ("XSLDocument" in document)
             prep_for_ie(document.XSLDocument);
          
          call_callback();
       }
+      else if (xml_island)
+      {
+         if (!("XMLDocument" in document))
+         {
+            var tdoc = parseXML(get_innerhtml(xml_island));
+            have_xml(tdoc);
+         }
+      }
       else
       {
-         alert("Unable to get XML from original submitted document.");
+         console.warn("Unable to get XML from original submitted document.");
          xhr_get(window.location.href,have_xml,get_error,null,"text/xml");
       }
    };
