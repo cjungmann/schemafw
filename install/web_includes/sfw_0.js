@@ -22,7 +22,7 @@ var SFW = { types     : {},
             add_preload : function(name, f)
             {
                if (name in this.preloads)
-                  console.err("\"" + name + "\" is already in use.  Request ignored.");
+                  console.error("\"" + name + "\" is already in use.  Request ignored.");
                else
                   this.preloads[name] = f;
             },
@@ -39,7 +39,7 @@ var SFW = { types     : {},
                      this.start_app();
                }
                else
-                  console.err("\""+name+"\" not found for deletion.");
+                  console.error("\""+name+"\" not found for deletion.");
             },
             
             /** Checks prerequisites for loading the class, setting a delay if necessary.
