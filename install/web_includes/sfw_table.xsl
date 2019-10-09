@@ -341,7 +341,6 @@
       </xsl:if>
 
       <xsl:apply-templates select="." mode="custom_tr_attributes" />
-      <xsl:attribute name="bogus">ha</xsl:attribute>
 
       <xsl:apply-templates select="$schema/field" mode="construct_line_cell">
         <xsl:with-param name="data" select="." />
