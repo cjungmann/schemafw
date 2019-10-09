@@ -105,8 +105,6 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="*[@rndx]"><div>Unidentifiable modeless result template</div></xsl:template>
-
   <xsl:template match="*[@rndx]" mode="construct_host_top">
     <xsl:apply-templates select="." mode="construct_host_title" />
     <xsl:apply-templates select="." mode="show_intro" />
