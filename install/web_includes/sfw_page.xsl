@@ -369,8 +369,6 @@
     </xsl:copy>
   </xsl:template>
 
-  <xsl:template match="text()" mode="copyxml"><xsl:value-of select="." /></xsl:template>
-
   <xsl:template name="xmlscript">
     <script id="XMLDocument" type="text/xml">
       <xsl:apply-templates select="/*" mode="copyxml" />
