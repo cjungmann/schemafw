@@ -2948,9 +2948,13 @@ function init_SFW(callback)
    _resize_page_head();
 
    var xdocs_preload = "xmldocs_loaded";
+   var xml_island = document.getElementById("XMLDocument");
 
    function xmldocs_ready()
    {
+      // Remove redundant xml_island
+      xml_island.parentNode.removeChild(xml_island);
+
       // These may change if I redo XML.js.  They should all
       // accept and use a callback in case the documents are
       // not already resident.
@@ -2967,5 +2971,5 @@ function init_SFW(callback)
 
    SFW.add_preload(xdocs_preload);
 
-   getXMLDocs(xmldocs_ready);
+   getXMLDocs(xmldocs_ready, xml_island);
 } // end of init_SFW
