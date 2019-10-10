@@ -2953,7 +2953,11 @@ function init_SFW(callback)
    function xmldocs_ready()
    {
       // Remove redundant xml_island
-      xml_island.parentNode.removeChild(xml_island);
+      if (xml_island)
+      {
+         xml_island.parentNode.removeChild(xml_island);
+         xml_island = null;
+      }
 
       // These may change if I redo XML.js.  They should all
       // accept and use a callback in case the documents are
