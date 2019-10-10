@@ -66,29 +66,6 @@
       </xsl:element>
     </div>
 
-
-    <!-- <div class="SFW_Host" style="position:static"> -->
-    <!--   <xsl:apply-templates select="$jresult" mode="construct_table"> -->
-    <!--     <xsl:with-param name="sfw_class" select="'table'" /> -->
-    <!--   </xsl:apply-templates> -->
-    <!-- </div> -->
-
-    <!-- <xsl:element name="table"> -->
-    <!--   <xsl:attribute name="class">iltable</xsl:attribute> -->
-    <!--   <xsl:attribute name="data-sfw-class">iltable</xsl:attribute> -->
-    <!--   <xsl:attribute name="data-sfw-control">input</xsl:attribute> -->
-    <!--   <xsl:attribute name="tabindex">0</xsl:attribute> -->
-
-    <!--   <tbody> -->
-        
-    <!--     <xsl:call-template name="transform_associated_references"> -->
-    <!--       <xsl:with-param name="result" select="/*/*[local-name()=$jresult/@result]" /> -->
-    <!--       <xsl:with-param name="field" select="." /> -->
-    <!--       <xsl:with-param name="str" select="$value" /> -->
-    <!--     </xsl:call-template> -->
-    <!--   </tbody> -->
-
-    <!-- </xsl:element> -->
   </xsl:template>
 
   <xsl:template match="schema/field[@type='iltable']" mode="make_add_button"></xsl:template>
