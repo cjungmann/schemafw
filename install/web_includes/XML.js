@@ -620,20 +620,15 @@ function prepare_getDocument_functions()
 
       function get_innerhtml(xmlel)
       {
-         if ("innerHTML" in xmlel)
-            return xmlel.innerHTML;
-         else
+         var els=[];
+         var curel = xmlel.firstChild;
+         while (curel)
          {
-            var els=[];
-            var curel = xmlel.firstChild;
-            while (curel)
-            {
-               els.push(serialize(curel));
-               curel = curel.nextSibling();
-            }
-
-            return els.join();
+            els.push(serialize(curel));
+            curel = curel.nextSibling;
          }
+
+         return els.join("\n");
       }
 
       // First try to get XMLDocument from document copy in script element:
