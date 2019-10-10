@@ -20,8 +20,8 @@
    }
 
    // Make copies of _form for prototype property "class_name" (RTTI).
-   function _form_new(base, doc, caller, data) { _form.apply(this, arguments); }
-   function _form_edit(base, doc, caller, data) { _form.apply(this, arguments); }
+   function _form_new(actors) { _form.apply(this, arguments); }
+   function _form_edit(actors) { _form.apply(this, arguments); }
 
    // Adding useful local functions to global object
    SFW.focus_on_first_field = _focus_on_first_field;
