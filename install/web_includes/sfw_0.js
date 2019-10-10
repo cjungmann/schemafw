@@ -1040,7 +1040,7 @@ function init_SFW(callback)
       var obj = _seek_event_object(t);
       if (obj)
          return obj.process(e,t);
-      else if (t.tagName.toLowerCase()=="button")
+      else if (t.nodeType==1 && t.tagName.toLowerCase()=="button")
          return ! _process_rogue_button(t);
       else
          return true;
