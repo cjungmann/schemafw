@@ -18,7 +18,7 @@
          omit-xml-declaration="yes"
          encoding="UTF-8"/>
 
-  <xsl:template match="*[@rndx][not(schema)][/*/@mode-type='table' or @merge-type='table']">
+  <xsl:template match="*[@rndx][/*/@mode-type='table' or @merge-type='table']">
     <!-- Modeless templates should render content.  Tables need schemas to do that. -->
     <div>Can't render table without a schema</div>
   </xsl:template>
@@ -26,10 +26,6 @@
   <xsl:template match="*[@rndx][schema][/*/@mode-type='table' or @merge-type='table']">
     <xsl:apply-templates select="schema" mode="construct_table" />
   </xsl:template>
-
-  <!-- <xsl:template match="*[@rndx][@merge-type='table'][schema]"> -->
-  <!--   <xsl:apply-templates select="schema" mode="construct_table" /> -->
-  <!-- </xsl:template> -->
 
   <xsl:template match="*[@rndx][schema][@sfw_refill_tbody]">
     <xsl:apply-templates select="schema" mode="fill_tbody" />
@@ -138,24 +134,6 @@
       </tbody>
     </xsl:element>
   </xsl:template>
-
-  <!--
-      Pass-through template to provide a result-based entry to construct_table.
-  -->
-  <xsl:template match="*[@rndx]" mode="construct_table">
-    <xsl:param name="sfw_class" />
-    <xsl:choose>
-      <xsl:when test="schema">
-        <xsl:apply-templates select="schema" mode="construct_table">
-          <xsl:with-param name="sfw_class" select="$sfw_class" />
-        </xsl:apply-templates>
-      </xsl:when>
-      <xsl:otherwise>
-        <div>Can't construct a table without a schema</div>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-
 
   <xsl:template match="schema" mode="construct_thead_rows">
     <xsl:param name="class" />
