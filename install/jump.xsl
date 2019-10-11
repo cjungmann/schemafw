@@ -19,15 +19,15 @@
 
   <xsl:variable name="apos">'</xsl:variable>
 
-  <xsl:variable name="payload" select="/*/*[@rndx][@type='jumps']/*[local-name()=../@row-name]" />
+  <xsl:variable name="jresult" select="/*/*[@rndx][@type='jumps']" />
 
+  <xsl:variable name="payload" select="$jresult/*[local-name()=../@row-name]" />
   <xsl:variable name="msg" select="$payload/@msg" />
-
   <xsl:variable name="jval" select="$payload/@jump" />
   <xsl:variable name="eval" select="substring($payload/@error,1 div boolean(0=string-length($jval)))" />
   <xsl:variable name="jump_code" select="concat($jval,$eval)" />
 
-  <xsl:variable name="jumps" select="$payload/../jumps" />
+  <xsl:variable name="jumps" select="$jresult/jumps" />
   <xsl:variable name="raw_dest" select="$jumps/@*[local-name()=concat('jump',$jump_code)]" />
 
   <xsl:variable name="dest">
@@ -49,8 +49,10 @@
       <head>
         <title>Schema Framework Jump Page</title>
 
-        <!-- Always make a jump -->
-        <xsl:call-template name="add-meta-jump" />
+        <!-- Only add 'refresh' meta if a destination has be found: -->
+        <xsl:if test="string-length($dest)">
+          <xsl:call-template name="add-meta-jump" />
+        </xsl:if>
 
         <!-- Only load stylesheet for a message -->
         <xsl:if test="$payload/@msg">
@@ -66,7 +68,26 @@
         </xsl:if>
 
         <p class="def_center">
-          <a href="{$dest}">Click on this link if you get stuck on this page.</a>
+          <xsl:choose>
+            <xsl:when test="not($jresult)">
+              Failed to identify the jump-type result.
+            </xsl:when>
+            <xsl:when test="not($jumps)">
+              Failed to find jump destinations.
+            </xsl:when>
+            <xsl:when test="not($payload)">
+              Failed to find jump instructions.
+            </xsl:when>
+            <xsl:when test="not($jump_code)">
+              Failed to identify a jump code.
+            </xsl:when>
+            <xsl:when test="string-length($dest)">
+              <a href="{$dest}">Click on this link if you get stuck on this page.</a>
+            </xsl:when>
+            <xsl:otherwise>
+              Failed to discern a URL.
+            </xsl:otherwise>
+          </xsl:choose>
         </p>
       </body>
     </html>
