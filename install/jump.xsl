@@ -58,6 +58,11 @@
         <xsl:if test="$payload/@msg">
           <link rel="stylesheet" type="text/css" href="includes/schemafw.css" />
         </xsl:if>
+
+        <style type="text/css">
+          .def_center { text-align:center; }
+        </style>
+
       </head>
       <body>
         <xsl:if test="$payload/@msg">
@@ -69,23 +74,28 @@
 
         <p class="def_center">
           <xsl:choose>
-            <xsl:when test="not($jresult)">
-              Failed to identify the jump-type result.
-            </xsl:when>
-            <xsl:when test="not($jumps)">
-              Failed to find jump destinations.
-            </xsl:when>
-            <xsl:when test="not($payload)">
-              Failed to find jump instructions.
-            </xsl:when>
-            <xsl:when test="not($jump_code)">
-              Failed to identify a jump code.
-            </xsl:when>
             <xsl:when test="string-length($dest)">
               <a href="{$dest}">Click on this link if you get stuck on this page.</a>
             </xsl:when>
             <xsl:otherwise>
-              Failed to discern a URL.
+              <xsl:choose>
+                <xsl:when test="not($jresult)">
+                  Failed to identify the jump-type result.
+                </xsl:when>
+                <xsl:when test="not($jumps)">
+                  Failed to find jump destinations.
+                </xsl:when>
+                <xsl:when test="not($payload)">
+                  Failed to find jump instructions.
+                </xsl:when>
+                <xsl:when test="not($jump_code)">
+                  Failed to identify a jump code.
+                </xsl:when>
+                <xsl:otherwise>
+                  Failed to discern a URL.
+                </xsl:otherwise>
+              </xsl:choose>
+              <xsl:text>  Press BACK to retrace your steps.</xsl:text>
             </xsl:otherwise>
           </xsl:choose>
         </p>
@@ -98,6 +108,5 @@
 
     <meta http-equiv="refresh" content="{$content}" />
   </xsl:template>
-
 
 </xsl:stylesheet>
