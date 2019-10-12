@@ -653,7 +653,6 @@
       </xsl:if>
 
       <xsl:if test="$readonly='true'">
-        <xsl:attribute name="disabled">disabled</xsl:attribute>
         <xsl:attribute name="readonly">readonly</xsl:attribute>
       </xsl:if>
       

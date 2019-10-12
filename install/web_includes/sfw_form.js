@@ -143,7 +143,8 @@
    var _dataless_els = 'submit reset button';
    function _holds_data(el)
    {
-      return (el.name.length || _dataless_els.search(el.type)==-1) ? el : null;
+      // HTML forms never send disabled fields, we shouldn't either
+      return (!el.disabled && (el.name.length || _dataless_els.search(el.type)==-1)) ? el : null;
    }
 
    // Global, SFW member function
