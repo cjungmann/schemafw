@@ -179,9 +179,10 @@
             </xsl:attribute>
             <xsl:value-of select="$legend" />
           </xsl:element>
-        </xsl:if>
 
-        <xsl:apply-templates select="." mode="show_intro" />
+          <!-- In form-page, the intro is printed under the titles. -->
+          <xsl:apply-templates select="." mode="show_intro" />
+        </xsl:if>
 
         <xsl:apply-templates select="." mode="construct_button_row">
           <xsl:with-param name="host-type" select="'p'" />
