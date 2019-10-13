@@ -90,6 +90,11 @@
         </xsl:apply-templates>
       </xsl:when>
       <xsl:when test="$gschema[not(.. = $gresult)]">
+        <!-- 
+             We've matched a schema that is not hosted
+             in a result (an empty form like a login form)
+        -->
+        <xsl:apply-templates select="$gschema" mode="construct_host_title" />
         <xsl:apply-templates select="$gschema" mode="construct_form">
           <xsl:with-param name="primary" select="$cprimary" />
         </xsl:apply-templates>
@@ -117,9 +122,12 @@
   <xsl:template match="*" mode="show_intro">
     <xsl:param name="class" />
 
-    <xsl:variable
-        name="intro_str"
-        select="string(ancestor-or-self::*[@intro][last()]/@intro)" />
+    <xsl:variable name="result" select="descendant-or-self::*[@rndx]" />
+    <xsl:variable name="schema" select="self::schema|$result/schema" />
+    <xsl:variable name="bottom" select="$schema | $result[not($schema)]" />
+
+    <xsl:variable name="intro_str"
+                  select="($bottom/ancestor-or-self::*/@intro)[last()]" />
 
     <xsl:if test="string-length($intro_str)">
       <xsl:variable name="classname">
@@ -142,45 +150,37 @@
     
   </xsl:template>
 
+
   <!--
-      Select and present a title, if found.  Weighted selection, giving highest
-      priority to the title attribute of the matched result, then to the title
-      attribute of the schema (if found), then to the title attribute of the
-      document element.
-
-      Variables starting "r" are for result, "s" for schema, and "d" for document.
-      The value to use starts with "l" for local.
+      Simpler yet more generic logic for determining highest priority
+      among a hierarchy of elements for rendering host title elements.
   -->
-  <xsl:template match="*[@rndx]" mode="construct_host_title">
-    <xsl:param name="schema" select="/.." />
-    
-    <xsl:variable name="rschema" select="schema[not($schema)]" />
-    <xsl:variable name="dschema" select="/*[not($schema|$rschema)]/schema" />
-    <xsl:variable name="lschema" select="$schema|$rschema|$dschema" />
+  <xsl:template match="*" mode="construct_host_title">
+    <xsl:variable name="result" select="descendant-or-self::*[@rndx]" />
+    <xsl:variable name="schema" select="self::schema|$result/schema" />
+    <xsl:variable name="bottom" select="$schema | $result[not($schema)]" />
 
-    <xsl:variable name="rtitle" select="@title" />
-    <xsl:variable name="stitle" select="$lschema[not($rtitle)]/@title" />
-    <xsl:variable name="dtitle" select="/*[not($rtitle|$stitle)]/@title" />
-    <xsl:variable name="ltitle" select="$rtitle|$stitle|$dtitle" />
+    <xsl:if test="$bottom">
+      <xsl:variable name="title" select="($bottom/ancestor-or-self::*/@title)[last()]" />
+      <xsl:variable name="subtitle" select="($bottom/ancestor-or-self::*/@subtitle)[last()]" />
 
-    <xsl:variable name="rstitle" select="@subtitle" />
-    <xsl:variable name="sstitle" select="$lschema[not($rstitle)]/@subtitle" />
-    <xsl:variable name="dstitle" select="/*[not($rstitle|$sstitle)]/@subtitle" />
-    <xsl:variable name="lstitle" select="$rstitle|$sstitle|$dstitle" />
+      <xsl:if test="$title">
+        <h2 class="fixed_head">
+          <xsl:call-template name="resolve_refs">
+            <xsl:with-param name="str" select="$title" />
+          </xsl:call-template>
+        </h2>
+      </xsl:if>
 
-    <xsl:if test="$ltitle">
-      <xsl:call-template name="construct_title">
-        <xsl:with-param name="str" select="$ltitle" />
-      </xsl:call-template>
+      <xsl:if test="$subtitle">
+        <h3>
+          <xsl:call-template name="resolve_refs">
+            <xsl:with-param name="str" select="$subtitle" />
+          </xsl:call-template>
+        </h3>
+      </xsl:if>
     </xsl:if>
 
-    <xsl:if test="$lstitle">
-      <h3>
-        <xsl:call-template name="resolve_refs">
-          <xsl:with-param name="str" select="$lstitle" />
-        </xsl:call-template>
-      </h3>
-    </xsl:if>
   </xsl:template>
 
   <xsl:template match="views" mode="construct_view_set">
