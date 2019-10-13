@@ -382,15 +382,6 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template name="construct_title">
-    <xsl:param name="str" />
-    <h2 class="fixed_head">
-      <xsl:call-template name="resolve_refs">
-        <xsl:with-param name="str" select="$str" />
-      </xsl:call-template>
-    </h2>
-  </xsl:template>
-
   <xsl:template match="*" mode="seek_attribute">
     <xsl:param name="name" />
     <xsl:variable name="attr" select="@*[local-name()=$name]" />
