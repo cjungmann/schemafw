@@ -17,6 +17,8 @@
       omit-xml-declaration="yes"
       encoding="utf-8"/>
 
+  <xsl:param name="message" />
+
   <xsl:variable name="apos">'</xsl:variable>
 
   <xsl:variable name="jresult" select="/*/*[@rndx][@type='jumps']" />
@@ -74,6 +76,9 @@
 
         <p class="def_center">
           <xsl:choose>
+            <xsl:when test="string-length($message)">
+              <xsl:value-of select="$message" />
+            </xsl:when>
             <xsl:when test="string-length($dest)">
               <a href="{$dest}">Click on this link if you get stuck on this page.</a>
             </xsl:when>
