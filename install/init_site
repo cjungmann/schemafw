@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+
+declare WWW_ROOT="/var/www/"
+declare WWW_NAME
+
+get_www_root()
+{
+    local -n www_root="WWW_ROOT"
+    local new_root
+
+    local -a readargs=(
+        -e
+        -i "${www_root}"
+        -p "Set root into which the new site is hosted: "
+        new_root
+    )
+
+    read "${readargs[@]}"
+
+    if [ ${#new_root} -gt 0 ]; then
+        www_root=${new_root}
+        return 0
+    else
+        return 1
+    fi
+}
+
+database_exists()
+{
+    local name="$1"
+    local dbase
+    local -a dbases=( $( mysql -BN -e "show databases;" ) )
+    for dbase in "${dbases[@]}"; do
+        if [ "$dbase" == "$name" ]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+site_exists()
+{
+    return 0
+}
+
+directory_exists()
+{
+    return 0
+}
+
+get_site_name()
+{
+    local -n www_name=WWW_NAME
+    local new_name
+
+    local -a readargs=(
+        -e
+        -i "mysite"
+        -p "Select a new site name (shared by directory, database, and virtual site): "
+        new_name
+    )
+
+    read "${readargs[@]}"
+
+    if [ ${#new_name} -gt 0 ]; then
+        if database_exists "${new_name}"; then
+            echo "There is already a \"${new_name}\" database"
+            return 1
+        elif site_exists "${new_name}"; then
+            echo "There is already a site named \"${new_name}\"."
+            return 1
+        elif directory_exists "${new_name}"; then
+            echo "There is already a directory named \"${new_name}\"."
+            return 1
+        fi
+        
+        www_root=${new_root}
+        return 0
+    else
+        return 1
+    fi
+
+}
+
+check_name_for_validity()
+{
+    local ppath="${WWW_ROOT}${WWW_NAME}"
+
+    if site_exists "${WWW_NAME}"; then
+        echo "${WWW_NAME} is already a site."
+    elif database_exists "${WWW_NAME}"; then
+        echo "${WWW_NAME} is already a database."
+    elif directory_exists "${ppath}"; then
+         echo "Directory \"${ppath}\" already exists."
+    else
+        return 0
+    fi
+
+    return 1
+}
+
+
+
+
+# Begin script here:
+
+# Detect and exit for erroneous entry
+if get_www_root; then
+    if [ -d "${WWW_ROOT}" ]; then
+        if get_site_name; then
+            if check_name_for_validity; then
+                echo "We can create site \"${WWW_NAME}\" in \"${WWW_ROOT}\""
+                return 0
+            fi
+        fi
+    else
+        echo "Directory ${WWW_ROOT} does not exist."
+    fi
+fi
+
+exit 1
+
