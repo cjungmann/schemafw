@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
-declare WWW_ROOT="/var/www/"
+declare WWW_ROOT="/var/www"
+WWW_ROOT="/~"
 declare WWW_NAME
 
+# Functions for getting information from user
+# get_www_root() and get_site_name()
 get_www_root()
 {
     local -n www_root="WWW_ROOT"
@@ -25,6 +28,24 @@ get_www_root()
     fi
 }
 
+get_site_name()
+{
+    local -n www_name=WWW_NAME
+
+    local -a readargs=(
+        -e
+        -i "mysite"
+        -p "Select a new site name (shared by directory, database, and virtual site): "
+        www_name
+    )
+
+    read "${readargs[@]}"
+
+    return 0
+}
+
+# Functions that test for collisions
+# database_exists(), site_exists(), directory_exists()
 database_exists()
 {
     local name="$1"
@@ -41,63 +62,117 @@ database_exists()
 
 site_exists()
 {
-    return 0
+    local site_root="$1"
+    local site_name="${site_root}.conf"
+
+    local -a site_confs
+    local site_conf
+    site_confs=( $( ls -1 "/etc/apache2/sites-available" ) )
+    for site_conf in "${site_confs[@]}"; do
+        if [ "${site_conf}" == "${site_name}" ]; then
+            return 0
+        fi
+    done
+    return 1
 }
 
 directory_exists()
 {
-    return 0
+    [ -d $1 ]
 }
 
-get_site_name()
+
+
+check_name_for_collisions()
 {
-    local -n www_name=WWW_NAME
-    local new_name
+    local lname="$1"
 
-    local -a readargs=(
-        -e
-        -i "mysite"
-        -p "Select a new site name (shared by directory, database, and virtual site): "
-        new_name
-    )
-
-    read "${readargs[@]}"
-
-    if [ ${#new_name} -gt 0 ]; then
-        if database_exists "${new_name}"; then
-            echo "There is already a \"${new_name}\" database"
-            return 1
-        elif site_exists "${new_name}"; then
-            echo "There is already a site named \"${new_name}\"."
-            return 1
-        elif directory_exists "${new_name}"; then
-            echo "There is already a directory named \"${new_name}\"."
-            return 1
-        fi
-        
-        www_root=${new_root}
-        return 0
-    else
-        return 1
-    fi
-
-}
-
-check_name_for_validity()
-{
-    local ppath="${WWW_ROOT}${WWW_NAME}"
-
-    if site_exists "${WWW_NAME}"; then
-        echo "${WWW_NAME} is already a site."
-    elif database_exists "${WWW_NAME}"; then
-        echo "${WWW_NAME} is already a database."
-    elif directory_exists "${ppath}"; then
-         echo "Directory \"${ppath}\" already exists."
+    if site_exists "${lname}"; then
+        echo "${lname} is already a site."
+    elif database_exists "${lname}"; then
+        echo "${lname} is already a database."
+    elif directory_exists "${lname}"; then
+         echo "Directory \"${lname}\" already exists."
     else
         return 0
     fi
 
     return 1
+}
+
+establish_database()
+{
+    local name="$1"
+
+    mysql -e create\ database\ "$name"
+    mysql -f "$name" < boilerplate/site.sql
+}
+
+establish_directory()
+{
+    local name="$1"
+    local root="$2"
+
+    # Prepare to restore entrance directory when leaving
+    local OPWD="${PWD}"
+
+    # Create directories
+    cd "$root"
+    mkdir "$name"
+    cd "$name"
+    mkdir site
+    mkdir sql
+
+    # Prepare site directory
+    cp "${OPWD}/default.xsl" site
+    ln -s "${OPWD}/web_includes" site/includes
+
+    # Modify and install SRM file
+    local -a sedargs=(
+        -e "/s/#DATABASE#/$name/"
+        -e 
+        )
+
+    sed "${sedargs[@]}" "${OPWD}/boilerplate/site.srm" > site/site.srm
+
+    cp "${OPWD}/boilerplate/site.sql" sql
+    
+    cd "${OPWD}"
+}
+
+establish_site()
+{
+    local name="$1"
+    local root="$2"
+
+    # Create Apache site with doctored conf files
+    local -a sedargs=(
+        -e "/s/sname/${name}/"
+        -e "/s/dname/${root}/${name}/"
+        )
+
+    sed "${sedargs[@]}" boilerplate/site.conf > "${name}.conf"
+    mv "${name}.conf" /etc/apache2/sites-available
+    a2ensite "${name}"
+}
+
+remove_parts()
+{
+    local root="$1"
+    local name="$2"
+
+    if database_exists "$name"; then
+        mysql -e drop\ database\ "$name"
+    fi
+    
+    if site_exists "$name"; then
+        a2dissite "$name"
+        rm "/etc/apache2/sites-available/${name}.conf"
+    fi
+
+    if directory_exists "${root}/${name}"; then
+        rm -rf "${root}/${name}"
+    fi
 }
 
 
@@ -109,9 +184,14 @@ check_name_for_validity()
 if get_www_root; then
     if [ -d "${WWW_ROOT}" ]; then
         if get_site_name; then
-            if check_name_for_validity; then
-                echo "We can create site \"${WWW_NAME}\" in \"${WWW_ROOT}\""
-                return 0
+            remove_parts "${WWW_ROOT}" "${WWW_NAME}"
+
+            if check_name_for_collisions "${WWW_NAME}"; then
+
+                establish_database "${WWW_NAME}"
+                establish_directory "${WWW_NAME}" "${WWW_ROOT}"
+                establish_site "${WWW_NAME}" "${WWW_ROOT}"
+                exit 0
             fi
         fi
     else
