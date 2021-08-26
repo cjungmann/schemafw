@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 declare WWW_ROOT="/var/www"
-WWW_ROOT="/home/${SUDO_USER}"
+WWW_ROOT="/home/${SUDO_USER}/www"
 declare WWW_NAME
 
 # Functions for getting information from user
@@ -147,12 +147,32 @@ establish_site()
     # Create Apache site with doctored conf files
     local -a sedargs=(
         -e "s|sname|${name}|"
-        -e "s|dname|${root}/${name}|"
+        -e "s|dname|${root}/${name}/site|"
         )
 
     sed "${sedargs[@]}" boilerplate/site.conf > "${name}.conf"
     mv "${name}.conf" /etc/apache2/sites-available
     a2ensite "${name}"
+
+    systemctl reload apache2
+    if [ $? -ne 0 ]; then
+        if [ "${root}" != "/var/www" ]; then
+            echo "[31;1mConsult troubleshooting.md.[m"
+        fi
+    fi
+}
+
+establish_tables_and_procs()
+{
+    local name="$1"
+    local root="$2"
+
+    local -a scripts=( $( ls -1 "${root}/${name}"/sql/*.sql ) )
+    local script
+
+    for script in "${scripts[@]}"; do
+        mysql "${name}" < "${script}"
+    done
 }
 
 remove_parts()
@@ -179,6 +199,7 @@ remove_parts()
 
 # Begin script here:
 
+
 # Detect and exit for erroneous entry
 if get_www_root; then
     if [ -d "${WWW_ROOT}" ]; then
@@ -190,6 +211,7 @@ if get_www_root; then
                 establish_database "${WWW_NAME}"
                 establish_directory "${WWW_NAME}" "${WWW_ROOT}"
                 establish_site "${WWW_NAME}" "${WWW_ROOT}"
+                establish_tables_and_procs "${WWW_NAME}" "${WWW_ROOT}"
                 exit 0
             fi
         fi
