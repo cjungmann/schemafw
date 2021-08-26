@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 declare WWW_ROOT="/var/www"
-WWW_ROOT="/~"
+WWW_ROOT="/home/${SUDO_USER}"
 declare WWW_NAME
 
 # Functions for getting information from user
@@ -129,8 +129,7 @@ establish_directory()
 
     # Modify and install SRM file
     local -a sedargs=(
-        -e "/s/#DATABASE#/$name/"
-        -e 
+        -e 's/#DATABASE#/'"$name/"
         )
 
     sed "${sedargs[@]}" "${OPWD}/boilerplate/site.srm" > site/site.srm
@@ -147,8 +146,8 @@ establish_site()
 
     # Create Apache site with doctored conf files
     local -a sedargs=(
-        -e "/s/sname/${name}/"
-        -e "/s/dname/${root}/${name}/"
+        -e "s|sname|${name}|"
+        -e "s|dname|${root}/${name}|"
         )
 
     sed "${sedargs[@]}" boilerplate/site.conf > "${name}.conf"
