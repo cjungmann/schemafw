@@ -8,6 +8,21 @@ declare MYSQL_USER="root"
 declare MYSQL_PASSWORD=""
 declare -a MYSQL_CREDS=( -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" )
 
+is_root() { [ "${USER}" == "root" ]; }
+
+get_creds()
+{
+    local -n user=MYSQL_USER
+    local -n password=MYSQL_PASSWORD
+
+
+    echo -n "Please enter your username: "
+    read -e -i "${MYSQL_USER}"  "user"
+
+    echo -n "Please enter your password: "
+    read -e -i "${MYSQL_PASSWORD}" "password"
+}
+
 # Functions for getting information from user
 # get_www_root() and get_site_name()
 get_www_root()
@@ -213,6 +228,12 @@ remove_parts()
 
 # Begin script here:
 
+if ! is_root; then
+    echo "You must be root to run this script (sudo)."
+    exit 1
+fi
+
+get_creds
 
 # Detect and exit for erroneous entry
 if get_www_root; then
