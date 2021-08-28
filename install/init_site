@@ -4,6 +4,10 @@ declare WWW_ROOT="/var/www"
 WWW_ROOT="/home/${SUDO_USER}/www"
 declare WWW_NAME
 
+declare MYSQL_USER="root"
+declare MYSQL_PASSWORD=""
+declare -a MYSQL_CREDS=( -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" )
+
 # Functions for getting information from user
 # get_www_root() and get_site_name()
 get_www_root()
@@ -50,7 +54,14 @@ database_exists()
 {
     local name="$1"
     local dbase
-    local -a dbases=( $( mysql -BN -e "show databases;" ) )
+
+    local -a sqlargs=(
+        "${MYSQL_CREDS[@]}"
+        -BN
+        -e "show databases"
+        )
+
+    local -a dbases=( $( mysql "${sqlargs[@]}" ) )
     for dbase in "${dbases[@]}"; do
         if [ "$dbase" == "$name" ]; then
             return 0
@@ -104,8 +115,8 @@ establish_database()
 {
     local name="$1"
 
-    mysql -e create\ database\ "$name"
-    mysql -f "$name" < boilerplate/site.sql
+    mysql "${MYSQL_CREDS[@]}" -e "create database ${name}"
+    mysql "${MYSQL_CREDS[@]}" -D "$name" < boilerplate/site.sql
 }
 
 establish_directory()
@@ -135,6 +146,9 @@ establish_directory()
     sed "${sedargs[@]}" "${OPWD}/boilerplate/site.srm" > site/site.srm
 
     cp "${OPWD}/boilerplate/site.sql" sql
+
+    cd ..
+    chown -R "${SUDO_USER}":"${SUDO_USER}" "${name}"
     
     cd "${OPWD}"
 }
@@ -171,7 +185,7 @@ establish_tables_and_procs()
     local script
 
     for script in "${scripts[@]}"; do
-        mysql "${name}" < "${script}"
+        mysql "${MYSQL_CREDS[@]}" "${name}" < "${script}"
     done
 }
 
@@ -181,7 +195,7 @@ remove_parts()
     local name="$2"
 
     if database_exists "$name"; then
-        mysql -e drop\ database\ "$name"
+        mysql "${MYSQL_CREDS[@]}" -e "drop database ${name}"
     fi
     
     if site_exists "$name"; then
