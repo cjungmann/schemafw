@@ -156,6 +156,7 @@ establish_directory()
 
     # Prepare site directory
     cp "${OPWD}/default.xsl" site
+    cp "${OPWD}/index.htm" site
     ln -s "${OPWD}/web_includes" site/includes
 
     # Modify and install SRM file
