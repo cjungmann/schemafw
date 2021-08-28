@@ -14,13 +14,18 @@ get_creds()
 {
     local -n user=MYSQL_USER
     local -n password=MYSQL_PASSWORD
-
+    local -n creds=MYSQL_CREDS
 
     echo -n "Please enter your username: "
     read -e -i "${MYSQL_USER}"  "user"
 
     echo -n "Please enter your password: "
     read -e -i "${MYSQL_PASSWORD}" "password"
+
+    creds=(
+        -u"${user}"
+        -p"${password}"
+    )
 }
 
 # Functions for getting information from user
