@@ -35,8 +35,8 @@ if [ -n "${wi_uglify}" ]; then
     cd ..
 else
     echo
-    echo "Install uglify-js to minify the javascript library."
-    echo "sudo apt-get install uglify-js"
+    echo "Install uglifyjs to minify the javascript library."
+    echo "sudo apt-get install uglifyjs"
     echo
 fi
 
