@@ -33,12 +33,13 @@ get_creds()
 
 webuser_is_installed()
 {
-    if mysql_is_installed(); then
+    if mysql_is_installed; then
 
         declare -a query_arr=(
             "SELECT PRIVILEGE_TYPE "
-            "FROM information_schema.USER_PRIVILEGES "
-            "WHERE GRANTEE = 'webuser'@'localhost'"
+            "  FROM mysql.user "
+            " WHERE User='webuser' "
+            "  AND Host='localhost'"
         )
         declare -a urecs;
 
@@ -58,7 +59,7 @@ install_webuser()
 {
     if mysql_is_installed; then
         mysql -e "CREATE USER 'webuser'@'localhost' IDENTIFIED BY 'webuser'"
-        mysql -e "GRANT EXECUTE FILE ON * TO 'webuser'@'localhost'"
+        mysql -e "GRANT EXECUTE ON * TO 'webuser'@'localhost'"
     fi
 }
 
