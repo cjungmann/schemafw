@@ -10,6 +10,8 @@ declare -a MYSQL_CREDS=( -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" )
 
 is_root()              { [ "${USER}" == "root" ]; }
 command_is_installed() { command -v "$1" > /dev/null 2>&1; }
+mysql_is_installed()   { command_is_installed mysql; }
+apache_is_installed()  { command_is_installed a2ensite; }
 
 get_creds()
 {
@@ -27,6 +29,37 @@ get_creds()
         -u"${user}"
         -p"${password}"
     )
+}
+
+webuser_is_installed()
+{
+    if mysql_is_installed(); then
+
+        declare -a query_arr=(
+            "SELECT PRIVILEGE_TYPE "
+            "FROM information_schema.USER_PRIVILEGES "
+            "WHERE GRANTEE = 'webuser'@'localhost'"
+        )
+        declare -a urecs;
+
+        urecs=( $( mysql -e "${query_arr[*]}" ) )
+
+        echo "There are ${#urecs[@]} webuser privileges."
+
+        if [ "${#urecs[@]}" -gt 1 ]; then
+            return 0
+        fi
+    fi
+
+    return 1;
+}
+
+install_webuser()
+{
+    if mysql_is_installed; then
+        mysql -e "CREATE USER 'webuser'@'localhost' IDENTIFIED BY 'webuser'"
+        mysql -e "GRANT EXECUTE FILE ON * TO 'webuser'@'localhost'"
+    fi
 }
 
 # Functions for getting information from user
@@ -73,7 +106,7 @@ get_site_name()
 # database_exists(), site_exists(), directory_exists()
 database_exists()
 {
-    if command_is_installed mysql; then
+    if mysql_is_installed; then
         local name="$1"
         local dbase
 
@@ -96,7 +129,7 @@ database_exists()
 
 site_exists()
 {
-    if command_is_installed a2ensite; then
+    if apache_is_installed; then
         local site_root="$1"
         local site_name="${site_root}.conf"
 
@@ -138,7 +171,7 @@ check_name_for_collisions()
 
 establish_database()
 {
-    if command_is_installed mysql; then
+    if mysql_is_installed; then
         local name="$1"
 
         mysql "${MYSQL_CREDS[@]}" -e "create database ${name}"
@@ -184,7 +217,7 @@ establish_directory()
 
 establish_site()
 {
-    if command_is_installed a2ensite; then
+    if apache_is_installed; then
         local name="$1"
         local root="$2"
 
@@ -209,7 +242,7 @@ establish_site()
 
 establish_tables_and_procs()
 {
-    if command_is_installed mysql; then
+    if mysql_is_installed; then
         local name="$1"
         local root="$2"
 
@@ -253,11 +286,11 @@ fi
 
 get_creds
 
-if ! command_is_installed mysql; then
+if ! mysql_is_installed; then
     echo "[31;1mNeither MySQL nor MariaDB are available, skipping database actions.[m"
 fi
 
-if ! command_is_installed a2ensite; then
+if ! apache_is_installed; then
     echo "[31;1mThe Apache web server is not available, skipping some configuration.[m"
 fi
 
@@ -281,6 +314,10 @@ if get_www_root; then
             establish_directory "${WWW_NAME}" "${WWW_ROOT}"
             establish_site "${WWW_NAME}" "${WWW_ROOT}"
             establish_tables_and_procs "${WWW_NAME}" "${WWW_ROOT}"
+
+            if ! webuser_is_installed; then
+                install_webuser
+            fi
             exit 0
         fi
     fi
