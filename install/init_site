@@ -8,7 +8,8 @@ declare MYSQL_USER="root"
 declare MYSQL_PASSWORD=""
 declare -a MYSQL_CREDS=( -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" )
 
-is_root() { [ "${USER}" == "root" ]; }
+is_root()              { [ "${USER}" == "root" ]; }
+command_is_installed() { command -v "$1" > /dev/null 2>&1; }
 
 get_creds()
 {
@@ -72,38 +73,42 @@ get_site_name()
 # database_exists(), site_exists(), directory_exists()
 database_exists()
 {
-    local name="$1"
-    local dbase
+    if command_is_installed mysql; then
+        local name="$1"
+        local dbase
 
-    local -a sqlargs=(
-        "${MYSQL_CREDS[@]}"
-        -BN
-        -e "show databases"
+        local -a sqlargs=(
+            "${MYSQL_CREDS[@]}"
+            -BN
+            -e "show databases"
         )
 
-    local -a dbases=( $( mysql "${sqlargs[@]}" ) )
-    for dbase in "${dbases[@]}"; do
-        if [ "$dbase" == "$name" ]; then
-            return 0
-        fi
-    done
+        local -a dbases=( $( mysql "${sqlargs[@]}" ) )
+        for dbase in "${dbases[@]}"; do
+            if [ "$dbase" == "$name" ]; then
+                return 0
+            fi
+        done
+    fi
 
     return 1
 }
 
 site_exists()
 {
-    local site_root="$1"
-    local site_name="${site_root}.conf"
+    if command_is_installed a2ensite; then
+        local site_root="$1"
+        local site_name="${site_root}.conf"
 
-    local -a site_confs
-    local site_conf
-    site_confs=( $( ls -1 "/etc/apache2/sites-available" ) )
-    for site_conf in "${site_confs[@]}"; do
-        if [ "${site_conf}" == "${site_name}" ]; then
-            return 0
-        fi
-    done
+        local -a site_confs
+        local site_conf
+        site_confs=( $( ls -1 "/etc/apache2/sites-available" ) )
+        for site_conf in "${site_confs[@]}"; do
+            if [ "${site_conf}" == "${site_name}" ]; then
+                return 0
+            fi
+        done
+    fi
     return 1
 }
 
@@ -133,10 +138,12 @@ check_name_for_collisions()
 
 establish_database()
 {
-    local name="$1"
+    if command_is_installed mysql; then
+        local name="$1"
 
-    mysql "${MYSQL_CREDS[@]}" -e "create database ${name}"
-    mysql "${MYSQL_CREDS[@]}" -D "$name" < boilerplate/site.sql
+        mysql "${MYSQL_CREDS[@]}" -e "create database ${name}"
+        mysql "${MYSQL_CREDS[@]}" -D "$name" < boilerplate/site.sql
+    fi
 }
 
 establish_directory()
@@ -148,7 +155,7 @@ establish_directory()
     local OPWD="${PWD}"
 
     # Create directories
-    cd "$root"
+    cd "${root}"
     mkdir "$name"
     cd "$name"
     mkdir site
@@ -168,6 +175,7 @@ establish_directory()
 
     cp "${OPWD}/boilerplate/site.sql" sql
 
+    echo "Changing the directory owner to \"${SUDO_USER}\" (instead of \"root\")."
     cd ..
     chown -R "${SUDO_USER}":"${SUDO_USER}" "${name}"
     
@@ -176,38 +184,42 @@ establish_directory()
 
 establish_site()
 {
-    local name="$1"
-    local root="$2"
+    if command_is_installed a2ensite; then
+        local name="$1"
+        local root="$2"
 
-    # Create Apache site with doctored conf files
-    local -a sedargs=(
-        -e "s|sname|${name}|"
-        -e "s|dname|${root}/${name}/site|"
+        # Create Apache site with doctored conf files
+        local -a sedargs=(
+            -e "s|sname|${name}|"
+            -e "s|dname|${root}/${name}/site|"
         )
 
-    sed "${sedargs[@]}" boilerplate/site.conf > "${name}.conf"
-    mv "${name}.conf" /etc/apache2/sites-available
-    a2ensite "${name}"
+        sed "${sedargs[@]}" boilerplate/site.conf > "${name}.conf"
+        mv "${name}.conf" /etc/apache2/sites-available
+        a2ensite "${name}"
 
-    systemctl reload apache2
-    if [ $? -ne 0 ]; then
-        if [ "${root}" != "/var/www" ]; then
-            echo "[31;1mConsult troubleshooting.md.[m"
+        systemctl reload apache2
+        if [ $? -ne 0 ]; then
+            if [ "${root}" != "/var/www" ]; then
+                echo "[31;1mConsult troubleshooting.md.[m"
+            fi
         fi
     fi
 }
 
 establish_tables_and_procs()
 {
-    local name="$1"
-    local root="$2"
+    if command_is_installed mysql; then
+        local name="$1"
+        local root="$2"
 
-    local -a scripts=( $( ls -1 "${root}/${name}"/sql/*.sql ) )
-    local script
+        local -a scripts=( $( ls -1 "${root}/${name}"/sql/*.sql ) )
+        local script
 
-    for script in "${scripts[@]}"; do
-        mysql "${MYSQL_CREDS[@]}" "${name}" < "${script}"
-    done
+        for script in "${scripts[@]}"; do
+            mysql "${MYSQL_CREDS[@]}" "${name}" < "${script}"
+        done
+    fi
 }
 
 remove_parts()
@@ -241,21 +253,37 @@ fi
 
 get_creds
 
+if ! command_is_installed mysql; then
+    echo "[31;1mNeither MySQL nor MariaDB are available, skipping database actions.[m"
+fi
+
+if ! command_is_installed a2ensite; then
+    echo "[31;1mThe Apache web server is not available, skipping some configuration.[m"
+fi
+
 # Detect and exit for erroneous entry
 if get_www_root; then
-    if [ -d "${WWW_ROOT}" ]; then
-        if get_site_name; then
-            remove_parts "${WWW_ROOT}" "${WWW_NAME}"
-
-            if check_name_for_collisions "${WWW_NAME}"; then
-
-                establish_database "${WWW_NAME}"
-                establish_directory "${WWW_NAME}" "${WWW_ROOT}"
-                establish_site "${WWW_NAME}" "${WWW_ROOT}"
-                establish_tables_and_procs "${WWW_NAME}" "${WWW_ROOT}"
-                exit 0
-            fi
+    if ! [ -d "${WWW_ROOT}" ]; then
+        read -p "\"${WWW_ROOT}\" does not exists.  Create it now (y or [n])? "
+        if [ "$REPLY" == "y" ] || [ "$REPLY" == "Y" ]; then
+            mkdir -p "${WWW_ROOT}"
+        else
+            exit 1
         fi
+    fi
+    
+    if get_site_name; then
+        remove_parts "${WWW_ROOT}" "${WWW_NAME}"
+
+        if check_name_for_collisions "${WWW_NAME}"; then
+
+            establish_database "${WWW_NAME}"
+            establish_directory "${WWW_NAME}" "${WWW_ROOT}"
+            establish_site "${WWW_NAME}" "${WWW_ROOT}"
+            establish_tables_and_procs "${WWW_NAME}" "${WWW_ROOT}"
+            exit 0
+        fi
+    fi
     else
         echo "Directory ${WWW_ROOT} does not exist."
     fi
