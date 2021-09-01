@@ -36,7 +36,7 @@ webuser_is_installed()
     if mysql_is_installed; then
 
         declare -a query_arr=(
-            "SELECT PRIVILEGE_TYPE "
+            "SELECT Execute_priv "
             "  FROM mysql.user "
             " WHERE User='webuser' "
             "  AND Host='localhost'"
