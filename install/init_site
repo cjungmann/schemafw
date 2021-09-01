@@ -31,21 +31,23 @@ get_creds()
     )
 }
 
-webuser_is_installed()
+web_account_is_installed()
 {
+    local user="$1"
+
     if mysql_is_installed; then
 
         declare -a query_arr=(
             "SELECT Execute_priv "
             "  FROM mysql.user "
-            " WHERE User='webuser' "
+            " WHERE User='${user}' "
             "  AND Host='localhost'"
         )
         declare -a urecs;
 
         urecs=( $( mysql "${MYSQL_CREDS[@]}" -e "${query_arr[*]}" ) )
 
-        echo "There are ${#urecs[@]} webuser privileges."
+        echo "There are ${#urecs[@]} ${user} privileges."
 
         if [ "${#urecs[@]}" -gt 1 ]; then
             return 0
@@ -55,11 +57,13 @@ webuser_is_installed()
     return 1;
 }
 
-install_webuser()
+install_web_account()
 {
+    local user="$1"
+
     if mysql_is_installed; then
-        mysql "${MYSQL_CREDS[@]}" -e "CREATE USER 'webuser'@'localhost' IDENTIFIED BY 'webuser'"
-        mysql "${MYSQL_CREDS[@]}" -e "GRANT EXECUTE ON * TO 'webuser'@'localhost'"
+        mysql "${MYSQL_CREDS[@]}" -e "CREATE USER '${user}'@'localhost'"
+        mysql "${MYSQL_CREDS[@]}" -e "GRANT EXECUTE ON * TO '${user}'@'localhost'"
     fi
 }
 
@@ -251,7 +255,7 @@ establish_tables_and_procs()
         local script
 
         for script in "${scripts[@]}"; do
-            mysql "${MYSQL_CREDS[@]}" "${name}" < "${script}"
+            mysql "${MYSQL_CREDS[@]}" -D "${name}" < "${script}"
         done
     fi
 }
@@ -316,8 +320,8 @@ if get_www_root; then
             establish_site "${WWW_NAME}" "${WWW_ROOT}"
             establish_tables_and_procs "${WWW_NAME}" "${WWW_ROOT}"
 
-            if ! webuser_is_installed; then
-                install_webuser
+            if ! web_account_is_installed webuser; then
+                install_web_account webuser
             fi
             exit 0
         fi
