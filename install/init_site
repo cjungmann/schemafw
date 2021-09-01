@@ -43,7 +43,7 @@ webuser_is_installed()
         )
         declare -a urecs;
 
-        urecs=( $( mysql -e "${query_arr[*]}" ) )
+        urecs=( $( mysql "${MYSQL_CREDS[@]}" -e "${query_arr[*]}" ) )
 
         echo "There are ${#urecs[@]} webuser privileges."
 
@@ -58,8 +58,8 @@ webuser_is_installed()
 install_webuser()
 {
     if mysql_is_installed; then
-        mysql -e "CREATE USER 'webuser'@'localhost' IDENTIFIED BY 'webuser'"
-        mysql -e "GRANT EXECUTE ON * TO 'webuser'@'localhost'"
+        mysql "${MYSQL_CREDS[@]}" -e "CREATE USER 'webuser'@'localhost' IDENTIFIED BY 'webuser'"
+        mysql "${MYSQL_CREDS[@]}" -e "GRANT EXECUTE ON * TO 'webuser'@'localhost'"
     fi
 }
 
