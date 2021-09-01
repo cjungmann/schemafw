@@ -63,7 +63,7 @@ install_web_account()
 
     if mysql_is_installed; then
         mysql "${MYSQL_CREDS[@]}" -e "CREATE USER '${user}'@'localhost'"
-        mysql "${MYSQL_CREDS[@]}" -e "GRANT EXECUTE ON * TO '${user}'@'localhost'"
+        mysql "${MYSQL_CREDS[@]}" -e "GRANT EXECUTE ON *.* TO '${user}'@'localhost'"
     fi
 }
 
