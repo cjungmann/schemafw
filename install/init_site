@@ -47,8 +47,6 @@ web_account_is_installed()
 
         urecs=( $( mysql "${MYSQL_CREDS[@]}" -e "${query_arr[*]}" ) )
 
-        echo "There are ${#urecs[@]} ${user} privileges."
-
         if [ "${#urecs[@]}" -gt 1 ]; then
             return 0
         fi
@@ -320,8 +318,8 @@ if get_www_root; then
             establish_site "${WWW_NAME}" "${WWW_ROOT}"
             establish_tables_and_procs "${WWW_NAME}" "${WWW_ROOT}"
 
-            if ! web_account_is_installed webuser; then
-                install_web_account webuser
+            if ! web_account_is_installed www-data; then
+                install_web_account www-data
             fi
             exit 0
         fi
