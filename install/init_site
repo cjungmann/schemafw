@@ -174,12 +174,21 @@ check_name_for_collisions()
 
 establish_database()
 {
-    if mysql_is_installed; then
-        local name="$1"
+    local name="$1"
+    local root="$2"
+    local dadir="${root}/${name}"
 
-        mysql "${MYSQL_CREDS[@]}" -e "create database ${name}"
-        mysql "${MYSQL_CREDS[@]}" -D "$name" < boilerplate/site.sql
+    if [ -d "${dadir}" ]; then
+        if mysql_is_installed; then
+            mysql "${MYSQL_CREDS[@]}" -e "create database ${name}"
+            mysql "${MYSQL_CREDS[@]}" -D "$name" < boilerplate/site.sql
+            mysql "${MYSQL_CREDS[@]}" -D "$name" < /usr/local/lib/SchemaServer/install/sys_procs.sql
+        fi
+    else
+        echo "The directory, ${dadir}, was not found.  Procedures found"
+        echo "therein are necessary to setup MySQL for this site."
     fi
+
 }
 
 establish_directory()
@@ -258,6 +267,15 @@ establish_tables_and_procs()
     fi
 }
 
+give_final_advice()
+{
+    echo "Final notes:"
+    echo "1. Ensure there is a <Directory ..> entry for \"${WWW_ROOT}\" in /etc/apache2/apache2.conf."
+    echo "   If necessayr, copy the Directory entry for /var/www."
+    echo
+    echo "2. Ensure MySQL's event_scheduler is turned on in /etc/mysql/my.cnf"
+}
+
 remove_parts()
 {
     local root="$1"
@@ -313,14 +331,17 @@ if get_www_root; then
 
         if check_name_for_collisions "${WWW_NAME}"; then
 
-            establish_database "${WWW_NAME}"
             establish_directory "${WWW_NAME}" "${WWW_ROOT}"
+            establish_database "${WWW_NAME}" "${WWW_ROOT}"
             establish_site "${WWW_NAME}" "${WWW_ROOT}"
             establish_tables_and_procs "${WWW_NAME}" "${WWW_ROOT}"
 
             if ! web_account_is_installed www-data; then
                 install_web_account www-data
             fi
+
+            give_final_advice
+
             exit 0
         fi
     fi
