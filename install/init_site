@@ -242,8 +242,8 @@ establish_site()
 
         # Create Apache site with doctored conf files
         local -a sedargs=(
-            -e "s|sname|${name}|"
-            -e "s|dname|${root}/${name}/site|"
+            -e "s|sname|${name}|g"
+            -e "s|dname|${root}/${name}/site|g"
         )
 
         sed "${sedargs[@]}" boilerplate/site.conf > "${name}.conf"
