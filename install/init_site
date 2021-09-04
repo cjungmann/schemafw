@@ -278,13 +278,8 @@ give_final_advice()
 {
     echo
     echo "${EMP}Final notes:${MEND}"
-    echo "1. Ensure there is a <Directory ..> entry for \"${WWW_ROOT}\" in /etc/apache2/apache2.conf."
-    echo "   If necessary, copy the Directory entry for /var/www."
-    echo
-    echo "2. Ensure the Apache actions mod is enabled:"
-    echo "   sudo a2enmod actions"
-    echo
-    echo "3. Ensure MySQL's event_scheduler is turned on in /etc/mysql/my.cnf.  Add these lines:"
+    echo "1. Ensure MySQL's event_scheduler is turned on in /etc/mysql/my.cnf.  This enables"
+    echo "   the Schema Framework to manage sessions. Add these lines:"
     echo "   [mysqld]"
     echo "   enable_scheduler=ON"
 }
