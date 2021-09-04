@@ -282,6 +282,12 @@ give_final_advice()
     echo "   the Schema Framework to manage sessions. Add these lines:"
     echo "   [mysqld]"
     echo "   enable_scheduler=ON"
+    echo
+    echo "2. Local debugging on the command line will likely require establishing"
+    echo "   a MySQL account matching the login name and no password.  Adjust the"
+    echo "   following if (and as) appropriate:"
+    echo "   mysql -uroot -p -e \"CREATE USER '${SUDO_USER}'@'localhost'\""
+    echo "   mysql -uroot -p -e \"GRANT EXECUTE ON *.* TO '${SUDO_USER}'@'localhost'\""
 }
 
 remove_parts()
