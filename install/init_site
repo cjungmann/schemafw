@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ERR id red, WARN is magenta, EMP is blue, HAIL is green
+# ERR id red, WARN is magenta, EMP is blue, HAIL is green
 declare ERR="[31;1m"
 declare WARN="[35;1m"
 declare EMP="[34;1m"
