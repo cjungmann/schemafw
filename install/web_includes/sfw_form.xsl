@@ -77,6 +77,7 @@
     pd (parameter data): data row explicitly included in parameters (top priority)
     sd (sibling data): data row is sibling of schema element
     fd (form data): data row from explicitly-named form-data element
+    rd (result data): data row from result element that is a sibling of the schema
     md (merged data) row from merged result
 
     There was a last resort variable, but it's been removed in favor
@@ -87,7 +88,9 @@
     <xsl:variable name="fd" select="../form-data[not($prow)][not($sd)]/*[1]" />
     <xsl:variable name="md"
         select="../*[not($prow|$sd|$fd)][@merged][@rndx]/*[local-name()=../@row-name][1]" />
-    <xsl:variable name="data" select="$prow|$sd|$fd|$md" />
+    <xsl:variable name="rd"
+        select="../*[not($prow|$sd|$fd|$md)][@rndx='1']/*[local-name()=../@row-name][1]" />
+    <xsl:variable name="data" select="$prow|$sd|$fd|$md|$rd" />
 
     <xsl:variable name="sfw-class">
       <xsl:choose>
