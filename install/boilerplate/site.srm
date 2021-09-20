@@ -14,7 +14,7 @@ list
 add
    type        : form-new
    schema-proc : App_Person_Add
-   form-action : add_submit
+   form-action : ?add_submit
 
 add_submit
    type      : form-submit
