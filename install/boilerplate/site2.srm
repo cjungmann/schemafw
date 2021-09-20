@@ -1,0 +1,46 @@
+$database       : #DATABASE#
+$xml-stylesheet : default.xsl
+$default-mode   : list
+
+list
+   type          : table
+   title         : Semi-pro League Page
+   procedure     : App_Person_List
+   on_line_click : ?edit&id={!id}
+   button
+      type   : add
+      label  : Add Person
+      task   : ?add
+
+add
+   type        : form-new
+   schema-proc : App_Person_Add
+   form-action : ?add_submit
+
+add_submit
+   type      : form-submit
+   procedure : App_Person_Add
+   result : 1
+      type : update
+
+edit
+   type        : form-edit
+   schema-proc : App_Person_Update
+   procedure   : App_Person_Read
+   form-action : ?edit_submit
+   button
+      type : delete
+      label : Delete {@fname} {@lname}
+      confirm: Delete {@fname} {@lname}?
+      task: ?delete&id={@id}
+
+edit_submit
+   type      : form-submit
+   procedure : App_Person_Update
+   result
+      type : update
+
+delete
+   type      : delete
+   procedure : App_Person_Delete
+
