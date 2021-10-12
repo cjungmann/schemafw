@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 TARGET=schemafw
+
 
 wi_xsli=$( which xsl-import )
 if [ -n "${wi_xsli}" ]; then
@@ -40,8 +41,9 @@ else
     echo
 fi
 
-install -D --mode=644 web_includes/* -t /usr/local/lib/${TARGET}/web_includes/
-install --mode=644    default.xsl    /usr/local/lib/${TARGET}/
+mkdir -m 644 -p /usr/local/lib/${TARGET}/web_includes
+install -m 644 web_includes/*  /usr/local/lib/${TARGET}/web_includes/
+install -m 644 default.xsl    /usr/local/lib/${TARGET}/
 
 ./install-info
 
