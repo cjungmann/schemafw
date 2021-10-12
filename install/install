@@ -41,7 +41,7 @@ else
     echo
 fi
 
-mkdir -m 644 -p /usr/local/lib/${TARGET}/web_includes
+mkdir -m 755 -p /usr/local/lib/${TARGET}/web_includes
 install -m 644 web_includes/*  /usr/local/lib/${TARGET}/web_includes/
 install -m 644 default.xsl    /usr/local/lib/${TARGET}/
 
